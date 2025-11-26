@@ -14,4 +14,4 @@
 
 ## Examples
 
-see [example](https://github.com/stayhydated/gpui-table/tree/master/example)
+see [examples](https://github.com/stayhydated/gpui-table/tree/master/examples)
