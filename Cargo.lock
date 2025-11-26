@@ -6036,6 +6036,9 @@ dependencies = [
 name = "some-lib"
 version = "0.4.0"
 dependencies = [
+ "es-fluent",
+ "es-fluent-build",
+ "es-fluent-manager-embedded",
  "gpui",
  "gpui-component",
  "gpui-table",

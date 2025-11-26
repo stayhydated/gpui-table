@@ -1,8 +1,10 @@
-use gpui::{App, Div, IntoElement, Stateful, Window};
-use gpui_component::table::{Column, TableDelegate};
-use gpui_table::{NamedTableRow, TableRowMeta as _, TableRowStyle as _};
+use es_fluent::EsFluentKv;
+use gpui::IntoElement;
+use gpui_table::NamedTableRow;
 
-#[derive(NamedTableRow)]
+#[derive(NamedTableRow, EsFluentKv)]
+#[fluent_kv(display = "std")]
+#[fluent_kv(this, keys = ["Description", "Label"])]
 #[table(id = "users", title = "Users")]
 pub struct User {
     #[table(col = "id", title = "ID", width = 60.)]
