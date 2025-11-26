@@ -1,10 +1,11 @@
 [workspace]
-default-members = [ "example" ]
+default-members = [ "examples/some-lib-table" ]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
-  "example",
+  "examples/some-lib",
+  "examples/some-lib-table",
 ]
 resolver = "3"
 
@@ -27,9 +28,15 @@ crate-paths = "0.1.0"
 darling = "0.20.10"
 derive_more = "2.0.1"
 dotenv = "0.15.0"
+es-fluent = "0.2.5"
+es-fluent-build = "0.2.5"
+es-fluent-lang = "0.2.5"
+es-fluent-manager-embedded = "0.2.5"
+fluent-bundle = "0.15.3"
 futures = "0.3.31"
 gpui = "0.2.2"
 gpui-component = "0.4.1"
+gpui-storybook = "0.4.1"
 gpui-table = { path = "crates/gpui-table", version = "0.4.0" }
 gpui-table-core = { path = "crates/gpui-table-core", version = "0.4.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.4.0" }

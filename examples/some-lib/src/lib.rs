@@ -1,11 +1,11 @@
 use gpui::{App, Div, IntoElement, Stateful, Window};
-use gpui_component::table::{Column, Table, TableDelegate, TableState};
+use gpui_component::table::{Column, TableDelegate};
 use gpui_table_core::{TableRowMeta, TableRowStyle};
 use gpui_table_derive::NamedTableRow;
 
 #[derive(NamedTableRow)]
 #[table(id = "users", title = "Users")]
-struct UserRow {
+pub struct UserRow {
     #[table(col = "id", title = "ID", width = 60.)]
     id: usize,
 
@@ -22,7 +22,7 @@ struct UserRow {
     active: bool,
 }
 
-struct UsersTableDelegate {
+pub struct UsersTableDelegate {
     rows: Vec<UserRow>,
 }
 
@@ -52,17 +52,4 @@ impl TableDelegate for UsersTableDelegate {
     fn render_tr(&self, row_ix: usize, window: &mut Window, cx: &mut App) -> Stateful<Div> {
         self.rows[row_ix].render_table_row(row_ix, window, cx)
     }
-}
-
-fn main() {
-    // This is just a compilation check, we don't need to run the app
-    let _ = UserRow {
-        id: 1,
-        name: "Alice".to_string(),
-        age: 30,
-        email: "alice@example.com".to_string(),
-        active: true,
-    };
-
-    let _columns = UserRow::table_columns();
 }

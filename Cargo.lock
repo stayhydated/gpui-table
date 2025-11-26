@@ -5300,6 +5300,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "some-lib-table"
+version = "0.4.0"
+
+[[package]]
 name = "spin"
 version = "0.9.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"

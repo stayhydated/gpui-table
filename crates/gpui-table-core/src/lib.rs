@@ -63,7 +63,7 @@ macro_rules! impl_table_cell_value {
 }
 
 /// A value that can be displayed in a table cell.
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug)]
 pub enum TableCellValue<'a> {
     Str(&'a str),
     String(String),

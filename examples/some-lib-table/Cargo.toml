@@ -1,0 +1,26 @@
+[package]
+name = "some-lib-table"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+readme.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+version.workspace = true
+
+[dependencies]
+chrono = { workspace = true }
+es-fluent = { workspace = true }
+es-fluent-lang = { workspace = true }
+es-fluent-manager-embedded = { workspace = true }
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+gpui-storybook = { features = [ "macros" ], workspace = true }
+inventory = { workspace = true }
+rust-embed = { workspace = true }
+rust_decimal = { workspace = true }
+some-lib = { path = "../some-lib" }
+strum = { workspace = true }
+
+[lints]
+workspace = true
