@@ -14,6 +14,7 @@ readme.workspace = true
 proc-macro = true
 
 [dependencies]
+crate-paths = { workspace = true }
 gpui-table-core = { workspace = true }
 heck = { workspace = true }
 inventory = { workspace = true }

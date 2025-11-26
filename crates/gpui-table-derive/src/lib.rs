@@ -1,3 +1,5 @@
+mod __crate_paths;
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Lit, parse_macro_input};
@@ -149,14 +151,18 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             quote! {}
         };
 
+        use __crate_paths::gpui_component::table::ColumnFixed;
+
         let fixed_chain = match f.fixed.as_deref() {
-            Some("left") => quote! { .fixed(gpui_component::table::ColumnFixed::Left) },
-            Some("right") => quote! { .fixed(gpui_component::table::ColumnFixed::Right) },
+            Some("left") => quote! { .fixed(#ColumnFixed::Left) },
+            Some("right") => quote! { .fixed(#ColumnFixed::Right) },
             _ => quote! {},
         };
 
+        use __crate_paths::gpui_component::table::Column;
+
         quote! {
-            gpui_component::table::Column::new(#key, #title)
+            #Column::new(#key, #title)
                 .width(#width)
                 #sortable_chain
                 #text_right_chain
@@ -167,38 +173,40 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     let cell_value_match_arms = field_configs.iter().enumerate().map(|(i, f)| {
         let ident = &f.ident;
         quote! {
-            #i => gpui_table_core::TableCellValue::from(&self.#ident),
+            #i => gpui_table::TableCellValue::from(&self.#ident),
         }
     });
 
+    use __crate_paths::gpui_component::table::Column;
+
     let generated_code = quote! {
-        impl gpui_table_core::TableRowMeta for #struct_name {
+        impl gpui_table::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;
             const TABLE_TITLE: &'static str = #table_title;
 
-            fn table_columns() -> &'static [gpui_component::table::Column] {
-                static COLUMNS: std::sync::OnceLock<Vec<gpui_component::table::Column>> = std::sync::OnceLock::new();
+            fn table_columns() -> &'static [#Column] {
+                static COLUMNS: std::sync::OnceLock<Vec<#Column>> = std::sync::OnceLock::new();
                 COLUMNS.get_or_init(|| vec![
                     #(#columns_init),*
                 ])
             }
 
-            fn cell_value(&self, col_ix: usize) -> gpui_table_core::TableCellValue {
+            fn cell_value(&self, col_ix: usize) -> gpui_table::TableCellValue {
                 match col_ix {
                     #(#cell_value_match_arms)*
-                    _ => gpui_table_core::TableCellValue::String(String::new()),
+                    _ => gpui_table::TableCellValue::String(String::new()),
                 }
             }
         }
 
-        impl gpui_table_core::TableRowStyle for #struct_name {
+        impl gpui_table::TableRowStyle for #struct_name {
             fn render_table_cell(
                 &self,
                 col_ix: usize,
                 window: &mut gpui::Window,
                 cx: &mut gpui::App,
             ) -> gpui::AnyElement {
-                gpui_table_core::default_render_cell(self, col_ix, window, cx).into_any_element()
+                gpui_table::default_render_cell(self, col_ix, window, cx).into_any_element()
             }
 
             fn render_table_row(
@@ -207,7 +215,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 window: &mut gpui::Window,
                 cx: &mut gpui::App,
             ) -> gpui::Stateful<gpui::Div> {
-                gpui_table_core::default_render_row(row_ix, window, cx)
+                gpui_table::default_render_row(row_ix, window, cx)
             }
         }
     };
