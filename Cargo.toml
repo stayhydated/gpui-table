@@ -1,11 +1,11 @@
 [workspace]
-default-members = [ "examples/some-lib-table" ]
+default-members = [ "examples/some-lib-tables" ]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
   "examples/some-lib",
-  "examples/some-lib-table",
+  "examples/some-lib-tables",
 ]
 resolver = "3"
 

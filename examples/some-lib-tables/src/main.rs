@@ -1,12 +1,12 @@
-mod stories;
-
 use es_fluent::EsFluent;
 use es_fluent_lang::es_fluent_language;
 use gpui::Application;
 use gpui_storybook::{Assets, Gallery};
 use strum::EnumIter;
 
-es_fluent_manager_embedded::define_i18n_module!();
+// bring the stories in scope for inventory
+#[allow(unused_imports, clippy::single_component_path_imports)]
+use some_lib_tables;
 
 #[es_fluent_language]
 #[derive(Clone, Copy, Debug, EnumIter, EsFluent, PartialEq)]

@@ -1,5 +1,5 @@
 [package]
-name = "some-lib-table"
+name = "some-lib-tables"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true

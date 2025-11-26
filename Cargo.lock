@@ -6126,7 +6126,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "some-lib-table"
+name = "some-lib-tables"
 version = "0.4.0"
 dependencies = [
  "chrono",
