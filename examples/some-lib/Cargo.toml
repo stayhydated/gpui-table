@@ -11,7 +11,7 @@ version.workspace = true
 [dependencies]
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table = { workspace = true }
+gpui-table = { features = [ "fluent" ], workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 

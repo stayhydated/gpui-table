@@ -13,9 +13,11 @@ readme.workspace = true
 [features]
 default = [ "derive" ]
 derive = [ "dep:gpui-table-derive" ]
+fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 
 [dependencies]
 anyhow = { workspace = true }
+es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-table-core = { workspace = true }

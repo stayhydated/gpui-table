@@ -31,6 +31,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     let mut table_id = struct_name.to_string();
     let mut table_title = struct_name.to_string();
     let mut delegate = true;
+    let mut fluent_key: Option<String> = None;
 
     for attr in &input.attrs {
         if attr.path().is_ident("table") {
@@ -46,6 +47,10 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 } else if meta.path.is_ident("delegate") {
                     if let Ok(Lit::Bool(lit)) = meta.value()?.parse() {
                         delegate = lit.value;
+                    }
+                } else if meta.path.is_ident("fluent") {
+                    if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                        fluent_key = Some(lit.value());
                     }
                 }
                 Ok(())
@@ -184,10 +189,40 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
 
     use __crate_paths::gpui_component::table::Column;
 
+    // Generate fluent-aware table title code
+    let table_title_impl = if let Some(key) = &fluent_key {
+        // EsFluentKv generates enum names as: {StructName}{Key}{Ftl}
+        // where Key is capitalized from the keys array value
+        let key_capitalized = {
+            let mut chars = key.chars();
+            match chars.next() {
+                None => String::new(),
+                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+            }
+        };
+        let fluent_enum_ident = syn::Ident::new(
+            &format!("{}{}{}", struct_name, key_capitalized, "Ftl"),
+            struct_name.span(),
+        );
+        quote! {
+            fn table_title() -> String {
+                #fluent_enum_ident::this_ftl()
+            }
+        }
+    } else {
+        quote! {
+            fn table_title() -> String {
+                Self::TABLE_TITLE.to_string()
+            }
+        }
+    };
+
     let generated_code = quote! {
         impl gpui_table::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;
             const TABLE_TITLE: &'static str = #table_title;
+
+            #table_title_impl
 
             fn table_columns() -> &'static [#Column] {
                 static COLUMNS: std::sync::OnceLock<Vec<#Column>> = std::sync::OnceLock::new();

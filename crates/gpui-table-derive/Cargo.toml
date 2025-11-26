@@ -13,8 +13,12 @@ readme.workspace = true
 [lib]
 proc-macro = true
 
+[features]
+fluent = []
+
 [dependencies]
 crate-paths = { workspace = true }
+darling = { workspace = true }
 gpui-table-core = { workspace = true }
 heck = { workspace = true }
 inventory = { workspace = true }
