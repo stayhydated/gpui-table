@@ -1,10 +1,10 @@
-# GPUI Storybook
+# GPUI Table
 
 [![Build Status](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml/badge.svg)](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml)
 [![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
-`gpui-table` provides a streamlined environment for building UI components for [GPUI](https://www.gpui.rs/) applications. It allows you to visualize different states of your components, toggle internationalization (i18n) locales, and organize your UI library without launching your full application.
+`gpui-table` ...tbd
 
 ## Compatibility
 
@@ -15,9 +15,3 @@
 ## Examples
 
 see [example](https://github.com/stayhydated/gpui-table/tree/master/example)
-
-## Acknowledgements
-
-This project is heavily inspired by the story section of [gpui-component](https://github.com/longbridge/gpui-component/tree/main/crates/story).
-
-See related discussion on ownership transfer [here](https://github.com/longbridge/gpui-component/discussions/1473).
