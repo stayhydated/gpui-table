@@ -1,1 +1,2 @@
-mod user;
+pub mod i18n;
+pub mod structs;

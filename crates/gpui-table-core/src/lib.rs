@@ -13,6 +13,12 @@ pub trait TableRowMeta {
     /// Human-readable title for the table.
     const TABLE_TITLE: &'static str;
 
+    /// Returns the table title. This can be overridden to provide dynamic
+    /// titles, for example from localization libraries.
+    fn table_title() -> String {
+        Self::TABLE_TITLE.to_string()
+    }
+
     /// Returns the column definitions for this row type.
     fn table_columns() -> &'static [Column];
 

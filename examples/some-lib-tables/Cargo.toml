@@ -1,5 +1,5 @@
 [package]
-name = "some-lib-table"
+name = "some-lib-tables"
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
@@ -21,6 +21,11 @@ rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
 some-lib = { path = "../some-lib" }
 strum = { workspace = true }
+serde = { workspace = true }
+fake = { workspace = true }
+
+[build-dependencies]
+es-fluent-build = { workspace = true }
 
 [lints]
 workspace = true
