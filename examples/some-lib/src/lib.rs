@@ -1,6 +1,6 @@
 use gpui::{App, Div, IntoElement, Stateful, Window};
 use gpui_component::table::{Column, TableDelegate};
-use gpui_table::{NamedTableRow, TableRowMeta, TableRowStyle};
+use gpui_table::{NamedTableRow, TableRowMeta as _, TableRowStyle as _};
 
 #[derive(NamedTableRow)]
 #[table(id = "users", title = "Users")]

@@ -38,10 +38,10 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
                         table_id = lit.value();
                     }
-                } else if meta.path.is_ident("title") {
-                    if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
-                        table_title = lit.value();
-                    }
+                } else if meta.path.is_ident("title")
+                    && let Ok(Lit::Str(lit)) = meta.value()?.parse()
+                {
+                    table_title = lit.value();
                 }
                 Ok(())
             })?;
