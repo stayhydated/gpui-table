@@ -6123,6 +6123,7 @@ dependencies = [
  "gpui",
  "gpui-component",
  "gpui-table",
+ "rust-embed",
 ]
 
 [[package]]

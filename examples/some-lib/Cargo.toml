@@ -15,6 +15,7 @@ gpui-table = { features = [ "fluent" ], workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 fake = { features = [ "derive" ], workspace = true }
+rust-embed = { workspace = true }
 
 [build-dependencies]
 es-fluent-build = { workspace = true }

@@ -15,7 +15,7 @@ use gpui_component::{
     v_flex,
 };
 use serde::Deserialize;
-use some_lib::user::{User, UserTableDelegate};
+use some_lib::structs::user::{User, UserTableDelegate};
 
 #[derive(Action, Clone, PartialEq, Eq, Deserialize)]
 #[action(namespace = table_story, no_json)]
