@@ -1,0 +1,27 @@
+[package]
+name = "gpui-table-core"
+description = """
+Core crate for gpui-table
+"""
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+version.workspace = true
+repository.workspace = true
+readme.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+inventory = { workspace = true }
+proc-macro2 = { workspace = true }
+quote = { workspace = true }
+rust-embed = { workspace = true }
+serde = { features = [ "derive" ], workspace = true }
+serde_json = { workspace = true }
+strum = { features = [ "derive" ], workspace = true }
+tracing-subscriber = { features = [ "env-filter" ], workspace = true }
+
+[lints]
+workspace = true
