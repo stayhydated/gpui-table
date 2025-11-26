@@ -30,6 +30,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
 
     let mut table_id = struct_name.to_string();
     let mut table_title = struct_name.to_string();
+    let mut delegate = true;
 
     for attr in &input.attrs {
         if attr.path().is_ident("table") {
@@ -42,6 +43,10 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     && let Ok(Lit::Str(lit)) = meta.value()?.parse()
                 {
                     table_title = lit.value();
+                } else if meta.path.is_ident("delegate") {
+                    if let Ok(Lit::Bool(lit)) = meta.value()?.parse() {
+                        delegate = lit.value;
+                    }
                 }
                 Ok(())
             })?;
@@ -218,6 +223,56 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 gpui_table::default_render_row(row_ix, window, cx)
             }
         }
+    };
+
+    let delegate_impl = if delegate {
+        let delegate_name_str = format!("{}TableDelegate", struct_name);
+        let delegate_name = syn::Ident::new(&delegate_name_str, struct_name.span());
+
+        use __crate_paths::gpui_component::table::{Column, TableDelegate};
+
+        quote! {
+            pub struct #delegate_name {
+                pub rows: Vec<#struct_name>,
+            }
+
+            impl #TableDelegate for #delegate_name {
+                fn columns_count(&self, _: &gpui::App) -> usize {
+                    <#struct_name as gpui_table::TableRowMeta>::table_columns().len()
+                }
+
+                fn rows_count(&self, _: &gpui::App) -> usize {
+                    self.rows.len()
+                }
+
+                fn column(&self, col_ix: usize, _: &gpui::App) -> &#Column {
+                    &<#struct_name as gpui_table::TableRowMeta>::table_columns()[col_ix]
+                }
+
+                fn render_td(
+                    &self,
+                    row_ix: usize,
+                    col_ix: usize,
+                    window: &mut gpui::Window,
+                    cx: &mut gpui::App,
+                ) -> impl gpui::IntoElement {
+                    use gpui_table::TableRowStyle;
+                    self.rows[row_ix].render_table_cell(col_ix, window, cx)
+                }
+
+                fn render_tr(&self, row_ix: usize, window: &mut gpui::Window, cx: &mut gpui::App) -> gpui::Stateful<gpui::Div> {
+                    use gpui_table::TableRowStyle;
+                    self.rows[row_ix].render_table_row(row_ix, window, cx)
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    let generated_code = quote! {
+        #generated_code
+        #delegate_impl
     };
 
     Ok(generated_code)
