@@ -1,4 +1,6 @@
 use es_fluent::EsFluentKv;
+use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
+use fake::uuid::UUIDv4;
 use gpui::IntoElement;
 use gpui_table::NamedTableRow;
 
@@ -8,17 +10,24 @@ use gpui_table::NamedTableRow;
 #[table(fluent = "label")]
 pub struct User {
     #[table(skip)]
-    id: usize,
+    #[dummy(faker = "UUIDv4")]
+    id: uuid::Uuid,
 
     #[table(sortable, width = 150.)]
+    #[dummy(faker = "Name()")]
     name: String,
 
     #[table(sortable, width = 80.)]
-    age: u32,
+    #[dummy(faker = "18..90")]
+    age: u8,
 
     #[table(width = 200.)]
+    #[dummy(faker = "SafeEmail()")]
     email: String,
 
     #[table(width = 50.)]
     active: bool,
+    // #[table(width = 50.)]
+    // #[dummy(faker = "DateTime()")]
+    // created_at: chrono::DateTime<chrono::Utc>,
 }

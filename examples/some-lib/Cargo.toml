@@ -14,8 +14,10 @@ gpui-component = { workspace = true }
 gpui-table = { features = [ "fluent" ], workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
-fake = { features = [ "derive" ], workspace = true }
+fake = { features = [ "derive", "uuid", "ulid", "random_color", "chrono" ], workspace = true }
 rust-embed = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }
 
 [build-dependencies]
 es-fluent-build = { workspace = true }
