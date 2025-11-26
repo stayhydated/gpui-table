@@ -2,7 +2,7 @@ use es_fluent::EsFluentKv;
 use gpui::IntoElement;
 use gpui_table::NamedTableRow;
 
-#[derive(NamedTableRow, EsFluentKv)]
+#[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
 #[fluent_kv(display = "std")]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[table(fluent = "label")]

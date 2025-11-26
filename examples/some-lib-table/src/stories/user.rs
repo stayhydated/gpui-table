@@ -34,9 +34,9 @@ struct ChangeSize(Size);
 #[action(namespace = table_story, no_json)]
 struct OpenDetail(usize);
 
+#[gpui_storybook::story]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
-    num_stocks_input: Entity<InputState>,
     stripe: bool,
     refresh_data: bool,
     size: Size,
@@ -70,7 +70,52 @@ impl UserTableStory {
         cx.new(|cx| Self::new(window, cx))
     }
 
-    fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {}
+    fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        let mut delegate = UserTableDelegate::new(vec![]);
+        for _ in 0..100 {
+            delegate.rows.push(fake::Faker.fake());
+        }
+
+        let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+        let _subscriptions = vec![cx.subscribe_in(&table, window, Self::on_table_event)];
+
+        let _load_task =
+            cx.spawn(async move |this, cx| {
+                loop {
+                    Timer::after(time::Duration::from_millis(33)).await;
+
+                    this.update(cx, |this, cx| {
+                        if !this.refresh_data {
+                            return;
+                        }
+
+                        this.table.update(cx, |table, _| {
+                            table.delegate_mut().rows.iter_mut().enumerate().for_each(
+                                |(i, user)| {
+                                    let n = (3..10).fake::<usize>();
+                                    // update 30% of the stocks
+                                    if i % n == 0 {
+                                        *user = fake::Faker.fake();
+                                    }
+                                },
+                            );
+                        });
+                        cx.notify();
+                    })
+                    .ok();
+                }
+            });
+
+        Self {
+            table,
+            stripe: false,
+            refresh_data: false,
+            size: Size::default(),
+            _subscriptions,
+            _load_task,
+        }
+    }
 
     fn toggle_loop_selection(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
         self.table.update(cx, |table, cx| {
@@ -288,23 +333,6 @@ impl Render for UserTableStory {
                         .items_center()
                         .justify_between()
                         .gap_2()
-                        .child(
-                            h_flex()
-                                .gap_2()
-                                .flex_1()
-                                .child(Label::new("Number of Stocks:"))
-                                .child(
-                                    h_flex()
-                                        .min_w_32()
-                                        .child(Input::new(&self.num_stocks_input).small())
-                                        .into_any_element(),
-                                )
-                                .when(delegate.loading, |this| {
-                                    this.child(
-                                        h_flex().gap_1().child(Spinner::new()).child("Loading..."),
-                                    )
-                                }),
-                        )
                         .child(
                             h_flex()
                                 .gap_2()

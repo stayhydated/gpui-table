@@ -327,6 +327,16 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             #[derive(gpui_table::derive_new::new)]
             pub struct #delegate_name {
                 pub rows: Vec<#struct_name>,
+                #[new(default)]
+                pub visible_rows: std::ops::Range<usize>,
+                #[new(default)]
+                pub visible_cols: std::ops::Range<usize>,
+                #[new(default)]
+                pub eof: bool,
+                #[new(default)]
+                pub loading: bool,
+                #[new(default)]
+                pub full_loading: bool,
             }
 
             impl #TableDelegate for #delegate_name {
@@ -356,6 +366,32 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 fn render_tr(&self, row_ix: usize, window: &mut gpui::Window, cx: &mut gpui::App) -> gpui::Stateful<gpui::Div> {
                     use gpui_table::TableRowStyle;
                     self.rows[row_ix].render_table_row(row_ix, window, cx)
+                }
+
+                fn visible_rows_changed(
+                    &mut self,
+                    visible_range: std::ops::Range<usize>,
+                    _: &mut gpui::Window,
+                    _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                ) {
+                    self.visible_rows = visible_range;
+                }
+
+                fn visible_columns_changed(
+                    &mut self,
+                    visible_range: std::ops::Range<usize>,
+                    _: &mut gpui::Window,
+                    _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                ) {
+                    self.visible_cols = visible_range;
+                }
+
+                fn is_eof(&self, _: &gpui::App) -> bool {
+                    self.eof
+                }
+
+                fn loading(&self, _: &gpui::App) -> bool {
+                    self.loading
                 }
             }
         }
