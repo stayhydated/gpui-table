@@ -17,12 +17,30 @@ struct FieldConfig {
     ident: syn::Ident,
     col_key: String,
     title: String,
+    title_from_attr: bool,
     width: Option<f32>,
     sortable: bool,
     text_right: bool,
     fixed: Option<String>, // "left" or "right"
     #[allow(dead_code)]
     style: Option<String>,
+}
+
+fn capitalize_first(s: &str) -> String {
+    let mut chars = s.chars();
+    match chars.next() {
+        None => String::new(),
+        Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
+    }
+}
+
+fn to_pascal_case(s: &str) -> String {
+    let trimmed = s.strip_prefix("r#").unwrap_or(s);
+    trimmed
+        .split('_')
+        .filter(|part| !part.is_empty())
+        .map(capitalize_first)
+        .collect::<String>()
 }
 
 fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -83,9 +101,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         let mut col_key = ident.to_string();
         let mut title = ident.to_string(); // Default title is field name
         // Capitalize first letter of default title
-        if let Some(c) = title.chars().next() {
-            title = c.to_uppercase().collect::<String>() + &title[1..];
-        }
+        title = capitalize_first(&title);
 
         let mut width = None;
         let mut sortable = false;
@@ -93,6 +109,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         let mut fixed = None;
         let mut style = None;
         let mut is_table_col = false;
+        let mut title_from_attr = false;
 
         for attr in &field.attrs {
             if attr.path().is_ident("table") {
@@ -105,6 +122,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     } else if meta.path.is_ident("title") {
                         if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
                             title = lit.value();
+                            title_from_attr = true;
                         }
                     } else if meta.path.is_ident("width") {
                         if let Ok(Lit::Float(lit)) = meta.value()?.parse() {
@@ -135,6 +153,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 ident,
                 col_key,
                 title,
+                title_from_attr,
                 width,
                 sortable,
                 text_right,
@@ -144,10 +163,31 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         }
     }
 
+    let fluent_enum_ident = fluent_key.as_ref().map(|key| {
+        let key_capitalized = capitalize_first(key);
+        syn::Ident::new(
+            &format!("{}{}{}", struct_name, key_capitalized, "Ftl"),
+            struct_name.span(),
+        )
+    });
+
     let columns_init = field_configs.iter().map(|f| {
         let key = &f.col_key;
-        let title = &f.title;
         let width = f.width.unwrap_or(100.0); // Default width
+
+        let title_expr = if !f.title_from_attr {
+            if let Some(fluent_enum_ident) = &fluent_enum_ident {
+                let field_name = to_pascal_case(&f.ident.to_string());
+                let fluent_variant_ident = syn::Ident::new(&field_name, f.ident.span());
+                quote! { #fluent_enum_ident::#fluent_variant_ident.to_string() }
+            } else {
+                let title = &f.title;
+                quote! { #title }
+            }
+        } else {
+            let title = &f.title;
+            quote! { #title }
+        };
 
         let sortable_chain = if f.sortable {
             quote! { .sortable() }
@@ -172,7 +212,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         use __crate_paths::gpui_component::table::Column;
 
         quote! {
-            #Column::new(#key, #title)
+            #Column::new(#key, #title_expr)
                 .width(#width)
                 #sortable_chain
                 #text_right_chain
@@ -190,20 +230,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     use __crate_paths::gpui_component::table::Column;
 
     // Generate fluent-aware table title code
-    let table_title_impl = if let Some(key) = &fluent_key {
-        // EsFluentKv generates enum names as: {StructName}{Key}{Ftl}
-        // where Key is capitalized from the keys array value
-        let key_capitalized = {
-            let mut chars = key.chars();
-            match chars.next() {
-                None => String::new(),
-                Some(first) => first.to_uppercase().collect::<String>() + chars.as_str(),
-            }
-        };
-        let fluent_enum_ident = syn::Ident::new(
-            &format!("{}{}{}", struct_name, key_capitalized, "Ftl"),
-            struct_name.span(),
-        );
+    let table_title_impl = if let Some(fluent_enum_ident) = &fluent_enum_ident {
         quote! {
             fn table_title() -> String {
                 #fluent_enum_ident::this_ftl()
