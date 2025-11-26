@@ -1,7 +1,7 @@
 [package]
-name = "gpui-table-macros"
+name = "gpui-table-derive"
 description = """
-Macro crate for gpui-table
+Derive crate for gpui-table
 """
 edition.workspace = true
 license.workspace = true

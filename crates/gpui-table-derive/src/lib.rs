@@ -1,1 +1,216 @@
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{Data, DeriveInput, Fields, Lit, parse_macro_input};
 
+#[proc_macro_derive(NamedTableRow, attributes(table))]
+pub fn derive_named_table_row(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    match expand_named_table_row(&input) {
+        Ok(ts) => ts.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+struct FieldConfig {
+    ident: syn::Ident,
+    col_key: String,
+    title: String,
+    width: Option<f32>,
+    sortable: bool,
+    text_right: bool,
+    fixed: Option<String>, // "left" or "right"
+    #[allow(dead_code)]
+    style: Option<String>,
+}
+
+fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    let struct_name = &input.ident;
+
+    let mut table_id = struct_name.to_string();
+    let mut table_title = struct_name.to_string();
+
+    for attr in &input.attrs {
+        if attr.path().is_ident("table") {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("id") {
+                    if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                        table_id = lit.value();
+                    }
+                } else if meta.path.is_ident("title") {
+                    if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                        table_title = lit.value();
+                    }
+                }
+                Ok(())
+            })?;
+        }
+    }
+
+    let fields = match &input.data {
+        Data::Struct(data) => match &data.fields {
+            Fields::Named(fields) => fields,
+            _ => {
+                return Err(syn::Error::new_spanned(
+                    input,
+                    "NamedTableRow only supports named fields",
+                ));
+            },
+        },
+        _ => {
+            return Err(syn::Error::new_spanned(
+                input,
+                "NamedTableRow only supports structs",
+            ));
+        },
+    };
+
+    let mut field_configs = Vec::new();
+
+    for field in &fields.named {
+        let ident = field.ident.clone().unwrap();
+        let mut col_key = ident.to_string();
+        let mut title = ident.to_string(); // Default title is field name
+        // Capitalize first letter of default title
+        if let Some(c) = title.chars().next() {
+            title = c.to_uppercase().collect::<String>() + &title[1..];
+        }
+
+        let mut width = None;
+        let mut sortable = false;
+        let mut text_right = false;
+        let mut fixed = None;
+        let mut style = None;
+        let mut is_table_col = false;
+
+        for attr in &field.attrs {
+            if attr.path().is_ident("table") {
+                is_table_col = true;
+                attr.parse_nested_meta(|meta| {
+                    if meta.path.is_ident("col") {
+                        if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                            col_key = lit.value();
+                        }
+                    } else if meta.path.is_ident("title") {
+                        if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                            title = lit.value();
+                        }
+                    } else if meta.path.is_ident("width") {
+                        if let Ok(Lit::Float(lit)) = meta.value()?.parse() {
+                            width = Some(lit.base10_parse::<f32>()?);
+                        } else if let Ok(Lit::Int(lit)) = meta.value()?.parse() {
+                            width = Some(lit.base10_parse::<f32>()?);
+                        }
+                    } else if meta.path.is_ident("fixed") {
+                        if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                            fixed = Some(lit.value());
+                        }
+                    } else if meta.path.is_ident("style") {
+                        if let Ok(Lit::Str(lit)) = meta.value()?.parse() {
+                            style = Some(lit.value());
+                        }
+                    } else if meta.path.is_ident("sortable") {
+                        sortable = true;
+                    } else if meta.path.is_ident("text_right") {
+                        text_right = true;
+                    }
+                    Ok(())
+                })?;
+            }
+        }
+
+        if is_table_col {
+            field_configs.push(FieldConfig {
+                ident,
+                col_key,
+                title,
+                width,
+                sortable,
+                text_right,
+                fixed,
+                style,
+            });
+        }
+    }
+
+    let columns_init = field_configs.iter().map(|f| {
+        let key = &f.col_key;
+        let title = &f.title;
+        let width = f.width.unwrap_or(100.0); // Default width
+
+        let sortable_chain = if f.sortable {
+            quote! { .sortable() }
+        } else {
+            quote! {}
+        };
+
+        let text_right_chain = if f.text_right {
+            quote! { .text_right() }
+        } else {
+            quote! {}
+        };
+
+        let fixed_chain = match f.fixed.as_deref() {
+            Some("left") => quote! { .fixed(gpui_component::table::ColumnFixed::Left) },
+            Some("right") => quote! { .fixed(gpui_component::table::ColumnFixed::Right) },
+            _ => quote! {},
+        };
+
+        quote! {
+            gpui_component::table::Column::new(#key, #title)
+                .width(#width)
+                #sortable_chain
+                #text_right_chain
+                #fixed_chain
+        }
+    });
+
+    let cell_value_match_arms = field_configs.iter().enumerate().map(|(i, f)| {
+        let ident = &f.ident;
+        quote! {
+            #i => gpui_table_core::TableCellValue::from(&self.#ident),
+        }
+    });
+
+    let generated_code = quote! {
+        impl gpui_table_core::TableRowMeta for #struct_name {
+            const TABLE_ID: &'static str = #table_id;
+            const TABLE_TITLE: &'static str = #table_title;
+
+            fn table_columns() -> &'static [gpui_component::table::Column] {
+                static COLUMNS: std::sync::OnceLock<Vec<gpui_component::table::Column>> = std::sync::OnceLock::new();
+                COLUMNS.get_or_init(|| vec![
+                    #(#columns_init),*
+                ])
+            }
+
+            fn cell_value(&self, col_ix: usize) -> gpui_table_core::TableCellValue {
+                match col_ix {
+                    #(#cell_value_match_arms)*
+                    _ => gpui_table_core::TableCellValue::String(String::new()),
+                }
+            }
+        }
+
+        impl gpui_table_core::TableRowStyle for #struct_name {
+            fn render_table_cell(
+                &self,
+                col_ix: usize,
+                window: &mut gpui::Window,
+                cx: &mut gpui::App,
+            ) -> gpui::AnyElement {
+                gpui_table_core::default_render_cell(self, col_ix, window, cx).into_any_element()
+            }
+
+            fn render_table_row(
+                &self,
+                row_ix: usize,
+                window: &mut gpui::Window,
+                cx: &mut gpui::App,
+            ) -> gpui::Stateful<gpui::Div> {
+                gpui_table_core::default_render_row(row_ix, window, cx)
+            }
+        }
+    };
+
+    Ok(generated_code)
+}

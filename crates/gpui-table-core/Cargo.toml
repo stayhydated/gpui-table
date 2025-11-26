@@ -22,6 +22,8 @@ serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 tracing-subscriber = { features = [ "env-filter" ], workspace = true }
+derive_more = { workspace = true, features = [ "full" ] }
+paste = { workspace = true }
 
 [lints]
 workspace = true

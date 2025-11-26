@@ -11,15 +11,15 @@ repository.workspace = true
 readme.workspace = true
 
 [features]
-default = [ "macros" ]
-macros = [ "dep:gpui-table-macros" ]
+default = [ "derive" ]
+derive = [ "dep:gpui-table-derive" ]
 
 [dependencies]
 anyhow = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-table-core = { workspace = true }
-gpui-table-macros = { optional = true, workspace = true }
+gpui-table-derive = { optional = true, workspace = true }
 inventory = { workspace = true }
 rust-embed = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }

@@ -9,6 +9,15 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+gpui-table-core = { workspace = true }
+gpui-table-derive = { workspace = true }
+gpui-table = { workspace = true }
 
 [lints]
 workspace = true
+
+[[bin]]
+name = "macro_verify"
+path = "src/macro_verify.rs"
