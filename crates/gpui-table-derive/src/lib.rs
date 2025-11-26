@@ -324,6 +324,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         use __crate_paths::gpui_component::table::{Column, TableDelegate};
 
         quote! {
+            #[derive(gpui_table::derive_new::new)]
             pub struct #delegate_name {
                 pub rows: Vec<#struct_name>,
             }

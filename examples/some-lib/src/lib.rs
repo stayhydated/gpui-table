@@ -1,2 +1,2 @@
-mod fruit;
-mod user;
+pub mod fruit;
+pub mod user;

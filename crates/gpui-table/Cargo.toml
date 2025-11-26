@@ -27,6 +27,7 @@ rust-embed = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 tracing-subscriber = { features = [ "env-filter" ], workspace = true }
+derive-new = { workspace = true }
 
 [lints]
 workspace = true
