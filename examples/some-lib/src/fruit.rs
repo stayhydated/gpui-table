@@ -7,6 +7,9 @@ use gpui_table::NamedTableRow;
 #[fluent_kv(this)]
 #[table(fluent)]
 pub struct Fruit {
+    #[table(skip)]
+    id: usize,
+
     #[table(width = 100.)]
     name: String,
 

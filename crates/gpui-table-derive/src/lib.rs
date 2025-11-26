@@ -126,6 +126,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         let mut style = None;
         let mut is_table_col = false;
         let mut title_from_attr = false;
+        let mut skip = false;
 
         for attr in &field.attrs {
             if attr.path().is_ident("table") {
@@ -158,10 +159,16 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                         sortable = true;
                     } else if meta.path.is_ident("text_right") {
                         text_right = true;
+                    } else if meta.path.is_ident("skip") {
+                        skip = true;
                     }
                     Ok(())
                 })?;
             }
+        }
+
+        if skip {
+            continue;
         }
 
         if is_table_col {

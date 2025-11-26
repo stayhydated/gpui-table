@@ -2,6 +2,7 @@
 
 fruit_ftl = Fruit Ftl
 fruit_ftl-color = Color
+fruit_ftl-id = Id
 fruit_ftl-name = Name
 fruit_ftl-ripe = Ripe
 fruit_ftl-weight_grams = Weight Grams
@@ -27,9 +28,3 @@ user_label_ftl-age = Age
 user_label_ftl-email = Email
 user_label_ftl-id = Id
 user_label_ftl-name = Name
-user_ftl-active = Active
-user_ftl-email = Email
-user_ftl-id = Id
-user_ftl-name = Name
-user_ftl = User Ftl
-user_ftl-age = Age
