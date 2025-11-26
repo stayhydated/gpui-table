@@ -1,29 +1,20 @@
-use std::{
-    ops::Range,
-    sync::LazyLock,
-    time::{self, Duration},
-};
+use std::time;
 
 use fake::Fake;
 use gpui::{
-    Action, AnyElement, App, AppContext, ClickEvent, Context, Div, Entity, Focusable,
-    InteractiveElement, IntoElement, ParentElement, Render, SharedString, Stateful,
-    StatefulInteractiveElement, Styled, Subscription, Task, TextAlign, Timer, Window, div,
-    prelude::FluentBuilder as _,
+    Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
+    Styled, Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
 };
 use gpui_component::{
-    ActiveTheme as _, Selectable, Sizable as _, Size, StyleSized as _, StyledExt,
+    Selectable, Sizable as _, Size,
     button::Button,
     checkbox::Checkbox,
     h_flex,
-    input::{Input, InputEvent, InputState},
-    label::Label,
-    menu::{DropdownMenu, PopupMenu},
-    spinner::Spinner,
-    table::{Column, ColumnFixed, ColumnSort, Table, TableDelegate, TableEvent, TableState},
+    menu::DropdownMenu,
+    table::{Table, TableDelegate, TableEvent, TableState},
     v_flex,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use some_lib::user::{User, UserTableDelegate};
 
 #[derive(Action, Clone, PartialEq, Eq, Deserialize)]
