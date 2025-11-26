@@ -5,7 +5,7 @@ use gpui_table::NamedTableRow;
 #[derive(NamedTableRow, EsFluentKv)]
 #[fluent_kv(display = "std")]
 #[fluent_kv(this, keys = ["description", "label"])]
-#[table(id = "users", fluent = "description")]
+#[table(fluent = "description")]
 pub struct User {
     #[table(width = 60.)]
     id: usize,
