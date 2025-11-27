@@ -80,9 +80,6 @@ impl TableCell for chrono::NaiveTime {
 }
 
 /// Metadata for a table row type.
-///
-/// This trait describes the structure of the row (columns, ID, title)
-/// and provides a way to extract cell values.
 pub trait TableRowMeta {
     /// Unique identifier for this row type.
     const TABLE_ID: &'static str;
