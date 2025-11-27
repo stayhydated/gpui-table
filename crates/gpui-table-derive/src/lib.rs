@@ -1,7 +1,9 @@
 mod __crate_paths;
 
 use __crate_paths::gpui::{AnyElement, App, Context, Div, IntoElement, Stateful, Window};
-use __crate_paths::gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate, TableState};
+use __crate_paths::gpui_component::table::{
+    Column, ColumnFixed, ColumnSort, TableDelegate, TableState,
+};
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -64,6 +66,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     let mut table_title = struct_name.to_string();
     let mut delegate = true;
     let mut fluent_config = FluentConfig::None;
+    let mut custom_style = false;
 
     for attr in &input.attrs {
         if attr.path().is_ident("table") {
@@ -79,6 +82,14 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 } else if meta.path.is_ident("delegate") {
                     if let Ok(Lit::Bool(lit)) = meta.value()?.parse() {
                         delegate = lit.value;
+                    }
+                } else if meta.path.is_ident("custom_style") {
+                    if meta.input.peek(syn::Token![=]) {
+                        if let Ok(Lit::Bool(lit)) = meta.value()?.parse() {
+                            custom_style = lit.value;
+                        }
+                    } else {
+                        custom_style = true;
                     }
                 } else if meta.path.is_ident("fluent") {
                     // Accept either `fluent = "key"` or a bare `fluent` flag.
@@ -288,7 +299,75 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         }
     };
 
+    let column_enum_name = syn::Ident::new(&format!("{}Column", struct_name), struct_name.span());
+
+    let column_variants = field_configs.iter().map(|f| {
+        let ident = &f.ident;
+        let variant_name = heck::AsPascalCase(ident.to_string()).to_string();
+        let variant_ident = syn::Ident::new(&variant_name, ident.span());
+        quote! { #variant_ident }
+    });
+
+    let from_usize_arms = field_configs.iter().enumerate().map(|(i, f)| {
+        let ident = &f.ident;
+        let variant_name = heck::AsPascalCase(ident.to_string()).to_string();
+        let variant_ident = syn::Ident::new(&variant_name, ident.span());
+        quote! { #i => #column_enum_name::#variant_ident, }
+    });
+
+    let into_usize_arms = field_configs.iter().enumerate().map(|(i, f)| {
+        let ident = &f.ident;
+        let variant_name = heck::AsPascalCase(ident.to_string()).to_string();
+        let variant_ident = syn::Ident::new(&variant_name, ident.span());
+        quote! { #column_enum_name::#variant_ident => #i, }
+    });
+
+    let column_enum = quote! {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        pub enum #column_enum_name {
+            #(#column_variants),*
+        }
+
+        impl From<usize> for #column_enum_name {
+            fn from(ix: usize) -> Self {
+                match ix {
+                    #(#from_usize_arms)*
+                    _ => panic!("Invalid column index: {}", ix),
+                }
+            }
+        }
+
+        impl From<#column_enum_name> for usize {
+            fn from(col: #column_enum_name) -> Self {
+                match col {
+                    #(#into_usize_arms)*
+                }
+            }
+        }
+    };
+
+    let style_impl = if !custom_style {
+        quote! {
+            impl gpui_table::TableRowStyle for #struct_name {
+                type ColumnId = #column_enum_name;
+
+                fn render_table_cell(
+                    &self,
+                    col: Self::ColumnId,
+                    window: &mut #Window,
+                    cx: &mut #App,
+                ) -> #AnyElement {
+                    gpui_table::default_render_cell(self, col.into(), window, cx).into_any_element()
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     let generated_code = quote! {
+        #column_enum
+
         impl gpui_table::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;
             const TABLE_TITLE: &'static str = #table_title;
@@ -310,25 +389,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             }
         }
 
-        impl gpui_table::TableRowStyle for #struct_name {
-            fn render_table_cell(
-                &self,
-                col_ix: usize,
-                window: &mut #Window,
-                cx: &mut #App,
-            ) -> #AnyElement {
-                gpui_table::default_render_cell(self, col_ix, window, cx).into_any_element()
-            }
-
-            fn render_table_row(
-                &self,
-                row_ix: usize,
-                window: &mut #Window,
-                cx: &mut #App,
-            ) -> #Stateful<#Div> {
-                gpui_table::default_render_row(row_ix, window, cx)
-            }
-        }
+        #style_impl
     };
 
     let delegate_impl = if delegate {
@@ -372,12 +433,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     cx: &mut #App,
                 ) -> impl #IntoElement {
                     use gpui_table::TableRowStyle;
-                    self.rows[row_ix].render_table_cell(col_ix, window, cx)
-                }
-
-                fn render_tr(&self, row_ix: usize, window: &mut #Window, cx: &mut #App) -> #Stateful<#Div> {
-                    use gpui_table::TableRowStyle;
-                    self.rows[row_ix].render_table_row(row_ix, window, cx)
+                    self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
                 }
 
                 fn visible_rows_changed(
