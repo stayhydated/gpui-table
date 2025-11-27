@@ -1,7 +1,7 @@
 mod __crate_paths;
 
 use __crate_paths::gpui::{AnyElement, App, Context, Div, IntoElement, Stateful, Window};
-use __crate_paths::gpui_component::table::{Column, ColumnFixed, TableDelegate, TableState};
+use __crate_paths::gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate, TableState};
 
 use proc_macro::TokenStream;
 use quote::quote;
@@ -256,6 +256,23 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         }
     });
 
+    let sort_match_arms = field_configs.iter().enumerate().filter(|(_, f)| f.sortable).map(|(i, f)| {
+        let ident = &f.ident;
+        quote! {
+            #i => {
+                self.rows.sort_by(|a, b| {
+                    let a_val = &a.#ident;
+                    let b_val = &b.#ident;
+                    match sort {
+                        #ColumnSort::Ascending => a_val.partial_cmp(b_val).unwrap_or(std::cmp::Ordering::Equal),
+                        #ColumnSort::Descending => b_val.partial_cmp(a_val).unwrap_or(std::cmp::Ordering::Equal),
+                        _ => std::cmp::Ordering::Equal,
+                    }
+                });
+            }
+        }
+    });
+
     // Generate fluent-aware table title code
     let table_title_impl = if let Some(fluent_enum_ident) = &fluent_enum_ident {
         quote! {
@@ -387,6 +404,19 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
 
                 fn loading(&self, _: &#App) -> bool {
                     self.loading
+                }
+
+                fn perform_sort(
+                    &mut self,
+                    col_ix: usize,
+                    sort: #ColumnSort,
+                    _: &mut #Window,
+                    _: &mut #Context<#TableState<Self>>,
+                ) {
+                    match col_ix {
+                        #(#sort_match_arms)*
+                        _ => {}
+                    }
                 }
             }
         }
