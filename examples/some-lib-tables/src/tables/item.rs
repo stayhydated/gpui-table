@@ -16,19 +16,19 @@ use gpui_component::{
     v_flex,
 };
 use serde::Deserialize;
-use some_lib::structs::fruit::{Fruit, FruitFtl, FruitTableDelegate};
+use some_lib::structs::item::{Item, ItemFtl, ItemTableDelegate};
 
 #[gpui_storybook::story]
-pub struct FruitTableStory {
-    table: Entity<TableState<FruitTableDelegate>>,
+pub struct ItemTableStory {
+    table: Entity<TableState<ItemTableDelegate>>,
     stripe: bool,
     size: Size,
     _subscriptions: Vec<Subscription>,
 }
 
-impl gpui_storybook::Story for FruitTableStory {
+impl gpui_storybook::Story for ItemTableStory {
     fn title() -> String {
-        FruitFtl::this_ftl()
+        ItemFtl::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
@@ -40,19 +40,19 @@ impl gpui_storybook::Story for FruitTableStory {
     }
 }
 
-impl Focusable for FruitTableStory {
+impl Focusable for ItemTableStory {
     fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
 
-impl FruitTableStory {
+impl ItemTableStory {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self::new(window, cx))
     }
 
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let mut delegate = FruitTableDelegate::new(vec![]);
+        let mut delegate = ItemTableDelegate::new(vec![]);
         for _ in 0..100 {
             delegate.rows.push(fake::Faker.fake());
         }
@@ -81,7 +81,7 @@ impl FruitTableStory {
 
     fn on_table_event(
         &mut self,
-        _: &Entity<TableState<FruitTableDelegate>>,
+        _: &Entity<TableState<ItemTableDelegate>>,
         event: &TableEvent,
         _window: &mut Window,
         _cx: &mut Context<Self>,
@@ -100,7 +100,7 @@ impl FruitTableStory {
     }
 }
 
-impl Render for FruitTableStory {
+impl Render for ItemTableStory {
     fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         let table = &self.table.read(cx);
         let delegate = table.delegate();

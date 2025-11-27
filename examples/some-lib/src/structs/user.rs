@@ -19,7 +19,7 @@ pub struct User {
     name: String,
 
     #[table(sortable, width = 80.)]
-    #[dummy(faker = "18..90")]
+    #[dummy(faker = "18..67")]
     age: u8,
 
     #[table(sortable, width = 150.)]

@@ -1,11 +1,11 @@
-## FruitFtl
+## ItemFtl
 
-fruit_ftl = Fruit Ftl
-fruit_ftl-color = Color
-fruit_ftl-id = Id
-fruit_ftl-name = Name
-fruit_ftl-ripe = Ripe
-fruit_ftl-weight = Weight
+item_ftl = Item Ftl
+item_ftl-acquired_on = Acquired On
+item_ftl-color = Color
+item_ftl-id = Id
+item_ftl-name = Name
+item_ftl-weight = Weight
 
 ## User
 

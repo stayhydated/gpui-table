@@ -1,2 +1,2 @@
-pub mod fruit;
+pub mod item;
 pub mod user;
