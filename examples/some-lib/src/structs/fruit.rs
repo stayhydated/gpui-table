@@ -16,7 +16,7 @@ pub struct Fruit {
     color: String,
 
     #[table(width = 60.)]
-    weight_grams: u32,
+    weight: u32,
 
     #[table(width = 50.)]
     ripe: bool,

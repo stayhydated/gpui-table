@@ -5,7 +5,7 @@ fruit_ftl-color = Color
 fruit_ftl-id = Id
 fruit_ftl-name = Name
 fruit_ftl-ripe = Ripe
-fruit_ftl-weight_grams = Weight Grams
+fruit_ftl-weight = Weight
 
 ## User
 
