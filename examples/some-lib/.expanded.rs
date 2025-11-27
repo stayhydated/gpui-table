@@ -132,6 +132,79 @@ pub mod structs {
             #[table(width = 50.)]
             ripe: bool,
         }
+        pub enum FruitTableColumn {
+            Name,
+            Color,
+            WeightGrams,
+            Ripe,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for FruitTableColumn {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::write_str(
+                    f,
+                    match self {
+                        FruitTableColumn::Name => "Name",
+                        FruitTableColumn::Color => "Color",
+                        FruitTableColumn::WeightGrams => "WeightGrams",
+                        FruitTableColumn::Ripe => "Ripe",
+                    },
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::clone::Clone for FruitTableColumn {
+            #[inline]
+            fn clone(&self) -> FruitTableColumn {
+                *self
+            }
+        }
+        #[automatically_derived]
+        impl ::core::marker::Copy for FruitTableColumn {}
+        #[automatically_derived]
+        impl ::core::marker::StructuralPartialEq for FruitTableColumn {}
+        #[automatically_derived]
+        impl ::core::cmp::PartialEq for FruitTableColumn {
+            #[inline]
+            fn eq(&self, other: &FruitTableColumn) -> bool {
+                let __self_discr = ::core::intrinsics::discriminant_value(self);
+                let __arg1_discr = ::core::intrinsics::discriminant_value(other);
+                __self_discr == __arg1_discr
+            }
+        }
+        #[automatically_derived]
+        impl ::core::cmp::Eq for FruitTableColumn {
+            #[inline]
+            #[doc(hidden)]
+            #[coverage(off)]
+            fn assert_receiver_is_total_eq(&self) -> () {}
+        }
+        impl From<usize> for FruitTableColumn {
+            fn from(ix: usize) -> Self {
+                match ix {
+                    0usize => FruitTableColumn::Name,
+                    1usize => FruitTableColumn::Color,
+                    2usize => FruitTableColumn::WeightGrams,
+                    3usize => FruitTableColumn::Ripe,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!("Invalid column index: {0}", ix),
+                        );
+                    }
+                }
+            }
+        }
+        impl From<FruitTableColumn> for usize {
+            fn from(col: FruitTableColumn) -> Self {
+                match col {
+                    FruitTableColumn::Name => 0usize,
+                    FruitTableColumn::Color => 1usize,
+                    FruitTableColumn::WeightGrams => 2usize,
+                    FruitTableColumn::Ripe => 3usize,
+                }
+            }
+        }
         impl gpui_table::TableRowMeta for Fruit {
             const TABLE_ID: &'static str = "Fruit";
             const TABLE_TITLE: &'static str = "Fruit";
@@ -226,16 +299,8 @@ pub mod structs {
                 cx: &mut gpui::App,
             ) -> impl gpui::IntoElement {
                 use gpui_table::TableRowStyle;
-                self.rows[row_ix].render_table_cell(col_ix, window, cx)
-            }
-            fn render_tr(
-                &self,
-                row_ix: usize,
-                window: &mut gpui::Window,
-                cx: &mut gpui::App,
-            ) -> gpui::Stateful<gpui::Div> {
-                use gpui_table::TableRowStyle;
-                self.rows[row_ix].render_table_row(row_ix, window, cx)
+                self.rows[row_ix]
+                    .render_table_cell(FruitTableColumn::from(col_ix), window, cx)
             }
             fn visible_rows_changed(
                 &mut self,
@@ -374,25 +439,37 @@ pub mod structs {
             }
         }
         impl gpui_table::TableRowStyle for Fruit {
+            type ColumnId = FruitTableColumn;
             fn render_table_cell(
                 &self,
-                col_ix: usize,
+                col: Self::ColumnId,
                 window: &mut gpui::Window,
                 cx: &mut gpui::App,
             ) -> gpui::AnyElement {
                 use gpui::{IntoElement, ParentElement, Styled, div};
-                if col_ix == 3 {
-                    if self.ripe {
-                        return div()
-                            .child("RIPE")
-                            .text_color(gpui::red())
-                            .bg(gpui::yellow())
-                            .px_1()
-                            .rounded_md()
-                            .into_any_element();
+                match col {
+                    FruitTableColumn::Ripe => {
+                        if self.ripe {
+                            return div()
+                                .child("RIPE")
+                                .text_color(gpui::green())
+                                .bg(gpui::yellow())
+                                .px_1()
+                                .rounded_md()
+                                .into_any_element();
+                        } else {
+                            return div()
+                                .child("UNRIPE")
+                                .text_color(gpui::white())
+                                .bg(gpui::black())
+                                .px_1()
+                                .rounded_md()
+                                .into_any_element();
+                        }
                     }
+                    _ => {}
                 }
-                gpui_table::default_render_cell(self, col_ix, window, cx)
+                gpui_table::default_render_cell(self, col.into(), window, cx)
                     .into_any_element()
             }
         }
@@ -401,6 +478,7 @@ pub mod structs {
         use es_fluent::EsFluentKv;
         use fake::faker::{internet::en::SafeEmail, name::en::Name};
         use fake::uuid::UUIDv4;
+        use gpui::IntoElement;
         use gpui_table::NamedTableRow;
         #[fluent_kv(display = "std")]
         #[fluent_kv(this, keys = ["description", "label"])]
@@ -420,6 +498,79 @@ pub mod structs {
             email: String,
             #[table(width = 50.)]
             active: bool,
+        }
+        pub enum UserTableColumn {
+            Name,
+            Age,
+            Email,
+            Active,
+        }
+        #[automatically_derived]
+        impl ::core::fmt::Debug for UserTableColumn {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::write_str(
+                    f,
+                    match self {
+                        UserTableColumn::Name => "Name",
+                        UserTableColumn::Age => "Age",
+                        UserTableColumn::Email => "Email",
+                        UserTableColumn::Active => "Active",
+                    },
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::clone::Clone for UserTableColumn {
+            #[inline]
+            fn clone(&self) -> UserTableColumn {
+                *self
+            }
+        }
+        #[automatically_derived]
+        impl ::core::marker::Copy for UserTableColumn {}
+        #[automatically_derived]
+        impl ::core::marker::StructuralPartialEq for UserTableColumn {}
+        #[automatically_derived]
+        impl ::core::cmp::PartialEq for UserTableColumn {
+            #[inline]
+            fn eq(&self, other: &UserTableColumn) -> bool {
+                let __self_discr = ::core::intrinsics::discriminant_value(self);
+                let __arg1_discr = ::core::intrinsics::discriminant_value(other);
+                __self_discr == __arg1_discr
+            }
+        }
+        #[automatically_derived]
+        impl ::core::cmp::Eq for UserTableColumn {
+            #[inline]
+            #[doc(hidden)]
+            #[coverage(off)]
+            fn assert_receiver_is_total_eq(&self) -> () {}
+        }
+        impl From<usize> for UserTableColumn {
+            fn from(ix: usize) -> Self {
+                match ix {
+                    0usize => UserTableColumn::Name,
+                    1usize => UserTableColumn::Age,
+                    2usize => UserTableColumn::Email,
+                    3usize => UserTableColumn::Active,
+                    _ => {
+                        ::core::panicking::panic_fmt(
+                            format_args!("Invalid column index: {0}", ix),
+                        );
+                    }
+                }
+            }
+        }
+        impl From<UserTableColumn> for usize {
+            fn from(col: UserTableColumn) -> Self {
+                match col {
+                    UserTableColumn::Name => 0usize,
+                    UserTableColumn::Age => 1usize,
+                    UserTableColumn::Email => 2usize,
+                    UserTableColumn::Active => 3usize,
+                }
+            }
         }
         impl gpui_table::TableRowMeta for User {
             const TABLE_ID: &'static str = "User";
@@ -469,7 +620,18 @@ pub mod structs {
                 }
             }
         }
-        impl gpui_table::TableRowStyle for User {}
+        impl gpui_table::TableRowStyle for User {
+            type ColumnId = UserTableColumn;
+            fn render_table_cell(
+                &self,
+                col: Self::ColumnId,
+                window: &mut gpui::Window,
+                cx: &mut gpui::App,
+            ) -> gpui::AnyElement {
+                gpui_table::default_render_cell(self, col.into(), window, cx)
+                    .into_any_element()
+            }
+        }
         pub struct UserTableDelegate {
             pub rows: Vec<User>,
             #[new(default)]
@@ -518,16 +680,8 @@ pub mod structs {
                 cx: &mut gpui::App,
             ) -> impl gpui::IntoElement {
                 use gpui_table::TableRowStyle;
-                self.rows[row_ix].render_table_cell(col_ix, window, cx)
-            }
-            fn render_tr(
-                &self,
-                row_ix: usize,
-                window: &mut gpui::Window,
-                cx: &mut gpui::App,
-            ) -> gpui::Stateful<gpui::Div> {
-                use gpui_table::TableRowStyle;
-                self.rows[row_ix].render_table_row(row_ix, window, cx)
+                self.rows[row_ix]
+                    .render_table_cell(UserTableColumn::from(col_ix), window, cx)
             }
             fn visible_rows_changed(
                 &mut self,

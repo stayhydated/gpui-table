@@ -1661,13 +1661,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "dirs"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
+dependencies = [
+ "dirs-sys 0.5.0",
+]
+
+[[package]]
 name = "dirs-sys"
 version = "0.3.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1b1d1d91c932ef41c0f2663aa8b0ca0342d444d842c06914aa0a7e352d0bada6"
 dependencies = [
  "libc",
- "redox_users",
+ "redox_users 0.4.6",
  "winapi",
 ]
 
@@ -1679,8 +1688,20 @@ checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
 dependencies = [
  "libc",
  "option-ext",
- "redox_users",
+ "redox_users 0.4.6",
  "windows-sys 0.48.0",
+]
+
+[[package]]
+name = "dirs-sys"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e01a3366d27ee9890022452ee61b2b63a67e6f13f58900b651ff5665f0bb1fab"
+dependencies = [
+ "libc",
+ "option-ext",
+ "redox_users 0.5.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -2820,9 +2841,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-component"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "637027625747c194c8bbcbc12965e5eac867c3ac38f20c3090c76cdcc0653214"
+checksum = "dd41a5808ef0eba74d7af77913dcca5f647f783bf1e0114726e2b01d7fbd194f"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -2858,10 +2879,21 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui-component-macros"
-version = "0.4.1"
+name = "gpui-component-assets"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "440ef68055e212f31bb9a6662aa1e7aa52087c857b7f8db737b812d240582aa2"
+checksum = "3c1c9651d87a0682396dce011cca6d7c58bfce72a6bb71144ca0cff4ddfcd925"
+dependencies = [
+ "anyhow",
+ "gpui",
+ "rust-embed",
+]
+
+[[package]]
+name = "gpui-component-macros"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "dc45eec82efdcc1b852ed14479bd41940c7de21e7b4a2c462d53db4d9823cebd"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2882,9 +2914,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e91d576b1e115c4a799a8ea62f249e06651eacf4bf43ce11592f67c311be4988"
+checksum = "44c22012d9c8ee887fdb07b6f0dbf408c2f49266ee6c75494ad556234369995b"
 dependencies = [
  "anyhow",
  "gpui",
@@ -2900,9 +2932,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-core"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "31b2cb3b19875eea11f67199cdc2ffd5bf27e695934ef7f7d44017b6da8130d1"
+checksum = "c59fb613f90c83be9b8c43679ff90e555f4148dad7d0e756bb439e8c533d87cd"
 dependencies = [
  "anyhow",
  "es-fluent",
@@ -2910,6 +2942,7 @@ dependencies = [
  "es-fluent-manager-embedded",
  "gpui",
  "gpui-component",
+ "gpui-component-assets",
  "inventory",
  "log",
  "proc-macro2",
@@ -2924,9 +2957,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-macros"
-version = "0.4.1"
+version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce41d49efdbf086ad4774fa4cab8e07035d2a749de45a0790eca76d03e5f7f82"
+checksum = "546c3efaa730ab394703df72a495bf0504fc33313645c4873231610f83874d70"
 dependencies = [
  "gpui-storybook-core",
  "heck 0.5.0",
@@ -5345,6 +5378,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "redox_users"
+version = "0.5.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
+dependencies = [
+ "getrandom 0.2.16",
+ "libredox",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "ref-cast"
 version = "1.0.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5503,6 +5547,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rust-embed-utils",
+ "shellexpand",
  "syn 2.0.111",
  "walkdir",
 ]
@@ -6017,6 +6062,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f40ca3c46823713e0d4209592e8d6e826aa57e928f09752619fc696c499637f6"
 dependencies = [
  "lazy_static",
+]
+
+[[package]]
+name = "shellexpand"
+version = "3.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8b1fdf65dd6331831494dd616b30351c38e96e45921a27745cf98490458b90bb"
+dependencies = [
+ "dirs 6.0.0",
 ]
 
 [[package]]

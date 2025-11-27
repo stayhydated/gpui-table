@@ -38,7 +38,7 @@ fluent-bundle = "0.15.3"
 futures = "0.3.31"
 gpui = "0.2.2"
 gpui-component = "0.4.1"
-gpui-storybook = "0.4.1"
+gpui-storybook = "0.4.2"
 gpui-table = { path = "crates/gpui-table", version = "0.4.0" }
 gpui-table-core = { path = "crates/gpui-table-core", version = "0.4.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.4.0" }
