@@ -1,21 +1,13 @@
-use std::time;
-
-use super::{ChangeSize, OpenDetail};
 use fake::Fake;
 use gpui::{
-    Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
-    Styled, Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
+    App, AppContext, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,
+    Window,
 };
 use gpui_component::{
-    Selectable, Sizable as _, Size,
-    button::Button,
-    checkbox::Checkbox,
-    h_flex,
-    menu::DropdownMenu,
+    Sizable as _, Size, h_flex,
     table::{Table, TableDelegate, TableEvent, TableState},
     v_flex,
 };
-use serde::Deserialize;
 use some_lib::structs::item::{Item, ItemFtl, ItemTableDelegate};
 
 #[gpui_storybook::story]
@@ -69,16 +61,6 @@ impl ItemTableStory {
         }
     }
 
-    fn toggle_stripe(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.stripe = *checked;
-        cx.notify();
-    }
-
-    fn on_change_size(&mut self, a: &ChangeSize, _: &mut Window, cx: &mut Context<Self>) {
-        self.size = a.0;
-        cx.notify();
-    }
-
     fn on_table_event(
         &mut self,
         _: &Entity<TableState<ItemTableDelegate>>,
@@ -105,51 +87,11 @@ impl Render for ItemTableStory {
         let table = &self.table.read(cx);
         let delegate = table.delegate();
         let rows_count = delegate.rows_count(cx);
-        let size = self.size;
 
         v_flex()
-            .on_action(cx.listener(Self::on_change_size))
             .size_full()
             .text_sm()
             .gap_4()
-            .child(
-                h_flex().items_center().gap_3().flex_wrap().child(
-                    Checkbox::new("stripe")
-                        .label("Stripe")
-                        .selected(self.stripe)
-                        .on_click(cx.listener(Self::toggle_stripe)),
-                ),
-            )
-            .child(
-                h_flex().gap_2().child(
-                    Button::new("size")
-                        .outline()
-                        .small()
-                        .label(format!("size: {:?}", self.size))
-                        .dropdown_menu(move |menu, _, _| {
-                            menu.menu_with_check(
-                                "Large",
-                                size == Size::Large,
-                                Box::new(ChangeSize(Size::Large)),
-                            )
-                            .menu_with_check(
-                                "Medium",
-                                size == Size::Medium,
-                                Box::new(ChangeSize(Size::Medium)),
-                            )
-                            .menu_with_check(
-                                "Small",
-                                size == Size::Small,
-                                Box::new(ChangeSize(Size::Small)),
-                            )
-                            .menu_with_check(
-                                "XSmall",
-                                size == Size::XSmall,
-                                Box::new(ChangeSize(Size::XSmall)),
-                            )
-                        }),
-                ),
-            )
             .child(
                 h_flex().items_center().gap_2().child(
                     h_flex()

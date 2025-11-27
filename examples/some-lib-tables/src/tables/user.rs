@@ -1,10 +1,9 @@
 use std::time;
 
-use super::{ChangeSize, OpenDetail};
 use fake::Fake;
 use gpui::{
-    App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render, Styled,
-    Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
+    Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
+    Styled, Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
 };
 use gpui_component::{
     Selectable, Sizable as _, Size,
@@ -15,7 +14,12 @@ use gpui_component::{
     table::{Table, TableDelegate, TableEvent, TableState},
     v_flex,
 };
+use serde::Deserialize;
 use some_lib::structs::user::{User, UserTableDelegate};
+
+#[derive(Action, Clone, Deserialize, Eq, PartialEq)]
+#[action(namespace = user_table, no_json)]
+pub struct ChangeSize(Size);
 
 #[gpui_storybook::story]
 pub struct UserTableStory {
@@ -77,7 +81,6 @@ impl UserTableStory {
                             table.delegate_mut().rows.iter_mut().enumerate().for_each(
                                 |(i, user)| {
                                     let n = (3..10).fake::<usize>();
-                                    // update 30% of the stocks
                                     if i % n == 0 {
                                         *user = fake::Faker.fake();
                                     }
