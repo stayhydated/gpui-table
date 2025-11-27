@@ -9,14 +9,14 @@ rust-version.workspace = true
 version.workspace = true
 
 [dependencies]
-gpui = { workspace = true }
-gpui-component = { workspace = true }
-gpui-table = { features = [ "fluent" ], workspace = true }
+chrono = { workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 fake = { features = [ "derive", "uuid", "ulid", "random_color", "chrono" ], workspace = true }
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+gpui-table = { features = [ "fluent" ], workspace = true }
 rust-embed = { workspace = true }
-chrono = { workspace = true }
 uuid = { workspace = true }
 
 [build-dependencies]

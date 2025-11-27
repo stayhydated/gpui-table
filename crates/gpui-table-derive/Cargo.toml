@@ -14,7 +14,7 @@ readme.workspace = true
 proc-macro = true
 
 [features]
-fluent = []
+fluent = [  ]
 
 [dependencies]
 crate-paths = { workspace = true }

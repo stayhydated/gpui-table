@@ -1,7 +1,7 @@
 use es_fluent::EsFluentKv;
 use gpui_table::NamedTableRow;
 
-#[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
+#[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(display = "std")]
 #[fluent_kv(this)]
 #[table(fluent, custom_style)]

@@ -324,7 +324,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     });
 
     let column_enum = quote! {
-        #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+        #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub enum #column_enum_name {
             #(#column_variants),*
         }

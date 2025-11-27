@@ -74,7 +74,12 @@ pub trait TableRowStyle: TableRowMeta {
     type ColumnId: Into<usize> + From<usize>;
 
     /// Renders a single cell.
-    fn render_table_cell(&self, col: Self::ColumnId, window: &mut Window, cx: &mut App) -> AnyElement;
+    fn render_table_cell(
+        &self,
+        col: Self::ColumnId,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> AnyElement;
 
     /// Renders the row container.
     fn render_table_row(&self, row_ix: usize, window: &mut Window, cx: &mut App) -> Stateful<Div> {

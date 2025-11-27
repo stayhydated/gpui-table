@@ -3,7 +3,7 @@ use fake::faker::{internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
 use gpui_table::NamedTableRow;
 
-#[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
+#[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(display = "std")]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[table(fluent = "label")]

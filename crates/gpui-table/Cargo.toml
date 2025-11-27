@@ -17,6 +17,7 @@ fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 
 [dependencies]
 anyhow = { workspace = true }
+derive-new = { workspace = true }
 es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
@@ -27,7 +28,6 @@ rust-embed = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 tracing-subscriber = { features = [ "env-filter" ], workspace = true }
-derive-new = { workspace = true }
 
 [lints]
 workspace = true
