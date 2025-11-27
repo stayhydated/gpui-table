@@ -12,10 +12,11 @@ version.workspace = true
 chrono = { workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
-fake = { features = [ "derive", "uuid", "ulid", "random_color", "chrono" ], workspace = true }
+fake = { features = [ "derive", "uuid", "random_color", "chrono", "rust_decimal" ], workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table = { features = [ "fluent" ], workspace = true }
+rust_decimal = { workspace = true }
+gpui-table = { features = [ "fluent", "rust_decimal", "chrono" ], workspace = true }
 rust-embed = { workspace = true }
 uuid = { workspace = true }
 

@@ -39,6 +39,46 @@ impl TableCell for bool {
     }
 }
 
+#[cfg(feature = "rust_decimal")]
+impl TableCell for rust_decimal::Decimal {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        format!("{:.2}", self).into_any_element()
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl<Tz: chrono::TimeZone> TableCell for chrono::DateTime<Tz>
+where
+    Tz::Offset: std::fmt::Display,
+{
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_rfc3339().into_any_element()
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl TableCell for chrono::NaiveDateTime {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.format("%Y-%m-%d %H:%M:%S")
+            .to_string()
+            .into_any_element()
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl TableCell for chrono::NaiveDate {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.format("%Y-%m-%d").to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl TableCell for chrono::NaiveTime {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.format("%H:%M:%S").to_string().into_any_element()
+    }
+}
+
 /// Metadata for a table row type.
 ///
 /// This trait describes the structure of the row (columns, ID, title)

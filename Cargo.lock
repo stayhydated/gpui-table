@@ -2173,7 +2173,7 @@ dependencies = [
  "either",
  "rand 0.9.2",
  "random_color",
- "ulid",
+ "rust_decimal",
  "uuid",
 ]
 
@@ -2992,6 +2992,7 @@ name = "gpui-table-core"
 version = "0.4.0"
 dependencies = [
  "anyhow",
+ "chrono",
  "derive_more 2.0.1",
  "es-fluent",
  "gpui",
@@ -3001,6 +3002,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "rust-embed",
+ "rust_decimal",
  "serde",
  "serde_json",
  "strum 0.27.2",
@@ -6201,6 +6203,7 @@ dependencies = [
  "gpui-component",
  "gpui-table",
  "rust-embed",
+ "rust_decimal",
  "uuid",
 ]
 
@@ -7119,16 +7122,6 @@ dependencies = [
  "memoffset",
  "tempfile",
  "winapi",
-]
-
-[[package]]
-name = "ulid"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "470dbf6591da1b39d43c14523b2b469c86879a53e8b758c8e090a470fe7b1fbe"
-dependencies = [
- "rand 0.9.2",
- "web-time",
 ]
 
 [[package]]

@@ -1,7 +1,9 @@
 use es_fluent::EsFluentKv;
-use fake::faker::{internet::en::SafeEmail, name::en::Name};
+use fake::decimal::PositiveDecimal;
+use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
 use gpui_table::NamedTableRow;
+use rust_decimal::Decimal;
 
 #[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(display = "std")]
@@ -20,13 +22,18 @@ pub struct User {
     #[dummy(faker = "18..90")]
     age: u8,
 
+    #[table(sortable, width = 150.)]
+    #[dummy(faker = "PositiveDecimal")]
+    debt: Decimal,
+
     #[table(width = 200.)]
     #[dummy(faker = "SafeEmail()")]
     email: String,
 
-    #[table(width = 50.)]
+    #[table(width = 70.)]
     active: bool,
-    // #[table(width = 50.)]
-    // #[dummy(faker = "DateTime()")]
-    // created_at: chrono::DateTime<chrono::Utc>,
+
+    #[table(sortable, width = 300.)]
+    #[dummy(faker = "DateTime()")]
+    created_at: chrono::DateTime<chrono::Utc>,
 }
