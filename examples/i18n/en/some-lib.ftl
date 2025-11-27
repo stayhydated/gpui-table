@@ -28,5 +28,3 @@ user_label_ftl-age = Age
 user_label_ftl-email = Email
 user_label_ftl-id = Id
 user_label_ftl-name = Name
-user_label_ftl-created_at = Created At
-user_description_ftl-created_at = Created At

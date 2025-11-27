@@ -1,5 +1,8 @@
 mod __crate_paths;
 
+use __crate_paths::gpui::{AnyElement, App, Context, Div, IntoElement, Stateful, Window};
+use __crate_paths::gpui_component::table::{Column, ColumnFixed, TableDelegate, TableState};
+
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Data, DeriveInput, Fields, Lit, parse_macro_input};
@@ -231,15 +234,11 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             quote! {}
         };
 
-        use __crate_paths::gpui_component::table::ColumnFixed;
-
         let fixed_chain = match f.fixed.as_deref() {
             Some("left") => quote! { .fixed(#ColumnFixed::Left) },
             Some("right") => quote! { .fixed(#ColumnFixed::Right) },
             _ => quote! {},
         };
-
-        use __crate_paths::gpui_component::table::Column;
 
         quote! {
             #Column::new(#key, #title_expr)
@@ -256,8 +255,6 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             #i => gpui_table::TableCellValue::from(&self.#ident),
         }
     });
-
-    use __crate_paths::gpui_component::table::Column;
 
     // Generate fluent-aware table title code
     let table_title_impl = if let Some(fluent_enum_ident) = &fluent_enum_ident {
@@ -300,18 +297,18 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             fn render_table_cell(
                 &self,
                 col_ix: usize,
-                window: &mut gpui::Window,
-                cx: &mut gpui::App,
-            ) -> gpui::AnyElement {
+                window: &mut #Window,
+                cx: &mut #App,
+            ) -> #AnyElement {
                 gpui_table::default_render_cell(self, col_ix, window, cx).into_any_element()
             }
 
             fn render_table_row(
                 &self,
                 row_ix: usize,
-                window: &mut gpui::Window,
-                cx: &mut gpui::App,
-            ) -> gpui::Stateful<gpui::Div> {
+                window: &mut #Window,
+                cx: &mut #App,
+            ) -> #Stateful<#Div> {
                 gpui_table::default_render_row(row_ix, window, cx)
             }
         }
@@ -320,8 +317,6 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     let delegate_impl = if delegate {
         let delegate_name_str = format!("{}TableDelegate", struct_name);
         let delegate_name = syn::Ident::new(&delegate_name_str, struct_name.span());
-
-        use __crate_paths::gpui_component::table::{Column, TableDelegate};
 
         quote! {
             #[derive(gpui_table::derive_new::new)]
@@ -340,15 +335,15 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
             }
 
             impl #TableDelegate for #delegate_name {
-                fn columns_count(&self, _: &gpui::App) -> usize {
+                fn columns_count(&self, _: &#App) -> usize {
                     <#struct_name as gpui_table::TableRowMeta>::table_columns().len()
                 }
 
-                fn rows_count(&self, _: &gpui::App) -> usize {
+                fn rows_count(&self, _: &#App) -> usize {
                     self.rows.len()
                 }
 
-                fn column(&self, col_ix: usize, _: &gpui::App) -> &#Column {
+                fn column(&self, col_ix: usize, _: &#App) -> &#Column {
                     &<#struct_name as gpui_table::TableRowMeta>::table_columns()[col_ix]
                 }
 
@@ -356,14 +351,14 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     &self,
                     row_ix: usize,
                     col_ix: usize,
-                    window: &mut gpui::Window,
-                    cx: &mut gpui::App,
-                ) -> impl gpui::IntoElement {
+                    window: &mut #Window,
+                    cx: &mut #App,
+                ) -> impl #IntoElement {
                     use gpui_table::TableRowStyle;
                     self.rows[row_ix].render_table_cell(col_ix, window, cx)
                 }
 
-                fn render_tr(&self, row_ix: usize, window: &mut gpui::Window, cx: &mut gpui::App) -> gpui::Stateful<gpui::Div> {
+                fn render_tr(&self, row_ix: usize, window: &mut #Window, cx: &mut #App) -> #Stateful<#Div> {
                     use gpui_table::TableRowStyle;
                     self.rows[row_ix].render_table_row(row_ix, window, cx)
                 }
@@ -371,8 +366,8 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 fn visible_rows_changed(
                     &mut self,
                     visible_range: std::ops::Range<usize>,
-                    _: &mut gpui::Window,
-                    _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                    _: &mut #Window,
+                    _: &mut #Context<#TableState<Self>>,
                 ) {
                     self.visible_rows = visible_range;
                 }
@@ -380,17 +375,17 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 fn visible_columns_changed(
                     &mut self,
                     visible_range: std::ops::Range<usize>,
-                    _: &mut gpui::Window,
-                    _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                    _: &mut #Window,
+                    _: &mut #Context<#TableState<Self>>,
                 ) {
                     self.visible_cols = visible_range;
                 }
 
-                fn is_eof(&self, _: &gpui::App) -> bool {
+                fn is_eof(&self, _: &#App) -> bool {
                     self.eof
                 }
 
-                fn loading(&self, _: &gpui::App) -> bool {
+                fn loading(&self, _: &#App) -> bool {
                     self.loading
                 }
             }
