@@ -299,7 +299,8 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
         }
     };
 
-    let column_enum_name = syn::Ident::new(&format!("{}Column", struct_name), struct_name.span());
+    let column_enum_name =
+        syn::Ident::new(&format!("{}TableColumn", struct_name), struct_name.span());
 
     let column_variants = field_configs.iter().map(|f| {
         let ident = &f.ident;
@@ -357,6 +358,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                     window: &mut #Window,
                     cx: &mut #App,
                 ) -> #AnyElement {
+                    use #IntoElement;
                     gpui_table::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }

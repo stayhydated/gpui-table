@@ -1,7 +1,5 @@
 use es_fluent::EsFluentKv;
-use gpui::IntoElement;
 use gpui_table::NamedTableRow;
-use gpui_table::TableRowStyle;
 
 #[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
 #[fluent_kv(display = "std")]
@@ -25,7 +23,7 @@ pub struct Fruit {
 }
 
 impl gpui_table::TableRowStyle for Fruit {
-    type ColumnId = FruitColumn;
+    type ColumnId = FruitTableColumn;
 
     fn render_table_cell(
         &self,
@@ -36,12 +34,20 @@ impl gpui_table::TableRowStyle for Fruit {
         use gpui::{IntoElement, ParentElement, Styled, div};
 
         match col {
-            FruitColumn::Ripe => {
+            FruitTableColumn::Ripe => {
                 if self.ripe {
                     return div()
                         .child("RIPE")
-                        .text_color(gpui::red())
+                        .text_color(gpui::green())
                         .bg(gpui::yellow())
+                        .px_1()
+                        .rounded_md()
+                        .into_any_element();
+                } else {
+                    return div()
+                        .child("UNRIPE")
+                        .text_color(gpui::white())
+                        .bg(gpui::black())
                         .px_1()
                         .rounded_md()
                         .into_any_element();
@@ -50,7 +56,6 @@ impl gpui_table::TableRowStyle for Fruit {
             _ => {},
         }
 
-        // Fallback to default
         gpui_table::default_render_cell(self, col.into(), window, cx).into_any_element()
     }
 }

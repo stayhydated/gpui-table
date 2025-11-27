@@ -1,9 +1,7 @@
 use es_fluent::EsFluentKv;
 use fake::faker::{internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use gpui::IntoElement;
 use gpui_table::NamedTableRow;
-use gpui_table::TableRowStyle;
 
 #[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
 #[fluent_kv(display = "std")]
