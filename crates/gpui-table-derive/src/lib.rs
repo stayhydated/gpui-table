@@ -252,7 +252,7 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
     let cell_value_match_arms = field_configs.iter().enumerate().map(|(i, f)| {
         let ident = &f.ident;
         quote! {
-            #i => gpui_table::TableCellValue::from(&self.#ident),
+            #i => Box::new(self.#ident.clone()),
         }
     });
 
@@ -285,10 +285,10 @@ fn expand_named_table_row(input: &DeriveInput) -> syn::Result<proc_macro2::Token
                 ])
             }
 
-            fn cell_value(&self, col_ix: usize) -> gpui_table::TableCellValue {
+            fn cell_value(&self, col_ix: usize) -> Box<dyn gpui_table::TableCell + '_> {
                 match col_ix {
                     #(#cell_value_match_arms)*
-                    _ => gpui_table::TableCellValue::String(String::new()),
+                    _ => Box::new(String::new()),
                 }
             }
         }

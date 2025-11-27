@@ -2,6 +2,44 @@ use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful,
 use gpui_component::table::Column;
 use paste::paste;
 
+/// A value that can be displayed in a table cell.
+pub trait TableCell {
+    fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement;
+}
+
+macro_rules! impl_table_cell_display {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl TableCell for $t {
+                fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+                    self.to_string().into_any_element()
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! impl_table_cell_float {
+    ($($t:ty),* $(,)?) => {
+        $(
+            impl TableCell for $t {
+                fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+                    format!("{:.2}", self).into_any_element()
+                }
+            }
+        )*
+    };
+}
+
+impl_table_cell_display!(String, &str, usize, u8, u16, u32, u64, i8, i16, i32, i64);
+impl_table_cell_float!(f32, f64);
+
+impl TableCell for bool {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        (if *self { "✓" } else { "✗" }).into_any_element()
+    }
+}
+
 /// Metadata for a table row type.
 ///
 /// This trait describes the structure of the row (columns, ID, title)
@@ -23,7 +61,7 @@ pub trait TableRowMeta {
     fn table_columns() -> &'static [Column];
 
     /// Returns the value for a specific column index.
-    fn cell_value(&self, col_ix: usize) -> TableCellValue<'_>;
+    fn cell_value(&self, col_ix: usize) -> Box<dyn TableCell + '_>;
 }
 
 /// Styling hooks for a table row.
@@ -39,100 +77,14 @@ pub trait TableRowStyle {
     fn render_table_row(&self, row_ix: usize, window: &mut Window, cx: &mut App) -> Stateful<Div>;
 }
 
-macro_rules! impl_table_cell_value {
-    (clone: $($variant:ident($t:ty)),* $(,)?) => {
-        paste! {
-            $(
-                impl From<$t> for TableCellValue<'_> {
-                    fn from(v: $t) -> Self { TableCellValue::$variant(v) }
-                }
-
-                impl From<&$t> for TableCellValue<'_> {
-                    fn from(v: &$t) -> Self { TableCellValue::$variant(v.clone()) }
-                }
-            )*
-        }
-    };
-    (copy: $($variant:ident($t:ty)),* $(,)?) => {
-        paste! {
-            $(
-                impl From<$t> for TableCellValue<'_> {
-                    fn from(v: $t) -> Self { TableCellValue::$variant(v) }
-                }
-
-                impl From<&$t> for TableCellValue<'_> {
-                    fn from(v: &$t) -> Self { TableCellValue::$variant(*v) }
-                }
-            )*
-        }
-    };
-}
-
-/// A value that can be displayed in a table cell.
-#[derive(Clone, Debug)]
-pub enum TableCellValue<'a> {
-    Str(&'a str),
-    String(String),
-    Usize(usize),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    F32(f32),
-    F64(f64),
-    Bool(bool),
-}
-
-impl<'a> From<&'a str> for TableCellValue<'a> {
-    fn from(s: &'a str) -> Self {
-        TableCellValue::Str(s)
-    }
-}
-
-impl_table_cell_value!(clone: String(String));
-
-impl_table_cell_value!(copy:
-    Usize(usize),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    F32(f32),
-    F64(f64),
-    Bool(bool),
-);
-
 /// Default implementation for rendering a cell.
 pub fn default_render_cell<R: TableRowMeta + ?Sized>(
     row: &R,
     col_ix: usize,
-    _window: &mut Window,
-    _cx: &mut App,
+    window: &mut Window,
+    cx: &mut App,
 ) -> impl IntoElement {
-    match row.cell_value(col_ix) {
-        TableCellValue::Str(s) => s.to_string(),
-        TableCellValue::String(s) => s,
-        TableCellValue::Usize(n) => n.to_string(),
-        TableCellValue::U8(n) => n.to_string(),
-        TableCellValue::U16(n) => n.to_string(),
-        TableCellValue::U32(n) => n.to_string(),
-        TableCellValue::U64(n) => n.to_string(),
-        TableCellValue::I8(n) => n.to_string(),
-        TableCellValue::I16(n) => n.to_string(),
-        TableCellValue::I32(n) => n.to_string(),
-        TableCellValue::I64(n) => n.to_string(),
-        TableCellValue::F32(n) => format!("{:.2}", n),
-        TableCellValue::F64(n) => format!("{:.2}", n),
-        TableCellValue::Bool(b) => if b { "✓" } else { "✗" }.to_string(),
-    }
+    row.cell_value(col_ix).draw(window, cx)
 }
 
 /// Default implementation for rendering a row.
