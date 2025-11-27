@@ -1,10 +1,9 @@
 use es_fluent::EsFluentKv;
-use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
+use fake::faker::{internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use gpui::IntoElement;
 use gpui_table::NamedTableRow;
 
-#[derive(NamedTableRow, EsFluentKv, fake::Dummy)]
+#[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(display = "std")]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[table(fluent = "label")]

@@ -1,9 +1,10 @@
 use std::time;
 
+use super::{ChangeSize, OpenDetail};
 use fake::Fake;
 use gpui::{
-    Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
-    Styled, Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
+    App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render, Styled,
+    Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
 };
 use gpui_component::{
     Selectable, Sizable as _, Size,
@@ -14,16 +15,7 @@ use gpui_component::{
     table::{Table, TableDelegate, TableEvent, TableState},
     v_flex,
 };
-use serde::Deserialize;
 use some_lib::structs::user::{User, UserTableDelegate};
-
-#[derive(Action, Clone, PartialEq, Eq, Deserialize)]
-#[action(namespace = table_story, no_json)]
-struct ChangeSize(Size);
-
-#[derive(Action, Clone, PartialEq, Eq, Deserialize)]
-#[action(namespace = table_story, no_json)]
-struct OpenDetail(usize);
 
 #[gpui_storybook::story]
 pub struct UserTableStory {
