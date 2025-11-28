@@ -160,13 +160,13 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
         Some(Override::Explicit(key)) => {
             let key_cap = key.to_pascal_case();
             let fluent_enum = Ident::new(
-                &format!("{}{}{}Ftl", struct_name, key_cap, ""),
+                &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
                 struct_name.span(),
             );
             quote! { fn table_title() -> String { #fluent_enum::this_ftl() } }
         },
         Some(Override::Inherit) => {
-            let fluent_enum = Ident::new(&format!("{}Ftl", struct_name), struct_name.span());
+            let fluent_enum = Ident::new(&format!("{}", struct_name), struct_name.span());
             quote! { fn table_title() -> String { #fluent_enum::this_ftl() } }
         },
         None => {
@@ -268,11 +268,11 @@ fn determine_title_expr(
             Override::Explicit(key) => {
                 let key_cap = key.to_pascal_case();
                 Ident::new(
-                    &format!("{}{}{}Ftl", struct_name, key_cap, ""),
+                    &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
                     struct_name.span(),
                 )
             },
-            Override::Inherit => Ident::new(&format!("{}Ftl", struct_name), struct_name.span()),
+            Override::Inherit => Ident::new(&format!("{}KvFtl", struct_name), struct_name.span()),
         };
 
         let field_name = ident.to_string().to_pascal_case();

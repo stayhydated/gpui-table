@@ -921,17 +921,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "cargo-platform"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "122ec45a44b270afd1402f351b782c676b173e3c3fb28d86ff7ebfb4d86a4ee4"
+dependencies = [
+ "serde",
+]
+
+[[package]]
 name = "cargo_metadata"
 version = "0.18.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2d886547e41f740c616ae73108f6eb70afe6d940c7bc697cb30f13daec073037"
 dependencies = [
  "camino",
- "cargo-platform",
+ "cargo-platform 0.1.9",
  "semver",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
+]
+
+[[package]]
+name = "cargo_metadata"
+version = "0.23.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ef987d17b0a113becdd19d3d0022d04d7ef41f9efe4f3fb63ac44ba61df3ade9"
+dependencies = [
+ "camino",
+ "cargo-platform 0.3.1",
+ "semver",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.17",
 ]
 
 [[package]]
@@ -1926,8 +1949,22 @@ version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddba20f0f3d9d383dd76ef74470d02b8d975b5a7ebc1ce032dbbd3c3d30aa681"
 dependencies = [
- "es-fluent-derive",
- "es-fluent-manager-core",
+ "es-fluent-derive 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-manager-core 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fluent-bundle",
+ "inventory",
+ "log",
+ "rust-embed",
+ "unic-langid",
+]
+
+[[package]]
+name = "es-fluent"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "es-fluent-derive 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-manager-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "fluent-bundle",
  "inventory",
  "log",
@@ -1941,10 +1978,23 @@ version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a5f003d6e1aeb38cc2f569b8e974a2003116551a96c07942f12b7e1d7b1b0112"
 dependencies = [
- "cargo_metadata",
- "es-fluent-generate",
- "es-fluent-sc-parser",
- "es-fluent-toml",
+ "cargo_metadata 0.18.1",
+ "es-fluent-generate 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-sc-parser 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-toml 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "state-shift",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "es-fluent-build"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "cargo_metadata 0.23.1",
+ "es-fluent-generate 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-sc-parser 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-toml 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "state-shift",
  "thiserror 2.0.17",
 ]
@@ -1971,13 +2021,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "es-fluent-core"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "bon",
+ "darling 0.21.3",
+ "derive_more 2.0.1",
+ "getset",
+ "heck 0.5.0",
+ "log",
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "strum 0.27.2",
+ "syn 2.0.111",
+ "thiserror 2.0.17",
+]
+
+[[package]]
 name = "es-fluent-derive"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f60e868d08eccd27764903776f629067d0f503a2f1541aacda4d7191333ef815"
 dependencies = [
  "darling 0.20.11",
- "es-fluent-core",
+ "es-fluent-core 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "getset",
  "heck 0.5.0",
  "proc-macro-error2",
@@ -1988,14 +2058,43 @@ dependencies = [
 ]
 
 [[package]]
+name = "es-fluent-derive"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "darling 0.21.3",
+ "es-fluent-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "getset",
+ "heck 0.5.0",
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "strum 0.27.2",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "es-fluent-generate"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3226a46cc6f8b928097aa28f9629db560635a5a4180c32d191a6c932fb1f0806"
 dependencies = [
  "clap",
- "es-fluent-core",
+ "es-fluent-core 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "fluent-syntax 0.11.1",
+ "heck 0.5.0",
+ "log",
+ "thiserror 2.0.17",
+]
+
+[[package]]
+name = "es-fluent-generate"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "clap",
+ "es-fluent-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "fluent-syntax 0.12.0",
  "heck 0.5.0",
  "log",
  "thiserror 2.0.17",
@@ -2004,11 +2103,10 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "af50d94a4a149c502afa1128477ac255aa239626fe56f1c5ddb6bb6543ae2115"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
 dependencies = [
  "es-fluent-lang-macro",
- "es-fluent-manager-core",
+ "es-fluent-manager-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "fluent-bundle",
  "inventory",
  "log",
@@ -2018,10 +2116,9 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.2.7"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "19f34c8a13c006b0e696d985a9e31fb8d0962b9bcc1ebf06be51e594e1ad7c9b"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
 dependencies = [
- "es-fluent-toml",
+ "es-fluent-toml 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "heck 0.5.0",
  "proc-macro-error2",
  "proc-macro2",
@@ -2046,14 +2143,40 @@ dependencies = [
 ]
 
 [[package]]
+name = "es-fluent-manager-core"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "anyhow",
+ "fluent-bundle",
+ "inventory",
+ "log",
+ "rust-embed",
+ "thiserror 2.0.17",
+ "unic-langid",
+]
+
+[[package]]
 name = "es-fluent-manager-embedded"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e274bfabad58a7b533047de695ce5e50c76082b1bcea1785f1acaad32186279"
 dependencies = [
- "es-fluent",
- "es-fluent-manager-core",
- "es-fluent-manager-macros",
+ "es-fluent 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-manager-core 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-manager-macros 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "log",
+ "unic-langid",
+]
+
+[[package]]
+name = "es-fluent-manager-embedded"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "es-fluent 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-manager-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-manager-macros 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "log",
  "unic-langid",
 ]
@@ -2064,7 +2187,19 @@ version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6d9395bede9f8802acf91549ef76010e6fb9eb9fc6510cf72ba6f1e2383afcdd"
 dependencies = [
- "es-fluent-toml",
+ "es-fluent-toml 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
+name = "es-fluent-manager-macros"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "es-fluent-toml 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "heck 0.5.0",
  "proc-macro2",
  "quote",
@@ -2079,7 +2214,23 @@ checksum = "9a96d6980dfa191734a59e1e921fc0cf55fc3ed24a9d74b932a340c64320486e"
 dependencies = [
  "bon",
  "darling 0.20.11",
- "es-fluent-core",
+ "es-fluent-core 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "getset",
+ "log",
+ "quote",
+ "syn 2.0.111",
+ "thiserror 2.0.17",
+ "walkdir",
+]
+
+[[package]]
+name = "es-fluent-sc-parser"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
+dependencies = [
+ "bon",
+ "darling 0.21.3",
+ "es-fluent-core 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "getset",
  "log",
  "quote",
@@ -2093,6 +2244,17 @@ name = "es-fluent-toml"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "41f79d23a9aada6806135e79a8fee5de2e68e5e9b75846afd9392dc6acdfb740"
+dependencies = [
+ "serde",
+ "thiserror 2.0.17",
+ "toml 0.9.8",
+ "unic-langid",
+]
+
+[[package]]
+name = "es-fluent-toml"
+version = "0.2.7"
+source = "git+https://github.com/stayhydated/es-fluent?branch=update-deps#afc7731af757402be92b4ea6530b1439209ab432"
 dependencies = [
  "serde",
  "thiserror 2.0.17",
@@ -2937,9 +3099,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c59fb613f90c83be9b8c43679ff90e555f4148dad7d0e756bb439e8c533d87cd"
 dependencies = [
  "anyhow",
- "es-fluent",
- "es-fluent-build",
- "es-fluent-manager-embedded",
+ "es-fluent 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-build 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "es-fluent-manager-embedded 0.2.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "gpui",
  "gpui-component",
  "gpui-component-assets",
@@ -2975,7 +3137,7 @@ version = "0.4.0"
 dependencies = [
  "anyhow",
  "derive-new",
- "es-fluent",
+ "es-fluent 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "gpui",
  "gpui-component",
  "gpui-table-core",
@@ -2994,7 +3156,7 @@ dependencies = [
  "anyhow",
  "chrono",
  "derive_more 2.0.1",
- "es-fluent",
+ "es-fluent 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "gpui",
  "gpui-component",
  "inventory",
@@ -6195,9 +6357,9 @@ name = "some-lib"
 version = "0.4.0"
 dependencies = [
  "chrono",
- "es-fluent",
- "es-fluent-build",
- "es-fluent-manager-embedded",
+ "es-fluent 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-build 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-manager-embedded 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "fake",
  "gpui",
  "gpui-component",
@@ -6212,10 +6374,10 @@ name = "some-lib-tables"
 version = "0.4.0"
 dependencies = [
  "chrono",
- "es-fluent",
- "es-fluent-build",
+ "es-fluent 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
+ "es-fluent-build 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "es-fluent-lang",
- "es-fluent-manager-embedded",
+ "es-fluent-manager-embedded 0.2.7 (git+https://github.com/stayhydated/es-fluent?branch=update-deps)",
  "fake",
  "gpui",
  "gpui-component",
