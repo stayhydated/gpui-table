@@ -114,79 +114,190 @@ pub mod i18n {
     };
 }
 pub mod structs {
-    pub mod fruit {
+    pub mod item {
         use es_fluent::EsFluentKv;
+        use fake::faker::{chrono::en::DateTime, color::en::Color, lorem::en::Word};
+        use fake::uuid::UUIDv4;
         use gpui_table::NamedTableRow;
         #[fluent_kv(display = "std")]
         #[fluent_kv(this)]
         #[table(fluent, custom_style)]
-        pub struct Fruit {
+        pub struct Item {
             #[table(skip)]
-            id: usize,
+            #[dummy(faker = "UUIDv4")]
+            id: uuid::Uuid,
             #[table(width = 100.)]
+            #[dummy(faker = "Word()")]
             name: String,
             #[table(width = 80.)]
+            #[dummy(faker = "Color()")]
             color: String,
             #[table(width = 60.)]
-            weight_grams: u32,
+            #[dummy(faker = "18..67")]
+            weight: u8,
             #[table(width = 50.)]
-            ripe: bool,
+            #[dummy(faker = "DateTime()")]
+            acquired_on: chrono::DateTime<chrono::Utc>,
         }
-        pub enum FruitTableColumn {
+        impl ::fake::Dummy<::fake::Faker> for Item {
+            fn dummy_with_rng<R: ::fake::Rng + ?Sized>(
+                _: &::fake::Faker,
+                rng: &mut R,
+            ) -> Self {
+                let id: uuid::Uuid = ::fake::Fake::fake_with_rng::<
+                    uuid::Uuid,
+                    _,
+                >(&(UUIDv4), rng);
+                let name: String = ::fake::Fake::fake_with_rng::<
+                    String,
+                    _,
+                >(&(Word()), rng);
+                let color: String = ::fake::Fake::fake_with_rng::<
+                    String,
+                    _,
+                >(&(Color()), rng);
+                let weight: u8 = ::fake::Fake::fake_with_rng::<u8, _>(&(18..67), rng);
+                let acquired_on: chrono::DateTime<chrono::Utc> = ::fake::Fake::fake_with_rng::<
+                    chrono::DateTime<chrono::Utc>,
+                    _,
+                >(&(DateTime()), rng);
+                Item {
+                    id,
+                    name,
+                    color,
+                    weight,
+                    acquired_on,
+                }
+            }
+        }
+        pub enum ItemFtl {
+            Id,
             Name,
             Color,
-            WeightGrams,
-            Ripe,
+            Weight,
+            AcquiredOn,
+        }
+        impl ::std::fmt::Display for ItemFtl {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                match self {
+                    Self::Id => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("item_ftl-id", None),
+                            ),
+                        )
+                    }
+                    Self::Name => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("item_ftl-name", None),
+                            ),
+                        )
+                    }
+                    Self::Color => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("item_ftl-color", None),
+                            ),
+                        )
+                    }
+                    Self::Weight => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("item_ftl-weight", None),
+                            ),
+                        )
+                    }
+                    Self::AcquiredOn => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("item_ftl-acquired_on", None),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+        impl ItemFtl {
+            pub fn this_ftl() -> String {
+                ::es_fluent::localize("item_ftl", None)
+            }
+        }
+        impl From<&ItemFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: &ItemFtl) -> Self {
+                value.to_string().into()
+            }
+        }
+        impl From<ItemFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: ItemFtl) -> Self {
+                (&value).into()
+            }
+        }
+        impl Item {
+            pub fn this_ftl() -> String {
+                ::es_fluent::localize("item", None)
+            }
+        }
+        pub enum ItemTableColumn {
+            Name,
+            Color,
+            Weight,
+            AcquiredOn,
         }
         #[automatically_derived]
-        impl ::core::fmt::Debug for FruitTableColumn {
+        impl ::core::clone::Clone for ItemTableColumn {
+            #[inline]
+            fn clone(&self) -> ItemTableColumn {
+                *self
+            }
+        }
+        #[automatically_derived]
+        impl ::core::marker::Copy for ItemTableColumn {}
+        #[automatically_derived]
+        impl ::core::fmt::Debug for ItemTableColumn {
             #[inline]
             fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
                 ::core::fmt::Formatter::write_str(
                     f,
                     match self {
-                        FruitTableColumn::Name => "Name",
-                        FruitTableColumn::Color => "Color",
-                        FruitTableColumn::WeightGrams => "WeightGrams",
-                        FruitTableColumn::Ripe => "Ripe",
+                        ItemTableColumn::Name => "Name",
+                        ItemTableColumn::Color => "Color",
+                        ItemTableColumn::Weight => "Weight",
+                        ItemTableColumn::AcquiredOn => "AcquiredOn",
                     },
                 )
             }
         }
         #[automatically_derived]
-        impl ::core::clone::Clone for FruitTableColumn {
-            #[inline]
-            fn clone(&self) -> FruitTableColumn {
-                *self
-            }
-        }
-        #[automatically_derived]
-        impl ::core::marker::Copy for FruitTableColumn {}
-        #[automatically_derived]
-        impl ::core::marker::StructuralPartialEq for FruitTableColumn {}
-        #[automatically_derived]
-        impl ::core::cmp::PartialEq for FruitTableColumn {
-            #[inline]
-            fn eq(&self, other: &FruitTableColumn) -> bool {
-                let __self_discr = ::core::intrinsics::discriminant_value(self);
-                let __arg1_discr = ::core::intrinsics::discriminant_value(other);
-                __self_discr == __arg1_discr
-            }
-        }
-        #[automatically_derived]
-        impl ::core::cmp::Eq for FruitTableColumn {
+        impl ::core::cmp::Eq for ItemTableColumn {
             #[inline]
             #[doc(hidden)]
             #[coverage(off)]
             fn assert_receiver_is_total_eq(&self) -> () {}
         }
-        impl From<usize> for FruitTableColumn {
+        #[automatically_derived]
+        impl ::core::marker::StructuralPartialEq for ItemTableColumn {}
+        #[automatically_derived]
+        impl ::core::cmp::PartialEq for ItemTableColumn {
+            #[inline]
+            fn eq(&self, other: &ItemTableColumn) -> bool {
+                let __self_discr = ::core::intrinsics::discriminant_value(self);
+                let __arg1_discr = ::core::intrinsics::discriminant_value(other);
+                __self_discr == __arg1_discr
+            }
+        }
+        impl From<usize> for ItemTableColumn {
             fn from(ix: usize) -> Self {
                 match ix {
-                    0usize => FruitTableColumn::Name,
-                    1usize => FruitTableColumn::Color,
-                    2usize => FruitTableColumn::WeightGrams,
-                    3usize => FruitTableColumn::Ripe,
+                    0usize => ItemTableColumn::Name,
+                    1usize => ItemTableColumn::Color,
+                    2usize => ItemTableColumn::Weight,
+                    3usize => ItemTableColumn::AcquiredOn,
                     _ => {
                         ::core::panicking::panic_fmt(
                             format_args!("Invalid column index: {0}", ix),
@@ -195,21 +306,21 @@ pub mod structs {
                 }
             }
         }
-        impl From<FruitTableColumn> for usize {
-            fn from(col: FruitTableColumn) -> Self {
+        impl From<ItemTableColumn> for usize {
+            fn from(col: ItemTableColumn) -> Self {
                 match col {
-                    FruitTableColumn::Name => 0usize,
-                    FruitTableColumn::Color => 1usize,
-                    FruitTableColumn::WeightGrams => 2usize,
-                    FruitTableColumn::Ripe => 3usize,
+                    ItemTableColumn::Name => 0usize,
+                    ItemTableColumn::Color => 1usize,
+                    ItemTableColumn::Weight => 2usize,
+                    ItemTableColumn::AcquiredOn => 3usize,
                 }
             }
         }
-        impl gpui_table::TableRowMeta for Fruit {
-            const TABLE_ID: &'static str = "Fruit";
-            const TABLE_TITLE: &'static str = "Fruit";
+        impl gpui_table::TableRowMeta for Item {
+            const TABLE_ID: &'static str = "Item";
+            const TABLE_TITLE: &'static str = "Item";
             fn table_title() -> String {
-                FruitFtl::this_ftl()
+                ItemFtl::this_ftl()
             }
             fn table_columns() -> &'static [gpui_component::table::Column] {
                 static COLUMNS: std::sync::OnceLock<
@@ -220,22 +331,22 @@ pub mod structs {
                         ::alloc::boxed::box_new([
                             gpui_component::table::Column::new(
                                     "name",
-                                    FruitFtl::Name.to_string(),
+                                    ItemFtl::Name.to_string(),
                                 )
                                 .width(100f32),
                             gpui_component::table::Column::new(
                                     "color",
-                                    FruitFtl::Color.to_string(),
+                                    ItemFtl::Color.to_string(),
                                 )
                                 .width(80f32),
                             gpui_component::table::Column::new(
-                                    "weight_grams",
-                                    FruitFtl::WeightGrams.to_string(),
+                                    "weight",
+                                    ItemFtl::Weight.to_string(),
                                 )
                                 .width(60f32),
                             gpui_component::table::Column::new(
-                                    "ripe",
-                                    FruitFtl::Ripe.to_string(),
+                                    "acquired_on",
+                                    ItemFtl::AcquiredOn.to_string(),
                                 )
                                 .width(50f32),
                         ]),
@@ -245,14 +356,14 @@ pub mod structs {
                 match col_ix {
                     0usize => Box::new(self.name.clone()),
                     1usize => Box::new(self.color.clone()),
-                    2usize => Box::new(self.weight_grams.clone()),
-                    3usize => Box::new(self.ripe.clone()),
+                    2usize => Box::new(self.weight.clone()),
+                    3usize => Box::new(self.acquired_on.clone()),
                     _ => Box::new(String::new()),
                 }
             }
         }
-        pub struct FruitTableDelegate {
-            pub rows: Vec<Fruit>,
+        pub struct ItemTableDelegate {
+            pub rows: Vec<Item>,
             #[new(default)]
             pub visible_rows: std::ops::Range<usize>,
             #[new(default)]
@@ -264,10 +375,10 @@ pub mod structs {
             #[new(default)]
             pub full_loading: bool,
         }
-        impl FruitTableDelegate {
-            ///Constructs a new `FruitTableDelegate`.
-            pub fn new(rows: Vec<Fruit>) -> Self {
-                FruitTableDelegate {
+        impl ItemTableDelegate {
+            ///Constructs a new `ItemTableDelegate`.
+            pub fn new(rows: Vec<Item>) -> Self {
+                ItemTableDelegate {
                     rows: rows,
                     visible_rows: ::core::default::Default::default(),
                     visible_cols: ::core::default::Default::default(),
@@ -277,9 +388,9 @@ pub mod structs {
                 }
             }
         }
-        impl gpui_component::table::TableDelegate for FruitTableDelegate {
+        impl gpui_component::table::TableDelegate for ItemTableDelegate {
             fn columns_count(&self, _: &gpui::App) -> usize {
-                <Fruit as gpui_table::TableRowMeta>::table_columns().len()
+                <Item as gpui_table::TableRowMeta>::table_columns().len()
             }
             fn rows_count(&self, _: &gpui::App) -> usize {
                 self.rows.len()
@@ -289,7 +400,7 @@ pub mod structs {
                 col_ix: usize,
                 _: &gpui::App,
             ) -> &gpui_component::table::Column {
-                &<Fruit as gpui_table::TableRowMeta>::table_columns()[col_ix]
+                &<Item as gpui_table::TableRowMeta>::table_columns()[col_ix]
             }
             fn render_td(
                 &self,
@@ -300,7 +411,7 @@ pub mod structs {
             ) -> impl gpui::IntoElement {
                 use gpui_table::TableRowStyle;
                 self.rows[row_ix]
-                    .render_table_cell(FruitTableColumn::from(col_ix), window, cx)
+                    .render_table_cell(ItemTableColumn::from(col_ix), window, cx)
             }
             fn visible_rows_changed(
                 &mut self,
@@ -336,110 +447,8 @@ pub mod structs {
                 }
             }
         }
-        pub enum FruitFtl {
-            Id,
-            Name,
-            Color,
-            WeightGrams,
-            Ripe,
-        }
-        impl ::std::fmt::Display for FruitFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                match self {
-                    Self::Id => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("fruit_ftl-id", None),
-                            ),
-                        )
-                    }
-                    Self::Name => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("fruit_ftl-name", None),
-                            ),
-                        )
-                    }
-                    Self::Color => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("fruit_ftl-color", None),
-                            ),
-                        )
-                    }
-                    Self::WeightGrams => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("fruit_ftl-weight_grams", None),
-                            ),
-                        )
-                    }
-                    Self::Ripe => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("fruit_ftl-ripe", None),
-                            ),
-                        )
-                    }
-                }
-            }
-        }
-        impl FruitFtl {
-            pub fn this_ftl() -> String {
-                ::es_fluent::localize("fruit_ftl", None)
-            }
-        }
-        impl From<&FruitFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: &FruitFtl) -> Self {
-                value.to_string().into()
-            }
-        }
-        impl From<FruitFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: FruitFtl) -> Self {
-                (&value).into()
-            }
-        }
-        impl ::fake::Dummy<::fake::Faker> for Fruit {
-            fn dummy_with_rng<R: ::fake::Rng + ?Sized>(
-                _: &::fake::Faker,
-                rng: &mut R,
-            ) -> Self {
-                let id: usize = ::fake::Fake::fake_with_rng::<
-                    usize,
-                    _,
-                >(&::fake::Faker, rng);
-                let name: String = ::fake::Fake::fake_with_rng::<
-                    String,
-                    _,
-                >(&::fake::Faker, rng);
-                let color: String = ::fake::Fake::fake_with_rng::<
-                    String,
-                    _,
-                >(&::fake::Faker, rng);
-                let weight_grams: u32 = ::fake::Fake::fake_with_rng::<
-                    u32,
-                    _,
-                >(&::fake::Faker, rng);
-                let ripe: bool = ::fake::Fake::fake_with_rng::<
-                    bool,
-                    _,
-                >(&::fake::Faker, rng);
-                Fruit {
-                    id,
-                    name,
-                    color,
-                    weight_grams,
-                    ripe,
-                }
-            }
-        }
-        impl gpui_table::TableRowStyle for Fruit {
-            type ColumnId = FruitTableColumn;
+        impl gpui_table::TableRowStyle for Item {
+            type ColumnId = ItemTableColumn;
             fn render_table_cell(
                 &self,
                 col: Self::ColumnId,
@@ -448,24 +457,18 @@ pub mod structs {
             ) -> gpui::AnyElement {
                 use gpui::{IntoElement, ParentElement, Styled, div};
                 match col {
-                    FruitTableColumn::Ripe => {
-                        if self.ripe {
-                            return div()
-                                .child("RIPE")
-                                .text_color(gpui::green())
-                                .bg(gpui::yellow())
-                                .px_1()
-                                .rounded_md()
-                                .into_any_element();
-                        } else {
-                            return div()
-                                .child("UNRIPE")
-                                .text_color(gpui::white())
-                                .bg(gpui::black())
-                                .px_1()
-                                .rounded_md()
-                                .into_any_element();
-                        }
+                    ItemTableColumn::Weight => {
+                        return div()
+                            .child(
+                                ::alloc::__export::must_use({
+                                    ::alloc::fmt::format(format_args!("{0} g", self.weight))
+                                }),
+                            )
+                            .text_color(gpui::black())
+                            .bg(gpui::white())
+                            .px_1()
+                            .rounded_md()
+                            .into_any_element();
                     }
                     _ => {}
                 }
@@ -476,10 +479,11 @@ pub mod structs {
     }
     pub mod user {
         use es_fluent::EsFluentKv;
-        use fake::faker::{internet::en::SafeEmail, name::en::Name};
+        use fake::decimal::PositiveDecimal;
+        use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
         use fake::uuid::UUIDv4;
-        use gpui::IntoElement;
         use gpui_table::NamedTableRow;
+        use rust_decimal::Decimal;
         #[fluent_kv(display = "std")]
         #[fluent_kv(this, keys = ["description", "label"])]
         #[table(fluent = "label")]
@@ -491,34 +495,248 @@ pub mod structs {
             #[dummy(faker = "Name()")]
             name: String,
             #[table(sortable, width = 80.)]
-            #[dummy(faker = "18..90")]
+            #[dummy(faker = "18..67")]
             age: u8,
+            #[table(sortable, width = 150.)]
+            #[dummy(faker = "PositiveDecimal")]
+            debt: Decimal,
             #[table(width = 200.)]
             #[dummy(faker = "SafeEmail()")]
             email: String,
-            #[table(width = 50.)]
+            #[table(width = 70.)]
             active: bool,
+            #[table(sortable, width = 300.)]
+            #[dummy(faker = "DateTime()")]
+            created_at: chrono::DateTime<chrono::Utc>,
+        }
+        impl ::fake::Dummy<::fake::Faker> for User {
+            fn dummy_with_rng<R: ::fake::Rng + ?Sized>(
+                _: &::fake::Faker,
+                rng: &mut R,
+            ) -> Self {
+                let id: uuid::Uuid = ::fake::Fake::fake_with_rng::<
+                    uuid::Uuid,
+                    _,
+                >(&(UUIDv4), rng);
+                let name: String = ::fake::Fake::fake_with_rng::<
+                    String,
+                    _,
+                >(&(Name()), rng);
+                let age: u8 = ::fake::Fake::fake_with_rng::<u8, _>(&(18..67), rng);
+                let debt: Decimal = ::fake::Fake::fake_with_rng::<
+                    Decimal,
+                    _,
+                >(&(PositiveDecimal), rng);
+                let email: String = ::fake::Fake::fake_with_rng::<
+                    String,
+                    _,
+                >(&(SafeEmail()), rng);
+                let active: bool = ::fake::Fake::fake_with_rng::<
+                    bool,
+                    _,
+                >(&::fake::Faker, rng);
+                let created_at: chrono::DateTime<chrono::Utc> = ::fake::Fake::fake_with_rng::<
+                    chrono::DateTime<chrono::Utc>,
+                    _,
+                >(&(DateTime()), rng);
+                User {
+                    id,
+                    name,
+                    age,
+                    debt,
+                    email,
+                    active,
+                    created_at,
+                }
+            }
+        }
+        pub enum UserDescriptionFtl {
+            Id,
+            Name,
+            Age,
+            Debt,
+            Email,
+            Active,
+            CreatedAt,
+        }
+        impl ::std::fmt::Display for UserDescriptionFtl {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                match self {
+                    Self::Id => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-id", None),
+                            ),
+                        )
+                    }
+                    Self::Name => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-name", None),
+                            ),
+                        )
+                    }
+                    Self::Age => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-age", None),
+                            ),
+                        )
+                    }
+                    Self::Debt => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-debt", None),
+                            ),
+                        )
+                    }
+                    Self::Email => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-email", None),
+                            ),
+                        )
+                    }
+                    Self::Active => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_description_ftl-active", None),
+                            ),
+                        )
+                    }
+                    Self::CreatedAt => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize(
+                                    "user_description_ftl-created_at",
+                                    None,
+                                ),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+        impl UserDescriptionFtl {
+            pub fn this_ftl() -> String {
+                ::es_fluent::localize("user_description_ftl", None)
+            }
+        }
+        impl From<&UserDescriptionFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: &UserDescriptionFtl) -> Self {
+                value.to_string().into()
+            }
+        }
+        impl From<UserDescriptionFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: UserDescriptionFtl) -> Self {
+                (&value).into()
+            }
+        }
+        pub enum UserLabelFtl {
+            Id,
+            Name,
+            Age,
+            Debt,
+            Email,
+            Active,
+            CreatedAt,
+        }
+        impl ::std::fmt::Display for UserLabelFtl {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                match self {
+                    Self::Id => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-id", None),
+                            ),
+                        )
+                    }
+                    Self::Name => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-name", None),
+                            ),
+                        )
+                    }
+                    Self::Age => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-age", None),
+                            ),
+                        )
+                    }
+                    Self::Debt => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-debt", None),
+                            ),
+                        )
+                    }
+                    Self::Email => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-email", None),
+                            ),
+                        )
+                    }
+                    Self::Active => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-active", None),
+                            ),
+                        )
+                    }
+                    Self::CreatedAt => {
+                        f.write_fmt(
+                            format_args!(
+                                "{0}",
+                                ::es_fluent::localize("user_label_ftl-created_at", None),
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+        impl UserLabelFtl {
+            pub fn this_ftl() -> String {
+                ::es_fluent::localize("user_label_ftl", None)
+            }
+        }
+        impl From<&UserLabelFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: &UserLabelFtl) -> Self {
+                value.to_string().into()
+            }
+        }
+        impl From<UserLabelFtl> for ::es_fluent::FluentValue<'_> {
+            fn from(value: UserLabelFtl) -> Self {
+                (&value).into()
+            }
+        }
+        impl User {
+            pub fn this_ftl() -> String {
+                ::es_fluent::localize("user", None)
+            }
         }
         pub enum UserTableColumn {
             Name,
             Age,
+            Debt,
             Email,
             Active,
-        }
-        #[automatically_derived]
-        impl ::core::fmt::Debug for UserTableColumn {
-            #[inline]
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                ::core::fmt::Formatter::write_str(
-                    f,
-                    match self {
-                        UserTableColumn::Name => "Name",
-                        UserTableColumn::Age => "Age",
-                        UserTableColumn::Email => "Email",
-                        UserTableColumn::Active => "Active",
-                    },
-                )
-            }
+            CreatedAt,
         }
         #[automatically_derived]
         impl ::core::clone::Clone for UserTableColumn {
@@ -530,6 +748,30 @@ pub mod structs {
         #[automatically_derived]
         impl ::core::marker::Copy for UserTableColumn {}
         #[automatically_derived]
+        impl ::core::fmt::Debug for UserTableColumn {
+            #[inline]
+            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+                ::core::fmt::Formatter::write_str(
+                    f,
+                    match self {
+                        UserTableColumn::Name => "Name",
+                        UserTableColumn::Age => "Age",
+                        UserTableColumn::Debt => "Debt",
+                        UserTableColumn::Email => "Email",
+                        UserTableColumn::Active => "Active",
+                        UserTableColumn::CreatedAt => "CreatedAt",
+                    },
+                )
+            }
+        }
+        #[automatically_derived]
+        impl ::core::cmp::Eq for UserTableColumn {
+            #[inline]
+            #[doc(hidden)]
+            #[coverage(off)]
+            fn assert_receiver_is_total_eq(&self) -> () {}
+        }
+        #[automatically_derived]
         impl ::core::marker::StructuralPartialEq for UserTableColumn {}
         #[automatically_derived]
         impl ::core::cmp::PartialEq for UserTableColumn {
@@ -540,20 +782,15 @@ pub mod structs {
                 __self_discr == __arg1_discr
             }
         }
-        #[automatically_derived]
-        impl ::core::cmp::Eq for UserTableColumn {
-            #[inline]
-            #[doc(hidden)]
-            #[coverage(off)]
-            fn assert_receiver_is_total_eq(&self) -> () {}
-        }
         impl From<usize> for UserTableColumn {
             fn from(ix: usize) -> Self {
                 match ix {
                     0usize => UserTableColumn::Name,
                     1usize => UserTableColumn::Age,
-                    2usize => UserTableColumn::Email,
-                    3usize => UserTableColumn::Active,
+                    2usize => UserTableColumn::Debt,
+                    3usize => UserTableColumn::Email,
+                    4usize => UserTableColumn::Active,
+                    5usize => UserTableColumn::CreatedAt,
                     _ => {
                         ::core::panicking::panic_fmt(
                             format_args!("Invalid column index: {0}", ix),
@@ -567,8 +804,10 @@ pub mod structs {
                 match col {
                     UserTableColumn::Name => 0usize,
                     UserTableColumn::Age => 1usize,
-                    UserTableColumn::Email => 2usize,
-                    UserTableColumn::Active => 3usize,
+                    UserTableColumn::Debt => 2usize,
+                    UserTableColumn::Email => 3usize,
+                    UserTableColumn::Active => 4usize,
+                    UserTableColumn::CreatedAt => 5usize,
                 }
             }
         }
@@ -598,6 +837,12 @@ pub mod structs {
                                 .width(80f32)
                                 .sortable(),
                             gpui_component::table::Column::new(
+                                    "debt",
+                                    UserLabelFtl::Debt.to_string(),
+                                )
+                                .width(150f32)
+                                .sortable(),
+                            gpui_component::table::Column::new(
                                     "email",
                                     UserLabelFtl::Email.to_string(),
                                 )
@@ -606,7 +851,13 @@ pub mod structs {
                                     "active",
                                     UserLabelFtl::Active.to_string(),
                                 )
-                                .width(50f32),
+                                .width(70f32),
+                            gpui_component::table::Column::new(
+                                    "created_at",
+                                    UserLabelFtl::CreatedAt.to_string(),
+                                )
+                                .width(300f32)
+                                .sortable(),
                         ]),
                     ))
             }
@@ -614,8 +865,10 @@ pub mod structs {
                 match col_ix {
                     0usize => Box::new(self.name.clone()),
                     1usize => Box::new(self.age.clone()),
-                    2usize => Box::new(self.email.clone()),
-                    3usize => Box::new(self.active.clone()),
+                    2usize => Box::new(self.debt.clone()),
+                    3usize => Box::new(self.email.clone()),
+                    4usize => Box::new(self.active.clone()),
+                    5usize => Box::new(self.created_at.clone()),
                     _ => Box::new(String::new()),
                 }
             }
@@ -628,6 +881,7 @@ pub mod structs {
                 window: &mut gpui::Window,
                 cx: &mut gpui::App,
             ) -> gpui::AnyElement {
+                use gpui::IntoElement;
                 gpui_table::default_render_cell(self, col.into(), window, cx)
                     .into_any_element()
             }
@@ -753,179 +1007,47 @@ pub mod structs {
                                 }
                             });
                     }
+                    2usize => {
+                        self.rows
+                            .sort_by(|a, b| {
+                                let a_val = &a.debt;
+                                let b_val = &b.debt;
+                                match sort {
+                                    gpui_component::table::ColumnSort::Ascending => {
+                                        a_val
+                                            .partial_cmp(b_val)
+                                            .unwrap_or(std::cmp::Ordering::Equal)
+                                    }
+                                    gpui_component::table::ColumnSort::Descending => {
+                                        b_val
+                                            .partial_cmp(a_val)
+                                            .unwrap_or(std::cmp::Ordering::Equal)
+                                    }
+                                    _ => std::cmp::Ordering::Equal,
+                                }
+                            });
+                    }
+                    5usize => {
+                        self.rows
+                            .sort_by(|a, b| {
+                                let a_val = &a.created_at;
+                                let b_val = &b.created_at;
+                                match sort {
+                                    gpui_component::table::ColumnSort::Ascending => {
+                                        a_val
+                                            .partial_cmp(b_val)
+                                            .unwrap_or(std::cmp::Ordering::Equal)
+                                    }
+                                    gpui_component::table::ColumnSort::Descending => {
+                                        b_val
+                                            .partial_cmp(a_val)
+                                            .unwrap_or(std::cmp::Ordering::Equal)
+                                    }
+                                    _ => std::cmp::Ordering::Equal,
+                                }
+                            });
+                    }
                     _ => {}
-                }
-            }
-        }
-        pub enum UserDescriptionFtl {
-            Id,
-            Name,
-            Age,
-            Email,
-            Active,
-        }
-        impl ::std::fmt::Display for UserDescriptionFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                match self {
-                    Self::Id => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_description_ftl-id", None),
-                            ),
-                        )
-                    }
-                    Self::Name => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_description_ftl-name", None),
-                            ),
-                        )
-                    }
-                    Self::Age => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_description_ftl-age", None),
-                            ),
-                        )
-                    }
-                    Self::Email => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_description_ftl-email", None),
-                            ),
-                        )
-                    }
-                    Self::Active => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_description_ftl-active", None),
-                            ),
-                        )
-                    }
-                }
-            }
-        }
-        impl UserDescriptionFtl {
-            pub fn this_ftl() -> String {
-                ::es_fluent::localize("user_description_ftl", None)
-            }
-        }
-        impl From<&UserDescriptionFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: &UserDescriptionFtl) -> Self {
-                value.to_string().into()
-            }
-        }
-        impl From<UserDescriptionFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: UserDescriptionFtl) -> Self {
-                (&value).into()
-            }
-        }
-        pub enum UserLabelFtl {
-            Id,
-            Name,
-            Age,
-            Email,
-            Active,
-        }
-        impl ::std::fmt::Display for UserLabelFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
-                match self {
-                    Self::Id => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_label_ftl-id", None),
-                            ),
-                        )
-                    }
-                    Self::Name => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_label_ftl-name", None),
-                            ),
-                        )
-                    }
-                    Self::Age => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_label_ftl-age", None),
-                            ),
-                        )
-                    }
-                    Self::Email => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_label_ftl-email", None),
-                            ),
-                        )
-                    }
-                    Self::Active => {
-                        f.write_fmt(
-                            format_args!(
-                                "{0}",
-                                ::es_fluent::localize("user_label_ftl-active", None),
-                            ),
-                        )
-                    }
-                }
-            }
-        }
-        impl UserLabelFtl {
-            pub fn this_ftl() -> String {
-                ::es_fluent::localize("user_label_ftl", None)
-            }
-        }
-        impl From<&UserLabelFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: &UserLabelFtl) -> Self {
-                value.to_string().into()
-            }
-        }
-        impl From<UserLabelFtl> for ::es_fluent::FluentValue<'_> {
-            fn from(value: UserLabelFtl) -> Self {
-                (&value).into()
-            }
-        }
-        impl User {
-            pub fn this_ftl() -> String {
-                ::es_fluent::localize("user", None)
-            }
-        }
-        impl ::fake::Dummy<::fake::Faker> for User {
-            fn dummy_with_rng<R: ::fake::Rng + ?Sized>(
-                _: &::fake::Faker,
-                rng: &mut R,
-            ) -> Self {
-                let id: uuid::Uuid = ::fake::Fake::fake_with_rng::<
-                    uuid::Uuid,
-                    _,
-                >(&(UUIDv4), rng);
-                let name: String = ::fake::Fake::fake_with_rng::<
-                    String,
-                    _,
-                >(&(Name()), rng);
-                let age: u8 = ::fake::Fake::fake_with_rng::<u8, _>(&(18..90), rng);
-                let email: String = ::fake::Fake::fake_with_rng::<
-                    String,
-                    _,
-                >(&(SafeEmail()), rng);
-                let active: bool = ::fake::Fake::fake_with_rng::<
-                    bool,
-                    _,
-                >(&::fake::Faker, rng);
-                User {
-                    id,
-                    name,
-                    age,
-                    email,
-                    active,
                 }
             }
         }

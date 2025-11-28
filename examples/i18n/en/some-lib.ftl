@@ -1,3 +1,7 @@
+## Item
+
+item = Item
+
 ## ItemFtl
 
 item_ftl = Item Ftl

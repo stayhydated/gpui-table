@@ -1922,9 +1922,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "953ac208182d1db72479446b8bd6bf690e46931d1fbac839b31748f936cbf40c"
+checksum = "ddba20f0f3d9d383dd76ef74470d02b8d975b5a7ebc1ce032dbbd3c3d30aa681"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
@@ -1937,9 +1937,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-build"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "caf6be63c971d6df0878fd2160110b97919ae9b5d410b7b84af7550813efc0a9"
+checksum = "a5f003d6e1aeb38cc2f569b8e974a2003116551a96c07942f12b7e1d7b1b0112"
 dependencies = [
  "cargo_metadata",
  "es-fluent-generate",
@@ -1951,9 +1951,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-core"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "144150288a32201fa418509cc6b0cb3d03761f8be4a7af32a296d72376ed143c"
+checksum = "8b208b7ddf06f0c5780de06e5174ab34815945f73582af539f2c630bb89bbf8d"
 dependencies = [
  "bon",
  "darling 0.20.11",
@@ -1972,9 +1972,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-derive"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1c0e57c2c9de5b822404f336cf6cc6b03dad366641910ae205a29731af3e1bd"
+checksum = "f60e868d08eccd27764903776f629067d0f503a2f1541aacda4d7191333ef815"
 dependencies = [
  "darling 0.20.11",
  "es-fluent-core",
@@ -1989,9 +1989,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-generate"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e7a58940c90e8d233f2883ea8cd88275192c5b77cc99923eed9d78741c6d3fc"
+checksum = "3226a46cc6f8b928097aa28f9629db560635a5a4180c32d191a6c932fb1f0806"
 dependencies = [
  "clap",
  "es-fluent-core",
@@ -2003,9 +2003,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-lang"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d3192197a9c95464ae8122597861ffecdaaf35b2bda6c33585ecdcfccf05ecf0"
+checksum = "af50d94a4a149c502afa1128477ac255aa239626fe56f1c5ddb6bb6543ae2115"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -2017,9 +2017,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-lang-macro"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c6a70356a64693e97935db41e35d2c749bafd6da14728b0e7b31bb669568188"
+checksum = "19f34c8a13c006b0e696d985a9e31fb8d0962b9bcc1ebf06be51e594e1ad7c9b"
 dependencies = [
  "es-fluent-toml",
  "heck 0.5.0",
@@ -2032,9 +2032,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-manager-core"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "08956be96a2e2d02614b9332ef67c1967827cb4bd1d4079c8af1fb3c67cf72bb"
+checksum = "e268d160da158e829868d03e441ca7c06fd83ec0030c5d8e6829a012f4212b73"
 dependencies = [
  "anyhow",
  "fluent-bundle",
@@ -2047,9 +2047,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-manager-embedded"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7966412632701c9afd413ca188ecdffcb102792943708de6ed484fb8f784cdc1"
+checksum = "1e274bfabad58a7b533047de695ce5e50c76082b1bcea1785f1acaad32186279"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -2060,9 +2060,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-manager-macros"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "231eeba5c0a59653dd038a3e0a8e0a9562ac27a94599183bafa81e07cd2e61d5"
+checksum = "6d9395bede9f8802acf91549ef76010e6fb9eb9fc6510cf72ba6f1e2383afcdd"
 dependencies = [
  "es-fluent-toml",
  "heck 0.5.0",
@@ -2073,9 +2073,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-sc-parser"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f5886fb5dac14c9fbaa6e2298cce4d3962d5441859ad42db926c06ee93cc6ffa"
+checksum = "9a96d6980dfa191734a59e1e921fc0cf55fc3ed24a9d74b932a340c64320486e"
 dependencies = [
  "bon",
  "darling 0.20.11",
@@ -2090,9 +2090,9 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-toml"
-version = "0.2.6"
+version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d5dd5c8a73194c5d8dee95913a01c324d9d1eb628cedaf6b20c1223b7b0653f"
+checksum = "41f79d23a9aada6806135e79a8fee5de2e68e5e9b75846afd9392dc6acdfb740"
 dependencies = [
  "serde",
  "thiserror 2.0.17",
@@ -3794,9 +3794,9 @@ dependencies = [
 
 [[package]]
 name = "js-sys"
-version = "0.3.82"
+version = "0.3.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b011eec8cc36da2aab2d5cff675ec18454fad408585853910a202391cf9f8e65"
+checksum = "464a3709c7f55f1f721e5389aa6ea4e3bc6aba669353300af094b29ffbdde1d8"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
@@ -4212,9 +4212,9 @@ dependencies = [
 
 [[package]]
 name = "moxcms"
-version = "0.7.9"
+version = "0.7.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fbdd3d7436f8b5e892b8b7ea114271ff0fa00bc5acae845d53b07d498616ef6"
+checksum = "80986bbbcf925ebd3be54c26613d861255284584501595cf418320c078945608"
 dependencies = [
  "num-traits",
  "pxfm",
@@ -5062,9 +5062,9 @@ dependencies = [
 
 [[package]]
 name = "pxfm"
-version = "0.1.25"
+version = "0.1.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a3cbdf373972bf78df4d3b518d07003938e2c7d1fb5891e55f9cb6df57009d84"
+checksum = "b3502d6155304a4173a5f2c34b52b7ed0dd085890326cb50fd625fdf39e86b3b"
 dependencies = [
  "num-traits",
 ]
@@ -7463,9 +7463,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.105"
+version = "0.2.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da95793dfc411fbbd93f5be7715b0578ec61fe87cb1a42b12eb625caa5c5ea60"
+checksum = "0d759f433fa64a2d763d1340820e46e111a7a5ab75f993d1852d70b03dbb80fd"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -7476,9 +7476,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-futures"
-version = "0.4.55"
+version = "0.4.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "551f88106c6d5e7ccc7cd9a16f312dd3b5d36ea8b4954304657d5dfba115d4a0"
+checksum = "836d9622d604feee9e5de25ac10e3ea5f2d65b41eac0d9ce72eb5deae707ce7c"
 dependencies = [
  "cfg-if",
  "js-sys",
@@ -7489,9 +7489,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.105"
+version = "0.2.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04264334509e04a7bf8690f2384ef5265f05143a4bff3889ab7a3269adab59c2"
+checksum = "48cb0d2638f8baedbc542ed444afc0644a29166f1595371af4fecf8ce1e7eeb3"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -7499,9 +7499,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.105"
+version = "0.2.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "420bc339d9f322e562942d52e115d57e950d12d88983a14c79b86859ee6c7ebc"
+checksum = "cefb59d5cd5f92d9dcf80e4683949f15ca4b511f4ac0a6e14d4e1ac60c6ecd40"
 dependencies = [
  "bumpalo",
  "proc-macro2",
@@ -7512,9 +7512,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.105"
+version = "0.2.106"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "76f218a38c84bcb33c25ec7059b07847d465ce0e0a76b995e134a45adcb6af76"
+checksum = "cbc538057e648b67f72a982e708d485b2efa771e1ac05fec311f9f63e5800db4"
 dependencies = [
  "unicode-ident",
 ]
@@ -7631,9 +7631,9 @@ dependencies = [
 
 [[package]]
 name = "web-sys"
-version = "0.3.82"
+version = "0.3.83"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3a1f95c0d03a47f4ae1f7a64643a6bb97465d9b740f0fa8f90ea33915c99a9a1"
+checksum = "9b32828d774c412041098d182a8b38b16ea816958e07cf40eec2bc080ae137ac"
 dependencies = [
  "js-sys",
  "wasm-bindgen",

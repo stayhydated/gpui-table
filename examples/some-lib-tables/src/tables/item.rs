@@ -8,7 +8,7 @@ use gpui_component::{
     table::{Table, TableDelegate, TableEvent, TableState},
     v_flex,
 };
-use some_lib::structs::item::{Item, ItemFtl, ItemTableDelegate};
+use some_lib::structs::item::{Item, ItemTableDelegate};
 
 #[gpui_storybook::story]
 pub struct ItemTableStory {
@@ -20,7 +20,7 @@ pub struct ItemTableStory {
 
 impl gpui_storybook::Story for ItemTableStory {
     fn title() -> String {
-        ItemFtl::this_ftl()
+        Item::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
