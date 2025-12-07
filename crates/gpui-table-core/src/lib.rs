@@ -30,7 +30,9 @@ macro_rules! impl_table_cell_float {
     };
 }
 
-impl_table_cell_display!(String, &str, usize, u8, u16, u32, u64, i8, i16, i32, i64);
+impl_table_cell_display!(
+    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64
+);
 impl_table_cell_float!(f32, f64);
 
 impl TableCell for bool {

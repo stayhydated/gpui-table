@@ -1,7 +1,7 @@
 use fake::{Fake, Faker};
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
-    Styled, Window,
+    Styled, Subscription, Window,
 };
 use gpui_component::{
     h_flex,
@@ -13,6 +13,7 @@ use some_lib::structs::infinite_scroll::{InfiniteRow, InfiniteRowTableDelegate};
 #[gpui_storybook::story]
 pub struct InfiniteScrollStory {
     table: Entity<TableState<InfiniteRowTableDelegate>>,
+    _subscription: Subscription,
 }
 
 impl gpui_storybook::Story for InfiniteScrollStory {
@@ -46,7 +47,12 @@ impl InfiniteScrollStory {
 
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-        Self { table }
+        let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+
+        Self {
+            table,
+            _subscription,
+        }
     }
 }
 
