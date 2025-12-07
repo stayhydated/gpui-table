@@ -2,8 +2,16 @@ use es_fluent::EsFluentKv;
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use gpui_table::NamedTableRow;
+use gpui_table::{NamedTableRow, TableCell};
 use rust_decimal::Decimal;
+
+#[derive(Debug, Clone, PartialEq, TableCell, fake::Dummy, es_fluent::EsFluent)]
+#[fluent(display = "std")]
+pub enum UserStatus {
+    Active,
+    Suspended,
+    Offline,
+}
 
 #[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(display = "std")]
@@ -32,6 +40,9 @@ pub struct User {
 
     #[table(width = 70.)]
     active: bool,
+
+    #[table(width = 100.)]
+    status: UserStatus,
 
     #[table(sortable, width = 300.)]
     #[dummy(faker = "DateTime()")]

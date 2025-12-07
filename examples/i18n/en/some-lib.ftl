@@ -25,6 +25,7 @@ user_description_kv_ftl-debt = Debt
 user_description_kv_ftl-email = Email
 user_description_kv_ftl-id = Id
 user_description_kv_ftl-name = Name
+user_description_kv_ftl-status = Status
 
 ## UserLabelKvFtl
 
@@ -36,3 +37,10 @@ user_label_kv_ftl-debt = Debt
 user_label_kv_ftl-email = Email
 user_label_kv_ftl-id = Id
 user_label_kv_ftl-name = Name
+user_label_kv_ftl-status = Status
+
+## UserStatus
+
+user_status-Active = Active
+user_status-Offline = Offline
+user_status-Suspended = Suspended
