@@ -6,7 +6,6 @@ use gpui_table::{NamedTableRow, TableCell};
 use rust_decimal::Decimal;
 
 #[derive(Debug, Clone, PartialEq, TableCell, fake::Dummy, es_fluent::EsFluent)]
-#[fluent(display = "std")]
 pub enum UserStatus {
     Active,
     Suspended,
@@ -14,7 +13,6 @@ pub enum UserStatus {
 }
 
 #[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
-#[fluent_kv(display = "std")]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[table(fluent = "label")]
 pub struct User {

@@ -4,7 +4,6 @@ use fake::uuid::UUIDv4;
 use gpui_table::NamedTableRow;
 
 #[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
-#[fluent_kv(display = "std")]
 #[fluent_kv(this)]
 #[table(fluent, custom_style)]
 pub struct Item {
