@@ -30,11 +30,6 @@ macro_rules! impl_table_cell_float {
     };
 }
 
-impl_table_cell_display!(
-    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
-);
-impl_table_cell_float!(f32, f64);
-
 impl<T: TableCell> TableCell for Option<T> {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
         match self {
@@ -43,6 +38,11 @@ impl<T: TableCell> TableCell for Option<T> {
         }
     }
 }
+
+impl_table_cell_display!(
+    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
+);
+impl_table_cell_float!(f32, f64);
 
 impl TableCell for bool {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
@@ -87,6 +87,34 @@ impl TableCell for chrono::NaiveDate {
 impl TableCell for chrono::NaiveTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
         self.format("%H:%M:%S").to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "jiff")]
+impl TableCell for jiff::civil::Date {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "jiff")]
+impl TableCell for jiff::civil::Time {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "jiff")]
+impl TableCell for jiff::civil::DateTime {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "jiff")]
+impl TableCell for jiff::Zoned {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
     }
 }
 
