@@ -1,3 +1,4 @@
+#[doc(hidden)]
 mod __crate_paths;
 
 use __crate_paths::gpui::{AnyElement, App, Context, IntoElement, Window};
