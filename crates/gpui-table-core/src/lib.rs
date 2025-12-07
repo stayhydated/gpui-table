@@ -31,9 +31,18 @@ macro_rules! impl_table_cell_float {
 }
 
 impl_table_cell_display!(
-    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64
+    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
 );
 impl_table_cell_float!(f32, f64);
+
+impl<T: TableCell> TableCell for Option<T> {
+    fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
+        match self {
+            Some(value) => value.draw(window, cx),
+            None => "".into_any_element(),
+        }
+    }
+}
 
 impl TableCell for bool {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
