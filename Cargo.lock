@@ -1527,7 +1527,6 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
- "strsim",
  "syn 2.0.111",
 ]
 
@@ -3006,7 +3005,7 @@ name = "gpui-table-derive"
 version = "0.4.0"
 dependencies = [
  "crate-paths",
- "darling 0.20.11",
+ "darling 0.21.3",
  "gpui-table-core",
  "heck 0.5.0",
  "inventory",
