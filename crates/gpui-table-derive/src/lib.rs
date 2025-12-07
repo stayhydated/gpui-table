@@ -10,7 +10,7 @@ use darling::{FromDeriveInput, FromField, util::Override};
 use heck::{ToPascalCase as _, ToTitleCase as _};
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Ident};
+use syn::{DeriveInput, Ident, Path};
 
 #[proc_macro_derive(NamedTableRow, attributes(table))]
 pub fn derive_named_table_row(input: TokenStream) -> TokenStream {
@@ -44,6 +44,15 @@ struct TableMeta {
 
     #[darling(default)]
     fluent: Option<Override<String>>,
+
+    #[darling(default)]
+    load_more: Option<Path>,
+    #[darling(default)]
+    eof: Option<Ident>,
+    #[darling(default)]
+    loading: Option<Ident>,
+    #[darling(default)]
+    threshold: Option<usize>,
 }
 
 fn default_delegate() -> bool {
@@ -72,18 +81,30 @@ struct TableColumn {
 }
 
 fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
-    let struct_name = &meta.ident;
+    let TableMeta {
+        ident: struct_name,
+        data,
+        id,
+        title,
+        delegate,
+        custom_style,
+        fluent,
+        load_more,
+        eof,
+        loading,
+        threshold,
+    } = meta;
 
-    let table_id = meta.id.unwrap_or_else(|| struct_name.to_string());
-    let table_title = meta.title.unwrap_or_else(|| struct_name.to_string());
+    let table_id = id.unwrap_or_else(|| struct_name.to_string());
+    let table_title = title.unwrap_or_else(|| struct_name.to_string());
 
-    let custom_style = match meta.custom_style {
+    let custom_style = match custom_style {
         Some(Override::Explicit(val)) => val,
         Some(Override::Inherit) => true,
         None => false,
     };
 
-    let fields = meta.data.take_struct().unwrap();
+    let fields = data.take_struct().unwrap();
 
     let mut columns_init = Vec::new();
     let mut cell_value_match_arms = Vec::new();
@@ -101,7 +122,7 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
         let key = field.col.unwrap_or_else(|| ident.to_string());
         let width = field.width.unwrap_or(100.0);
 
-        let title_expr = determine_title_expr(&field.title, ident, &meta.fluent, struct_name);
+        let title_expr = determine_title_expr(&field.title, ident, &fluent, &struct_name);
 
         let sortable_chain = if field.sortable {
             quote! { .sortable() }
@@ -157,7 +178,7 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
         into_usize_arms.push(quote! { #column_enum_name::#variant_ident => #i, });
     }
 
-    let table_title_impl = match &meta.fluent {
+    let table_title_impl = match &fluent {
         Some(Override::Explicit(key)) => {
             let key_cap = key.to_pascal_case();
             let fluent_enum = Ident::new(
@@ -219,8 +240,16 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
         quote! {}
     };
 
-    let delegate_impl = if meta.delegate {
-        generate_delegate(struct_name, &column_enum_name, sort_match_arms)
+    let delegate_impl = if delegate {
+        generate_delegate(
+            &struct_name,
+            &column_enum_name,
+            sort_match_arms,
+            load_more,
+            eof,
+            loading,
+            threshold,
+        )
     } else {
         quote! {}
     };
@@ -290,8 +319,60 @@ fn generate_delegate(
     struct_name: &Ident,
     column_enum_name: &Ident,
     sort_arms: Vec<proc_macro2::TokenStream>,
+    load_more: Option<Path>,
+    eof: Option<Ident>,
+    loading: Option<Ident>,
+    threshold: Option<usize>,
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
+
+    let load_more_impl = if let Some(load_fn) = load_more {
+        quote! {
+            fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                #load_fn(self, window, cx);
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    let eof_impl = if let Some(field) = eof {
+        quote! {
+            fn is_eof(&self, app: &#App) -> bool {
+                self.#field(app)
+            }
+        }
+    } else {
+        quote! {
+            fn is_eof(&self, _: &#App) -> bool {
+                self.eof
+            }
+        }
+    };
+
+    let loading_impl = if let Some(field) = loading {
+        quote! {
+            fn loading(&self, app: &#App) -> bool {
+                self.#field(app)
+            }
+        }
+    } else {
+        quote! {
+            fn loading(&self, _: &#App) -> bool {
+                self.loading
+            }
+        }
+    };
+
+    let threshold_impl = if let Some(val) = threshold {
+        quote! {
+            fn load_more_threshold(&self) -> usize {
+                #val
+            }
+        }
+    } else {
+        quote! {}
+    };
 
     quote! {
         #[derive(gpui_table::derive_new::new)]
@@ -351,13 +432,10 @@ fn generate_delegate(
                 self.visible_cols = visible_range;
             }
 
-            fn is_eof(&self, _: &#App) -> bool {
-                self.eof
-            }
-
-            fn loading(&self, _: &#App) -> bool {
-                self.loading
-            }
+            #eof_impl
+            #loading_impl
+            #load_more_impl
+            #threshold_impl
 
             fn perform_sort(
                 &mut self,
