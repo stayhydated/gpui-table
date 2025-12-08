@@ -34,7 +34,7 @@ pub struct UserTableStory {
 
 impl gpui_storybook::Story for UserTableStory {
     fn title() -> String {
-        UserLabelKvFtl::this_ftl()
+        User::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {

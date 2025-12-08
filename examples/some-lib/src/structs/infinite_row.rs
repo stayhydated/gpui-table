@@ -1,3 +1,4 @@
+use es_fluent::EsFluentKv;
 use fake::faker::lorem::en::Sentence;
 use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
@@ -6,8 +7,10 @@ use gpui_component::table::TableState;
 use gpui_table::NamedTableRow;
 use std::time::Duration;
 
-#[derive(Clone, Debug, Dummy, NamedTableRow)]
+#[derive(Clone, Debug, Dummy, NamedTableRow, EsFluentKv)]
+#[fluent_kv(this, keys = ["description", "label"])]
 #[table(load_more = "Self::load_more_data")]
+#[table(fluent = "label")]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
     #[table(width = 80.)]

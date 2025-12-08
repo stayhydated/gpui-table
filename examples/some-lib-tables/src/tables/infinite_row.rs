@@ -18,7 +18,7 @@ pub struct InfiniteScrollStory {
 
 impl gpui_storybook::Story for InfiniteScrollStory {
     fn title() -> String {
-        "Infinite Scroll Table".to_string()
+        InfiniteRow::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {

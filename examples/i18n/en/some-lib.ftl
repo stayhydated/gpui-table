@@ -1,3 +1,21 @@
+## InfiniteRow
+
+infinite_row = Infinite Row
+
+## InfiniteRowDescriptionKvFtl
+
+infinite_row_description_kv_ftl = Infinite Row Description Kv Ftl
+infinite_row_description_kv_ftl-description = Description
+infinite_row_description_kv_ftl-id = Id
+infinite_row_description_kv_ftl-name = Name
+
+## InfiniteRowLabelKvFtl
+
+infinite_row_label_kv_ftl = Infinite Row Label Kv Ftl
+infinite_row_label_kv_ftl-description = Description
+infinite_row_label_kv_ftl-id = Id
+infinite_row_label_kv_ftl-name = Name
+
 ## Item
 
 item = Item
