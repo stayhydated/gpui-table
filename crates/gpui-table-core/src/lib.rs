@@ -135,7 +135,7 @@ pub trait TableRowMeta {
     }
 
     /// Returns the column definitions for this row type.
-    fn table_columns() -> &'static [Column];
+    fn table_columns() -> Vec<Column>;
 
     /// Returns the value for a specific column index.
     fn cell_value(&self, col_ix: usize) -> Box<dyn TableCell + '_>;
