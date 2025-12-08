@@ -1,7 +1,7 @@
 use fake::{Fake, Faker};
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
-    Styled, Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,
+    Window,
 };
 use gpui_component::{
     h_flex,

@@ -1,4 +1,3 @@
-use es_fluent::ToFluentString as _;
 use fake::Fake;
 use gpui::{
     App, AppContext, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled, Window,

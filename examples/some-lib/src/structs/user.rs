@@ -18,6 +18,7 @@ pub enum UserStatus {
 pub struct User {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
+    #[allow(dead_code)]
     id: uuid::Uuid,
 
     #[gpui_table(sortable, width = 150.)]

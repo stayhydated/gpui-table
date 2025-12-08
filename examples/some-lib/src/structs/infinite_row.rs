@@ -41,7 +41,6 @@ impl InfiniteRowTableDelegate {
                 .timer(Duration::from_millis(500))
                 .await;
 
-            // Generate fake data
             let new_rows: Vec<InfiniteRow> = (0..50).map(|_| Faker.fake()).collect();
 
             _ = cx.update(|cx| {

@@ -1,5 +1,3 @@
-//! Column-level code generation utilities.
-
 use gpui_table_core::registry::ColumnVariant;
 use heck::ToPascalCase as _;
 use proc_macro2::TokenStream;
@@ -79,7 +77,7 @@ impl<'a> ColumnInfo<'a> {
     pub fn field_type_syn(&self) -> syn::Type {
         syn::parse_str(self.variant.field_type).unwrap_or_else(|_| {
             // If parsing fails, wrap in angle brackets to handle generics
-            syn::parse_str(&format!("{}", self.variant.field_type))
+            syn::parse_str(self.variant.field_type)
                 .unwrap_or_else(|_| panic!("Failed to parse type: {}", self.variant.field_type))
         })
     }

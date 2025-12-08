@@ -8,6 +8,7 @@ use gpui_table::GpuiTable;
 pub struct Item {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
+    #[allow(dead_code)]
     id: uuid::Uuid,
 
     #[gpui_table(width = 100.)]

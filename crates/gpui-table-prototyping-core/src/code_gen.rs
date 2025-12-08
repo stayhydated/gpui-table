@@ -1,9 +1,3 @@
-//! Code generation utilities for table view scaffolds.
-//!
-//! This module provides traits and adapters for generating table story code.
-//! The design allows consumers to access individual code generation components
-//! and assemble them with their own imports and structure.
-
 use gpui_table_core::registry::{ColumnVariant, GpuiTableShape};
 use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
@@ -62,10 +56,6 @@ pub trait TableIdentities {
 }
 
 /// Trait for generating different parts of the table story code.
-///
-/// This trait provides methods that return `Option<TokenStream>` for optional
-/// parts and `TokenStream` for required parts. Consumers can pick and choose
-/// which parts to use and how to assemble them.
 pub trait TableShape {
     /// Generate delegate state creation (e.g., `let delegate = ...;`)
     fn delegate_creation(&self) -> TokenStream;
@@ -120,24 +110,6 @@ impl TableIdentities for ShapeIdentities<'_> {
 }
 
 /// Adapter for generating code from a table shape.
-///
-/// This adapter provides access to both identities and code generation methods.
-/// Use with `TableIdentities` and `TableShape` traits.
-///
-/// # Example
-///
-/// ```ignore
-/// let adapter = TableShapeAdapter::new(shape);
-///
-/// // Access identities
-/// let struct_name = adapter.identities.struct_name();
-/// let story_ident = adapter.identities.story_struct_ident();
-///
-/// // Generate code components
-/// let delegate = adapter.delegate_creation();
-/// let table = adapter.table_state_creation();
-/// let fields = adapter.field_initializers();
-/// ```
 pub struct TableShapeAdapter<'a> {
     pub shape: &'a GpuiTableShape,
     pub identities: ShapeIdentities<'a>,
