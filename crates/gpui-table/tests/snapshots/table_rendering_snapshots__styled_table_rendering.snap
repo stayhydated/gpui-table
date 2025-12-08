@@ -1,0 +1,35 @@
+---
+source: crates/gpui-table/tests/table_rendering_snapshots.rs
+assertion_line: 93
+expression: "table_snapshot::<StyledRow>()"
+---
+table_id: custom-row
+title: Custom Row Table
+columns:
+  - key: name
+    title: Name
+    align: left
+    sort: default
+    width: 120
+    fixed: ~
+    resizable: true
+    movable: true
+    selectable: true
+  - key: score
+    title: Score
+    align: right
+    sort: descending
+    width: 80
+    fixed: left
+    resizable: false
+    movable: true
+    selectable: true
+  - key: email
+    title: Email Address
+    align: left
+    sort: ascending
+    width: 180
+    fixed: ~
+    resizable: true
+    movable: false
+    selectable: true

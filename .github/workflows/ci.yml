@@ -1,20 +1,71 @@
 name: ci
 
 on:
+  pull_request:
   push:
-    branches:
-      - not-ready-yet
+    branches: [not-ready-yet]
+
+env:
+  CARGO_TERM_COLOR: always
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Setup mold
+        uses: rui314/setup-mold@v1
+
+      - name: Run tests
+        run: cargo test --workspace --all-features
+
+  fmt:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Setup mold
+        uses: rui314/setup-mold@v1
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+  clippy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - name: Setup mold
+        uses: rui314/setup-mold@v1
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
+
+      - name: Lint code
+        run: cargo clippy --workspace --all-features --exclude cosmic-example -- -D warnings
+
   release-plz-release:
     name: Release-plz release
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == 'stayhydated' }}
+    needs: [test, fmt, clippy]
+    if: ${{ github.repository_owner == 'stayhydated' && github.event_name == 'push' }}
     permissions:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
@@ -22,6 +73,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Setup mold
         uses: rui314/setup-mold@v1
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
       - name: Run release-plz
         uses: release-plz/action@v0.5
         with:
@@ -29,12 +82,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.RELEASE_PLZ_TOKEN }}
           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-          ES_FLUENT_SKIP_BUILD: true
 
   release-plz-pr:
     name: Release-plz PR
     runs-on: ubuntu-latest
-    if: ${{ github.repository_owner == 'stayhydated' }}
+    needs: [test, fmt, clippy]
+    if: ${{ github.repository_owner == 'stayhydated' && github.event_name == 'push' }}
     permissions:
       pull-requests: write
       contents: write
@@ -43,7 +96,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
@@ -51,6 +104,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Setup mold
         uses: rui314/setup-mold@v1
+      - name: Install Linux dependencies
+        uses: ./.github/actions/install-linux-deps
 
       - name: Run release-plz
         uses: release-plz/action@v0.5

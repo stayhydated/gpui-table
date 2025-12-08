@@ -1,0 +1,35 @@
+---
+source: crates/gpui-table/tests/table_rendering_snapshots.rs
+assertion_line: 88
+expression: "table_snapshot::<BasicRow>()"
+---
+table_id: BasicRow
+title: BasicRow
+columns:
+  - key: name
+    title: Name
+    align: left
+    sort: ~
+    width: 100
+    fixed: ~
+    resizable: true
+    movable: true
+    selectable: true
+  - key: age
+    title: Age
+    align: left
+    sort: ~
+    width: 100
+    fixed: ~
+    resizable: true
+    movable: true
+    selectable: true
+  - key: active
+    title: Active
+    align: left
+    sort: ~
+    width: 100
+    fixed: ~
+    resizable: true
+    movable: true
+    selectable: true
