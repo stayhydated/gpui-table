@@ -144,7 +144,7 @@ pub trait TableRowMeta {
 /// Styling hooks for a table row.
 ///
 /// This trait allows customizing how rows and cells are rendered.
-/// The `NamedTableRow` derive macro generates a default implementation
+/// The `GpuiTable` derive macro generates a default implementation
 /// that uses `default_render_cell` and `default_render_row`.
 pub trait TableRowStyle: TableRowMeta {
     /// The type representing the columns of the table.

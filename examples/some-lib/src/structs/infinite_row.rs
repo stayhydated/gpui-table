@@ -4,24 +4,24 @@ use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
 use gpui::{AsyncWindowContext, Context, Window};
 use gpui_component::table::TableState;
-use gpui_table::NamedTableRow;
+use gpui_table::GpuiTable;
 use std::time::Duration;
 
-#[derive(Clone, Debug, Dummy, NamedTableRow, EsFluentKv)]
+#[derive(Clone, Debug, Dummy, GpuiTable, EsFluentKv)]
 #[fluent_kv(this, keys = ["description", "label"])]
-#[table(load_more = "Self::load_more_data")]
-#[table(fluent = "label")]
+#[gpui_table(load_more = "Self::load_more_data")]
+#[gpui_table(fluent = "label")]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
-    #[table(width = 80.)]
+    #[gpui_table(width = 80.)]
     pub id: u64,
 
     #[dummy(faker = "Name()")]
-    #[table(sortable)]
+    #[gpui_table(sortable)]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
-    #[table(width = 300.)]
+    #[gpui_table(width = 300.)]
     pub description: String,
 }
 

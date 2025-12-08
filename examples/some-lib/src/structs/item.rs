@@ -1,28 +1,28 @@
 use es_fluent::EsFluentKv;
 use fake::faker::{chrono::en::DateTime, color::en::Color, lorem::en::Word};
 use fake::uuid::UUIDv4;
-use gpui_table::NamedTableRow;
-#[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
+use gpui_table::GpuiTable;
+#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this)]
-#[table(fluent, custom_style)]
+#[gpui_table(fluent, custom_style)]
 pub struct Item {
-    #[table(skip)]
+    #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
     id: uuid::Uuid,
 
-    #[table(width = 100.)]
+    #[gpui_table(width = 100.)]
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[table(width = 80.)]
+    #[gpui_table(width = 80.)]
     #[dummy(faker = "Color()")]
     color: String,
 
-    #[table(width = 60.)]
+    #[gpui_table(width = 60.)]
     #[dummy(faker = "18..67")]
     weight: u8,
 
-    #[table(width = 50.)]
+    #[gpui_table(width = 250.)]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
 }

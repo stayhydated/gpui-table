@@ -2,7 +2,7 @@ use es_fluent::EsFluentKv;
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use gpui_table::{NamedTableRow, TableCell};
+use gpui_table::{GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
 #[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell)]
@@ -12,37 +12,37 @@ pub enum UserStatus {
     Offline,
 }
 
-#[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
+#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this, keys = ["description", "label"])]
-#[table(fluent = "label")]
+#[gpui_table(fluent = "label")]
 pub struct User {
-    #[table(skip)]
+    #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
     id: uuid::Uuid,
 
-    #[table(sortable, width = 150.)]
+    #[gpui_table(sortable, width = 150.)]
     #[dummy(faker = "Name()")]
     name: String,
 
-    #[table(sortable, width = 80.)]
+    #[gpui_table(sortable, width = 80.)]
     #[dummy(faker = "18..67")]
     age: u8,
 
-    #[table(sortable, width = 150.)]
+    #[gpui_table(sortable, width = 150.)]
     #[dummy(faker = "PositiveDecimal")]
     debt: Decimal,
 
-    #[table(width = 200.)]
+    #[gpui_table(width = 200.)]
     #[dummy(faker = "SafeEmail()")]
     email: String,
 
-    #[table(width = 70.)]
+    #[gpui_table(width = 70.)]
     active: bool,
 
-    #[table(width = 100.)]
+    #[gpui_table(width = 100.)]
     status: UserStatus,
 
-    #[table(sortable, width = 300.)]
+    #[gpui_table(sortable, width = 300.)]
     #[dummy(faker = "DateTime()")]
     created_at: chrono::DateTime<chrono::Utc>,
 }

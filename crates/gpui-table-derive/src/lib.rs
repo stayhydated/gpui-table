@@ -12,12 +12,12 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Ident, Path};
 
-#[proc_macro_derive(NamedTableRow, attributes(table))]
-pub fn derive_named_table_row(input: TokenStream) -> TokenStream {
+#[proc_macro_derive(GpuiTable, attributes(gpui_table))]
+pub fn derive_gpui_table(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
 
     match TableMeta::from_derive_input(&input) {
-        Ok(meta) => match expand_named_table_row(meta) {
+        Ok(meta) => match expand_gpui_table(meta) {
             Ok(ts) => ts.into(),
             Err(err) => err.to_compile_error().into(),
         },
@@ -26,7 +26,7 @@ pub fn derive_named_table_row(input: TokenStream) -> TokenStream {
 }
 
 #[derive(FromDeriveInput)]
-#[darling(attributes(table), supports(struct_named))]
+#[darling(attributes(gpui_table), supports(struct_named))]
 struct TableMeta {
     ident: Ident,
     data: darling::ast::Data<darling::util::Ignored, TableColumn>,
@@ -60,7 +60,7 @@ fn default_delegate() -> bool {
 }
 
 #[derive(FromField)]
-#[darling(attributes(table))]
+#[darling(attributes(gpui_table))]
 struct TableColumn {
     ident: Option<Ident>,
     ty: syn::Type,
@@ -81,7 +81,7 @@ struct TableColumn {
     skip: bool,
 }
 
-fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
+fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
     let TableMeta {
         ident: struct_name,
         data,
