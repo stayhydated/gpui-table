@@ -5,7 +5,7 @@ use gpui::{
     Styled, Window,
 };
 use gpui_component::{
-    table::{Table, TableState},
+    table::{Table, TableState, TableDelegate as _},
     v_flex,
 };
 use es_fluent::ToFluentString as _;
@@ -17,7 +17,7 @@ pub struct ItemTableStory {
 }
 impl gpui_storybook::Story for ItemTableStory {
     fn title() -> String {
-        ItemLabelKvFtl::this_ftl()
+        Item::this_ftl()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

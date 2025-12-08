@@ -1,13 +1,14 @@
-use es_fluent::ToFluentString as _;
+use some_lib::structs::user::*;
 use fake::Fake;
 use gpui::{
-    App, AppContext, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled, Window,
+    App, AppContext, Context, Entity, Focusable, IntoElement, ParentElement, Render,
+    Styled, Window,
 };
 use gpui_component::{
-    table::{Table, TableState},
+    table::{Table, TableState, TableDelegate as _},
     v_flex,
 };
-use some_lib::structs::user::*;
+use es_fluent::ToFluentString as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
@@ -16,7 +17,7 @@ pub struct UserTableStory {
 }
 impl gpui_storybook::Story for UserTableStory {
     fn title() -> String {
-        UserLabelKvFtl::this_ftl()
+        User::this_ftl()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

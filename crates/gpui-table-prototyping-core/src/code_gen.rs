@@ -1,153 +1,201 @@
 //! Code generation utilities for table view scaffolds.
+//!
+//! This module provides traits and adapters for generating table story code.
+//! The design allows consumers to access individual code generation components
+//! and assemble them with their own imports and structure.
 
-use gpui_table_core::registry::GpuiTableShape;
+use gpui_table_core::registry::{ColumnVariant, GpuiTableShape};
 use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
-/// Identities derived from a table shape.
-pub struct TableIdentities<'a>(&'a GpuiTableShape);
-
-impl<'a> TableIdentities<'a> {
-    pub fn new(shape: &'a GpuiTableShape) -> Self {
-        Self(shape)
-    }
-
+/// Trait for deriving various identifier names from a table shape.
+pub trait TableIdentities {
     /// The original struct name (e.g., "User")
-    pub fn struct_name(&self) -> &'static str {
-        self.0.struct_name
-    }
+    fn struct_name(&self) -> &'static str;
 
     /// The struct name as an identifier
-    pub fn struct_name_ident(&self) -> syn::Ident {
+    fn struct_name_ident(&self) -> syn::Ident {
         syn::parse_str(self.struct_name()).unwrap()
     }
 
     /// The table story struct name (e.g., "UserTableStory")
-    pub fn story_struct_ident(&self) -> syn::Ident {
+    fn story_struct_ident(&self) -> syn::Ident {
         format_ident!("{}TableStory", self.struct_name())
     }
 
     /// The table delegate struct name (e.g., "UserTableDelegate")
-    pub fn delegate_struct_ident(&self) -> syn::Ident {
+    fn delegate_struct_ident(&self) -> syn::Ident {
         format_ident!("{}TableDelegate", self.struct_name())
     }
 
     /// The table ID
-    pub fn table_id(&self) -> &'static str {
-        self.0.table_id
-    }
+    fn table_id(&self) -> &'static str;
+
+    /// The table title
+    fn table_title(&self) -> &'static str;
 
     /// The snake_case version of struct name for file paths
-    pub fn snake_case_name(&self) -> String {
+    fn snake_case_name(&self) -> String {
         self.struct_name().to_snake_case()
     }
 
+    /// Snake case name as identifier (for import paths)
+    fn snake_case_ident(&self) -> syn::Ident {
+        syn::parse_str(&self.snake_case_name()).unwrap()
+    }
+
     /// Fluent label enum identifier (e.g., "UserLabelKvFtl")
-    pub fn ftl_label_ident(&self) -> syn::Ident {
+    fn ftl_label_ident(&self) -> syn::Ident {
         format_ident!("{}LabelKvFtl", self.struct_name())
+    }
+
+    /// Fluent description enum identifier (e.g., "UserDescriptionKvFtl")
+    fn ftl_description_ident(&self) -> syn::Ident {
+        format_ident!("{}DescriptionKvFtl", self.struct_name())
+    }
+
+    /// The story ID literal (e.g., "user-table-story")
+    fn story_id_literal(&self) -> String {
+        format!("{}-table-story", self.snake_case_name().replace('_', "-"))
+    }
+}
+
+/// Trait for generating different parts of the table story code.
+///
+/// This trait provides methods that return `Option<TokenStream>` for optional
+/// parts and `TokenStream` for required parts. Consumers can pick and choose
+/// which parts to use and how to assemble them.
+pub trait TableShape {
+    /// Generate delegate state creation (e.g., `let delegate = ...;`)
+    fn delegate_creation(&self) -> TokenStream;
+
+    /// Generate table state creation (e.g., `let table = cx.new(...);`)
+    fn table_state_creation(&self) -> TokenStream;
+
+    /// Generate struct field initializers (for the Self { ... } block)
+    fn field_initializers(&self) -> TokenStream;
+
+    /// Generate struct field definitions (for the struct definition)
+    fn struct_fields(&self) -> TokenStream;
+
+    /// Generate render children (the .child(...) calls)
+    fn render_children(&self) -> TokenStream;
+
+    /// Generate story title expression
+    fn title_expr(&self) -> TokenStream;
+}
+
+/// Identities wrapper for GpuiTableShape
+pub struct ShapeIdentities<'a>(&'a GpuiTableShape);
+
+impl<'a> ShapeIdentities<'a> {
+    pub fn new(shape: &'a GpuiTableShape) -> Self {
+        Self(shape)
+    }
+
+    /// Get the underlying shape
+    pub fn shape(&self) -> &'a GpuiTableShape {
+        self.0
+    }
+
+    /// Get columns
+    pub fn columns(&self) -> &'static [ColumnVariant] {
+        self.0.columns
+    }
+}
+
+impl TableIdentities for ShapeIdentities<'_> {
+    fn struct_name(&self) -> &'static str {
+        self.0.struct_name
+    }
+
+    fn table_id(&self) -> &'static str {
+        self.0.table_id
+    }
+
+    fn table_title(&self) -> &'static str {
+        self.0.table_title
     }
 }
 
 /// Adapter for generating code from a table shape.
+///
+/// This adapter provides access to both identities and code generation methods.
+/// Use with `TableIdentities` and `TableShape` traits.
+///
+/// # Example
+///
+/// ```ignore
+/// let adapter = TableShapeAdapter::new(shape);
+///
+/// // Access identities
+/// let struct_name = adapter.identities.struct_name();
+/// let story_ident = adapter.identities.story_struct_ident();
+///
+/// // Generate code components
+/// let delegate = adapter.delegate_creation();
+/// let table = adapter.table_state_creation();
+/// let fields = adapter.field_initializers();
+/// ```
 pub struct TableShapeAdapter<'a> {
     pub shape: &'a GpuiTableShape,
-    pub identities: TableIdentities<'a>,
+    pub identities: ShapeIdentities<'a>,
 }
 
 impl<'a> TableShapeAdapter<'a> {
     pub fn new(shape: &'a GpuiTableShape) -> Self {
         Self {
             shape,
-            identities: TableIdentities::new(shape),
-        }
-    }
-
-    /// Generate the full table story module code.
-    pub fn generate_story_code(&self) -> TokenStream {
-        let struct_name_ident = self.identities.struct_name_ident();
-        let story_struct_ident = self.identities.story_struct_ident();
-        let delegate_struct_ident = self.identities.delegate_struct_ident();
-        let snake_case_name = self.identities.snake_case_name();
-        let ftl_label_ident = self.identities.ftl_label_ident();
-
-        let import_path = syn::parse_str::<syn::Ident>(&snake_case_name).unwrap();
-
-        quote! {
-            use some_lib::structs::#import_path::*;
-            use fake::Fake;
-            use gpui::{
-                App, AppContext, Context, Entity, Focusable, IntoElement,
-                ParentElement, Render, Styled, Window,
-            };
-            use gpui_component::{
-                table::{Table, TableState},
-                v_flex,
-            };
-            use es_fluent::ToFluentString as _;
-
-            #[gpui_storybook::story_init]
-            pub fn init(_cx: &mut App) {}
-
-            #[gpui_storybook::story]
-            pub struct #story_struct_ident {
-                table: Entity<TableState<#delegate_struct_ident>>,
-            }
-
-            impl gpui_storybook::Story for #story_struct_ident {
-                fn title() -> String {
-                    #ftl_label_ident::this_ftl()
-                }
-
-                fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
-                    Self::view(window, cx)
-                }
-            }
-
-            impl Focusable for #story_struct_ident {
-                fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
-                    self.table.focus_handle(cx)
-                }
-            }
-
-            impl #story_struct_ident {
-                pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
-                    cx.new(|cx| Self::new(window, cx))
-                }
-
-                fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-                    let mut delegate = #delegate_struct_ident::new(vec![]);
-                    for _ in 0..100 {
-                        delegate.rows.push(fake::Faker.fake());
-                    }
-
-                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                    Self { table }
-                }
-            }
-
-            impl Render for #story_struct_ident {
-                fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-                    let table = &self.table.read(cx);
-                    let delegate = table.delegate();
-                    let rows_count = delegate.rows_count(cx);
-
-                    v_flex()
-                        .size_full()
-                        .text_sm()
-                        .gap_4()
-                        .child(format!("Total Rows: {}", rows_count))
-                        .child(Table::new(&self.table))
-                }
-            }
+            identities: ShapeIdentities::new(shape),
         }
     }
 }
 
-/// Generate a complete syn::File from the table shape.
-pub fn generate_table_story(shape: &GpuiTableShape) -> syn::File {
-    let adapter = TableShapeAdapter::new(shape);
-    let tokens = adapter.generate_story_code();
-    syn::parse2(tokens).expect("Failed to parse generated table story code")
+impl TableShape for TableShapeAdapter<'_> {
+    fn delegate_creation(&self) -> TokenStream {
+        let delegate_struct_ident = self.identities.delegate_struct_ident();
+
+        quote! {
+            let mut delegate = #delegate_struct_ident::new(vec![]);
+            for _ in 0..100 {
+                delegate.rows.push(fake::Faker.fake());
+            }
+        }
+    }
+
+    fn table_state_creation(&self) -> TokenStream {
+        quote! {
+            let table = cx.new(|cx| TableState::new(delegate, window, cx));
+        }
+    }
+
+    fn field_initializers(&self) -> TokenStream {
+        quote! {
+            table,
+        }
+    }
+
+    fn struct_fields(&self) -> TokenStream {
+        let delegate_struct_ident = self.identities.delegate_struct_ident();
+
+        quote! {
+            table: Entity<TableState<#delegate_struct_ident>>,
+        }
+    }
+
+    fn render_children(&self) -> TokenStream {
+        quote! {
+            .child(format!("Total Rows: {}", rows_count))
+            .child(Table::new(&self.table))
+        }
+    }
+
+    fn title_expr(&self) -> TokenStream {
+        let struct_name_ident = self.identities.struct_name_ident();
+
+        quote! {
+            #struct_name_ident::this_ftl()
+        }
+    }
 }
