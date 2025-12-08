@@ -2,7 +2,6 @@ use es_fluent::EsFluentKv;
 use fake::faker::{chrono::en::DateTime, color::en::Color, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use gpui_table::NamedTableRow;
-
 #[derive(fake::Dummy, EsFluentKv, NamedTableRow)]
 #[fluent_kv(this)]
 #[table(fluent, custom_style)]

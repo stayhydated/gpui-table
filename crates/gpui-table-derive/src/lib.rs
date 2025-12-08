@@ -308,7 +308,7 @@ fn determine_title_expr(
         let field_name = ident.to_string().to_pascal_case();
         let fluent_variant_ident = Ident::new(&field_name, ident.span());
 
-        quote! { #fluent_enum_ident::#fluent_variant_ident.to_string() }
+        quote! { { use es_fluent::ToFluentString as _; #fluent_enum_ident::#fluent_variant_ident.to_fluent_string() } }
     } else {
         let raw_title = ident.to_string().to_title_case();
         quote! { #raw_title }

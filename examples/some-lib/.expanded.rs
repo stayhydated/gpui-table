@@ -448,7 +448,8 @@ pub mod structs {
         }
     }
     pub mod item {
-        use es_fluent::EsFluentKv;
+        use es_fluent::ToFluentString as _;
+        use es_fluent::{EsFluentKv, FluentDisplay};
         use fake::faker::{chrono::en::DateTime, color::en::Color, lorem::en::Word};
         use fake::uuid::UUIDv4;
         use gpui_table::NamedTableRow;
@@ -509,8 +510,11 @@ pub mod structs {
             Weight,
             AcquiredOn,
         }
-        impl ::std::fmt::Display for ItemKvFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        impl ::es_fluent::FluentDisplay for ItemKvFtl {
+            fn fluent_fmt(
+                &self,
+                f: &mut ::std::fmt::Formatter<'_>,
+            ) -> ::std::fmt::Result {
                 match self {
                     Self::Id => {
                         f.write_fmt(
@@ -557,7 +561,8 @@ pub mod structs {
         }
         impl From<&ItemKvFtl> for ::es_fluent::FluentValue<'_> {
             fn from(value: &ItemKvFtl) -> Self {
-                value.to_string().into()
+                use ::es_fluent::ToFluentString as _;
+                value.to_fluent_string().into()
             }
         }
         impl From<ItemKvFtl> for ::es_fluent::FluentValue<'_> {
@@ -658,22 +663,34 @@ pub mod structs {
                         ::alloc::boxed::box_new([
                             gpui_component::table::Column::new(
                                     "name",
-                                    ItemKvFtl::Name.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        ItemKvFtl::Name.to_fluent_string()
+                                    },
                                 )
                                 .width(100f32),
                             gpui_component::table::Column::new(
                                     "color",
-                                    ItemKvFtl::Color.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        ItemKvFtl::Color.to_fluent_string()
+                                    },
                                 )
                                 .width(80f32),
                             gpui_component::table::Column::new(
                                     "weight",
-                                    ItemKvFtl::Weight.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        ItemKvFtl::Weight.to_fluent_string()
+                                    },
                                 )
                                 .width(60f32),
                             gpui_component::table::Column::new(
                                     "acquired_on",
-                                    ItemKvFtl::AcquiredOn.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        ItemKvFtl::AcquiredOn.to_fluent_string()
+                                    },
                                 )
                                 .width(50f32),
                         ]),
@@ -1016,8 +1033,11 @@ pub mod structs {
             Status,
             CreatedAt,
         }
-        impl ::std::fmt::Display for UserDescriptionKvFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        impl ::es_fluent::FluentDisplay for UserDescriptionKvFtl {
+            fn fluent_fmt(
+                &self,
+                f: &mut ::std::fmt::Formatter<'_>,
+            ) -> ::std::fmt::Result {
                 match self {
                     Self::Id => {
                         f.write_fmt(
@@ -1102,7 +1122,8 @@ pub mod structs {
         }
         impl From<&UserDescriptionKvFtl> for ::es_fluent::FluentValue<'_> {
             fn from(value: &UserDescriptionKvFtl) -> Self {
-                value.to_string().into()
+                use ::es_fluent::ToFluentString as _;
+                value.to_fluent_string().into()
             }
         }
         impl From<UserDescriptionKvFtl> for ::es_fluent::FluentValue<'_> {
@@ -1120,8 +1141,11 @@ pub mod structs {
             Status,
             CreatedAt,
         }
-        impl ::std::fmt::Display for UserLabelKvFtl {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+        impl ::es_fluent::FluentDisplay for UserLabelKvFtl {
+            fn fluent_fmt(
+                &self,
+                f: &mut ::std::fmt::Formatter<'_>,
+            ) -> ::std::fmt::Result {
                 match self {
                     Self::Id => {
                         f.write_fmt(
@@ -1197,7 +1221,8 @@ pub mod structs {
         }
         impl From<&UserLabelKvFtl> for ::es_fluent::FluentValue<'_> {
             fn from(value: &UserLabelKvFtl) -> Self {
-                value.to_string().into()
+                use ::es_fluent::ToFluentString as _;
+                value.to_fluent_string().into()
             }
         }
         impl From<UserLabelKvFtl> for ::es_fluent::FluentValue<'_> {
@@ -1310,40 +1335,61 @@ pub mod structs {
                         ::alloc::boxed::box_new([
                             gpui_component::table::Column::new(
                                     "name",
-                                    UserLabelKvFtl::Name.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Name.to_fluent_string()
+                                    },
                                 )
                                 .width(150f32)
                                 .sortable(),
                             gpui_component::table::Column::new(
                                     "age",
-                                    UserLabelKvFtl::Age.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Age.to_fluent_string()
+                                    },
                                 )
                                 .width(80f32)
                                 .sortable(),
                             gpui_component::table::Column::new(
                                     "debt",
-                                    UserLabelKvFtl::Debt.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Debt.to_fluent_string()
+                                    },
                                 )
                                 .width(150f32)
                                 .sortable(),
                             gpui_component::table::Column::new(
                                     "email",
-                                    UserLabelKvFtl::Email.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Email.to_fluent_string()
+                                    },
                                 )
                                 .width(200f32),
                             gpui_component::table::Column::new(
                                     "active",
-                                    UserLabelKvFtl::Active.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Active.to_fluent_string()
+                                    },
                                 )
                                 .width(70f32),
                             gpui_component::table::Column::new(
                                     "status",
-                                    UserLabelKvFtl::Status.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::Status.to_fluent_string()
+                                    },
                                 )
                                 .width(100f32),
                             gpui_component::table::Column::new(
                                     "created_at",
-                                    UserLabelKvFtl::CreatedAt.to_string(),
+                                    {
+                                        use es_fluent::ToFluentString as _;
+                                        UserLabelKvFtl::CreatedAt.to_fluent_string()
+                                    },
                                 )
                                 .width(300f32)
                                 .sortable(),
