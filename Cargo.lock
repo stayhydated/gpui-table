@@ -2841,7 +2841,46 @@ dependencies = [
  "chrono",
  "enum-iterator",
  "gpui",
- "gpui-component-macros",
+ "gpui-component-macros 0.4.2",
+ "gpui-macros",
+ "html5ever",
+ "itertools 0.13.0",
+ "lsp-types",
+ "markdown",
+ "markup5ever_rcdom",
+ "notify",
+ "num-traits",
+ "once_cell",
+ "paste",
+ "regex",
+ "ropey",
+ "rust-i18n",
+ "schemars",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "smallvec",
+ "smol",
+ "tracing",
+ "tree-sitter",
+ "tree-sitter-json",
+ "unicode-segmentation",
+ "uuid",
+ "zed-sum-tree",
+]
+
+[[package]]
+name = "gpui-component"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2dda822a7bab4e0a08a4276ba68e2f82cc5855bf0b377d7b195c58c8061dc7d1"
+dependencies = [
+ "aho-corasick",
+ "anyhow",
+ "chrono",
+ "enum-iterator",
+ "gpui",
+ "gpui-component-macros 0.5.0",
  "gpui-macros",
  "html5ever",
  "itertools 0.13.0",
@@ -2892,6 +2931,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-component-macros"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "581a8cd1e38b2fd86d1029dd56a3296ffd1388fda295054104d89923755de902"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "gpui-macros"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2911,7 +2961,7 @@ checksum = "c0501de8a8ccfa104187db7c8b744ccf25de9555e423248ce4cb6344667fe56f"
 dependencies = [
  "anyhow",
  "gpui",
- "gpui-component",
+ "gpui-component 0.4.2",
  "gpui-storybook-core",
  "gpui-storybook-macros",
  "inventory",
@@ -2932,7 +2982,7 @@ dependencies = [
  "es-fluent-build",
  "es-fluent-manager-embedded",
  "gpui",
- "gpui-component",
+ "gpui-component 0.4.2",
  "gpui-component-assets",
  "inventory",
  "log",
@@ -2968,7 +3018,7 @@ dependencies = [
  "derive-new",
  "es-fluent",
  "gpui",
- "gpui-component",
+ "gpui-component 0.5.0",
  "gpui-table-core",
  "gpui-table-derive",
  "inventory",
@@ -2987,7 +3037,7 @@ dependencies = [
  "derive_more 2.1.0",
  "es-fluent",
  "gpui",
- "gpui-component",
+ "gpui-component 0.5.0",
  "inventory",
  "jiff",
  "paste",
@@ -6276,7 +6326,7 @@ dependencies = [
  "es-fluent-manager-embedded",
  "fake",
  "gpui",
- "gpui-component",
+ "gpui-component 0.5.0",
  "gpui-table",
  "rust-embed",
  "rust_decimal",
@@ -6294,7 +6344,7 @@ dependencies = [
  "es-fluent-manager-embedded",
  "fake",
  "gpui",
- "gpui-component",
+ "gpui-component 0.5.0",
  "gpui-storybook",
  "inventory",
  "rust-embed",
