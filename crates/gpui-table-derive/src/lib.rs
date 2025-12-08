@@ -375,6 +375,7 @@ fn generate_delegate(
     threshold: Option<usize>,
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
+    let has_load_more = load_more.is_some();
 
     let load_more_impl = if let Some(load_fn) = load_more {
         quote! {
@@ -386,20 +387,6 @@ fn generate_delegate(
         quote! {}
     };
 
-    let eof_impl = if let Some(field) = eof {
-        quote! {
-            fn is_eof(&self, app: &#App) -> bool {
-                self.#field(app)
-            }
-        }
-    } else {
-        quote! {
-            fn is_eof(&self, _: &#App) -> bool {
-                self.eof
-            }
-        }
-    };
-
     let loading_impl = if let Some(field) = loading {
         quote! {
             fn loading(&self, app: &#App) -> bool {
@@ -409,9 +396,33 @@ fn generate_delegate(
     } else {
         quote! {
             fn loading(&self, _: &#App) -> bool {
-                self.loading
+                self.full_loading
             }
         }
+    };
+
+    let is_eof_impl = if has_load_more {
+        if let Some(field) = eof {
+            quote! {
+                fn is_eof(&self, _: &#App) -> bool {
+                    if self.loading {
+                        return false;
+                    }
+                    !self.#field
+                }
+            }
+        } else {
+            quote! {
+                fn is_eof(&self, _: &#App) -> bool {
+                    if self.loading {
+                        return false;
+                    }
+                    !self.eof
+                }
+            }
+        }
+    } else {
+        quote! {}
     };
 
     let threshold_impl = if let Some(val) = threshold {
@@ -482,8 +493,8 @@ fn generate_delegate(
                 self.visible_cols = visible_range;
             }
 
-            #eof_impl
             #loading_impl
+            #is_eof_impl
             #load_more_impl
             #threshold_impl
 

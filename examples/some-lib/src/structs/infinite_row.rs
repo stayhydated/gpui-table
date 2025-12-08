@@ -2,7 +2,7 @@ use es_fluent::EsFluentKv;
 use fake::faker::lorem::en::Sentence;
 use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
-use gpui::{AsyncWindowContext, Context, Window};
+use gpui::{Context, Window};
 use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
 use std::time::Duration;
