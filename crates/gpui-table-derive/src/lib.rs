@@ -494,11 +494,6 @@ fn generate_delegate(
                     full_loading: false,
                 }
             }
-
-            /// Refreshes the column definitions to pick up i18n/locale changes.
-            pub fn refresh_columns(&mut self) {
-                self.columns = <#struct_name as gpui_table::TableRowMeta>::table_columns();
-            }
         }
 
         impl #TableDelegate for #delegate_name {
