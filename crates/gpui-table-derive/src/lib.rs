@@ -482,7 +482,6 @@ fn generate_delegate(
         }
 
         impl #delegate_name {
-            /// Creates a new delegate with the given rows.
             pub fn new(rows: Vec<#struct_name>) -> Self {
                 Self {
                     rows,

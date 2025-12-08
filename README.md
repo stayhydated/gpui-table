@@ -173,7 +173,6 @@ pub struct InfiniteRowTableDelegate {
     pub full_loading: bool,
 }
 impl InfiniteRowTableDelegate {
-    /// Creates a new delegate with the given rows.
     pub fn new(rows: Vec<InfiniteRow>) -> Self {
         Self {
             rows,
