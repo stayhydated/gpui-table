@@ -109,31 +109,38 @@ impl gpui_table::TableRowMeta for InfiniteRow {
     fn table_title() -> String {
         InfiniteRowLabelKvFtl::this_ftl()
     }
-    fn table_columns() -> &'static [gpui_component::table::Column] {
-        static COLUMNS: std::sync::OnceLock<Vec<gpui_component::table::Column>> =
-            std::sync::OnceLock::new();
-        COLUMNS.get_or_init(|| {
-            <[_]>::into_vec(::alloc::boxed::box_new([
-                gpui_component::table::Column::new("id", {
-                    use es_fluent::ToFluentString as _;
-                    InfiniteRowLabelKvFtl::Id.to_fluent_string()
-                })
-                .width(80f32)
-                .resizable(false)
-                .movable(false),
-                gpui_component::table::Column::new("name", {
-                    use es_fluent::ToFluentString as _;
-                    InfiniteRowLabelKvFtl::Name.to_fluent_string()
-                })
-                .width(100f32)
-                .ascending(),
-                gpui_component::table::Column::new("description", {
-                    use es_fluent::ToFluentString as _;
-                    InfiniteRowLabelKvFtl::Description.to_fluent_string()
-                })
-                .width(300f32),
-            ]))
-        })
+    fn table_columns() -> Vec<gpui_component::table::Column> {
+        <[_]>::into_vec(
+            ::alloc::boxed::box_new([
+                gpui_component::table::Column::new(
+                        "id",
+                        {
+                            use es_fluent::ToFluentString as _;
+                            InfiniteRowLabelKvFtl::Id.to_fluent_string()
+                        },
+                    )
+                    .width(80f32)
+                    .resizable(false)
+                    .movable(false),
+                gpui_component::table::Column::new(
+                        "name",
+                        {
+                            use es_fluent::ToFluentString as _;
+                            InfiniteRowLabelKvFtl::Name.to_fluent_string()
+                        },
+                    )
+                    .width(100f32)
+                    .ascending(),
+                gpui_component::table::Column::new(
+                        "description",
+                        {
+                            use es_fluent::ToFluentString as _;
+                            InfiniteRowLabelKvFtl::Description.to_fluent_string()
+                        },
+                    )
+                    .width(300f32),
+            ]),
+        )
     }
     fn cell_value(&self, col_ix: usize) -> Box<dyn gpui_table::TableCell + '_> {
         match col_ix {
@@ -158,39 +165,42 @@ impl gpui_table::TableRowStyle for InfiniteRow {
 }
 pub struct InfiniteRowTableDelegate {
     pub rows: Vec<InfiniteRow>,
-    #[new(default)]
+    columns: Vec<gpui_component::table::Column>,
     pub visible_rows: std::ops::Range<usize>,
-    #[new(default)]
     pub visible_cols: std::ops::Range<usize>,
-    #[new(default)]
     pub eof: bool,
-    #[new(default)]
     pub loading: bool,
-    #[new(default)]
     pub full_loading: bool,
 }
 impl InfiniteRowTableDelegate {
-    ///Constructs a new `InfiniteRowTableDelegate`.
     pub fn new(rows: Vec<InfiniteRow>) -> Self {
-        InfiniteRowTableDelegate {
+        Self {
             rows,
-            visible_rows: ::core::default::Default::default(),
-            visible_cols: ::core::default::Default::default(),
-            eof: ::core::default::Default::default(),
-            loading: ::core::default::Default::default(),
-            full_loading: ::core::default::Default::default(),
+            columns: <InfiniteRow as gpui_table::TableRowMeta>::table_columns(),
+            visible_rows: Default::default(),
+            visible_cols: Default::default(),
+            eof: false,
+            loading: false,
+            full_loading: false,
         }
     }
 }
 impl gpui_component::table::TableDelegate for InfiniteRowTableDelegate {
     fn columns_count(&self, _: &gpui::App) -> usize {
-        <InfiniteRow as gpui_table::TableRowMeta>::table_columns().len()
+        self.columns.len()
     }
     fn rows_count(&self, _: &gpui::App) -> usize {
         self.rows.len()
     }
-    fn column(&self, col_ix: usize, _: &gpui::App) -> &gpui_component::table::Column {
-        &<InfiniteRow as gpui_table::TableRowMeta>::table_columns()[col_ix]
+    fn column(
+        &self,
+        col_ix: usize,
+        _: &gpui::App,
+    ) -> gpui_component::table::Column {
+        <InfiniteRow as gpui_table::TableRowMeta>::table_columns()
+            .into_iter()
+            .nth(col_ix)
+            .expect("Invalid column index")
     }
     fn render_td(
         &mut self,
@@ -200,7 +210,8 @@ impl gpui_component::table::TableDelegate for InfiniteRowTableDelegate {
         cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
     ) -> impl gpui::IntoElement {
         use gpui_table::TableRowStyle;
-        self.rows[row_ix].render_table_cell(InfiniteRowTableColumn::from(col_ix), window, cx)
+        self.rows[row_ix]
+            .render_table_cell(InfiniteRowTableColumn::from(col_ix), window, cx)
     }
     fn visible_rows_changed(
         &mut self,
@@ -221,7 +232,7 @@ impl gpui_component::table::TableDelegate for InfiniteRowTableDelegate {
     fn loading(&self, _: &gpui::App) -> bool {
         self.full_loading
     }
-    fn is_eof(&self, _: &gpui::App) -> bool {
+    fn has_more(&self, _: &gpui::App) -> bool {
         if self.loading {
             return false;
         }
@@ -246,21 +257,26 @@ impl gpui_component::table::TableDelegate for InfiniteRowTableDelegate {
     ) {
         match col_ix {
             1usize => {
-                self.rows.sort_by(|a, b| {
-                    let a_val = &a.name;
-                    let b_val = &b.name;
-                    match sort {
-                        gpui_component::table::ColumnSort::Ascending => a_val
-                            .partial_cmp(b_val)
-                            .unwrap_or(std::cmp::Ordering::Equal),
-                        gpui_component::table::ColumnSort::Descending => b_val
-                            .partial_cmp(a_val)
-                            .unwrap_or(std::cmp::Ordering::Equal),
-                        _ => std::cmp::Ordering::Equal,
-                    }
-                });
-            },
-            _ => {},
+                self.rows
+                    .sort_by(|a, b| {
+                        let a_val = &a.name;
+                        let b_val = &b.name;
+                        match sort {
+                            gpui_component::table::ColumnSort::Ascending => {
+                                a_val
+                                    .partial_cmp(b_val)
+                                    .unwrap_or(std::cmp::Ordering::Equal)
+                            }
+                            gpui_component::table::ColumnSort::Descending => {
+                                b_val
+                                    .partial_cmp(a_val)
+                                    .unwrap_or(std::cmp::Ordering::Equal)
+                            }
+                            _ => std::cmp::Ordering::Equal,
+                        }
+                    });
+            }
+            _ => {}
         }
     }
 }

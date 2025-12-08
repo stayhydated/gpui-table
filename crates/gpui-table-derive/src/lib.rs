@@ -346,11 +346,10 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
 
             #table_title_impl
 
-            fn table_columns() -> &'static [#Column] {
-                static COLUMNS: std::sync::OnceLock<Vec<#Column>> = std::sync::OnceLock::new();
-                COLUMNS.get_or_init(|| vec![
+            fn table_columns() -> Vec<#Column> {
+                vec![
                     #(#columns_init),*
-                ])
+                ]
             }
 
             fn cell_value(&self, col_ix: usize) -> Box<dyn gpui_table::TableCell + '_> {
@@ -435,19 +434,19 @@ fn generate_delegate(
         }
     };
 
-    let is_eof_impl = if has_load_more {
+    let has_more_impl = if has_load_more {
         if let Some(field) = eof {
             quote! {
-                fn is_eof(&self, app: &#App) -> bool {
+                fn has_more(&self, app: &#App) -> bool {
                     if self.loading {
                         return false;
                     }
-                    self.#field(app)
+                    !self.#field(app)
                 }
             }
         } else {
             quote! {
-                fn is_eof(&self, _: &#App) -> bool {
+                fn has_more(&self, _: &#App) -> bool {
                     if self.loading {
                         return false;
                     }
@@ -469,33 +468,47 @@ fn generate_delegate(
         quote! {}
     };
 
+    let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
+
     quote! {
-        #[derive(gpui_table::derive_new::new)]
         pub struct #delegate_name {
             pub rows: Vec<#struct_name>,
-            #[new(default)]
+            columns: Vec<#Column>,
             pub visible_rows: std::ops::Range<usize>,
-            #[new(default)]
             pub visible_cols: std::ops::Range<usize>,
-            #[new(default)]
             pub eof: bool,
-            #[new(default)]
             pub loading: bool,
-            #[new(default)]
             pub full_loading: bool,
+        }
+
+        impl #delegate_name {
+            pub fn new(rows: Vec<#struct_name>) -> Self {
+                Self {
+                    rows,
+                    columns: #columns_init_expr,
+                    visible_rows: Default::default(),
+                    visible_cols: Default::default(),
+                    eof: false,
+                    loading: false,
+                    full_loading: false,
+                }
+            }
         }
 
         impl #TableDelegate for #delegate_name {
             fn columns_count(&self, _: &#App) -> usize {
-                <#struct_name as gpui_table::TableRowMeta>::table_columns().len()
+                self.columns.len()
             }
 
             fn rows_count(&self, _: &#App) -> usize {
                 self.rows.len()
             }
 
-            fn column(&self, col_ix: usize, _: &#App) -> &#Column {
-                &<#struct_name as gpui_table::TableRowMeta>::table_columns()[col_ix]
+            fn column(&self, col_ix: usize, _: &#App) -> #Column {
+                <#struct_name as gpui_table::TableRowMeta>::table_columns()
+                    .into_iter()
+                    .nth(col_ix)
+                    .expect("Invalid column index")
             }
 
             fn render_td(
@@ -528,7 +541,7 @@ fn generate_delegate(
             }
 
             #loading_impl
-            #is_eof_impl
+            #has_more_impl
             #load_more_impl
             #threshold_impl
 
