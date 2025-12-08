@@ -2832,45 +2832,6 @@ dependencies = [
 
 [[package]]
 name = "gpui-component"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd41a5808ef0eba74d7af77913dcca5f647f783bf1e0114726e2b01d7fbd194f"
-dependencies = [
- "aho-corasick",
- "anyhow",
- "chrono",
- "enum-iterator",
- "gpui",
- "gpui-component-macros 0.4.2",
- "gpui-macros",
- "html5ever",
- "itertools 0.13.0",
- "lsp-types",
- "markdown",
- "markup5ever_rcdom",
- "notify",
- "num-traits",
- "once_cell",
- "paste",
- "regex",
- "ropey",
- "rust-i18n",
- "schemars",
- "serde",
- "serde_json",
- "serde_repr",
- "smallvec",
- "smol",
- "tracing",
- "tree-sitter",
- "tree-sitter-json",
- "unicode-segmentation",
- "uuid",
- "zed-sum-tree",
-]
-
-[[package]]
-name = "gpui-component"
 version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dda822a7bab4e0a08a4276ba68e2f82cc5855bf0b377d7b195c58c8061dc7d1"
@@ -2880,7 +2841,7 @@ dependencies = [
  "chrono",
  "enum-iterator",
  "gpui",
- "gpui-component-macros 0.5.0",
+ "gpui-component-macros",
  "gpui-macros",
  "html5ever",
  "itertools 0.13.0",
@@ -2910,24 +2871,13 @@ dependencies = [
 
 [[package]]
 name = "gpui-component-assets"
-version = "0.4.2"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3c1c9651d87a0682396dce011cca6d7c58bfce72a6bb71144ca0cff4ddfcd925"
+checksum = "5842ea3f1e596fbc611894dcc0266df7125bc226f603ca313f5460b700503564"
 dependencies = [
  "anyhow",
  "gpui",
  "rust-embed",
-]
-
-[[package]]
-name = "gpui-component-macros"
-version = "0.4.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc45eec82efdcc1b852ed14479bd41940c7de21e7b4a2c462d53db4d9823cebd"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.111",
 ]
 
 [[package]]
@@ -2955,13 +2905,13 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c0501de8a8ccfa104187db7c8b744ccf25de9555e423248ce4cb6344667fe56f"
+checksum = "4bda3fc2b3aa5d6060b394c3f979bc54a4ff300f77fc4dc8e4759cb26b7a5dc2"
 dependencies = [
  "anyhow",
  "gpui",
- "gpui-component 0.4.2",
+ "gpui-component",
  "gpui-storybook-core",
  "gpui-storybook-macros",
  "inventory",
@@ -2973,16 +2923,16 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-core"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e270e6f7904a80254605eb6dd650152f337016712807e15405f26e92bcc921bc"
+checksum = "20c84c57dd30bb63687b10764a370a7cf84da54232a07d1175240f6f066a5718"
 dependencies = [
  "anyhow",
  "es-fluent",
  "es-fluent-build",
  "es-fluent-manager-embedded",
  "gpui",
- "gpui-component 0.4.2",
+ "gpui-component",
  "gpui-component-assets",
  "inventory",
  "log",
@@ -2998,9 +2948,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-macros"
-version = "0.4.3"
+version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "69ac068344f55853745223cc0c27a20635c1ec883f950682e7d7b43b3f33f00c"
+checksum = "5621740b3fdce7548aa796ca578c5dba5b1fa7acfa8fb2b456109461a318528e"
 dependencies = [
  "gpui-storybook-core",
  "heck 0.5.0",
@@ -3012,13 +2962,13 @@ dependencies = [
 
 [[package]]
 name = "gpui-table"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "derive-new",
  "es-fluent",
  "gpui",
- "gpui-component 0.5.0",
+ "gpui-component",
  "gpui-table-core",
  "gpui-table-derive",
  "inventory",
@@ -3030,14 +2980,14 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "anyhow",
  "chrono",
  "derive_more 2.1.0",
  "es-fluent",
  "gpui",
- "gpui-component 0.5.0",
+ "gpui-component",
  "inventory",
  "jiff",
  "paste",
@@ -3053,7 +3003,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-derive"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "crate-paths",
  "darling 0.21.3",
@@ -3067,7 +3017,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-prototyping-core"
-version = "0.4.0"
+version = "0.5.0"
 dependencies = [
  "gpui-table-core",
  "heck 0.5.0",
@@ -6326,7 +6276,7 @@ dependencies = [
  "es-fluent-manager-embedded",
  "fake",
  "gpui",
- "gpui-component 0.5.0",
+ "gpui-component",
  "gpui-table",
  "rust-embed",
  "rust_decimal",
@@ -6344,7 +6294,7 @@ dependencies = [
  "es-fluent-manager-embedded",
  "fake",
  "gpui",
- "gpui-component 0.5.0",
+ "gpui-component",
  "gpui-storybook",
  "inventory",
  "rust-embed",

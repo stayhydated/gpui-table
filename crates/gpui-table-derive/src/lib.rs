@@ -454,11 +454,11 @@ fn generate_delegate(
             }
 
             fn render_td(
-                &self,
+                &mut self,
                 row_ix: usize,
                 col_ix: usize,
                 window: &mut #Window,
-                cx: &mut #App,
+                cx: &mut #Context<#TableState<Self>>,
             ) -> impl #IntoElement {
                 use gpui_table::TableRowStyle;
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
