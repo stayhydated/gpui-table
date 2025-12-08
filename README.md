@@ -8,9 +8,9 @@
 
 ## Compatibility
 
-| `gpui-table` | `gpui-component` | `gpui`  |
-| :--------------- | :--------------- | :------ |
-| `0.4.0`          | `0.4.1`          | `0.2.2` |
+| `gpui-table` | `gpui-component` |
+| :----------- | :--------------- |
+| `0.5.x`      | `0.5.x`          |
 
 ## Examples
 

@@ -18,7 +18,7 @@ publish = true
 readme = "README.md"
 repository = "https://github.com/stayhydated/gpui-table"
 rust-version = "1.88"
-version = "0.4.0"
+version = "0.5.0"
 
 [workspace.dependencies]
 anyhow = "1.0.96"
@@ -39,12 +39,12 @@ fake = "4.4.0"
 fluent-bundle = "0.15.3"
 futures = "0.3.31"
 gpui = "0.2.2"
-gpui-component = "0.4.1"
-gpui-storybook = "0.4.2"
-gpui-table = { path = "crates/gpui-table", version = "0.4.0" }
-gpui-table-core = { path = "crates/gpui-table-core", version = "0.4.0" }
-gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.4.0" }
-gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.4.0" }
+gpui-component = "0.5.0"
+gpui-storybook = "0.5.0"
+gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
+gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }
+gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
+gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
 heck = "0.5.0"
 inventory = "0.3.20"
 itertools = "0.14.0"
