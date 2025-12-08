@@ -3,7 +3,7 @@ name: ci
 on:
   pull_request:
   push:
-    branches: [not-ready-yet]
+    branches: [master]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
       - name: Setup mold
@@ -26,15 +26,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt
       - name: Setup mold
         uses: rui314/setup-mold@v1
-      - name: Install Linux dependencies
-        uses: ./.github/actions/install-linux-deps
 
       - name: Check formatting
         run: cargo fmt --check
@@ -43,18 +41,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: clippy
       - name: Setup mold
         uses: rui314/setup-mold@v1
-      - name: Install Linux dependencies
-        uses: ./.github/actions/install-linux-deps
 
       - name: Lint code
-        run: cargo clippy --workspace --all-features --exclude cosmic-example -- -D warnings
+        run: cargo clippy --workspace --all-features
 
   release-plz-release:
     name: Release-plz release
@@ -65,7 +61,7 @@ jobs:
       contents: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
@@ -73,8 +69,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Setup mold
         uses: rui314/setup-mold@v1
-      - name: Install Linux dependencies
-        uses: ./.github/actions/install-linux-deps
       - name: Run release-plz
         uses: release-plz/action@v0.5
         with:
@@ -96,7 +90,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           token: ${{ secrets.RELEASE_PLZ_TOKEN }}
@@ -104,8 +98,6 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
       - name: Setup mold
         uses: rui314/setup-mold@v1
-      - name: Install Linux dependencies
-        uses: ./.github/actions/install-linux-deps
 
       - name: Run release-plz
         uses: release-plz/action@v0.5
