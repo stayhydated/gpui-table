@@ -14,11 +14,11 @@ pub struct Item {
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80.)]
+    #[gpui_table(width = 80., resizable = false)]
     #[dummy(faker = "Color()")]
     color: String,
 
-    #[gpui_table(width = 60.)]
+    #[gpui_table(width = 60., movable = false, ascending)]
     #[dummy(faker = "18..67")]
     weight: u8,
 

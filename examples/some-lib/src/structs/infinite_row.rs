@@ -10,14 +10,15 @@ use std::time::Duration;
 #[derive(Clone, Debug, Dummy, GpuiTable, EsFluentKv)]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[gpui_table(load_more = "Self::load_more_data")]
+#[gpui_table(load_more_threshold = 30)]
 #[gpui_table(fluent = "label")]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
-    #[gpui_table(width = 80.)]
+    #[gpui_table(width = 80., resizable = false, movable = false)]
     pub id: u64,
 
     #[dummy(faker = "Name()")]
-    #[gpui_table(sortable)]
+    #[gpui_table(sortable, ascending)]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
@@ -41,7 +42,7 @@ impl InfiniteRowTableDelegate {
                 .await;
 
             // Generate fake data
-            let new_rows: Vec<InfiniteRow> = (0..20).map(|_| Faker.fake()).collect();
+            let new_rows: Vec<InfiniteRow> = (0..50).map(|_| Faker.fake()).collect();
 
             _ = cx.update(|cx| {
                 view.update(cx, |table, cx| {

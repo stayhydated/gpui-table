@@ -53,6 +53,8 @@ struct TableMeta {
     loading: Option<Ident>,
     #[darling(default)]
     threshold: Option<usize>,
+    #[darling(default)]
+    load_more_threshold: Option<usize>,
 }
 
 fn default_delegate() -> bool {
@@ -76,7 +78,15 @@ struct TableColumn {
     #[darling(default)]
     sortable: bool,
     #[darling(default)]
+    ascending: bool,
+    #[darling(default)]
+    descending: bool,
+    #[darling(default)]
     text_right: bool,
+    #[darling(default)]
+    resizable: Option<bool>,
+    #[darling(default)]
+    movable: Option<bool>,
     #[darling(default)]
     skip: bool,
 }
@@ -94,7 +104,10 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         eof,
         loading,
         threshold,
+        load_more_threshold,
     } = meta;
+
+    let threshold = load_more_threshold.or(threshold);
 
     let table_id = id.unwrap_or_else(|| struct_name.to_string());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
@@ -125,9 +138,20 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         let key = field.col.unwrap_or_else(|| ident.to_string());
         let width = field.width.unwrap_or(100.0);
 
+        if field.ascending && field.descending {
+            return Err(syn::Error::new(
+                ident.span(),
+                "`ascending` and `descending` cannot both be set",
+            ));
+        }
+
         let title_expr = determine_title_expr(&field.title, ident, &fluent, &struct_name);
 
-        let sortable_chain = if field.sortable {
+        let sortable_chain = if field.descending {
+            quote! { .descending() }
+        } else if field.ascending {
+            quote! { .ascending() }
+        } else if field.sortable {
             quote! { .sortable() }
         } else {
             quote! {}
@@ -143,6 +167,14 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             Some("right") => quote! { .fixed(#ColumnFixed::Right) },
             _ => quote! {},
         };
+        let resizable_chain = match field.resizable {
+            Some(val) => quote! { .resizable(#val) },
+            None => quote! {},
+        };
+        let movable_chain = match field.movable {
+            Some(val) => quote! { .movable(#val) },
+            None => quote! {},
+        };
 
         columns_init.push(quote! {
             #Column::new(#key, #title_expr)
@@ -150,6 +182,8 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                 #sortable_chain
                 #text_right_chain
                 #fixed_chain
+                #resizable_chain
+                #movable_chain
         });
 
         cell_value_match_arms.push(quote! {
@@ -404,11 +438,11 @@ fn generate_delegate(
     let is_eof_impl = if has_load_more {
         if let Some(field) = eof {
             quote! {
-                fn is_eof(&self, _: &#App) -> bool {
+                fn is_eof(&self, app: &#App) -> bool {
                     if self.loading {
                         return false;
                     }
-                    !self.#field
+                    self.#field(app)
                 }
             }
         } else {
