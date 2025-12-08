@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 use gpui_table::registry::GpuiTableShape;
 use gpui_table_prototyping_core::code_gen::{TableIdentities as _, TableShape, TableShapeAdapter};
 use heck::ToSnakeCase as _;
@@ -36,7 +38,6 @@ fn layout(data: &GpuiTableShape) -> syn::File {
     // Access identities for various idents
     let struct_name_ident = adapter.identities.struct_name_ident();
     let story_struct_ident = adapter.identities.story_struct_ident();
-    let story_id_literal = adapter.identities.story_id_literal();
 
     // Build import path - customize this for your library
     let struct_name_path_qualifier = adapter.identities.snake_case_ident();

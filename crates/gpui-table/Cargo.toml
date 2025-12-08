@@ -34,7 +34,7 @@ serde_json = { workspace = true }
 tracing-subscriber = { features = [ "env-filter" ], workspace = true }
 
 [dev-dependencies]
-insta = { workspace = true, features = [ "yaml" ] }
+insta = { features = [ "yaml" ], workspace = true }
 
 [lints]
 workspace = true

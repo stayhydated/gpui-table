@@ -1,34 +1,31 @@
 # gpui-table-prototyping-core
 
-Core library for prototyping table views with gpui-table.
+opinionated core for prototyping table stories. inventory collects
+`GpuiTableShape` metadata so we can generate table scaffolds without digging
+into each row type by hand.
 
-This crate provides utilities for generating table view scaffolds from structs
-annotated with `#[derive(NamedTableRow)]`. It uses inventory to collect table
-shape metadata at runtime and generates complete Rust source files for table
-story components.
-
-## Usage
-
-This crate is intended to be used by a code generation binary (like the
-`prototyping` example) rather than directly in application code.
+This crate exposes small adapters that mirror the gpui-form prototyping core:
+identify shapes, generate delegate/table wiring, and optionally render column
+debug helpers.
 
 ```rust
 use gpui_table_core::registry::GpuiTableShape;
-use gpui_table_prototyping_core::code_gen::TableShapeAdapter;
+use gpui_table_prototyping_core::code_gen::{TableShape, TableShapeAdapter};
 
-// Import your library to trigger inventory registrations
+// import your library so inventory registrations run
 use your_lib::*;
 
 for shape in inventory::iter::<GpuiTableShape>() {
     let adapter = TableShapeAdapter::new(shape);
-    let syn_file = generate_table_view(&adapter);
-    // Write formatted code to file...
+
+    let imports = adapter.additional_imports().unwrap_or_default();
+    let table_setup = adapter.table_state_creation();
+    let columns_debug = adapter.column_debug_children().unwrap_or_default();
+    let story_children = adapter.render_children();
+
+    // assemble a syn::File with the tokens above...
 }
 ```
 
-## Features
-
-- Generates complete table story components
-- Integrates with gpui-storybook for story registration
-- Supports fluent localization for table titles
-- Generates proper imports and struct definitions
+Best consumed from a small codegen binary (see `examples/prototyping`) rather
+than directly in application code.

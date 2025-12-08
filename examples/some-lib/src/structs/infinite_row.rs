@@ -7,7 +7,7 @@ use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
 use std::time::Duration;
 
-#[derive(Clone, Debug, Dummy, GpuiTable, EsFluentKv)]
+#[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[gpui_table(load_more = "Self::load_more_data")]
 #[gpui_table(load_more_threshold = 30)]

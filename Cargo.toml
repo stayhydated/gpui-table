@@ -46,6 +46,7 @@ gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
 heck = "0.5.0"
+insta = { version = "1.43.2" }
 inventory = "0.3.20"
 itertools = "0.14.0"
 jiff = "0.2.14"
@@ -69,7 +70,6 @@ tokio = "1.43.0"
 tracing-subscriber = "0.3.19"
 unicode-segmentation = "1.12.0"
 uuid = "1.18.1"
-insta = { version = "1.43.2" }
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "deny" }
