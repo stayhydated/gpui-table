@@ -6,7 +6,7 @@ use gpui_component::table::TableState;
 use gpui_table::NamedTableRow;
 use std::time::Duration;
 
-#[derive(Dummy, NamedTableRow, Clone, Debug)]
+#[derive(Clone, Debug, Dummy, NamedTableRow)]
 #[table(load_more = "Self::load_more_data")]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]

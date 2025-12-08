@@ -11,8 +11,8 @@ repository.workspace = true
 readme.workspace = true
 
 [features]
-default = [ "chrono" ]
 chrono = [ "dep:chrono" ]
+default = [ "chrono" ]
 fluent = [ "dep:es-fluent" ]
 jiff = [ "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal" ]
@@ -38,4 +38,3 @@ tracing-subscriber = { features = [ "env-filter" ], workspace = true }
 
 [lints]
 workspace = true
-

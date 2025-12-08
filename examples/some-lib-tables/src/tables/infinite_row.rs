@@ -8,7 +8,7 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
-use some_lib::structs::infinite_scroll::{InfiniteRow, InfiniteRowTableDelegate};
+use some_lib::structs::infinite_row::{InfiniteRow, InfiniteRowTableDelegate};
 
 #[gpui_storybook::story]
 pub struct InfiniteScrollStory {

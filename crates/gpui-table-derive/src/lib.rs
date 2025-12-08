@@ -63,6 +63,7 @@ fn default_delegate() -> bool {
 #[darling(attributes(table))]
 struct TableColumn {
     ident: Option<Ident>,
+    ty: syn::Type,
 
     #[darling(default)]
     col: Option<String>,
@@ -112,6 +113,8 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
     let mut column_variants = Vec::new();
     let mut from_usize_arms = Vec::new();
     let mut into_usize_arms = Vec::new();
+    #[cfg(feature = "inventory")]
+    let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
 
     let column_enum_name = Ident::new(&format!("{}TableColumn", struct_name), struct_name.span());
 
@@ -176,6 +179,33 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
 
         from_usize_arms.push(quote! { #i => #column_enum_name::#variant_ident, });
         into_usize_arms.push(quote! { #column_enum_name::#variant_ident => #i, });
+
+        #[cfg(feature = "inventory")]
+        {
+            use quote::ToTokens as _;
+            let field_name_str = ident.to_string();
+            let field_type_str = field.ty.to_token_stream().to_string();
+            let title_str = field
+                .title
+                .clone()
+                .unwrap_or_else(|| ident.to_string().to_title_case());
+            let fixed_variant = match field.fixed.as_deref() {
+                Some("left") => quote! { gpui_table::registry::ColumnFixed::Left },
+                Some("right") => quote! { gpui_table::registry::ColumnFixed::Right },
+                _ => quote! { gpui_table::registry::ColumnFixed::None },
+            };
+            let sortable = field.sortable;
+            column_variant_constructions.push(quote! {
+                gpui_table::registry::ColumnVariant::new(
+                    #field_name_str,
+                    #field_type_str,
+                    #title_str,
+                    #width,
+                    #sortable,
+                    #fixed_variant,
+                )
+            });
+        }
     }
 
     let table_title_impl = match &fluent {
@@ -254,6 +284,25 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
         quote! {}
     };
 
+    #[cfg(feature = "inventory")]
+    let shape_impl = {
+        quote! {
+            gpui_table::registry::inventory::submit! {
+                gpui_table::registry::GpuiTableShape::new(
+                    stringify!(#struct_name),
+                    #table_id,
+                    #table_title,
+                    &[
+                        #(#column_variant_constructions),*
+                    ]
+                )
+            }
+        }
+    };
+
+    #[cfg(not(feature = "inventory"))]
+    let shape_impl = quote! {};
+
     Ok(quote! {
         #column_enum
 
@@ -278,6 +327,7 @@ fn expand_named_table_row(meta: TableMeta) -> syn::Result<proc_macro2::TokenStre
             }
         }
 
+        #shape_impl
         #style_impl
         #delegate_impl
     })

@@ -1,6 +1,8 @@
 use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
 use gpui_component::table::Column;
 
+pub mod registry;
+
 /// A value that can be displayed in a table cell.
 pub trait TableCell {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement;

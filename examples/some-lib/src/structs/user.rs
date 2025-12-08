@@ -5,7 +5,7 @@ use fake::uuid::UUIDv4;
 use gpui_table::{NamedTableRow, TableCell};
 use rust_decimal::Decimal;
 
-#[derive(Debug, Clone, PartialEq, TableCell, fake::Dummy, es_fluent::EsFluent)]
+#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell)]
 pub enum UserStatus {
     Active,
     Suspended,

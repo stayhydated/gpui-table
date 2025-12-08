@@ -15,7 +15,7 @@ use gpui_component::{
     v_flex,
 };
 use serde::Deserialize;
-use some_lib::structs::user::{User, UserTableDelegate};
+use some_lib::structs::user::{User, UserLabelKvFtl, UserTableDelegate};
 
 #[derive(Action, Clone, Deserialize, Eq, PartialEq)]
 #[action(namespace = user_table, no_json)]
@@ -34,7 +34,7 @@ pub struct UserTableStory {
 
 impl gpui_storybook::Story for UserTableStory {
     fn title() -> String {
-        User::this_ftl()
+        UserLabelKvFtl::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {

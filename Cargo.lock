@@ -3016,6 +3016,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-table-prototyping-core"
+version = "0.4.0"
+dependencies = [
+ "gpui-table-core",
+ "heck 0.5.0",
+ "inventory",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "gpui_collections"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5079,6 +5092,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "prototyping"
+version = "0.1.0"
+dependencies = [
+ "gpui-table",
+ "gpui-table-prototyping-core",
+ "heck 0.5.0",
+ "inventory",
+ "prettyplease",
+ "proc-macro2",
+ "quote",
+ "some-lib",
+ "syn 2.0.111",
+]
+
+[[package]]
 name = "psm"
 version = "0.1.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6240,7 +6268,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib"
-version = "0.4.0"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "es-fluent",
@@ -6257,7 +6285,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib-tables"
-version = "0.4.0"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "es-fluent",
