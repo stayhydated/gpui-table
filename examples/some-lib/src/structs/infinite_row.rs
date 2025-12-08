@@ -9,9 +9,9 @@ use std::time::Duration;
 
 #[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this, keys = ["description", "label"])]
+#[gpui_table(fluent = "label")]
 #[gpui_table(load_more = "Self::load_more_data")]
 #[gpui_table(load_more_threshold = 30)]
-#[gpui_table(fluent = "label")]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
     #[gpui_table(width = 80., resizable = false, movable = false)]
