@@ -14,7 +14,6 @@ readme.workspace = true
 chrono = [ "dep:chrono" ]
 default = [ "chrono" ]
 fluent = [ "dep:es-fluent" ]
-jiff = [ "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal" ]
 
 [dependencies]
@@ -25,7 +24,6 @@ es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 inventory = { workspace = true }
-jiff = { optional = true, workspace = true }
 paste = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }

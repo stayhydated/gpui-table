@@ -92,34 +92,6 @@ impl TableCell for chrono::NaiveTime {
     }
 }
 
-#[cfg(feature = "jiff")]
-impl TableCell for jiff::civil::Date {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
-#[cfg(feature = "jiff")]
-impl TableCell for jiff::civil::Time {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
-#[cfg(feature = "jiff")]
-impl TableCell for jiff::civil::DateTime {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
-#[cfg(feature = "jiff")]
-impl TableCell for jiff::Zoned {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
 /// Metadata for a table row type.
 pub trait TableRowMeta {
     /// Unique identifier for this row type.
