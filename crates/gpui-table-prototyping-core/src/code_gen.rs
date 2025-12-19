@@ -1,4 +1,4 @@
-use gpui_table_core::registry::{ColumnVariant, GpuiTableShape};
+use gpui_table_core::registry::{ColumnVariant, GpuiTableShape, RegistryFilterType};
 use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -122,6 +122,15 @@ impl<'a> TableShapeAdapter<'a> {
             identities: ShapeIdentities::new(shape),
         }
     }
+
+    fn get_column_title(&self, field_name: &str) -> String {
+        self.shape
+            .columns
+            .iter()
+            .find(|c| c.field_name == field_name)
+            .map(|c| c.title.to_string())
+            .unwrap_or_else(|| field_name.to_string())
+    }
 }
 
 impl TableShape for TableShapeAdapter<'_> {
@@ -143,21 +152,144 @@ impl TableShape for TableShapeAdapter<'_> {
     }
 
     fn field_initializers(&self) -> TokenStream {
-        quote! {
+        let mut initializers = quote! {
             table,
+        };
+
+        for filter in self.shape.filters {
+            let field_ident = format_ident!("filter_{}", filter.field_name);
+            let init = match filter.filter_type {
+                RegistryFilterType::Faceted => quote! { Default::default() },
+                RegistryFilterType::DateRange => quote! { (None, None) },
+                RegistryFilterType::NumberRange => quote! { (None, None) },
+                RegistryFilterType::Text => quote! { String::new() },
+            };
+            initializers.extend(quote! { #field_ident: #init, });
         }
+        initializers
     }
 
     fn struct_fields(&self) -> TokenStream {
         let delegate_struct_ident = self.identities.delegate_struct_ident();
 
-        quote! {
+        let mut fields = quote! {
             table: Entity<TableState<#delegate_struct_ident>>,
+        };
+
+        for filter in self.shape.filters {
+            let field_ident = format_ident!("filter_{}", filter.field_name);
+            let ty = match filter.filter_type {
+                RegistryFilterType::Faceted => quote! { std::collections::HashSet<String> },
+                RegistryFilterType::DateRange => {
+                    quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) }
+                },
+                RegistryFilterType::NumberRange => quote! { (Option<f64>, Option<f64>) },
+                RegistryFilterType::Text => quote! { String },
+            };
+            fields.extend(quote! { #field_ident: #ty, });
         }
+        fields
     }
 
     fn render_children(&self) -> TokenStream {
+        let mut filter_views = quote! {};
+
+        for filter in self.shape.filters {
+            let field_name = filter.field_name;
+            let field_ident = format_ident!("filter_{}", field_name);
+            let title = self.get_column_title(field_name);
+
+            // Look up column for type if needed
+            let col = self
+                .shape
+                .columns
+                .iter()
+                .find(|c| c.field_name == field_name)
+                .expect("Filter field not found in columns");
+
+            // Handle generic types or complex types by using syn::parse_str
+            // If it fails, it might be a simple identifier.
+            let field_type_str = col.field_type;
+            let field_type: syn::Type = syn::parse_str(field_type_str).unwrap_or_else(|_| {
+                syn::parse_str(&format!("crate::{}", field_type_str)).unwrap_or_else(|_| {
+                    panic!("Could not parse type for filter: {}", field_type_str)
+                })
+            });
+
+            let component = match filter.filter_type {
+                RegistryFilterType::Faceted => {
+                    quote! {
+                         gpui_table_components::faceted_filter::FacetedFilter::build(
+                            #title,
+                            <#field_type as gpui_table::filter::Filterable>::options(),
+                            self.#field_ident.clone(),
+                            move |new_val, window, cx| {
+                                view.update(cx, |this, cx| {
+                                    this.#field_ident = new_val;
+                                    cx.notify();
+                                });
+                            },
+                            cx
+                        )
+                    }
+                },
+                RegistryFilterType::DateRange => {
+                    quote! {
+                        gpui_table_components::date_range_filter::DateRangeFilter::build(
+                            #title,
+                            self.#field_ident,
+                            move |new_val, window, cx| {
+                                view.update(cx, |this, cx| {
+                                    this.#field_ident = new_val;
+                                    cx.notify();
+                                });
+                            },
+                            cx
+                        )
+                    }
+                },
+                RegistryFilterType::NumberRange => {
+                    quote! {
+                        gpui_table_components::number_range_filter::NumberRangeFilter::build(
+                            #title,
+                            self.#field_ident,
+                            move |new_val, window, cx| {
+                                view.update(cx, |this, cx| {
+                                    this.#field_ident = new_val;
+                                    cx.notify();
+                                });
+                            },
+                            cx
+                        )
+                    }
+                },
+                RegistryFilterType::Text => {
+                    quote! {
+                        gpui_table_components::text_filter::TextFilter::build(
+                            #title,
+                            self.#field_ident.clone(),
+                            move |new_val, window, cx| {
+                                view.update(cx, |this, cx| {
+                                    this.#field_ident = new_val;
+                                    cx.notify();
+                                });
+                            },
+                            cx
+                        )
+                    }
+                },
+            };
+
+            filter_views.extend(quote! { .child(#component) });
+        }
+
         quote! {
+            .child(
+                gpui_component::h_flex()
+                    .gap_2()
+                    .flex_wrap()
+                    #filter_views
+            )
             .child(format!("Total Rows: {}", rows_count))
             .child(Table::new(&self.table))
         }

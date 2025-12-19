@@ -114,6 +114,7 @@ fn layout(data: &GpuiTableShape) -> syn::File {
                 let table = &self.table.read(cx);
                 let delegate = table.delegate();
                 let rows_count = delegate.rows_count(cx);
+                let view = cx.entity().clone();
 
                 v_flex()
                     .size_full()

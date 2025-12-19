@@ -42,6 +42,7 @@ gpui = { git = "https://github.com/zed-industries/zed" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", branch = "git" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
+gpui-table-components = { path = "crates/gpui-table-components", version = "0.5.0" }
 gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }

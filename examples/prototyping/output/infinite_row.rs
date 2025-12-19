@@ -14,6 +14,8 @@ pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
 pub struct InfiniteRowTableStory {
     table: Entity<TableState<InfiniteRowTableDelegate>>,
+    filter_name: String,
+    filter_description: String,
 }
 impl gpui_storybook::Story for InfiniteRowTableStory {
     fn title() -> String {
@@ -38,7 +40,11 @@ impl InfiniteRowTableStory {
             delegate.rows.push(fake::Faker.fake());
         }
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        Self { table }
+        Self {
+            table,
+            filter_name: String::new(),
+            filter_description: String::new(),
+        }
     }
 }
 impl Render for InfiniteRowTableStory {
@@ -46,10 +52,48 @@ impl Render for InfiniteRowTableStory {
         let table = &self.table.read(cx);
         let delegate = table.delegate();
         let rows_count = delegate.rows_count(cx);
+        let view = cx.entity().clone();
         v_flex()
             .size_full()
             .text_sm()
             .gap_4()
+            .child(
+                gpui_component::h_flex()
+                    .gap_2()
+                    .flex_wrap()
+                    .child(
+                        gpui_table_components::text_filter::TextFilter::build(
+                            "Name",
+                            self.filter_name.clone(),
+                            move |new_val, window, cx| {
+                                view.update(
+                                    cx,
+                                    |this, cx| {
+                                        this.filter_name = new_val;
+                                        cx.notify();
+                                    },
+                                );
+                            },
+                            cx,
+                        ),
+                    )
+                    .child(
+                        gpui_table_components::text_filter::TextFilter::build(
+                            "Description",
+                            self.filter_description.clone(),
+                            move |new_val, window, cx| {
+                                view.update(
+                                    cx,
+                                    |this, cx| {
+                                        this.filter_description = new_val;
+                                        cx.notify();
+                                    },
+                                );
+                            },
+                            cx,
+                        ),
+                    ),
+            )
             .child(format!("Total Rows: {}", rows_count))
             .child(Table::new(&self.table))
     }

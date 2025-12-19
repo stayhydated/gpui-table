@@ -12,19 +12,19 @@ pub struct Item {
     #[allow(dead_code)]
     id: uuid::Uuid,
 
-    #[gpui_table(width = 100.)]
+    #[gpui_table(width = 100., filter = "Text")]
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80., resizable = false)]
+    #[gpui_table(width = 80., resizable = false, filter = "Text")]
     #[dummy(faker = "HexColor()")]
     color: String,
 
-    #[gpui_table(width = 120., movable = false, ascending)]
+    #[gpui_table(width = 120., movable = false, ascending, filter = "Number")]
     #[dummy(faker = "1..67")]
     weight: u8,
 
-    #[gpui_table(width = 250.)]
+    #[gpui_table(width = 250., filter = "Date")]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
 }

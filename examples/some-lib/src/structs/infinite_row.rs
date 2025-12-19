@@ -18,11 +18,11 @@ pub struct InfiniteRow {
     pub id: u64,
 
     #[dummy(faker = "Name()")]
-    #[gpui_table(sortable, ascending)]
+    #[gpui_table(sortable, ascending, filter = "Text")]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
-    #[gpui_table(width = 300.)]
+    #[gpui_table(width = 300., filter = "Text")]
     pub description: String,
 }
 

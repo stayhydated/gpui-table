@@ -132,6 +132,8 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
 
     #[cfg(feature = "inventory")]
     let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
+    #[cfg(feature = "inventory")]
+    let mut filter_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
 
     let column_enum_name = Ident::new(&format!("{}TableColumn", struct_name), struct_name.span());
 
@@ -221,6 +223,25 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     filter_type: #filter_type_ts,
                 }
             });
+
+            #[cfg(feature = "inventory")]
+            {
+                let field_name_str = ident.to_string();
+                let registry_filter_type = match filter_type.as_str() {
+                    "Faceted" => quote! { gpui_table::registry::RegistryFilterType::Faceted },
+                    "Date" => quote! { gpui_table::registry::RegistryFilterType::DateRange },
+                    "Number" => quote! { gpui_table::registry::RegistryFilterType::NumberRange },
+                    "Text" => quote! { gpui_table::registry::RegistryFilterType::Text },
+                    _ => quote! { gpui_table::registry::RegistryFilterType::Text },
+                };
+
+                filter_variant_constructions.push(quote! {
+                    gpui_table::registry::FilterVariant::new(
+                        #field_name_str,
+                        #registry_filter_type,
+                    )
+                });
+            }
         }
 
         if field.sortable {
@@ -361,6 +382,9 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     #table_title,
                     &[
                         #(#column_variant_constructions),*
+                    ],
+                    &[
+                        #(#filter_variant_constructions),*
                     ]
                 )
             }
@@ -419,6 +443,8 @@ pub fn derive_filterable(input: TokenStream) -> TokenStream {
 struct FilterableMeta {
     ident: Ident,
     data: darling::ast::Data<FilterableVariant, darling::util::Ignored>,
+    #[darling(default)]
+    fluent: bool,
 }
 
 #[derive(FromVariant)]
@@ -441,9 +467,16 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     for variant in variants {
         let variant_ident = variant.ident;
         let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
-        let label = variant
-            .label
-            .unwrap_or_else(|| value.clone().to_title_case());
+
+        let label_expr = if meta.fluent {
+            quote! { { use es_fluent::ToFluentString as _; Self::#variant_ident.to_fluent_string() } }
+        } else {
+            let label = variant
+                .label
+                .unwrap_or_else(|| value.clone().to_title_case());
+            quote! { #label.to_string() }
+        };
+
         let icon = match variant.icon {
             Some(i) => {
                 let icon_ident = Ident::new(&i, proc_macro2::Span::call_site());
@@ -454,7 +487,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
         options.push(quote! {
             gpui_table::filter::FacetedFilterOption {
-                label: #label.to_string(),
+                label: #label_expr,
                 value: #value.to_string(),
                 count: None,
                 icon: #icon,
