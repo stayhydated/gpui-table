@@ -6,7 +6,7 @@ use __crate_paths::gpui_component::table::{
     Column, ColumnFixed, ColumnSort, TableDelegate, TableState,
 };
 
-use darling::{FromDeriveInput, FromField, util::Override};
+use darling::{FromDeriveInput, FromField, FromVariant, util::Override};
 use heck::{ToPascalCase as _, ToTitleCase as _};
 use proc_macro::TokenStream;
 use quote::quote;
@@ -89,6 +89,8 @@ struct TableColumn {
     movable: Option<bool>,
     #[darling(default)]
     skip: bool,
+    #[darling(default)]
+    filter: Option<String>,
 }
 
 fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
@@ -126,6 +128,8 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
     let mut column_variants = Vec::new();
     let mut from_usize_arms = Vec::new();
     let mut into_usize_arms = Vec::new();
+    let mut filters_init = Vec::new();
+
     #[cfg(feature = "inventory")]
     let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
 
@@ -189,6 +193,35 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         cell_value_match_arms.push(quote! {
             #i => Box::new(self.#ident.clone()),
         });
+
+        if let Some(filter_type) = &field.filter {
+            let filter_type_ts = match filter_type.as_str() {
+                "Faceted" => {
+                    let field_ty = &field.ty;
+                    // Since the field type might be an Option<Enum>, we might need to unwrap the option
+                    // But typically Faceted filter on Enum works on the Enum type.
+                    // If the field is Option<Enum>, we can still call Enum::options().
+                    // But we need the Enum type.
+                    // For now, assume field.ty IS the enum or implements Filterable directly.
+                    // If it is Option<T>, T needs to implement Filterable and Option<T> needs to delegate or we handle it.
+                    // Simpler: assume the type used in `ty` is the one implementing `Filterable`.
+                    quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
+                },
+                "Date" => quote! { gpui_table::filter::FilterType::DateRange },
+                "Number" => quote! { gpui_table::filter::FilterType::NumberRange },
+                "Text" => quote! { gpui_table::filter::FilterType::Text },
+                _ => {
+                    quote! { gpui_table::filter::FilterType::Text }
+                },
+            };
+
+            filters_init.push(quote! {
+                gpui_table::filter::FilterConfig {
+                    column_index: #i,
+                    filter_type: #filter_type_ts,
+                }
+            });
+        }
 
         if field.sortable {
             sort_match_arms.push(quote! {
@@ -358,6 +391,12 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     _ => Box::new(String::new()),
                 }
             }
+
+            fn table_filters() -> Vec<gpui_table::filter::FilterConfig> {
+                vec![
+                    #(#filters_init),*
+                ]
+            }
         }
 
         #shape_impl
@@ -366,6 +405,75 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
     })
 }
 
+#[proc_macro_derive(Filterable, attributes(filter))]
+pub fn derive_filterable(input: TokenStream) -> TokenStream {
+    let input = syn::parse_macro_input!(input as DeriveInput);
+    match expand_derive_filterable(input) {
+        Ok(ts) => ts.into(),
+        Err(err) => err.to_compile_error().into(),
+    }
+}
+
+#[derive(FromDeriveInput)]
+#[darling(attributes(filter), supports(enum_any))]
+struct FilterableMeta {
+    ident: Ident,
+    data: darling::ast::Data<FilterableVariant, darling::util::Ignored>,
+}
+
+#[derive(FromVariant)]
+#[darling(attributes(filter))]
+struct FilterableVariant {
+    ident: Ident,
+    #[darling(default)]
+    label: Option<String>,
+    #[darling(default)]
+    icon: Option<String>,
+}
+
+fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    let meta = FilterableMeta::from_derive_input(&input)?;
+    let enum_name = meta.ident;
+    let variants = meta.data.take_enum().unwrap();
+
+    let mut options = Vec::new();
+
+    for variant in variants {
+        let variant_ident = variant.ident;
+        let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
+        let label = variant
+            .label
+            .unwrap_or_else(|| value.clone().to_title_case());
+        let icon = match variant.icon {
+            Some(i) => {
+                let icon_ident = Ident::new(&i, proc_macro2::Span::call_site());
+                quote! { Some(gpui_component::IconName::#icon_ident) }
+            },
+            None => quote! { None },
+        };
+
+        options.push(quote! {
+            gpui_table::filter::FacetedFilterOption {
+                label: #label.to_string(),
+                value: #value.to_string(),
+                count: None,
+                icon: #icon,
+            }
+        });
+    }
+
+    Ok(quote! {
+        impl gpui_table::filter::Filterable for #enum_name {
+            fn options() -> Vec<gpui_table::filter::FacetedFilterOption> {
+                vec![
+                    #(#options),*
+                ]
+            }
+        }
+    })
+}
+
+// ... existing code ...
 fn determine_title_expr(
     title_attr: &Option<String>,
     ident: &Ident,

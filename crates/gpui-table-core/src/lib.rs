@@ -1,6 +1,7 @@
 use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
 use gpui_component::table::Column;
 
+pub mod filter;
 pub mod registry;
 
 /// A value that can be displayed in a table cell.
@@ -111,6 +112,11 @@ pub trait TableRowMeta {
 
     /// Returns the value for a specific column index.
     fn cell_value(&self, col_ix: usize) -> Box<dyn TableCell + '_>;
+
+    /// Returns the filter configuration for the table.
+    fn table_filters() -> Vec<crate::filter::FilterConfig> {
+        Vec::new()
+    }
 }
 
 /// Styling hooks for a table row.

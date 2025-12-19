@@ -1,7 +1,7 @@
 [workspace]
 default-members = [ "examples/some-lib-tables" ]
 members = [
-  "crates/gpui-table",
+  "crates/gpui-table", "crates/gpui-table-components",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
   "crates/gpui-table-prototyping-core",
