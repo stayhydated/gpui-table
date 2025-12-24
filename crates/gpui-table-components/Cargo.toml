@@ -10,7 +10,11 @@ readme.workspace = true
 [dependencies]
 gpui = { workspace = true }
 gpui-table-core = { workspace = true }
+gpui-storybook = { workspace = true }
 gpui-component = { workspace = true }
+es-fluent = { workspace = true }
+es-fluent-lang = { workspace = true }
+es-fluent-manager-embedded = { workspace = true }
 chrono = {workspace = true, features = ["serde"] }
 serde = { workspace = true, features = ["derive"] }
 strum = { workspace = true, features = ["derive"] }
