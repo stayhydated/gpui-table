@@ -11,6 +11,37 @@ use std::{fs, path::Path};
 #[allow(unused_imports)]
 use some_lib::*;
 
+fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
+    let path = Path::new(source_path);
+    let components: Vec<_> = path.components().collect();
+
+    let src_index = components
+        .iter()
+        .position(|c| matches!(c, std::path::Component::Normal(s) if s.to_str() == Some("src")))?;
+
+    if src_index == 0 {
+        return None;
+    }
+    let crate_component = &components[src_index - 1];
+    let crate_name = match crate_component {
+        std::path::Component::Normal(s) => s.to_str()?.replace('-', "_"),
+        _ => return None,
+    };
+
+    let mut path_segments = vec![crate_name];
+
+    for component in &components[src_index + 1..] {
+        if let std::path::Component::Normal(s) = component {
+            let segment = s.to_str()?;
+            let segment = segment.strip_suffix(".rs").unwrap_or(segment);
+            path_segments.push(segment.replace('-', "_"));
+        }
+    }
+
+    let path_str = path_segments.join("::");
+    syn::parse_str(&path_str).ok()
+}
+
 fn main() {
     let output_dir = &Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
     fs::create_dir_all(output_dir).expect("Failed to create output directory");
@@ -39,10 +70,11 @@ fn layout(data: &GpuiTableShape) -> syn::File {
     let struct_name_ident = adapter.identities.struct_name_ident();
     let story_struct_ident = adapter.identities.story_struct_ident();
 
-    // Build import path - customize this for your library
-    let struct_name_path_qualifier = adapter.identities.snake_case_ident();
+    // Build import path from source_path
+    let source_module_path = source_path_to_use_path(data.source_path)
+        .unwrap_or_else(|| panic!("Failed to parse source_path: {}", data.source_path));
     let target_types_import = quote! {
-        use some_lib::structs::#struct_name_path_qualifier::*;
+        use #source_module_path::*;
     };
 
     // Get code generation components from the adapter
