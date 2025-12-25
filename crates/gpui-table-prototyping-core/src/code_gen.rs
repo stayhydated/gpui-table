@@ -219,7 +219,7 @@ impl TableShape for TableShapeAdapter<'_> {
             let component = match filter.filter_type {
                 RegistryFilterType::Faceted => {
                     quote! {
-                         gpui_table_components::faceted_filter::FacetedFilter::build(
+                         gpui_table_components::faceted_filter::FacetedFilter::build_with_options(
                             #title,
                             <#field_type as gpui_table::filter::Filterable>::options(),
                             self.#field_ident.clone(),

@@ -89,8 +89,64 @@ struct TableColumn {
     movable: Option<bool>,
     #[darling(default)]
     skip: bool,
+    /// Filter component type path (e.g., `TextFilter`, `FacetedFilter`).
+    /// The type must implement `TableFilterComponent`.
     #[darling(default)]
-    filter: Option<String>,
+    filter: Option<Path>,
+}
+
+/// Filter field metadata for delegate generation.
+#[derive(Clone)]
+struct FilterFieldMeta {
+    /// The field name identifier
+    field_ident: Ident,
+    /// The filter component type path (used for registry)
+    #[allow(dead_code)]
+    filter_type: Path,
+    /// The value type for this filter (derived from TableFilterComponent::Value)
+    value_type: proc_macro2::TokenStream,
+}
+
+/// Resolve the filter component path.
+/// The path is used as-is - users must import the filter type they want to use.
+fn resolve_filter_path(filter_path: &Path) -> proc_macro2::TokenStream {
+    quote! { #filter_path }
+}
+
+/// Get the registry filter type for a given filter component.
+#[cfg(feature = "inventory")]
+fn get_registry_filter_type(filter_path: &Path) -> proc_macro2::TokenStream {
+    let resolved = resolve_filter_path(filter_path);
+    quote! { <#resolved as gpui_table::components::TableFilterComponent>::FILTER_TYPE }
+}
+
+/// Get the FilterType enum for runtime filter config.
+fn get_filter_type_expr(filter_path: &Path, field_ty: &syn::Type) -> proc_macro2::TokenStream {
+    let path_str = filter_path
+        .segments
+        .iter()
+        .map(|s| s.ident.to_string())
+        .collect::<Vec<_>>()
+        .join("::");
+
+    // For faceted filters, we need to include the options
+    if path_str == "FacetedFilter"
+        || path_str.ends_with("::FacetedFilter")
+        || path_str.contains("faceted_filter")
+    {
+        quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
+    } else {
+        let resolved = resolve_filter_path(filter_path);
+        // Use the FILTER_TYPE constant to determine the runtime type
+        quote! {
+            match <#resolved as gpui_table::components::TableFilterComponent>::FILTER_TYPE {
+                gpui_table::registry::RegistryFilterType::Text => gpui_table::filter::FilterType::Text,
+                gpui_table::registry::RegistryFilterType::Faceted => gpui_table::filter::FilterType::Faceted(vec![]),
+                gpui_table::registry::RegistryFilterType::NumberRange => gpui_table::filter::FilterType::NumberRange,
+                gpui_table::registry::RegistryFilterType::DateRange => gpui_table::filter::FilterType::DateRange,
+            }
+        }
+    }
 }
 
 fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
@@ -129,6 +185,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
     let mut from_usize_arms = Vec::new();
     let mut into_usize_arms = Vec::new();
     let mut filters_init = Vec::new();
+    let mut filter_fields: Vec<FilterFieldMeta> = Vec::new();
 
     #[cfg(feature = "inventory")]
     let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
@@ -196,26 +253,9 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             #i => Box::new(self.#ident.clone()),
         });
 
-        if let Some(filter_type) = &field.filter {
-            let filter_type_ts = match filter_type.as_str() {
-                "Faceted" => {
-                    let field_ty = &field.ty;
-                    // Since the field type might be an Option<Enum>, we might need to unwrap the option
-                    // But typically Faceted filter on Enum works on the Enum type.
-                    // If the field is Option<Enum>, we can still call Enum::options().
-                    // But we need the Enum type.
-                    // For now, assume field.ty IS the enum or implements Filterable directly.
-                    // If it is Option<T>, T needs to implement Filterable and Option<T> needs to delegate or we handle it.
-                    // Simpler: assume the type used in `ty` is the one implementing `Filterable`.
-                    quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
-                },
-                "Date" => quote! { gpui_table::filter::FilterType::DateRange },
-                "Number" => quote! { gpui_table::filter::FilterType::NumberRange },
-                "Text" => quote! { gpui_table::filter::FilterType::Text },
-                _ => {
-                    quote! { gpui_table::filter::FilterType::Text }
-                },
-            };
+        if let Some(filter_path) = &field.filter {
+            let filter_type_ts = get_filter_type_expr(filter_path, &field.ty);
+            let resolved_path = resolve_filter_path(filter_path);
 
             filters_init.push(quote! {
                 gpui_table::filter::FilterConfig {
@@ -224,16 +264,18 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                 }
             });
 
+            // Collect filter field metadata for delegate generation
+            // The value type is derived from TableFilterComponent::Value
+            filter_fields.push(FilterFieldMeta {
+                field_ident: ident.clone(),
+                filter_type: filter_path.clone(),
+                value_type: quote! { <#resolved_path as gpui_table::components::TableFilterComponent>::Value },
+            });
+
             #[cfg(feature = "inventory")]
             {
                 let field_name_str = ident.to_string();
-                let registry_filter_type = match filter_type.as_str() {
-                    "Faceted" => quote! { gpui_table::registry::RegistryFilterType::Faceted },
-                    "Date" => quote! { gpui_table::registry::RegistryFilterType::DateRange },
-                    "Number" => quote! { gpui_table::registry::RegistryFilterType::NumberRange },
-                    "Text" => quote! { gpui_table::registry::RegistryFilterType::Text },
-                    _ => quote! { gpui_table::registry::RegistryFilterType::Text },
-                };
+                let registry_filter_type = get_registry_filter_type(filter_path);
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::registry::FilterVariant::new(
@@ -367,6 +409,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             eof,
             loading,
             threshold,
+            &filter_fields,
         )
     } else {
         quote! {}
@@ -548,9 +591,11 @@ fn generate_delegate(
     eof: Option<Ident>,
     loading: Option<Ident>,
     threshold: Option<usize>,
+    filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
     let has_load_more = load_more.is_some();
+    let _has_filters = !filter_fields.is_empty();
 
     let load_more_impl = if let Some(load_fn) = load_more {
         quote! {
@@ -612,7 +657,60 @@ fn generate_delegate(
 
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
 
+    // Generate a separate Filters struct if there are any filters
+    let filters_struct_name = Ident::new(&format!("{}Filters", struct_name), struct_name.span());
+    let has_filters = !filter_fields.is_empty();
+
+    let filter_field_defs: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let value_type = &f.value_type;
+            quote! {
+                pub #field_ident: #value_type,
+            }
+        })
+        .collect();
+
+    let filter_field_inits: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            quote! {
+                #field_ident: Default::default(),
+            }
+        })
+        .collect();
+
+    // Generate the Filters struct (only if there are filters)
+    let filters_struct_def = if has_filters {
+        quote! {
+            /// Filter values for the #struct_name table.
+            #[derive(Clone, Debug, Default)]
+            pub struct #filters_struct_name {
+                #(#filter_field_defs)*
+            }
+        }
+    } else {
+        quote! {}
+    };
+
+    // Delegate field for filters
+    let delegate_filters_field = if has_filters {
+        quote! { pub filters: #filters_struct_name, }
+    } else {
+        quote! {}
+    };
+
+    let delegate_filters_init = if has_filters {
+        quote! { filters: #filters_struct_name { #(#filter_field_inits)* }, }
+    } else {
+        quote! {}
+    };
+
     quote! {
+        #filters_struct_def
+
         pub struct #delegate_name {
             pub rows: Vec<#struct_name>,
             columns: Vec<#Column>,
@@ -621,6 +719,7 @@ fn generate_delegate(
             pub eof: bool,
             pub loading: bool,
             pub full_loading: bool,
+            #delegate_filters_field
         }
 
         impl #delegate_name {
@@ -633,6 +732,7 @@ fn generate_delegate(
                     eof: false,
                     loading: false,
                     full_loading: false,
+                    #delegate_filters_init
                 }
             }
         }

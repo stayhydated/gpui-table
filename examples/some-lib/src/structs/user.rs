@@ -2,6 +2,7 @@ use es_fluent::EsFluentKv;
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
+use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
@@ -25,29 +26,29 @@ pub struct User {
     #[allow(dead_code)]
     id: uuid::Uuid,
 
-    #[gpui_table(sortable, width = 150., filter = "Text")]
+    #[gpui_table(sortable, width = 150., filter = TextFilter)]
     #[dummy(faker = "Name()")]
     name: String,
 
-    #[gpui_table(sortable, width = 80., filter = "Number")]
+    #[gpui_table(sortable, width = 80., filter = NumberRangeFilter)]
     #[dummy(faker = "18..67")]
     age: u8,
 
-    #[gpui_table(sortable, width = 150., filter = "Number")]
+    #[gpui_table(sortable, width = 150., filter = NumberRangeFilter)]
     #[dummy(faker = "PositiveDecimal")]
     debt: Decimal,
 
-    #[gpui_table(width = 200., filter = "Text")]
+    #[gpui_table(width = 200., filter = TextFilter)]
     #[dummy(faker = "SafeEmail()")]
     email: String,
 
-    #[gpui_table(width = 70., filter = "Faceted")]
+    #[gpui_table(width = 70., filter = FacetedFilter)]
     active: bool,
 
-    #[gpui_table(width = 100., filter = "Faceted")]
+    #[gpui_table(width = 100., filter = FacetedFilter)]
     status: UserStatus,
 
-    #[gpui_table(sortable, width = 300., filter = "Date")]
+    #[gpui_table(sortable, width = 300., filter = DateRangeFilter)]
     #[dummy(faker = "DateTime()")]
     created_at: chrono::DateTime<chrono::Utc>,
 }

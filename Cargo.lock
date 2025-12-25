@@ -2992,6 +2992,7 @@ dependencies = [
  "es-fluent",
  "gpui",
  "gpui-component",
+ "gpui-table-components",
  "gpui-table-core",
  "gpui-table-derive",
  "insta",

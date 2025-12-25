@@ -8,11 +8,15 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table::components::TextFilter;
+use gpui_table_components::TableFilterComponent;
 use some_lib::structs::infinite_row::{InfiniteRow, InfiniteRowTableDelegate};
 
 #[gpui_storybook::story]
 pub struct InfiniteScrollStory {
     table: Entity<TableState<InfiniteRowTableDelegate>>,
+    filter_name: Entity<TextFilter>,
+    filter_description: Entity<TextFilter>,
     _subscription: Subscription,
 }
 
@@ -47,10 +51,38 @@ impl InfiniteScrollStory {
 
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
+        let table_entity = table.clone();
+        let filter_name = TextFilter::build(
+            "Name",
+            String::new(),
+            move |value, _window, cx| {
+                table_entity.update(cx, |table, cx| {
+                    table.delegate_mut().filters.name = value;
+                    cx.notify();
+                });
+            },
+            cx,
+        );
+
+        let table_entity = table.clone();
+        let filter_description = TextFilter::build(
+            "Description",
+            String::new(),
+            move |value, _window, cx| {
+                table_entity.update(cx, |table, cx| {
+                    table.delegate_mut().filters.description = value;
+                    cx.notify();
+                });
+            },
+            cx,
+        );
+
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
 
         Self {
             table,
+            filter_name,
+            filter_description,
             _subscription,
         }
     }
@@ -65,6 +97,12 @@ impl Render for InfiniteScrollStory {
             .size_full()
             .gap_4()
             .p_4()
+            .child(
+                h_flex()
+                    .gap_2()
+                    .child(self.filter_name.clone())
+                    .child(self.filter_description.clone()),
+            )
             .child(
                 h_flex()
                     .gap_4()

@@ -1,9 +1,14 @@
-use gpui::{
-    prelude::*, App, Context, Entity, FocusHandle, IntoElement, Render, VisualContext, Window,
-};
+use crate::TableFilterComponent;
+use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
-    badge::Badge, button::Button, checkbox::Checkbox, divider::Divider, label::Label,
-    popover::Popover, scroll::ScrollableElement, v_flex, Icon, IconName,
+    ActiveTheme, Icon, IconName, Sizable,
+    badge::Badge,
+    button::{Button, ButtonVariants},
+    checkbox::Checkbox,
+    divider::Divider,
+    input::{Input, InputState},
+    popover::Popover,
+    v_flex,
 };
 use gpui_table_core::filter::FacetedFilterOption;
 use std::collections::HashSet;
@@ -13,12 +18,40 @@ pub struct FacetedFilter {
     title: String,
     options: Vec<FacetedFilterOption>,
     selected_values: HashSet<String>,
+    search_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(HashSet<String>, &mut Window, &mut App) + 'static>,
-    focus_handle: FocusHandle,
+}
+
+impl TableFilterComponent for FacetedFilter {
+    type Value = HashSet<String>;
+
+    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
+        gpui_table_core::registry::RegistryFilterType::Faceted;
+
+    fn build(
+        title: impl Into<String>,
+        value: Self::Value,
+        on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+
+        cx.new(|_cx| Self {
+            title,
+            options: Vec::new(),
+            selected_values: value,
+            search_state: None,
+            on_change: Rc::new(on_change),
+        })
+    }
 }
 
 impl FacetedFilter {
-    pub fn build(
+    /// Build a faceted filter with options.
+    ///
+    /// This is the primary constructor for faceted filters since they require
+    /// a list of available options.
+    pub fn build_with_options(
         title: impl Into<String>,
         options: Vec<FacetedFilterOption>,
         selected_values: HashSet<String>,
@@ -27,13 +60,24 @@ impl FacetedFilter {
     ) -> Entity<Self> {
         let title = title.into();
 
-        cx.new(|cx| Self {
+        cx.new(|_cx| Self {
             title,
             options,
             selected_values,
+            search_state: None,
             on_change: Rc::new(on_change),
-            focus_handle: cx.focus_handle(),
         })
+    }
+
+    fn ensure_search_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.search_state.is_none() {
+            let input = cx.new(|cx| {
+                InputState::new(window, cx)
+                    .placeholder("Search...")
+                    .clean_on_escape()
+            });
+            self.search_state = Some(input);
+        }
     }
 
     fn toggle_option(
@@ -60,7 +104,10 @@ impl FacetedFilter {
 }
 
 impl Render for FacetedFilter {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        // Ensure search state exists
+        self.ensure_search_state(window, cx);
+
         let title = self.title.clone();
         let selected_count = self.selected_values.len();
         let has_selection = selected_count > 0;
@@ -68,55 +115,110 @@ impl Render for FacetedFilter {
         let view = cx.entity().clone();
         let options = self.options.clone();
         let selected_values = self.selected_values.clone();
+        let search_state = self.search_state.clone().unwrap();
 
-        let trigger = Button::new("trigger")
-            .label(title)
-            .icon(IconName::Plus)
+        // Icon: CircleX when has selection (to clear), Plus otherwise
+        let trigger_icon = if has_selection {
+            IconName::CircleX
+        } else {
+            IconName::Plus
+        };
+
+        let clear_view = view.clone();
+        let trigger = Button::new("faceted-filter-trigger")
+            .outline()
+            .child(
+                div()
+                    .id("clear-icon")
+                    .when(has_selection, |this| {
+                        this.cursor_pointer()
+                            .rounded_sm()
+                            .hover(|s| s.opacity(1.0))
+                            .opacity(0.7)
+                            .on_mouse_down(gpui::MouseButton::Left, move |_, window, cx| {
+                                clear_view.update(cx, |this, cx| {
+                                    this.clear_filters(window, cx);
+                                });
+                            })
+                    })
+                    .child(Icon::new(trigger_icon).xsmall()),
+            )
+            .child(title)
             .when(has_selection, |b| {
-                b.child(Badge::new().child(selected_count.to_string()))
+                b.child(Divider::vertical().h(px(16.)).mx_1())
+                    .child(Badge::new().child(selected_count.to_string()))
             });
 
-        Popover::new("filter-popover")
+        Popover::new("faceted-filter-popover")
             .trigger(trigger)
-            .content(move |_, _window, _cx| {
+            .content(move |_, _window, cx| {
+                let clear_view = view.clone();
+
+                // Build options using Checkbox like the original
                 let options_view = v_flex().gap_1().children(options.iter().map(|opt| {
                     let is_selected = selected_values.contains(&opt.value);
                     let val = opt.value.clone();
                     let view = view.clone();
+                    let label = opt.label.clone();
+                    let count = opt.count;
 
-                    let mut checkbox = Checkbox::new(format!("opt-{}", val))
-                        .label(opt.label.clone())
-                        .checked(is_selected)
-                        .on_click(move |checked, window, cx| {
-                            view.update(cx, |this, cx| {
-                                this.toggle_option(val.clone(), *checked, window, cx);
-                            });
-                        });
-
-                    checkbox
+                    div()
+                        .w_full()
+                        .flex()
+                        .items_center()
+                        .justify_between()
+                        .child(
+                            Checkbox::new(format!("opt-{}", val))
+                                .label(label)
+                                .checked(is_selected)
+                                .on_click(move |checked, window, cx| {
+                                    view.update(cx, |this, cx| {
+                                        this.toggle_option(val.clone(), *checked, window, cx);
+                                    });
+                                }),
+                        )
+                        .when(count.is_some(), |d| {
+                            d.child(
+                                div()
+                                    .text_xs()
+                                    .font_family("monospace")
+                                    .text_color(cx.theme().muted_foreground)
+                                    .child(count.unwrap().to_string()),
+                            )
+                        })
                 }));
 
                 v_flex()
-                    .w_64()
-                    .p_2()
-                    .gap_2()
-                    .child(Label::new("Search..."))
+                    .w_56()
+                    .child(
+                        div().p_2().child(
+                            Input::new(&search_state)
+                                .small()
+                                .prefix(Icon::new(IconName::Search).xsmall()),
+                        ),
+                    )
+                    .child(Divider::horizontal())
                     .child(
                         v_flex()
                             .id("options-list")
-                            .h_64()
-                            .overflow_y_scrollbar()
+                            .max_h_72()
+                            .overflow_y_scroll()
+                            .p_1()
                             .child(options_view),
                     )
                     .when(has_selection, |this| {
-                        let view = view.clone();
                         this.child(Divider::horizontal()).child(
-                            Button::new("clear").label("Clear filters").on_click(
-                                move |_, window, cx| {
-                                    view.update(cx, |this, cx| {
-                                        this.clear_filters(window, cx);
-                                    });
-                                },
+                            div().p_1().child(
+                                Button::new("clear-filters")
+                                    .ghost()
+                                    .w_full()
+                                    .justify_center()
+                                    .label("Clear filters")
+                                    .on_click(move |_, window, cx| {
+                                        clear_view.update(cx, |this, cx| {
+                                            this.clear_filters(window, cx);
+                                        });
+                                    }),
                             ),
                         )
                     })

@@ -5,6 +5,7 @@ use fake::{Dummy, Fake, Faker};
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
+use gpui_table::components::TextFilter;
 use std::time::Duration;
 
 #[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
@@ -18,11 +19,13 @@ pub struct InfiniteRow {
     pub id: u64,
 
     #[dummy(faker = "Name()")]
-    #[gpui_table(sortable, ascending, filter = "Text")]
+    // Use the component type directly - no strings!
+    #[gpui_table(sortable, ascending, filter = TextFilter)]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
-    #[gpui_table(width = 300., filter = "Text")]
+    // Both short form (TextFilter) and full path work
+    #[gpui_table(width = 300., filter = TextFilter)]
     pub description: String,
 }
 
@@ -30,6 +33,18 @@ impl InfiniteRowTableDelegate {
     pub fn load_more_data(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
+        }
+
+        // Type-safe access to filter values via the filters struct
+        let name_filter = self.filters.name.clone();
+        let description_filter = self.filters.description.clone();
+
+        // Log active filters (in a real app, these would be sent to an API)
+        if !name_filter.is_empty() {
+            println!("Fetching with name filter: {}", name_filter);
+        }
+        if !description_filter.is_empty() {
+            println!("Fetching with description filter: {}", description_filter);
         }
 
         self.loading = true;
@@ -41,7 +56,26 @@ impl InfiniteRowTableDelegate {
                 .timer(Duration::from_millis(500))
                 .await;
 
-            let new_rows: Vec<InfiniteRow> = (0..50).map(|_| Faker.fake()).collect();
+            // Generate fake data - in a real app, this would be an API call
+            // that includes the filter values as query parameters
+            let new_rows: Vec<InfiniteRow> = (0..50)
+                .map(|_| Faker.fake())
+                .filter(|row: &InfiniteRow| {
+                    // Apply client-side filtering for demo purposes
+                    // In production, filtering would happen server-side
+                    let name_match = name_filter.is_empty()
+                        || row
+                            .name
+                            .to_lowercase()
+                            .contains(&name_filter.to_lowercase());
+                    let desc_match = description_filter.is_empty()
+                        || row
+                            .description
+                            .to_lowercase()
+                            .contains(&description_filter.to_lowercase());
+                    name_match && desc_match
+                })
+                .collect();
 
             _ = cx.update(|cx| {
                 view.update(cx, |table, cx| {

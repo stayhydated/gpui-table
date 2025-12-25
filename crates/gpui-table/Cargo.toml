@@ -24,6 +24,7 @@ derive-new = { workspace = true }
 es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
+gpui-table-components = { workspace = true }
 gpui-table-core = { workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
 inventory = { workspace = true }
