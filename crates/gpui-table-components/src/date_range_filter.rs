@@ -159,12 +159,6 @@ impl Render for DateRangeFilter {
                     .p_2()
                     .gap_2()
                     .child(
-                        div()
-                            .text_sm()
-                            .font_weight(gpui::FontWeight::MEDIUM)
-                            .child(title.clone()),
-                    )
-                    .child(
                         // Use Calendar directly with 2 months shown
                         Calendar::new(&calendar).number_of_months(2).small(),
                     )

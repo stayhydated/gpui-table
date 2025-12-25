@@ -235,12 +235,6 @@ impl Render for NumberRangeFilter {
                     .gap_3()
                     .w_64()
                     .child(
-                        gpui::div()
-                            .text_sm()
-                            .font_weight(gpui::FontWeight::MEDIUM)
-                            .child(title.clone()),
-                    )
-                    .child(
                         h_flex()
                             .gap_2()
                             .items_center()
