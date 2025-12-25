@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
+use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, prelude::*, px};
 use gpui_component::{
     ActiveTheme, Icon, IconName, Sizable,
     button::{Button, ButtonVariants},
@@ -7,6 +7,7 @@ use gpui_component::{
     h_flex,
     input::{Input, InputState},
     popover::Popover,
+    slider::{Slider, SliderEvent, SliderState},
     v_flex,
 };
 use std::rc::Rc;
@@ -15,9 +16,13 @@ pub struct NumberRangeFilter {
     title: String,
     min: Option<f64>,
     max: Option<f64>,
+    range_min: f64,
+    range_max: f64,
     min_input: Option<Entity<InputState>>,
     max_input: Option<Entity<InputState>>,
+    slider_state: Option<Entity<SliderState>>,
     on_change: Rc<dyn Fn((Option<f64>, Option<f64>), &mut Window, &mut App) + 'static>,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl TableFilterComponent for NumberRangeFilter {
@@ -38,23 +43,24 @@ impl TableFilterComponent for NumberRangeFilter {
             title,
             min: value.0,
             max: value.1,
+            range_min: 0.0,
+            range_max: 100.0,
             min_input: None,
             max_input: None,
+            slider_state: None,
             on_change: Rc::new(on_change),
+            _subscriptions: Vec::new(),
         })
     }
 }
 
 impl NumberRangeFilter {
-    /// Legacy builder method for backwards compatibility.
-    #[deprecated(note = "Use TableFilterComponent::build instead")]
-    pub fn new(
-        title: impl Into<String>,
-        range: (Option<f64>, Option<f64>),
-        on_change: impl Fn((Option<f64>, Option<f64>), &mut Window, &mut App) + 'static,
-        cx: &mut App,
-    ) -> Entity<Self> {
-        <Self as TableFilterComponent>::build(title, range, on_change, cx)
+    /// Set the range bounds for the slider.
+    pub fn set_range(entity: Entity<Self>, min: f64, max: f64, cx: &mut App) {
+        entity.update(cx, |this, _cx| {
+            this.range_min = min;
+            this.range_max = max;
+        });
     }
 
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -78,6 +84,61 @@ impl NumberRangeFilter {
             });
             self.max_input = Some(input);
         }
+        if self.slider_state.is_none() {
+            let range_min = self.range_min;
+            let range_max = self.range_max;
+            let current_min = self.min.unwrap_or(range_min);
+            let current_max = self.max.unwrap_or(range_max);
+
+            let slider = cx.new(|_cx| {
+                SliderState::new()
+                    .min(range_min as f32)
+                    .max(range_max as f32)
+                    .step(1.0)
+                    .default_value(current_min as f32..current_max as f32)
+            });
+
+            let subscription = cx.subscribe(
+                &slider,
+                move |this: &mut Self, _, event: &SliderEvent, cx| {
+                    let SliderEvent::Change(value) = event;
+                    let start = value.start() as f64;
+                    let end = value.end() as f64;
+
+                    this.min = Some(start);
+                    this.max = Some(end);
+                    cx.notify();
+                },
+            );
+
+            self._subscriptions.push(subscription);
+            self.slider_state = Some(slider);
+        }
+    }
+
+    fn sync_inputs_from_slider(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let (Some(min_input), Some(max_input)) = (&self.min_input, &self.max_input) {
+            if let Some(min) = self.min {
+                min_input.update(cx, |state, cx| {
+                    state.set_value(format_number(min), window, cx);
+                });
+            }
+            if let Some(max) = self.max {
+                max_input.update(cx, |state, cx| {
+                    state.set_value(format_number(max), window, cx);
+                });
+            }
+        }
+    }
+
+    fn sync_slider_from_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if let Some(slider) = &self.slider_state {
+            let current_min = self.min.unwrap_or(self.range_min) as f32;
+            let current_max = self.max.unwrap_or(self.range_max) as f32;
+            slider.update(cx, |state, cx| {
+                state.set_value(current_min..current_max, window, cx);
+            });
+        }
     }
 
     fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -89,6 +150,8 @@ impl NumberRangeFilter {
             let max_str = max_input.read(cx).value().to_string();
             self.max = max_str.parse::<f64>().ok();
         }
+
+        self.sync_slider_from_inputs(window, cx);
 
         (self.on_change)((self.min, self.max), window, cx);
         cx.notify();
@@ -105,6 +168,14 @@ impl NumberRangeFilter {
         if let Some(input) = &self.max_input {
             input.update(cx, |state, cx| {
                 state.set_value("", window, cx);
+            });
+        }
+        // Reset slider to full range
+        if let Some(slider) = &self.slider_state {
+            let range_min = self.range_min as f32;
+            let range_max = self.range_max as f32;
+            slider.update(cx, |state, cx| {
+                state.set_value(range_min..range_max, window, cx);
             });
         }
         (self.on_change)((None, None), window, cx);
@@ -138,12 +209,16 @@ impl Render for NumberRangeFilter {
         // Ensure input states exist
         self.ensure_inputs(window, cx);
 
+        // Sync inputs from slider values (in case slider changed)
+        self.sync_inputs_from_slider(window, cx);
+
         let title = self.title.clone();
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity().clone();
         let min_input = self.min_input.clone().unwrap();
         let max_input = self.max_input.clone().unwrap();
+        let slider_state = self.slider_state.clone().unwrap();
 
         // Icon: CircleX when has value (to clear), Plus otherwise
         let trigger_icon = if has_value {
@@ -156,7 +231,7 @@ impl Render for NumberRangeFilter {
         let trigger = Button::new("number-range-trigger")
             .outline()
             .child(
-                div()
+                gpui::div()
                     .id("clear-icon")
                     .when(has_value, |this| {
                         this.cursor_pointer()
@@ -184,9 +259,9 @@ impl Render for NumberRangeFilter {
                 v_flex()
                     .p_3()
                     .gap_3()
-                    .w_56()
+                    .w_64()
                     .child(
-                        div()
+                        gpui::div()
                             .text_sm()
                             .font_weight(gpui::FontWeight::MEDIUM)
                             .child(title.clone()),
@@ -197,13 +272,14 @@ impl Render for NumberRangeFilter {
                             .items_center()
                             .child(Input::new(&min_input).small().w_full())
                             .child(
-                                div()
+                                gpui::div()
                                     .text_sm()
                                     .text_color(cx.theme().muted_foreground)
                                     .child("to"),
                             )
                             .child(Input::new(&max_input).small().w_full()),
                     )
+                    .child(Slider::new(&slider_state))
                     .child(
                         Button::new("apply-btn")
                             .primary()

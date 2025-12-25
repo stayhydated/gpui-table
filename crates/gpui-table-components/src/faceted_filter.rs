@@ -101,6 +101,15 @@ impl FacetedFilter {
         (self.on_change)(self.selected_values.clone(), window, cx);
         cx.notify();
     }
+
+    /// Get the labels of selected values for display.
+    fn get_selected_labels(&self) -> Vec<String> {
+        self.options
+            .iter()
+            .filter(|opt| self.selected_values.contains(&opt.value))
+            .map(|opt| opt.label.clone())
+            .collect()
+    }
 }
 
 impl Render for FacetedFilter {
@@ -111,6 +120,7 @@ impl Render for FacetedFilter {
         let title = self.title.clone();
         let selected_count = self.selected_values.len();
         let has_selection = selected_count > 0;
+        let selected_labels = self.get_selected_labels();
 
         let view = cx.entity().clone();
         let options = self.options.clone();
@@ -145,8 +155,20 @@ impl Render for FacetedFilter {
             )
             .child(title)
             .when(has_selection, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1())
-                    .child(Badge::new().child(selected_count.to_string()))
+                b.child(Divider::vertical().h(px(16.)).mx_1()).child(
+                    // Show badges for selected values (like ts-ref)
+                    // If more than 2 selected, show "{n} selected" badge
+                    // Otherwise show individual badges for each selected value
+                    if selected_count > 2 {
+                        div().child(Badge::new().child(format!("{} selected", selected_count)))
+                    } else {
+                        div().flex().items_center().gap_1().children(
+                            selected_labels
+                                .into_iter()
+                                .map(|label| Badge::new().child(label)),
+                        )
+                    },
+                )
             });
 
         Popover::new("faceted-filter-popover")

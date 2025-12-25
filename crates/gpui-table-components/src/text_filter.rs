@@ -1,12 +1,8 @@
 use crate::TableFilterComponent;
-use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
+use gpui::{App, Context, Entity, IntoElement, Render, Window, prelude::*, px};
 use gpui_component::{
-    Icon, IconName, Sizable,
-    button::{Button, ButtonVariants},
-    divider::Divider,
-    input::{Input, InputState},
-    popover::Popover,
-    v_flex,
+    Icon, IconName, Sizable, h_flex,
+    input::{Input, InputEvent, InputState},
 };
 use std::rc::Rc;
 
@@ -39,47 +35,46 @@ impl TableFilterComponent for TextFilter {
 }
 
 impl TextFilter {
-    /// Legacy builder method for backwards compatibility.
-    #[deprecated(note = "Use TableFilterComponent::build instead")]
-    pub fn new(
-        title: impl Into<String>,
-        value: String,
-        on_change: impl Fn(String, &mut Window, &mut App) + 'static,
-        cx: &mut App,
-    ) -> Entity<Self> {
-        <Self as TableFilterComponent>::build(title, value, on_change, cx)
-    }
-
     fn ensure_input_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.input_state.is_none() {
+            let title = self.title.clone();
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
-                    .placeholder("Filter...")
+                    .placeholder(format!("Filter {}...", title))
                     .default_value(self.value.clone())
                     .clean_on_escape()
             });
+
+            // Subscribe to input changes - InputEvent::Change is a unit variant
+            cx.subscribe(&input, |this: &mut Self, state, event: &InputEvent, cx| {
+                match event {
+                    InputEvent::Change => {
+                        let new_value = state.read(cx).value().to_string();
+                        this.value = new_value;
+                        cx.notify();
+                    },
+                    InputEvent::PressEnter { .. } => {
+                        // Apply on Enter - we need to defer this since we don't have window here
+                        cx.notify();
+                    },
+                    _ => {},
+                }
+            })
+            .detach();
+
             self.input_state = Some(input);
         }
     }
 
-    fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(input) = &self.input_state {
-            let new_value = input.read(cx).value().to_string();
-            self.value = new_value.clone();
-            (self.on_change)(new_value, window, cx);
-            cx.notify();
-        }
+    /// Apply the current filter value via callback.
+    /// Call this from parent when you want to trigger the on_change.
+    pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        (self.on_change)(self.value.clone(), window, cx);
     }
 
-    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        self.value.clear();
-        if let Some(input) = &self.input_state {
-            input.update(cx, |state, cx| {
-                state.set_value("", window, cx);
-            });
-        }
-        (self.on_change)(String::new(), window, cx);
-        cx.notify();
+    /// Get the current filter value.
+    pub fn value(&self) -> &str {
+        &self.value
     }
 }
 
@@ -88,64 +83,15 @@ impl Render for TextFilter {
         // Ensure input state exists
         self.ensure_input_state(window, cx);
 
-        let title = self.title.clone();
-        let has_value = !self.value.is_empty();
-        let view = cx.entity().clone();
         let input_state = self.input_state.clone().unwrap();
 
-        // Icon: CircleX when has value (to clear), Search otherwise
-        let trigger_icon = if has_value {
-            IconName::CircleX
-        } else {
-            IconName::Search
-        };
-
-        let clear_view = view.clone();
-        let trigger = Button::new("text-filter-trigger")
-            .outline()
-            .child(
-                div()
-                    .id("clear-icon")
-                    .when(has_value, |this| {
-                        this.cursor_pointer()
-                            .rounded_sm()
-                            .hover(|s| s.opacity(1.0))
-                            .opacity(0.7)
-                            .on_mouse_down(gpui::MouseButton::Left, move |_, window, cx| {
-                                clear_view.update(cx, |this, cx| {
-                                    this.clear(window, cx);
-                                });
-                            })
-                    })
-                    .child(Icon::new(trigger_icon).xsmall()),
-            )
-            .child(title.clone())
-            .when(has_value, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1())
-                    .child(self.value.clone())
-            });
-
-        Popover::new("text-filter-popover")
-            .trigger(trigger)
-            .content(move |_, _window, _cx| {
-                let apply_view = view.clone();
-                v_flex()
-                    .p_2()
-                    .w_48()
-                    .gap_2()
-                    .child(Input::new(&input_state).cleanable(true).small())
-                    .child(
-                        Button::new("apply-btn")
-                            .primary()
-                            .small()
-                            .w_full()
-                            .label("Apply")
-                            .on_click(move |_, window, cx| {
-                                apply_view.update(cx, |this, cx| {
-                                    this.apply(window, cx);
-                                });
-                            }),
-                    )
-            })
+        // Inline input without popover - similar to ts-ref data-table-filter-list.tsx
+        h_flex().gap_2().items_center().child(
+            Input::new(&input_state)
+                .small()
+                .w(px(200.))
+                .prefix(Icon::new(IconName::Search).xsmall())
+                .cleanable(true),
+        )
     }
 }

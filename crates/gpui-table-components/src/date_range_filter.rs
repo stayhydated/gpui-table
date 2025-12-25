@@ -1,12 +1,13 @@
 use crate::TableFilterComponent;
 use chrono::NaiveDate;
-use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
+use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
 use gpui_component::{
-    Icon, IconName, Sizable,
+    ActiveTheme, Icon, IconName, Sizable,
     button::{Button, ButtonVariants},
     calendar::Date,
-    date_picker::{DatePicker, DatePickerState},
+    date_picker::{DatePicker, DatePickerEvent, DatePickerState},
     divider::Divider,
+    h_flex,
     popover::Popover,
     v_flex,
 };
@@ -17,6 +18,7 @@ pub struct DateRangeFilter {
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
     date_picker: Option<Entity<DatePickerState>>,
     on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
+    _subscriptions: Vec<Subscription>,
 }
 
 impl TableFilterComponent for DateRangeFilter {
@@ -38,22 +40,12 @@ impl TableFilterComponent for DateRangeFilter {
             selected_range: value,
             date_picker: None,
             on_change: Rc::new(on_change),
+            _subscriptions: Vec::new(),
         })
     }
 }
 
 impl DateRangeFilter {
-    /// Legacy builder method for backwards compatibility.
-    #[deprecated(note = "Use TableFilterComponent::build instead")]
-    pub fn new(
-        title: impl Into<String>,
-        selected_range: (Option<NaiveDate>, Option<NaiveDate>),
-        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
-        cx: &mut App,
-    ) -> Entity<Self> {
-        <Self as TableFilterComponent>::build(title, selected_range, on_change, cx)
-    }
-
     fn ensure_date_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.date_picker.is_none() {
             let (start, end) = self.selected_range;
@@ -64,6 +56,22 @@ impl DateRangeFilter {
                 }
                 picker
             });
+
+            // Subscribe to date picker changes for immediate feedback
+            let subscription = cx.subscribe(
+                &picker,
+                |this: &mut Self, _, event: &DatePickerEvent, cx| {
+                    let DatePickerEvent::Change(date) = event;
+                    let (start, end) = match date {
+                        Date::Range(start, end) => (*start, *end),
+                        Date::Single(date) => (*date, None),
+                    };
+                    this.selected_range = (start, end);
+                    cx.notify();
+                },
+            );
+
+            self._subscriptions.push(subscription);
             self.date_picker = Some(picker);
         }
     }
@@ -94,17 +102,10 @@ impl DateRangeFilter {
         }
     }
 
-    fn update_from_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(picker) = &self.date_picker {
-            let date = picker.read(cx).date();
-            let (start, end) = match date {
-                Date::Range(start, end) => (start, end),
-                Date::Single(date) => (date, None),
-            };
-            self.selected_range = (start, end);
-            (self.on_change)((start, end), window, cx);
-            cx.notify();
-        }
+    fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        let (start, end) = self.selected_range;
+        (self.on_change)((start, end), window, cx);
+        cx.notify();
     }
 }
 
@@ -157,26 +158,55 @@ impl Render for DateRangeFilter {
 
         Popover::new("date-range-popover")
             .trigger(trigger)
-            .content(move |_, _window, _cx| {
+            .content(move |_, _window, cx| {
                 let apply_view = view.clone();
+                let clear_view_inner = view.clone();
                 v_flex()
                     .p_2()
+                    .gap_2()
                     .child(
-                        DatePicker::new(&date_picker)
-                            .number_of_months(2)
-                            .appearance(false),
+                        div()
+                            .text_sm()
+                            .font_weight(gpui::FontWeight::MEDIUM)
+                            .child(title.clone()),
                     )
                     .child(
-                        Button::new("apply-btn")
-                            .primary()
-                            .small()
-                            .w_full()
-                            .label("Apply")
-                            .on_click(move |_, window, cx| {
-                                apply_view.update(cx, |this, cx| {
-                                    this.update_from_picker(window, cx);
-                                });
-                            }),
+                        // Use DatePicker with appearance(false) for inline calendar display
+                        // with 2 months shown side by side
+                        div().w_full().bg(cx.theme().secondary).rounded_md().child(
+                            DatePicker::new(&date_picker)
+                                .number_of_months(2)
+                                .appearance(false)
+                                .cleanable(true),
+                        ),
+                    )
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .child(
+                                Button::new("clear-btn")
+                                    .outline()
+                                    .small()
+                                    .flex_1()
+                                    .label("Clear")
+                                    .on_click(move |_, window, cx| {
+                                        clear_view_inner.update(cx, |this, cx| {
+                                            this.clear(window, cx);
+                                        });
+                                    }),
+                            )
+                            .child(
+                                Button::new("apply-btn")
+                                    .primary()
+                                    .small()
+                                    .flex_1()
+                                    .label("Apply")
+                                    .on_click(move |_, window, cx| {
+                                        apply_view.update(cx, |this, cx| {
+                                            this.apply(window, cx);
+                                        });
+                                    }),
+                            ),
                     )
             })
     }
