@@ -254,18 +254,20 @@ impl Render for NumberRangeFilter {
                             .child(Input::new(&max_input).small().w_full()),
                     )
                     .child(Slider::new(&slider_state))
-                    .child(
-                        Button::new("clear-btn")
-                            .outline()
-                            .small()
-                            .w_full()
-                            .label("Clear")
-                            .on_click(move |_, window, cx| {
-                                clear_view_inner.update(cx, |this, cx| {
-                                    this.clear(window, cx);
-                                });
-                            }),
-                    )
+                    .when(has_value, |this| {
+                        this.child(
+                            Button::new("clear-btn")
+                                .outline()
+                                .small()
+                                .w_full()
+                                .label("Clear")
+                                .on_click(move |_, window, cx| {
+                                    clear_view_inner.update(cx, |this, cx| {
+                                        this.clear(window, cx);
+                                    });
+                                }),
+                        )
+                    })
             })
     }
 }

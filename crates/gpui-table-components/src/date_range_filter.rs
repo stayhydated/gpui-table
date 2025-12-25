@@ -3,10 +3,9 @@ use chrono::NaiveDate;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
 use gpui_component::{
     Icon, IconName, Sizable,
-    button::{Button, ButtonVariants},
+    button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
     divider::Divider,
-    h_flex,
     popover::Popover,
     v_flex,
 };
@@ -91,18 +90,17 @@ impl DateRangeFilter {
     fn format_range(&self) -> String {
         match self.selected_range {
             (Some(start), Some(end)) => {
-                format!("{} - {}", format_date(start), format_date(end))
+                if start == end {
+                    // Same date, no range separator needed
+                    format_date(start)
+                } else {
+                    format!("{} - {}", format_date(start), format_date(end))
+                }
             },
             (Some(start), None) => format_date(start),
             (None, Some(end)) => format!("... - {}", format_date(end)),
             (None, None) => String::new(),
         }
-    }
-
-    fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        let (start, end) = self.selected_range;
-        (self.on_change)((start, end), window, cx);
-        cx.notify();
     }
 }
 
@@ -156,7 +154,6 @@ impl Render for DateRangeFilter {
         Popover::new("date-range-popover")
             .trigger(trigger)
             .content(move |_, _window, _cx| {
-                let apply_view = view.clone();
                 let clear_view_inner = view.clone();
                 v_flex()
                     .p_2()
@@ -171,34 +168,20 @@ impl Render for DateRangeFilter {
                         // Use Calendar directly with 2 months shown
                         Calendar::new(&calendar).number_of_months(2).small(),
                     )
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .child(
-                                Button::new("clear-btn")
-                                    .outline()
-                                    .small()
-                                    .flex_1()
-                                    .label("Clear")
-                                    .on_click(move |_, window, cx| {
-                                        clear_view_inner.update(cx, |this, cx| {
-                                            this.clear(window, cx);
-                                        });
-                                    }),
-                            )
-                            .child(
-                                Button::new("apply-btn")
-                                    .primary()
-                                    .small()
-                                    .flex_1()
-                                    .label("Apply")
-                                    .on_click(move |_, window, cx| {
-                                        apply_view.update(cx, |this, cx| {
-                                            this.apply(window, cx);
-                                        });
-                                    }),
-                            ),
-                    )
+                    .when(has_value, |this| {
+                        this.child(
+                            Button::new("clear-btn")
+                                .outline()
+                                .small()
+                                .w_full()
+                                .label("Clear")
+                                .on_click(move |_, window, cx| {
+                                    clear_view_inner.update(cx, |this, cx| {
+                                        this.clear(window, cx);
+                                    });
+                                }),
+                        )
+                    })
             })
     }
 }
