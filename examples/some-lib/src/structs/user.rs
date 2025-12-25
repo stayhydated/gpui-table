@@ -2,6 +2,7 @@ use es_fluent::EsFluentKv;
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
+use gpui_component::IconName;
 use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
@@ -9,11 +10,11 @@ use rust_decimal::Decimal;
 #[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
 #[filter(fluent)]
 pub enum UserStatus {
-    #[filter(icon = "Check")]
+    #[filter(icon = IconName::Check)]
     Active,
-    #[filter(icon = "CircleX")]
+    #[filter(icon = IconName::CircleX)]
     Suspended,
-    #[filter(icon = "Moon")]
+    #[filter(icon = IconName::Moon)]
     Offline,
 }
 

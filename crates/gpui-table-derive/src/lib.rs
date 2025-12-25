@@ -497,8 +497,9 @@ struct FilterableVariant {
     ident: Ident,
     #[darling(default)]
     label: Option<String>,
+    /// Icon component path (e.g., `IconName::Check`).
     #[darling(default)]
-    icon: Option<String>,
+    icon: Option<Path>,
 }
 
 fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -522,9 +523,8 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         };
 
         let icon = match variant.icon {
-            Some(i) => {
-                let icon_ident = Ident::new(&i, proc_macro2::Span::call_site());
-                quote! { Some(gpui_component::IconName::#icon_ident) }
+            Some(path) => {
+                quote! { Some(#path) }
             },
             None => quote! { None },
         };

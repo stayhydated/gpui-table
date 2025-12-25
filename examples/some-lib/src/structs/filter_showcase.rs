@@ -5,6 +5,7 @@ use fake::faker::{
     name::en::Name,
 };
 use fake::uuid::UUIDv4;
+use gpui_component::IconName;
 use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
@@ -13,13 +14,13 @@ use rust_decimal::Decimal;
 #[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
 #[filter(fluent)]
 pub enum Priority {
-    #[filter(icon = "ArrowDown")]
+    #[filter(icon = IconName::ArrowDown)]
     Low,
-    #[filter(icon = "Minus")]
+    #[filter(icon = IconName::Minus)]
     Medium,
-    #[filter(icon = "ArrowUp")]
+    #[filter(icon = IconName::ArrowUp)]
     High,
-    #[filter(icon = "TriangleAlert")]
+    #[filter(icon = IconName::TriangleAlert)]
     Critical,
 }
 
@@ -27,15 +28,15 @@ pub enum Priority {
 #[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
 #[filter(fluent)]
 pub enum Category {
-    #[filter(icon = "Settings")]
+    #[filter(icon = IconName::Settings)]
     Engineering,
-    #[filter(icon = "Palette")]
+    #[filter(icon = IconName::Palette)]
     Design,
-    #[filter(icon = "ChartPie")]
+    #[filter(icon = IconName::ChartPie)]
     Marketing,
-    #[filter(icon = "Star")]
+    #[filter(icon = IconName::Star)]
     Sales,
-    #[filter(icon = "User")]
+    #[filter(icon = IconName::User)]
     Support,
 }
 
