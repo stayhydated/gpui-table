@@ -5,6 +5,7 @@ use gpui_component::{
     button::{Button, ButtonVariants},
     checkbox::Checkbox,
     divider::Divider,
+    h_flex,
     input::{Input, InputState},
     popover::Popover,
     tag::Tag,
@@ -160,7 +161,11 @@ impl Render for FacetedFilter {
                     // If more than 2 selected, show "{n} selected" tag
                     // Otherwise show individual tags for each selected value
                     if selected_count > 2 {
-                        div().child(Tag::secondary().small().child(format!("{} selected", selected_count)))
+                        div().child(
+                            Tag::secondary()
+                                .small()
+                                .child(format!("{} selected", selected_count)),
+                        )
                     } else {
                         div().flex().items_center().gap_1().children(
                             selected_labels
@@ -176,39 +181,90 @@ impl Render for FacetedFilter {
             .content(move |_, _window, cx| {
                 let clear_view = view.clone();
 
-                // Build options using Checkbox like the original
-                let options_view = v_flex().gap_1().children(options.iter().map(|opt| {
-                    let is_selected = selected_values.contains(&opt.value);
-                    let val = opt.value.clone();
-                    let view = view.clone();
-                    let label = opt.label.clone();
-                    let count = opt.count;
+                // Get search query to filter options
+                let search_query = search_state.read(cx).text().to_string().to_lowercase();
 
-                    div()
-                        .w_full()
-                        .flex()
-                        .items_center()
-                        .justify_between()
-                        .child(
-                            Checkbox::new(format!("opt-{}", val))
-                                .label(label)
-                                .checked(is_selected)
-                                .on_click(move |checked, window, cx| {
-                                    view.update(cx, |this, cx| {
-                                        this.toggle_option(val.clone(), *checked, window, cx);
-                                    });
-                                }),
-                        )
-                        .when(count.is_some(), |d| {
-                            d.child(
-                                div()
-                                    .text_xs()
-                                    .font_family("monospace")
-                                    .text_color(cx.theme().muted_foreground)
-                                    .child(count.unwrap().to_string()),
+                // Filter options based on search query
+                let filtered_options: Vec<_> = options
+                    .iter()
+                    .filter(|opt| {
+                        if search_query.is_empty() {
+                            true
+                        } else {
+                            opt.label.to_lowercase().contains(&search_query)
+                        }
+                    })
+                    .collect();
+
+                // Build options list with icons - each option is a full-width ghost button
+                let options_view = v_flex()
+                    .gap_1()
+                    .children(filtered_options.iter().map(|opt| {
+                        let is_selected = selected_values.contains(&opt.value);
+                        let val = opt.value.clone();
+                        let view = view.clone();
+                        let label = opt.label.clone();
+                        let count = opt.count;
+                        let icon = opt.icon.clone();
+
+                        div()
+                            .w_full()
+                            .flex()
+                            .items_center()
+                            .justify_between()
+                            .child(
+                                Button::new(format!("opt-btn-{}", val))
+                                    .ghost()
+                                    .flex_1()
+                                    .justify_start()
+                                    .child(
+                                        h_flex()
+                                            .w_full()
+                                            .items_center()
+                                            .gap_2()
+                                            .child(
+                                                Checkbox::new(format!("opt-{}", val))
+                                                    .checked(is_selected),
+                                            )
+                                            .when_some(icon, |this, icon_name| {
+                                                this.child(
+                                                    Icon::new(icon_name)
+                                                        .xsmall()
+                                                        .text_color(cx.theme().muted_foreground),
+                                                )
+                                            })
+                                            .child(label),
+                                    )
+                                    .on_click({
+                                        let view = view.clone();
+                                        let val = val.clone();
+                                        move |_, window, cx| {
+                                            view.update(cx, |this, cx| {
+                                                // Toggle: if selected, deselect; if not, select
+                                                let new_state = !this.selected_values.contains(&val);
+                                                this.toggle_option(
+                                                    val.clone(),
+                                                    new_state,
+                                                    window,
+                                                    cx,
+                                                );
+                                            });
+                                        }
+                                    }),
                             )
-                        })
-                }));
+                            .when(count.is_some(), |d| {
+                                d.child(
+                                    div()
+                                        .text_xs()
+                                        .font_family("monospace")
+                                        .text_color(cx.theme().muted_foreground)
+                                        .child(count.unwrap().to_string()),
+                                )
+                            })
+                    }));
+
+                // Show "No results" message if search yields nothing
+                let has_results = !filtered_options.is_empty();
 
                 v_flex()
                     .w_56()
@@ -226,7 +282,19 @@ impl Render for FacetedFilter {
                             .max_h_72()
                             .overflow_y_scroll()
                             .p_1()
-                            .child(options_view),
+                            .when(has_results, |this| this.child(options_view))
+                            .when(!has_results, |this| {
+                                this.child(
+                                    div()
+                                        .py_4()
+                                        .w_full()
+                                        .flex()
+                                        .justify_center()
+                                        .text_sm()
+                                        .text_color(cx.theme().muted_foreground)
+                                        .child("No results found"),
+                                )
+                            }),
                     )
                     .when(has_selection, |this| {
                         this.child(Divider::horizontal()).child(
