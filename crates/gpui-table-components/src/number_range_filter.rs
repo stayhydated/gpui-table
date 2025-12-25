@@ -2,7 +2,7 @@ use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, prelude::*, px};
 use gpui_component::{
     ActiveTheme, Icon, IconName, Sizable,
-    button::{Button, ButtonVariants},
+    button::Button,
     divider::Divider,
     h_flex,
     input::{Input, InputState},
@@ -131,32 +131,6 @@ impl NumberRangeFilter {
         }
     }
 
-    fn sync_slider_from_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(slider) = &self.slider_state {
-            let current_min = self.min.unwrap_or(self.range_min) as f32;
-            let current_max = self.max.unwrap_or(self.range_max) as f32;
-            slider.update(cx, |state, cx| {
-                state.set_value(current_min..current_max, window, cx);
-            });
-        }
-    }
-
-    fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let Some(min_input) = &self.min_input {
-            let min_str = min_input.read(cx).value().to_string();
-            self.min = min_str.parse::<f64>().ok();
-        }
-        if let Some(max_input) = &self.max_input {
-            let max_str = max_input.read(cx).value().to_string();
-            self.max = max_str.parse::<f64>().ok();
-        }
-
-        self.sync_slider_from_inputs(window, cx);
-
-        (self.on_change)((self.min, self.max), window, cx);
-        cx.notify();
-    }
-
     fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.min = None;
         self.max = None;
@@ -255,7 +229,7 @@ impl Render for NumberRangeFilter {
         Popover::new("number-range-popover")
             .trigger(trigger)
             .content(move |_, _window, cx| {
-                let apply_view = view.clone();
+                let clear_view_inner = view.clone();
                 v_flex()
                     .p_3()
                     .gap_3()
@@ -281,14 +255,14 @@ impl Render for NumberRangeFilter {
                     )
                     .child(Slider::new(&slider_state))
                     .child(
-                        Button::new("apply-btn")
-                            .primary()
+                        Button::new("clear-btn")
+                            .outline()
                             .small()
                             .w_full()
-                            .label("Apply")
+                            .label("Clear")
                             .on_click(move |_, window, cx| {
-                                apply_view.update(cx, |this, cx| {
-                                    this.apply(window, cx);
+                                clear_view_inner.update(cx, |this, cx| {
+                                    this.clear(window, cx);
                                 });
                             }),
                     )

@@ -2,10 +2,9 @@ use crate::TableFilterComponent;
 use chrono::NaiveDate;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable,
+    Icon, IconName, Sizable,
     button::{Button, ButtonVariants},
-    calendar::Date,
-    date_picker::{DatePicker, DatePickerEvent, DatePickerState},
+    calendar::{Calendar, CalendarEvent, CalendarState, Date},
     divider::Divider,
     h_flex,
     popover::Popover,
@@ -16,7 +15,7 @@ use std::rc::Rc;
 pub struct DateRangeFilter {
     title: String,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
-    date_picker: Option<Entity<DatePickerState>>,
+    calendar: Option<Entity<CalendarState>>,
     on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
 }
@@ -38,7 +37,7 @@ impl TableFilterComponent for DateRangeFilter {
         cx.new(|_cx| Self {
             title,
             selected_range: value,
-            date_picker: None,
+            calendar: None,
             on_change: Rc::new(on_change),
             _subscriptions: Vec::new(),
         })
@@ -46,22 +45,20 @@ impl TableFilterComponent for DateRangeFilter {
 }
 
 impl DateRangeFilter {
-    fn ensure_date_picker(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.date_picker.is_none() {
+    fn ensure_calendar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.calendar.is_none() {
             let (start, end) = self.selected_range;
-            let picker = cx.new(|cx| {
-                let mut picker = DatePickerState::range(window, cx);
-                if start.is_some() || end.is_some() {
-                    picker.set_date(Date::Range(start, end), window, cx);
-                }
-                picker
+            let calendar = cx.new(|cx| {
+                let mut cal = CalendarState::new(window, cx);
+                cal.set_date(Date::Range(start, end), window, cx);
+                cal
             });
 
-            // Subscribe to date picker changes for immediate feedback
+            // Subscribe to calendar selection changes
             let subscription = cx.subscribe(
-                &picker,
-                |this: &mut Self, _, event: &DatePickerEvent, cx| {
-                    let DatePickerEvent::Change(date) = event;
+                &calendar,
+                |this: &mut Self, _, event: &CalendarEvent, cx| {
+                    let CalendarEvent::Selected(date) = event;
                     let (start, end) = match date {
                         Date::Range(start, end) => (*start, *end),
                         Date::Single(date) => (*date, None),
@@ -72,15 +69,15 @@ impl DateRangeFilter {
             );
 
             self._subscriptions.push(subscription);
-            self.date_picker = Some(picker);
+            self.calendar = Some(calendar);
         }
     }
 
     fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_range = (None, None);
-        if let Some(picker) = &self.date_picker {
-            picker.update(cx, |picker, cx| {
-                picker.set_date(Date::Range(None, None), window, cx);
+        if let Some(calendar) = &self.calendar {
+            calendar.update(cx, |cal, cx| {
+                cal.set_date(Date::Range(None, None), window, cx);
             });
         }
         (self.on_change)((None, None), window, cx);
@@ -115,14 +112,14 @@ fn format_date(date: NaiveDate) -> String {
 
 impl Render for DateRangeFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        // Ensure date picker exists
-        self.ensure_date_picker(window, cx);
+        // Ensure calendar exists
+        self.ensure_calendar(window, cx);
 
         let title = self.title.clone();
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity().clone();
-        let date_picker = self.date_picker.clone().unwrap();
+        let calendar = self.calendar.clone().unwrap();
 
         // Icon: CircleX when has value (to clear), Calendar otherwise
         let trigger_icon = if has_value {
@@ -158,7 +155,7 @@ impl Render for DateRangeFilter {
 
         Popover::new("date-range-popover")
             .trigger(trigger)
-            .content(move |_, _window, cx| {
+            .content(move |_, _window, _cx| {
                 let apply_view = view.clone();
                 let clear_view_inner = view.clone();
                 v_flex()
@@ -171,14 +168,8 @@ impl Render for DateRangeFilter {
                             .child(title.clone()),
                     )
                     .child(
-                        // Use DatePicker with appearance(false) for inline calendar display
-                        // with 2 months shown side by side
-                        div().w_full().bg(cx.theme().secondary).rounded_md().child(
-                            DatePicker::new(&date_picker)
-                                .number_of_months(2)
-                                .appearance(false)
-                                .cleanable(true),
-                        ),
+                        // Use Calendar directly with 2 months shown
+                        Calendar::new(&calendar).number_of_months(2).small(),
                     )
                     .child(
                         h_flex()
