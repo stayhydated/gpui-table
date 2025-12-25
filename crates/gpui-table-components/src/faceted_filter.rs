@@ -2,12 +2,12 @@ use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
     ActiveTheme, Icon, IconName, Sizable,
-    badge::Badge,
     button::{Button, ButtonVariants},
     checkbox::Checkbox,
     divider::Divider,
     input::{Input, InputState},
     popover::Popover,
+    tag::Tag,
     v_flex,
 };
 use gpui_table_core::filter::FacetedFilterOption;
@@ -156,16 +156,16 @@ impl Render for FacetedFilter {
             .child(title)
             .when(has_selection, |b| {
                 b.child(Divider::vertical().h(px(16.)).mx_1()).child(
-                    // Show badges for selected values (like ts-ref)
-                    // If more than 2 selected, show "{n} selected" badge
-                    // Otherwise show individual badges for each selected value
+                    // Show tags for selected values
+                    // If more than 2 selected, show "{n} selected" tag
+                    // Otherwise show individual tags for each selected value
                     if selected_count > 2 {
-                        div().child(Badge::new().child(format!("{} selected", selected_count)))
+                        div().child(Tag::secondary().small().child(format!("{} selected", selected_count)))
                     } else {
                         div().flex().items_center().gap_1().children(
                             selected_labels
                                 .into_iter()
-                                .map(|label| Badge::new().child(label)),
+                                .map(|label| Tag::secondary().small().child(label)),
                         )
                     },
                 )
