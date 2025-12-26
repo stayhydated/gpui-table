@@ -1,5 +1,6 @@
 use std::time;
 
+use es_fluent::ThisFtl as _;
 use fake::Fake;
 use gpui::{
     Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,

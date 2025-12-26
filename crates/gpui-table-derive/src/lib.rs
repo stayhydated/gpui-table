@@ -345,11 +345,19 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                 &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
                 struct_name.span(),
             );
-            quote! { fn table_title() -> String { #fluent_enum::this_ftl() } }
+            quote! { fn table_title() -> String {
+              use es_fluent::ThisFtl as _;
+              #fluent_enum::this_ftl()
+              }
+            }
         },
         Some(Override::Inherit) => {
             let fluent_enum = Ident::new(&format!("{}", struct_name), struct_name.span());
-            quote! { fn table_title() -> String { #fluent_enum::this_ftl() } }
+            quote! { fn table_title() -> String {
+              use es_fluent::ThisFtl as _;
+              #fluent_enum::this_ftl()
+              }
+            }
         },
         None => {
             quote! { fn table_title() -> String { Self::TABLE_TITLE.to_string() } }

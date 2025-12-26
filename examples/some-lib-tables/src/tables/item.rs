@@ -1,3 +1,4 @@
+use es_fluent::ThisFtl as _;
 use fake::Fake;
 use gpui::{
     App, AppContext, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled, Window,

@@ -1,3 +1,4 @@
+use es_fluent::ThisFtl as _;
 use fake::{Fake, Faker};
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,

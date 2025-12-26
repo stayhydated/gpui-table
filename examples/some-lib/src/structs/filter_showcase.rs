@@ -1,4 +1,4 @@
-use es_fluent::EsFluentKv;
+use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{
     chrono::en::DateTime, company::en::CompanyName, internet::en::SafeEmail, lorem::en::Sentence,
@@ -11,7 +11,7 @@ use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
 /// Priority levels for tasks/items
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
+#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
 #[filter(fluent)]
 pub enum Priority {
     #[filter(icon = IconName::ArrowDown)]
@@ -25,7 +25,7 @@ pub enum Priority {
 }
 
 /// Categories for classification
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
+#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
 #[filter(fluent)]
 pub enum Category {
     #[filter(icon = IconName::Settings)]
@@ -41,8 +41,9 @@ pub enum Category {
 }
 
 /// A comprehensive example struct that showcases all filter types
-#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this, keys = ["description", "label"])]
+#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[fluent_this(origin, members)]
+#[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
 pub struct FilterShowcase {
     #[gpui_table(skip)]

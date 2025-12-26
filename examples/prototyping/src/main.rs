@@ -96,7 +96,7 @@ fn layout(data: &GpuiTableShape) -> syn::File {
             table::{Table, TableState, TableDelegate as _},
             v_flex,
         };
-        use es_fluent::ToFluentString as _;
+        use es_fluent::{ToFluentString as _, ThisFtl as _};
     };
 
     let layout_tokens = quote! {
