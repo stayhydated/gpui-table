@@ -1,4 +1,4 @@
-use es_fluent::EsFluentKv;
+use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::lorem::en::Sentence;
 use fake::faker::name::en::Name;
 use fake::{Dummy, Fake, Faker};
@@ -8,8 +8,9 @@ use gpui_table::GpuiTable;
 use gpui_table::components::TextFilter;
 use std::time::Duration;
 
-#[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this, keys = ["description", "label"])]
+#[derive(Clone, Debug, Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[fluent_this(origin, members)]
+#[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
 #[gpui_table(load_more = "Self::load_more_data")]
 #[gpui_table(load_more_threshold = 30)]

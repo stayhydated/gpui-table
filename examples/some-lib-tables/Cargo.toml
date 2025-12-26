@@ -13,18 +13,15 @@ es-fluent-manager-embedded = { workspace = true }
 fake = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table-components = { workspace = true }
-gpui-table = { workspace = true }
 gpui-storybook = { features = [ "macros" ], workspace = true }
+gpui-table = { workspace = true }
+gpui-table-components = { workspace = true }
 inventory = { workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
 serde = { workspace = true }
 some-lib = { path = "../some-lib" }
 strum = { workspace = true }
-
-[build-dependencies]
-es-fluent-build = { workspace = true }
 
 [lints]
 workspace = true

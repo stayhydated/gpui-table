@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use es_fluent::ThisFtl as _;
 use fake::Fake;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,

@@ -1,10 +1,11 @@
-use es_fluent::EsFluentKv;
+use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use gpui_table::GpuiTable;
 use gpui_table::components::{DateRangeFilter, NumberRangeFilter, TextFilter};
-#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this)]
+
+#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[fluent_this(origin, members)]
 #[gpui_table(fluent, custom_style)]
 pub struct Item {
     #[gpui_table(skip)]

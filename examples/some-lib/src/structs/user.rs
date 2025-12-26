@@ -1,4 +1,4 @@
-use es_fluent::EsFluentKv;
+use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
@@ -7,7 +7,7 @@ use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, 
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, PartialEq, TableCell, Filterable)]
+#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
 #[filter(fluent)]
 pub enum UserStatus {
     #[filter(icon = IconName::Check)]
@@ -18,8 +18,9 @@ pub enum UserStatus {
     Offline,
 }
 
-#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this, keys = ["description", "label"])]
+#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[fluent_this(origin, members)]
+#[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
 pub struct User {
     #[gpui_table(skip)]

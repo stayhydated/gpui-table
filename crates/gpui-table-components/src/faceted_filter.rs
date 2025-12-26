@@ -241,7 +241,8 @@ impl Render for FacetedFilter {
                                         move |_, window, cx| {
                                             view.update(cx, |this, cx| {
                                                 // Toggle: if selected, deselect; if not, select
-                                                let new_state = !this.selected_values.contains(&val);
+                                                let new_state =
+                                                    !this.selected_values.contains(&val);
                                                 this.toggle_option(
                                                     val.clone(),
                                                     new_state,
