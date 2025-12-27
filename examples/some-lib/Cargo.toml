@@ -19,9 +19,15 @@ fake = { features = [
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-table = { features = [ "fluent", "inventory", "rust_decimal", "chrono" ], workspace = true }
+gpui_tokio = { workspace = true }
+heck = { workspace = true }
+log = { workspace = true }
+reqwest = { features = [ "json" ], version = "0.12" }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
-strum = { features = ["derive"], workspace = true }
+serde = { features = [ "derive" ], workspace = true }
+strum = { features = [ "derive" ], workspace = true }
+urlencoding = "2"
 uuid = { workspace = true }
 
 [lints]

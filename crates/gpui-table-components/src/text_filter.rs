@@ -11,6 +11,7 @@ pub struct TextFilter {
     value: String,
     input_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(String, &mut Window, &mut App) + 'static>,
+    pending_apply: bool,
 }
 
 impl TableFilterComponent for TextFilter {
@@ -30,6 +31,7 @@ impl TableFilterComponent for TextFilter {
             value,
             input_state: None,
             on_change: Rc::new(on_change),
+            pending_apply: false,
         })
     }
 }
@@ -45,21 +47,23 @@ impl TextFilter {
                     .clean_on_escape()
             });
 
-            // Subscribe to input changes - InputEvent::Change is a unit variant
-            cx.subscribe(&input, |this: &mut Self, state, event: &InputEvent, cx| {
-                match event {
+            // Subscribe to input changes
+            cx.subscribe(
+                &input,
+                |this: &mut Self, state, event: &InputEvent, cx| match event {
                     InputEvent::Change => {
                         let new_value = state.read(cx).value().to_string();
                         this.value = new_value;
+                        this.pending_apply = true;
                         cx.notify();
                     },
                     InputEvent::PressEnter { .. } => {
-                        // Apply on Enter - we need to defer this since we don't have window here
+                        this.pending_apply = true;
                         cx.notify();
                     },
                     _ => {},
-                }
-            })
+                },
+            )
             .detach();
 
             self.input_state = Some(input);
@@ -82,6 +86,12 @@ impl Render for TextFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure input state exists
         self.ensure_input_state(window, cx);
+
+        // Apply pending changes now that we have window access
+        if self.pending_apply {
+            self.pending_apply = false;
+            (self.on_change)(self.value.clone(), window, cx);
+        }
 
         let input_state = self.input_state.clone().unwrap();
 

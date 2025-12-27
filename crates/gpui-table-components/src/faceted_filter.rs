@@ -57,7 +57,7 @@ impl FacetedFilter {
     ///
     /// # Example
     /// ```ignore
-    /// #[derive(Filterable, strum::EnumIter)]
+    /// #[derive(strum::EnumIter, Filterable)]
     /// #[filter(fluent)]
     /// pub enum Priority {
     ///     #[filter(icon = IconName::ArrowDown)]

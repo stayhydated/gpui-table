@@ -81,6 +81,117 @@ item_kv_ftl-name = Name
 item_kv_ftl-weight = Weight
 item_kv_ftl_this = Item Kv Ftl
 
+## Pokemon
+
+pokemon_this = Pokemon
+
+## PokemonDescriptionKvFtl
+
+pokemon_description_kv_ftl-id = ID
+pokemon_description_kv_ftl-name = Name
+pokemon_description_kv_ftl-primary_type = Primary Type
+pokemon_description_kv_ftl-secondary_type = Secondary Type
+pokemon_description_kv_ftl-height = Height
+pokemon_description_kv_ftl-weight = Weight
+pokemon_description_kv_ftl-base_experience = Base XP
+pokemon_description_kv_ftl-hp = HP
+pokemon_description_kv_ftl-attack = Attack
+pokemon_description_kv_ftl-defense = Defense
+pokemon_description_kv_ftl-speed = Speed
+pokemon_description_kv_ftl_this = Pokemon Description Kv Ftl
+
+## PokemonLabelKvFtl
+
+pokemon_label_kv_ftl-id = ID
+pokemon_label_kv_ftl-name = Name
+pokemon_label_kv_ftl-primary_type = Primary Type
+pokemon_label_kv_ftl-secondary_type = Secondary Type
+pokemon_label_kv_ftl-height = Height
+pokemon_label_kv_ftl-weight = Weight
+pokemon_label_kv_ftl-base_experience = Base XP
+pokemon_label_kv_ftl-hp = HP
+pokemon_label_kv_ftl-attack = Attack
+pokemon_label_kv_ftl-defense = Defense
+pokemon_label_kv_ftl-speed = Speed
+pokemon_label_kv_ftl_this = Pokemon Label Kv Ftl
+
+## Product
+
+product_this = Product
+
+## ProductDescriptionKvFtl
+
+product_description_kv_ftl-id = ID
+product_description_kv_ftl-title = Title
+product_description_kv_ftl-category = Category
+product_description_kv_ftl-brand = Brand
+product_description_kv_ftl-price = Price
+product_description_kv_ftl-discount_percentage = Discount %
+product_description_kv_ftl-rating = Rating
+product_description_kv_ftl-stock = Stock
+product_description_kv_ftl_this = Product Description Kv Ftl
+
+## ProductLabelKvFtl
+
+product_label_kv_ftl-id = ID
+product_label_kv_ftl-title = Title
+product_label_kv_ftl-category = Category
+product_label_kv_ftl-brand = Brand
+product_label_kv_ftl-price = Price
+product_label_kv_ftl-discount_percentage = Discount %
+product_label_kv_ftl-rating = Rating
+product_label_kv_ftl-stock = Stock
+product_label_kv_ftl_this = Product Label Kv Ftl
+
+## ProductCategory
+
+product_category-Beauty = Beauty
+product_category-Fragrances = Fragrances
+product_category-Furniture = Furniture
+product_category-Groceries = Groceries
+product_category-HomeDecoration = Home Decoration
+product_category-KitchenAccessories = Kitchen Accessories
+product_category-Laptops = Laptops
+product_category-MensShirts = Men's Shirts
+product_category-MensShoes = Men's Shoes
+product_category-MensWatches = Men's Watches
+product_category-MobileAccessories = Mobile Accessories
+product_category-Motorcycle = Motorcycle
+product_category-SkinCare = Skin Care
+product_category-Smartphones = Smartphones
+product_category-SportsAccessories = Sports Accessories
+product_category-Sunglasses = Sunglasses
+product_category-Tablets = Tablets
+product_category-Tops = Tops
+product_category-Vehicle = Vehicle
+product_category-WomensBags = Women's Bags
+product_category-WomensDresses = Women's Dresses
+product_category-WomensJewellery = Women's Jewellery
+product_category-WomensShoes = Women's Shoes
+product_category-WomensWatches = Women's Watches
+
+## PokemonType
+
+pokemon_type-Normal = Normal
+pokemon_type-Fire = Fire
+pokemon_type-Water = Water
+pokemon_type-Grass = Grass
+pokemon_type-Electric = Electric
+pokemon_type-Ice = Ice
+pokemon_type-Fighting = Fighting
+pokemon_type-Poison = Poison
+pokemon_type-Ground = Ground
+pokemon_type-Flying = Flying
+pokemon_type-Psychic = Psychic
+pokemon_type-Bug = Bug
+pokemon_type-Rock = Rock
+pokemon_type-Ghost = Ghost
+pokemon_type-Dragon = Dragon
+pokemon_type-Dark = Dark
+pokemon_type-Steel = Steel
+pokemon_type-Fairy = Fairy
+pokemon_type-None = None
+
 ## Priority
 
 priority-Critical = Critical
