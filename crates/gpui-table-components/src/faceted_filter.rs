@@ -11,13 +11,13 @@ use gpui_component::{
     tag::Tag,
     v_flex,
 };
-use gpui_table_core::filter::FacetedFilterOption;
+use gpui_table_core::filter::{FacetedFilterOption, Filterable};
 use std::collections::HashSet;
 use std::rc::Rc;
 
 pub struct FacetedFilter {
-    title: String,
-    options: Vec<FacetedFilterOption>,
+    title: Rc<dyn Fn() -> String>,
+    options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
     selected_values: HashSet<String>,
     search_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(HashSet<String>, &mut Window, &mut App) + 'static>,
@@ -38,8 +38,8 @@ impl TableFilterComponent for FacetedFilter {
         let title = title.into();
 
         cx.new(|_cx| Self {
-            title,
-            options: Vec::new(),
+            title: Rc::new(move || title.clone()),
+            options: Rc::new(Vec::new),
             selected_values: value,
             search_state: None,
             on_change: Rc::new(on_change),
@@ -48,22 +48,60 @@ impl TableFilterComponent for FacetedFilter {
 }
 
 impl FacetedFilter {
-    /// Build a faceted filter with options.
+    /// Build a faceted filter with options derived from a type implementing `Filterable`.
     ///
-    /// This is the primary constructor for faceted filters since they require
-    /// a list of available options.
-    pub fn build_with_options(
-        title: impl Into<String>,
-        options: Vec<FacetedFilterOption>,
+    /// This is the preferred constructor for enum-based filters. The options are
+    /// automatically generated from the enum's `Filterable` implementation, which
+    /// includes labels (from `#[filter(fluent)]` or `#[filter(label = "...")]`) and
+    /// icons (from `#[filter(icon = IconName::...)]`).
+    ///
+    /// # Example
+    /// ```ignore
+    /// #[derive(Filterable, strum::EnumIter)]
+    /// #[filter(fluent)]
+    /// pub enum Priority {
+    ///     #[filter(icon = IconName::ArrowDown)]
+    ///     Low,
+    ///     #[filter(icon = IconName::ArrowUp)]
+    ///     High,
+    /// }
+    ///
+    /// let filter = FacetedFilter::build_for::<Priority>(
+    ///     "Priority",
+    ///     HashSet::new(),
+    ///     move |value, _window, cx| { /* handle change */ },
+    ///     cx,
+    /// );
+    /// ```
+    pub fn build_for<T: Filterable + 'static>(
+        title: impl Fn() -> String + 'static,
         selected_values: HashSet<String>,
         on_change: impl Fn(HashSet<String>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        let title = title.into();
-
         cx.new(|_cx| Self {
-            title,
-            options,
+            title: Rc::new(title),
+            options: Rc::new(T::options),
+            selected_values,
+            search_state: None,
+            on_change: Rc::new(on_change),
+        })
+    }
+
+    /// Build a faceted filter with options.
+    ///
+    /// Use this constructor when you need to provide options dynamically
+    /// (e.g., for i18n support where labels need to update on language change).
+    pub fn build_with_options(
+        title: impl Fn() -> String + 'static,
+        options: impl Fn() -> Vec<FacetedFilterOption> + 'static,
+        selected_values: HashSet<String>,
+        on_change: impl Fn(HashSet<String>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        cx.new(|_cx| Self {
+            title: Rc::new(title),
+            options: Rc::new(options),
             selected_values,
             search_state: None,
             on_change: Rc::new(on_change),
@@ -105,7 +143,8 @@ impl FacetedFilter {
 
     /// Get the labels of selected values for display.
     fn get_selected_labels(&self) -> Vec<String> {
-        self.options
+        let options = (self.options)();
+        options
             .iter()
             .filter(|opt| self.selected_values.contains(&opt.value))
             .map(|opt| opt.label.clone())
@@ -118,13 +157,13 @@ impl Render for FacetedFilter {
         // Ensure search state exists
         self.ensure_search_state(window, cx);
 
-        let title = self.title.clone();
+        let title = (self.title)();
         let selected_count = self.selected_values.len();
         let has_selection = selected_count > 0;
         let selected_labels = self.get_selected_labels();
 
         let view = cx.entity().clone();
-        let options = self.options.clone();
+        let options_fn = self.options.clone();
         let selected_values = self.selected_values.clone();
         let search_state = self.search_state.clone().unwrap();
 
@@ -180,6 +219,9 @@ impl Render for FacetedFilter {
             .trigger(trigger)
             .content(move |_, _window, cx| {
                 let clear_view = view.clone();
+
+                // Get fresh options (for i18n reactivity)
+                let options = options_fn();
 
                 // Get search query to filter options
                 let search_query = search_state.read(cx).text().to_string().to_lowercase();

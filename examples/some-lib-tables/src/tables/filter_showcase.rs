@@ -12,9 +12,10 @@ use gpui_component::{
     v_flex,
 };
 use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
-use gpui_table::filter::FacetedFilterOption;
 use gpui_table_components::TableFilterComponent;
-use some_lib::structs::filter_showcase::{FilterShowcase, FilterShowcaseTableDelegate};
+use some_lib::structs::filter_showcase::{
+    Category, FilterShowcase, FilterShowcaseTableDelegate, Priority,
+};
 
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
@@ -193,22 +194,8 @@ impl FilterShowcaseStory {
 
         // FacetedFilter: active (boolean)
         let table_entity = table.clone();
-        let filter_active = FacetedFilter::build_with_options(
-            "Active",
-            vec![
-                FacetedFilterOption {
-                    label: "Yes".to_string(),
-                    value: "true".to_string(),
-                    count: None,
-                    icon: None,
-                },
-                FacetedFilterOption {
-                    label: "No".to_string(),
-                    value: "false".to_string(),
-                    count: None,
-                    icon: None,
-                },
-            ],
+        let filter_active = FacetedFilter::build_for::<bool>(
+            || "Active".to_string(),
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {
@@ -221,22 +208,8 @@ impl FilterShowcaseStory {
 
         // FacetedFilter: verified (boolean)
         let table_entity = table.clone();
-        let filter_verified = FacetedFilter::build_with_options(
-            "Verified",
-            vec![
-                FacetedFilterOption {
-                    label: "Yes".to_string(),
-                    value: "true".to_string(),
-                    count: None,
-                    icon: None,
-                },
-                FacetedFilterOption {
-                    label: "No".to_string(),
-                    value: "false".to_string(),
-                    count: None,
-                    icon: None,
-                },
-            ],
+        let filter_verified = FacetedFilter::build_for::<bool>(
+            || "Verified".to_string(),
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {
@@ -249,34 +222,8 @@ impl FilterShowcaseStory {
 
         // FacetedFilter: priority
         let table_entity = table.clone();
-        let filter_priority = FacetedFilter::build_with_options(
-            "Priority",
-            vec![
-                FacetedFilterOption {
-                    label: "Low".to_string(),
-                    value: "Low".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::ArrowDown),
-                },
-                FacetedFilterOption {
-                    label: "Medium".to_string(),
-                    value: "Medium".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::Minus),
-                },
-                FacetedFilterOption {
-                    label: "High".to_string(),
-                    value: "High".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::ArrowUp),
-                },
-                FacetedFilterOption {
-                    label: "Critical".to_string(),
-                    value: "Critical".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::TriangleAlert),
-                },
-            ],
+        let filter_priority = FacetedFilter::build_for::<Priority>(
+            Priority::this_ftl,
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {
@@ -289,40 +236,8 @@ impl FilterShowcaseStory {
 
         // FacetedFilter: category
         let table_entity = table.clone();
-        let filter_category = FacetedFilter::build_with_options(
-            "Category",
-            vec![
-                FacetedFilterOption {
-                    label: "Engineering".to_string(),
-                    value: "Engineering".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::Settings),
-                },
-                FacetedFilterOption {
-                    label: "Design".to_string(),
-                    value: "Design".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::Palette),
-                },
-                FacetedFilterOption {
-                    label: "Marketing".to_string(),
-                    value: "Marketing".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::ChartPie),
-                },
-                FacetedFilterOption {
-                    label: "Sales".to_string(),
-                    value: "Sales".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::Star),
-                },
-                FacetedFilterOption {
-                    label: "Support".to_string(),
-                    value: "Support".to_string(),
-                    count: None,
-                    icon: Some(gpui_component::IconName::User),
-                },
-            ],
+        let filter_category = FacetedFilter::build_for::<Category>(
+            Category::this_ftl,
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {

@@ -5,6 +5,7 @@ category-Engineering = Engineering
 category-Marketing = Marketing
 category-Sales = Sales
 category-Support = Support
+category_this = Category
 
 ## FilterShowcase
 
@@ -87,6 +88,7 @@ priority-Critical = Critical
 priority-High = High
 priority-Low = Low
 priority-Medium = Medium
+priority_this = Priority
 
 ## User
 

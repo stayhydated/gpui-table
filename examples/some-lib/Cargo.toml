@@ -21,6 +21,7 @@ gpui-component = { workspace = true }
 gpui-table = { features = [ "fluent", "inventory", "rust_decimal", "chrono" ], workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
+strum = { features = ["derive"], workspace = true }
 uuid = { workspace = true }
 
 [lints]

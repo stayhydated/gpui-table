@@ -11,7 +11,18 @@ use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
 /// Priority levels for tasks/items
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
+#[derive(
+    Clone,
+    Debug,
+    fake::Dummy,
+    es_fluent::EsFluent,
+    Filterable,
+    PartialEq,
+    TableCell,
+    strum::EnumIter,
+    EsFluentThis,
+)]
+#[fluent_this(origin)]
 #[filter(fluent)]
 pub enum Priority {
     #[filter(icon = IconName::ArrowDown)]
@@ -25,7 +36,18 @@ pub enum Priority {
 }
 
 /// Categories for classification
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
+#[derive(
+    Clone,
+    Debug,
+    fake::Dummy,
+    es_fluent::EsFluent,
+    Filterable,
+    PartialEq,
+    TableCell,
+    strum::EnumIter,
+    EsFluentThis,
+)]
+#[fluent_this(origin)]
 #[filter(fluent)]
 pub enum Category {
     #[filter(icon = IconName::Settings)]
