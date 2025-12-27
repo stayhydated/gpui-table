@@ -107,6 +107,9 @@ impl NumberRangeFilter {
 
                     this.min = Some(start);
                     this.max = Some(end);
+
+                    // Note: We can't call on_change here because we don't have window access
+                    // The on_change will be triggered when the popover closes or via apply()
                     cx.notify();
                 },
             );
@@ -158,6 +161,17 @@ impl NumberRangeFilter {
 
     fn has_value(&self) -> bool {
         self.min.is_some() || self.max.is_some()
+    }
+
+    /// Apply the current filter value via callback.
+    /// Call this from parent when you want to trigger the on_change.
+    pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        (self.on_change)((self.min, self.max), window, cx);
+    }
+
+    /// Get the current filter value.
+    pub fn value(&self) -> (Option<f64>, Option<f64>) {
+        (self.min, self.max)
     }
 
     fn format_range(&self) -> String {
@@ -226,8 +240,17 @@ impl Render for NumberRangeFilter {
                     .child(range_display)
             });
 
+        let apply_view = view.clone();
         Popover::new("number-range-popover")
             .trigger(trigger)
+            .on_open_change(move |open, window, cx| {
+                // When popover closes, apply the filter
+                if !open {
+                    apply_view.update(cx, |this, cx| {
+                        this.apply(window, cx);
+                    });
+                }
+            })
             .content(move |_, _window, cx| {
                 let clear_view_inner = view.clone();
                 v_flex()

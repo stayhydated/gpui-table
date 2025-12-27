@@ -87,6 +87,17 @@ impl DateRangeFilter {
         self.selected_range.0.is_some() || self.selected_range.1.is_some()
     }
 
+    /// Apply the current filter value via callback.
+    /// Call this from parent when you want to trigger the on_change.
+    pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        (self.on_change)(self.selected_range, window, cx);
+    }
+
+    /// Get the current filter value.
+    pub fn value(&self) -> (Option<NaiveDate>, Option<NaiveDate>) {
+        self.selected_range
+    }
+
     fn format_range(&self) -> String {
         match self.selected_range {
             (Some(start), Some(end)) => {
@@ -151,8 +162,17 @@ impl Render for DateRangeFilter {
                     .child(range_display)
             });
 
+        let apply_view = view.clone();
         Popover::new("date-range-popover")
             .trigger(trigger)
+            .on_open_change(move |open, window, cx| {
+                // When popover closes, apply the filter
+                if !open {
+                    apply_view.update(cx, |this, cx| {
+                        this.apply(window, cx);
+                    });
+                }
+            })
             .content(move |_, _window, _cx| {
                 let clear_view_inner = view.clone();
                 v_flex()
