@@ -2,6 +2,7 @@ use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful,
 use gpui_component::table::Column;
 
 pub mod filter;
+pub mod filter_helpers;
 pub mod registry;
 
 /// A value that can be displayed in a table cell.
