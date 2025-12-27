@@ -1,6 +1,6 @@
 use std::collections::HashSet;
 
-use es_fluent::ThisFtl as _;
+use es_fluent::{ThisFtl as _, ToFluentString};
 use fake::Fake;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,
@@ -14,7 +14,7 @@ use gpui_component::{
 use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
 use gpui_table_components::TableFilterComponent;
 use some_lib::structs::filter_showcase::{
-    Category, FilterShowcase, FilterShowcaseTableDelegate, Priority,
+    Category, FilterShowcase, FilterShowcaseLabelKvFtl, FilterShowcaseTableDelegate, Priority,
 };
 
 #[gpui_storybook::story_init]
@@ -223,7 +223,7 @@ impl FilterShowcaseStory {
         // FacetedFilter: priority
         let table_entity = table.clone();
         let filter_priority = FacetedFilter::build_for::<Priority>(
-            Priority::this_ftl,
+            || FilterShowcaseLabelKvFtl::Priority.to_fluent_string(),
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {
@@ -237,7 +237,7 @@ impl FilterShowcaseStory {
         // FacetedFilter: category
         let table_entity = table.clone();
         let filter_category = FacetedFilter::build_for::<Category>(
-            Category::this_ftl,
+            || FilterShowcaseLabelKvFtl::Category.to_fluent_string(),
             HashSet::new(),
             move |value, _window, cx| {
                 table_entity.update(cx, |table, cx| {

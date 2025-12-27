@@ -20,9 +20,7 @@ use rust_decimal::Decimal;
     PartialEq,
     TableCell,
     strum::EnumIter,
-    EsFluentThis,
 )]
-#[fluent_this(origin)]
 #[filter(fluent)]
 pub enum Priority {
     #[filter(icon = IconName::ArrowDown)]
@@ -45,9 +43,7 @@ pub enum Priority {
     PartialEq,
     TableCell,
     strum::EnumIter,
-    EsFluentThis,
 )]
-#[fluent_this(origin)]
 #[filter(fluent)]
 pub enum Category {
     #[filter(icon = IconName::Settings)]
