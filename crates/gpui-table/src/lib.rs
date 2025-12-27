@@ -3,10 +3,6 @@ pub use gpui_table_derive::*;
 
 pub use gpui_table_core::*;
 
-pub use derive_new;
-
-/// Re-export filter components for use in derive macros.
-/// These are used by the `#[gpui_table(filter = ...)]` attribute.
 pub mod components {
     pub use gpui_table_components::TableFilterComponent;
     pub use gpui_table_components::date_range_filter::DateRangeFilter;
