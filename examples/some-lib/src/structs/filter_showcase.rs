@@ -59,7 +59,7 @@ pub enum Category {
 }
 
 /// A comprehensive example struct that showcases all filter types
-#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[derive(Clone, fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
@@ -67,65 +67,65 @@ pub struct FilterShowcase {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
     #[allow(dead_code)]
-    id: uuid::Uuid,
+    pub id: uuid::Uuid,
 
     // TextFilter examples
     #[gpui_table(sortable, width = 150., filter = TextFilter)]
     #[dummy(faker = "Name()")]
-    name: String,
+    pub name: String,
 
     #[gpui_table(width = 200., filter = TextFilter)]
     #[dummy(faker = "SafeEmail()")]
-    email: String,
+    pub email: String,
 
     #[gpui_table(width = 150., filter = TextFilter)]
     #[dummy(faker = "CompanyName()")]
-    company: String,
+    pub company: String,
 
     #[gpui_table(width = 250., filter = TextFilter)]
     #[dummy(faker = "Sentence(3..8)")]
-    description: String,
+    pub description: String,
 
     // NumberRangeFilter examples
     #[gpui_table(sortable, width = 80., filter = NumberRangeFilter)]
     #[dummy(faker = "18..80")]
-    age: u8,
+    pub age: u8,
 
     #[gpui_table(sortable, width = 100., filter = NumberRangeFilter)]
     #[dummy(faker = "0..100")]
-    score: u8,
+    pub score: u8,
 
     #[gpui_table(sortable, width = 120., filter = NumberRangeFilter)]
     #[dummy(faker = "PositiveDecimal")]
-    amount: Decimal,
+    pub amount: Decimal,
 
     #[gpui_table(sortable, width = 100., filter = NumberRangeFilter)]
     #[dummy(faker = "1..1000")]
-    quantity: u32,
+    pub quantity: u32,
 
     // FacetedFilter examples
     #[gpui_table(width = 80., filter = FacetedFilter)]
-    active: bool,
+    pub active: bool,
 
     #[gpui_table(width = 80., filter = FacetedFilter)]
-    verified: bool,
+    pub verified: bool,
 
     #[gpui_table(width = 100., filter = FacetedFilter)]
-    priority: Priority,
+    pub priority: Priority,
 
     #[gpui_table(width = 120., filter = FacetedFilter)]
-    category: Category,
+    pub category: Category,
 
     // DateRangeFilter examples
     #[gpui_table(sortable, width = 180., filter = DateRangeFilter)]
     #[dummy(faker = "DateTime()")]
-    created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
 
     #[gpui_table(sortable, width = 180., filter = DateRangeFilter)]
     #[dummy(faker = "DateTime()")]
-    updated_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
 
     #[gpui_table(sortable, width = 180., filter = DateRangeFilter)]
     #[dummy(faker = "DateTime()")]
-    due_date: chrono::DateTime<chrono::Utc>,
+    pub due_date: chrono::DateTime<chrono::Utc>,
 }

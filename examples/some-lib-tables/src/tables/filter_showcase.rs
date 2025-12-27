@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use chrono::NaiveDate;
 use es_fluent::{ThisFtl as _, ToFluentString};
 use fake::Fake;
 use gpui::{
@@ -13,6 +14,7 @@ use gpui_component::{
 };
 use gpui_table::components::{DateRangeFilter, FacetedFilter, NumberRangeFilter, TextFilter};
 use gpui_table_components::TableFilterComponent;
+use rust_decimal::Decimal;
 use some_lib::structs::filter_showcase::{
     Category, FilterShowcase, FilterShowcaseLabelKvFtl, FilterShowcaseTableDelegate, Priority,
 };
@@ -23,6 +25,8 @@ pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
 pub struct FilterShowcaseStory {
     table: Entity<TableState<FilterShowcaseTableDelegate>>,
+    /// Original unfiltered data
+    all_rows: Vec<FilterShowcase>,
 
     // TextFilter instances
     filter_name: Entity<TextFilter>,
@@ -66,18 +70,100 @@ impl Focusable for FilterShowcaseStory {
     }
 }
 
+/// Check if a text field matches a filter (case-insensitive contains)
+fn text_matches(value: &str, filter: &str) -> bool {
+    filter.is_empty() || value.to_lowercase().contains(&filter.to_lowercase())
+}
+
+/// Check if a number is within a range filter
+fn number_in_range<T: Into<f64> + Copy>(value: T, range: &(Option<f64>, Option<f64>)) -> bool {
+    let v: f64 = value.into();
+    match range {
+        (None, None) => true,
+        (Some(min), None) => v >= *min,
+        (None, Some(max)) => v <= *max,
+        (Some(min), Some(max)) => v >= *min && v <= *max,
+    }
+}
+
+/// Check if a Decimal is within a range filter
+fn decimal_in_range(value: &Decimal, range: &(Option<f64>, Option<f64>)) -> bool {
+    let v: f64 = value.to_string().parse().unwrap_or(0.0);
+    match range {
+        (None, None) => true,
+        (Some(min), None) => v >= *min,
+        (None, Some(max)) => v <= *max,
+        (Some(min), Some(max)) => v >= *min && v <= *max,
+    }
+}
+
+/// Check if a faceted value matches the filter set (empty set = no filter)
+fn facet_matches(value: &str, filter: &HashSet<String>) -> bool {
+    filter.is_empty() || filter.contains(value)
+}
+
+/// Check if a date is within a date range filter
+fn date_in_range(
+    value: &chrono::DateTime<chrono::Utc>,
+    range: &(Option<NaiveDate>, Option<NaiveDate>),
+) -> bool {
+    let date = value.date_naive();
+    match range {
+        (None, None) => true,
+        (Some(start), None) => date >= *start,
+        (None, Some(end)) => date <= *end,
+        (Some(start), Some(end)) => date >= *start && date <= *end,
+    }
+}
+
 impl FilterShowcaseStory {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self::new(window, cx))
     }
 
-    fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let mut delegate = FilterShowcaseTableDelegate::new(vec![]);
-        // Generate 200 rows of sample data
-        for _ in 0..200 {
-            delegate.rows.push(fake::Faker.fake());
-        }
+    /// Apply all filters and update the table rows
+    fn apply_filters(&mut self, cx: &mut Context<Self>) {
+        self.table.update(cx, |table, _cx| {
+            let filters = &table.delegate().filters;
 
+            let filtered: Vec<FilterShowcase> = self
+                .all_rows
+                .iter()
+                .filter(|row| {
+                    // Text filters
+                    text_matches(&row.name, &filters.name)
+                        && text_matches(&row.email, &filters.email)
+                        && text_matches(&row.company, &filters.company)
+                        && text_matches(&row.description, &filters.description)
+                        // Number range filters
+                        && number_in_range(row.age, &filters.age)
+                        && number_in_range(row.score, &filters.score)
+                        && decimal_in_range(&row.amount, &filters.amount)
+                        && number_in_range(row.quantity, &filters.quantity)
+                        // Faceted filters (bool)
+                        && facet_matches(&row.active.to_string(), &filters.active)
+                        && facet_matches(&row.verified.to_string(), &filters.verified)
+                        // Faceted filters (enum) - use variant name
+                        && facet_matches(&format!("{:?}", row.priority), &filters.priority)
+                        && facet_matches(&format!("{:?}", row.category), &filters.category)
+                        // Date range filters
+                        && date_in_range(&row.created_at, &filters.created_at)
+                        && date_in_range(&row.updated_at, &filters.updated_at)
+                        && date_in_range(&row.due_date, &filters.due_date)
+                })
+                .cloned()
+                .collect();
+
+            table.delegate_mut().rows = filtered;
+        });
+        cx.notify();
+    }
+
+    fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
+        // Generate 200 rows of sample data
+        let all_rows: Vec<FilterShowcase> = (0..200).map(|_| fake::Faker.fake()).collect();
+
+        let delegate = FilterShowcaseTableDelegate::new(all_rows.clone());
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
         // TextFilter: name
@@ -290,10 +376,13 @@ impl FilterShowcaseStory {
             cx,
         );
 
-        let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+        let _subscription = cx.observe(&table, |this, _, cx| {
+            this.apply_filters(cx);
+        });
 
         Self {
             table,
+            all_rows,
             filter_name,
             filter_email,
             filter_company,
@@ -402,7 +491,11 @@ impl Render for FilterShowcaseStory {
             .child(
                 h_flex()
                     .gap_4()
-                    .child(format!("Total Rows: {}", delegate.rows.len()))
+                    .child(format!(
+                        "Showing: {} / {} rows",
+                        delegate.rows.len(),
+                        self.all_rows.len()
+                    ))
                     .child(if delegate.eof {
                         "All data loaded"
                     } else {
