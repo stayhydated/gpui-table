@@ -81,6 +81,62 @@ item_kv_ftl-name = Name
 item_kv_ftl-weight = Weight
 item_kv_ftl_this = Item Kv Ftl
 
+## Pokemon
+
+pokemon_this = Pokemon
+
+## PokemonDescriptionKvFtl
+
+pokemon_description_kv_ftl-id = ID
+pokemon_description_kv_ftl-name = Name
+pokemon_description_kv_ftl-primary_type = Primary Type
+pokemon_description_kv_ftl-secondary_type = Secondary Type
+pokemon_description_kv_ftl-height = Height
+pokemon_description_kv_ftl-weight = Weight
+pokemon_description_kv_ftl-base_experience = Base XP
+pokemon_description_kv_ftl-hp = HP
+pokemon_description_kv_ftl-attack = Attack
+pokemon_description_kv_ftl-defense = Defense
+pokemon_description_kv_ftl-speed = Speed
+pokemon_description_kv_ftl_this = Pokemon Description Kv Ftl
+
+## PokemonLabelKvFtl
+
+pokemon_label_kv_ftl-id = ID
+pokemon_label_kv_ftl-name = Name
+pokemon_label_kv_ftl-primary_type = Primary Type
+pokemon_label_kv_ftl-secondary_type = Secondary Type
+pokemon_label_kv_ftl-height = Height
+pokemon_label_kv_ftl-weight = Weight
+pokemon_label_kv_ftl-base_experience = Base XP
+pokemon_label_kv_ftl-hp = HP
+pokemon_label_kv_ftl-attack = Attack
+pokemon_label_kv_ftl-defense = Defense
+pokemon_label_kv_ftl-speed = Speed
+pokemon_label_kv_ftl_this = Pokemon Label Kv Ftl
+
+## PokemonType
+
+pokemon_type-Normal = Normal
+pokemon_type-Fire = Fire
+pokemon_type-Water = Water
+pokemon_type-Grass = Grass
+pokemon_type-Electric = Electric
+pokemon_type-Ice = Ice
+pokemon_type-Fighting = Fighting
+pokemon_type-Poison = Poison
+pokemon_type-Ground = Ground
+pokemon_type-Flying = Flying
+pokemon_type-Psychic = Psychic
+pokemon_type-Bug = Bug
+pokemon_type-Rock = Rock
+pokemon_type-Ghost = Ghost
+pokemon_type-Dragon = Dragon
+pokemon_type-Dark = Dark
+pokemon_type-Steel = Steel
+pokemon_type-Fairy = Fairy
+pokemon_type-None = None
+
 ## Priority
 
 priority-Critical = Critical
