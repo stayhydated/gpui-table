@@ -1,10 +1,12 @@
 #[doc(hidden)]
 mod __crate_paths;
+mod components;
 
 use __crate_paths::gpui::{AnyElement, App, Context, Entity, IntoElement, Window};
 use __crate_paths::gpui_component::table::{
     Column, ColumnFixed, ColumnSort, TableDelegate, TableState,
 };
+use components::FilterComponents;
 
 use darling::{FromDeriveInput, FromField, FromVariant, util::Override};
 use heck::{ToPascalCase as _, ToTitleCase as _};
@@ -89,10 +91,10 @@ struct TableColumn {
     movable: Option<bool>,
     #[darling(default)]
     skip: bool,
-    /// Filter component type path (e.g., `TextFilter`, `FacetedFilter`).
-    /// The type must implement `TableFilterComponent`.
+    /// Filter component configuration using function-style syntax.
+    /// Examples: `filter = text()`, `filter = number_range(min = 0, max = 100)`
     #[darling(default)]
-    filter: Option<Path>,
+    filter: Option<FilterComponents>,
 }
 
 /// Filter field metadata for delegate generation.
@@ -100,8 +102,8 @@ struct TableColumn {
 struct FilterFieldMeta {
     /// The field name identifier
     field_ident: Ident,
-    /// The filter component type path (used for registry)
-    filter_type: Path,
+    /// The filter component configuration
+    filter_config: FilterComponents,
     /// The value type for this filter (derived from TableFilterComponent::Value)
     value_type: proc_macro2::TokenStream,
     /// The field type (e.g., String, bool, Priority enum, chrono::DateTime)
@@ -111,44 +113,121 @@ struct FilterFieldMeta {
     column_index: usize,
 }
 
-/// Resolve the filter component path.
-/// The path is used as-is - users must import the filter type they want to use.
-fn resolve_filter_path(filter_path: &Path) -> proc_macro2::TokenStream {
-    quote! { #filter_path }
+/// Get the filter component type tokens for code generation.
+fn get_filter_type_tokens(filter: &FilterComponents) -> proc_macro2::TokenStream {
+    match filter {
+        FilterComponents::Text(_) => quote! { gpui_table::components::TextFilter },
+        FilterComponents::NumberRange(_) => quote! { gpui_table::components::NumberRangeFilter },
+        FilterComponents::DateRange(_) => quote! { gpui_table::components::DateRangeFilter },
+        FilterComponents::Faceted(_) => quote! { gpui_table::components::FacetedFilter },
+    }
 }
 
 /// Get the registry filter type for a given filter component.
 #[cfg(feature = "inventory")]
-fn get_registry_filter_type(filter_path: &Path) -> proc_macro2::TokenStream {
-    let resolved = resolve_filter_path(filter_path);
-    quote! { <#resolved as gpui_table::components::TableFilterComponent>::FILTER_TYPE }
+fn get_registry_filter_type(filter: &FilterComponents) -> proc_macro2::TokenStream {
+    match filter {
+        FilterComponents::Text(_) => {
+            quote! { gpui_table::registry::RegistryFilterType::Text }
+        }
+        FilterComponents::NumberRange(_) => {
+            quote! { gpui_table::registry::RegistryFilterType::NumberRange }
+        }
+        FilterComponents::DateRange(_) => {
+            quote! { gpui_table::registry::RegistryFilterType::DateRange }
+        }
+        FilterComponents::Faceted(_) => {
+            quote! { gpui_table::registry::RegistryFilterType::Faceted }
+        }
+    }
 }
 
 /// Get the FilterType enum for runtime filter config.
-fn get_filter_type_expr(filter_path: &Path, field_ty: &syn::Type) -> proc_macro2::TokenStream {
-    let path_str = filter_path
-        .segments
-        .iter()
-        .map(|s| s.ident.to_string())
-        .collect::<Vec<_>>()
-        .join("::");
+fn get_filter_type_expr(filter: &FilterComponents, field_ty: &syn::Type) -> proc_macro2::TokenStream {
+    match filter {
+        FilterComponents::Text(_) => quote! { gpui_table::filter::FilterType::Text },
+        FilterComponents::NumberRange(_) => quote! { gpui_table::filter::FilterType::NumberRange },
+        FilterComponents::DateRange(_) => quote! { gpui_table::filter::FilterType::DateRange },
+        FilterComponents::Faceted(_) => {
+            quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
+        }
+    }
+}
 
-    // For faceted filters, we need to include the options
-    if path_str == "FacetedFilter"
-        || path_str.ends_with("::FacetedFilter")
-        || path_str.contains("faceted_filter")
-    {
-        quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
-    } else {
-        let resolved = resolve_filter_path(filter_path);
-        // Use the FILTER_TYPE constant to determine the runtime type
-        quote! {
-            match <#resolved as gpui_table::components::TableFilterComponent>::FILTER_TYPE {
-                gpui_table::registry::RegistryFilterType::Text => gpui_table::filter::FilterType::Text,
-                gpui_table::registry::RegistryFilterType::Faceted => gpui_table::filter::FilterType::Faceted(vec![]),
-                gpui_table::registry::RegistryFilterType::NumberRange => gpui_table::filter::FilterType::NumberRange,
-                gpui_table::registry::RegistryFilterType::DateRange => gpui_table::filter::FilterType::DateRange,
+/// Generate chain method calls for filter options.
+fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::TokenStream {
+    use components::TextValidation;
+    
+    match filter {
+        FilterComponents::Text(opts) => {
+            let mut chain = quote! {};
+            
+            // Generate validation method if specified
+            if let Some(ref validation) = opts.validate {
+                let validation_chain = match validation {
+                    TextValidation::Alphabetic => quote! {
+                        use gpui_table::components::TextFilterExt as _;
+                        let filter = filter.alphabetic_only(cx);
+                    },
+                    TextValidation::Numeric => quote! {
+                        use gpui_table::components::TextFilterExt as _;
+                        let filter = filter.numeric_only(cx);
+                    },
+                    TextValidation::Alphanumeric => quote! {
+                        use gpui_table::components::TextFilterExt as _;
+                        let filter = filter.alphanumeric_only(cx);
+                    },
+                    TextValidation::Custom(path) => quote! {
+                        use gpui_table::components::TextFilterExt as _;
+                        let filter = filter.validate(#path, cx);
+                    },
+                };
+                chain = quote! { #chain #validation_chain };
             }
+            
+            chain
+        }
+        FilterComponents::NumberRange(opts) => {
+            let mut chain = quote! {};
+            
+            // Generate .range() call if min or max is specified
+            if opts.min.is_some() || opts.max.is_some() {
+                let min_val = opts.min.unwrap_or(0.0);
+                let max_val = opts.max.unwrap_or(100.0);
+                chain = quote! {
+                    #chain
+                    use gpui_table::components::NumberRangeFilterExt as _;
+                    let filter = filter.range(#min_val, #max_val, cx);
+                };
+            }
+            
+            // Generate .step() call if step is specified
+            if let Some(step_val) = opts.step {
+                chain = quote! {
+                    #chain
+                    let filter = filter.step(#step_val, cx);
+                };
+            }
+            
+            chain
+        }
+        FilterComponents::DateRange(_opts) => {
+            // Date range filter has no configurable options yet
+            quote! {}
+        }
+        FilterComponents::Faceted(opts) => {
+            let mut chain = quote! {};
+            
+            // Generate .searchable() call if enabled
+            if opts.searchable {
+                chain = quote! {
+                    #chain
+                    use gpui_table::components::FacetedFilterExt as _;
+                    let filter = filter.searchable(cx);
+                };
+            }
+            
+            chain
         }
     }
 }
@@ -257,9 +336,9 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             #i => Box::new(self.#ident.clone()),
         });
 
-        if let Some(filter_path) = &field.filter {
-            let filter_type_ts = get_filter_type_expr(filter_path, &field.ty);
-            let resolved_path = resolve_filter_path(filter_path);
+        if let Some(ref filter_config) = field.filter {
+            let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
+            let filter_type_tokens = get_filter_type_tokens(filter_config);
 
             filters_init.push(quote! {
                 gpui_table::filter::FilterConfig {
@@ -272,8 +351,8 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             // The value type is derived from TableFilterComponent::Value
             filter_fields.push(FilterFieldMeta {
                 field_ident: ident.clone(),
-                filter_type: filter_path.clone(),
-                value_type: quote! { <#resolved_path as gpui_table::components::TableFilterComponent>::Value },
+                filter_config: filter_config.clone(),
+                value_type: quote! { <#filter_type_tokens as gpui_table::components::TableFilterComponent>::Value },
                 field_type: field.ty.clone(),
                 column_index: i,
             });
@@ -281,7 +360,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             #[cfg(feature = "inventory")]
             {
                 let field_name_str = ident.to_string();
-                let registry_filter_type = get_registry_filter_type(filter_path);
+                let registry_filter_type = get_registry_filter_type(filter_config);
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::registry::FilterVariant::new(
@@ -843,9 +922,9 @@ fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_type = &f.filter_type;
+            let filter_type_tokens = get_filter_type_tokens(&f.filter_config);
             quote! {
-                pub #field_ident: #Entity<#filter_type>,
+                pub #field_ident: #Entity<#filter_type_tokens>,
             }
         })
         .collect();
@@ -855,32 +934,24 @@ fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_type = &f.filter_type;
+            let filter_type_tokens = get_filter_type_tokens(&f.filter_config);
             let field_type = &f.field_type;
 
             // Determine the title expression based on fluent config
             let title_expr =
                 determine_filter_title_expr(&f.field_ident, fluent_config, struct_name);
 
-            // Determine if this is a FacetedFilter (needs build_for)
-            let filter_path_str = f
-                .filter_type
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect::<Vec<_>>()
-                .join("::");
-
-            let is_faceted =
-                filter_path_str == "FacetedFilter" || filter_path_str.ends_with("::FacetedFilter");
-
-            if is_faceted {
-                // For FacetedFilter, use build_for with the field type
+            // Check if this is a FacetedFilter using the enum method
+            if f.filter_config.is_faceted() {
+                // Generate chain methods for options
+                let chain_methods = generate_filter_chain_methods(&f.filter_config);
+                
+                // For FacetedFilter, use new_for with the field type
                 quote! {
                     let #field_ident = {
                         let table_entity = table.clone();
                         let on_filter_change = on_filter_change.clone();
-                        #filter_type::build_for::<#field_type>(
+                        let filter = #filter_type_tokens::new_for::<#field_type>(
                             || #title_expr,
                             Default::default(),
                             move |value, window, cx| {
@@ -897,16 +968,21 @@ fn generate_filter_entities(
                                 }
                             },
                             cx,
-                        )
+                        );
+                        #chain_methods
+                        filter
                     };
                 }
             } else {
+                // Generate chain methods for options
+                let chain_methods = generate_filter_chain_methods(&f.filter_config);
+
                 // For other filters (TextFilter, NumberRangeFilter, DateRangeFilter)
                 quote! {
                     let #field_ident = {
                         let table_entity = table.clone();
                         let on_filter_change = on_filter_change.clone();
-                        #filter_type::build(
+                        let filter = #filter_type_tokens::new(
                             #title_expr,
                             Default::default(),
                             move |value, window, cx| {
@@ -923,7 +999,9 @@ fn generate_filter_entities(
                                 }
                             },
                             cx,
-                        )
+                        );
+                        #chain_methods
+                        filter
                     };
                 }
             }
@@ -1107,22 +1185,11 @@ fn categorize_filters(
     let mut date = Vec::new();
 
     for f in filter_fields {
-        let path_str = f
-            .filter_type
-            .segments
-            .iter()
-            .map(|s| s.ident.to_string())
-            .collect::<Vec<_>>()
-            .join("::");
-
-        if path_str.contains("TextFilter") {
-            text.push(f);
-        } else if path_str.contains("NumberRangeFilter") {
-            number.push(f);
-        } else if path_str.contains("FacetedFilter") {
-            faceted.push(f);
-        } else if path_str.contains("DateRangeFilter") {
-            date.push(f);
+        match &f.filter_config {
+            FilterComponents::Text(_) => text.push(f),
+            FilterComponents::NumberRange(_) => number.push(f),
+            FilterComponents::Faceted(_) => faceted.push(f),
+            FilterComponents::DateRange(_) => date.push(f),
         }
     }
 
@@ -1173,38 +1240,33 @@ fn generate_filter_match_impl(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_path_str = f
-                .filter_type
-                .segments
-                .iter()
-                .map(|s| s.ident.to_string())
-                .collect::<Vec<_>>()
-                .join("::");
-
-            if filter_path_str.contains("TextFilter") {
-                // Text filter: case-insensitive contains
-                quote! {
-                    (filters.#field_ident.is_empty() ||
-                     self.#field_ident.to_lowercase().contains(&filters.#field_ident.to_lowercase()))
+            
+            match &f.filter_config {
+                FilterComponents::Text(_) => {
+                    // Text filter: case-insensitive contains
+                    quote! {
+                        (filters.#field_ident.is_empty() ||
+                         self.#field_ident.to_lowercase().contains(&filters.#field_ident.to_lowercase()))
+                    }
                 }
-            } else if filter_path_str.contains("NumberRangeFilter") {
-                // Number range filter
-                quote! {
-                    gpui_table::filter_helpers::number_in_range(&self.#field_ident, &filters.#field_ident)
+                FilterComponents::NumberRange(_) => {
+                    // Number range filter
+                    quote! {
+                        gpui_table::filter_helpers::number_in_range(&self.#field_ident, &filters.#field_ident)
+                    }
                 }
-            } else if filter_path_str.contains("FacetedFilter") {
-                // Faceted filter: check if value is in selected set
-                quote! {
-                    gpui_table::filter_helpers::facet_matches(&self.#field_ident, &filters.#field_ident)
+                FilterComponents::Faceted(_) => {
+                    // Faceted filter: check if value is in selected set
+                    quote! {
+                        gpui_table::filter_helpers::facet_matches(&self.#field_ident, &filters.#field_ident)
+                    }
                 }
-            } else if filter_path_str.contains("DateRangeFilter") {
-                // Date range filter
-                quote! {
-                    gpui_table::filter_helpers::date_in_range(&self.#field_ident, &filters.#field_ident)
+                FilterComponents::DateRange(_) => {
+                    // Date range filter
+                    quote! {
+                        gpui_table::filter_helpers::date_in_range(&self.#field_ident, &filters.#field_ident)
+                    }
                 }
-            } else {
-                // Unknown filter type, always matches
-                quote! { true }
             }
         })
         .collect();

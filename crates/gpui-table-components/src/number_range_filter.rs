@@ -1,16 +1,31 @@
 use crate::TableFilterComponent;
-use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, prelude::*, px};
+use gpui::{
+    App, Context, Entity, IntoElement, Render, Subscription, Task, Timer, Window, prelude::*, px,
+};
 use gpui_component::{
     ActiveTheme, Icon, IconName, Sizable,
     button::Button,
     divider::Divider,
     h_flex,
-    input::{Input, InputState},
+    input::{InputEvent, InputState, NumberInput, NumberInputEvent, StepAction},
     popover::Popover,
     slider::{Slider, SliderEvent, SliderState},
     v_flex,
 };
 use std::rc::Rc;
+use std::time::Duration;
+
+/// Debounce delay in milliseconds for filter changes
+const DEBOUNCE_MS: u64 = 300;
+
+/// Tracks which component changed last to determine sync direction
+#[derive(Clone, Copy, PartialEq)]
+enum LastChanged {
+    None,
+    Slider,
+    MinInput,
+    MaxInput,
+}
 
 pub struct NumberRangeFilter {
     title: String,
@@ -18,11 +33,18 @@ pub struct NumberRangeFilter {
     max: Option<f64>,
     range_min: f64,
     range_max: f64,
+    step_size: Option<f64>,
     min_input: Option<Entity<InputState>>,
     max_input: Option<Entity<InputState>>,
     slider_state: Option<Entity<SliderState>>,
     on_change: Rc<dyn Fn((Option<f64>, Option<f64>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
+    /// Flag set by debounce task to trigger apply during next render
+    pending_apply: bool,
+    /// Current debounce task - dropping it cancels the pending apply
+    _debounce_task: Option<Task<()>>,
+    /// Tracks which component was last changed for sync direction
+    last_changed: LastChanged,
 }
 
 impl TableFilterComponent for NumberRangeFilter {
@@ -31,7 +53,7 @@ impl TableFilterComponent for NumberRangeFilter {
     const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
         gpui_table_core::registry::RegistryFilterType::NumberRange;
 
-    fn build(
+    fn new(
         title: impl Into<String>,
         value: Self::Value,
         on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,
@@ -45,45 +67,163 @@ impl TableFilterComponent for NumberRangeFilter {
             max: value.1,
             range_min: 0.0,
             range_max: 100.0,
+            step_size: None,
             min_input: None,
             max_input: None,
             slider_state: None,
             on_change: Rc::new(on_change),
             _subscriptions: Vec::new(),
+            pending_apply: false,
+            _debounce_task: None,
+            last_changed: LastChanged::None,
         })
     }
 }
 
-impl NumberRangeFilter {
-    /// Set the range bounds for the slider.
-    pub fn set_range(entity: Entity<Self>, min: f64, max: f64, cx: &mut App) {
-        entity.update(cx, |this, _cx| {
+/// Extension trait for chainable configuration on Entity<NumberRangeFilter>
+pub trait NumberRangeFilterExt {
+    /// Set the range bounds for the slider (chainable).
+    ///
+    /// # Example
+    /// ```ignore
+    /// NumberRangeFilter::build("Price", (None, None), on_change, cx)
+    ///     .range(0.0, 1000.0, cx)
+    ///     .step(10.0, cx)
+    /// ```
+    fn range(self, min: f64, max: f64, cx: &mut App) -> Self;
+
+    /// Set the step size for increment/decrement (chainable).
+    /// Default is 1% of the range.
+    fn step(self, step: f64, cx: &mut App) -> Self;
+}
+
+impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
+    fn range(self, min: f64, max: f64, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
             this.range_min = min;
             this.range_max = max;
         });
+        self
     }
 
+    fn step(self, step: f64, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.step_size = Some(step);
+        });
+        self
+    }
+}
+
+impl NumberRangeFilter {
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(|v| format_number(v)).unwrap_or_default();
+            let range_min = self.range_min;
+            let range_max = self.range_max;
+
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
                     .placeholder("Min")
                     .default_value(min_val)
                     .clean_on_escape()
             });
+
+            // Subscribe to input text changes
+            let sub1 = cx.subscribe(
+                &input,
+                move |this: &mut Self, state, event: &InputEvent, cx| {
+                    if let InputEvent::Change = event {
+                        let text = state.read(cx).value().to_string();
+                        if let Ok(val) = text.parse::<f64>() {
+                            let clamped = val.clamp(range_min, range_max);
+                            this.min = Some(clamped);
+                        } else if text.is_empty() {
+                            this.min = None;
+                        }
+                        this.last_changed = LastChanged::MinInput;
+                        this.schedule_debounced_apply(cx);
+                    }
+                },
+            );
+
+            // Subscribe to step actions
+            let sub2 = cx.subscribe(
+                &input,
+                move |this: &mut Self, _state, event: &NumberInputEvent, cx| {
+                    let NumberInputEvent::Step(action) = event;
+                    let current = this.min.unwrap_or(this.range_min);
+                    let step = this
+                        .step_size
+                        .unwrap_or((this.range_max - this.range_min) / 100.0);
+                    let new_val = match action {
+                        StepAction::Increment => (current + step).min(this.range_max),
+                        StepAction::Decrement => (current - step).max(this.range_min),
+                    };
+                    this.min = Some(new_val);
+                    this.last_changed = LastChanged::MinInput;
+                    this.schedule_debounced_apply(cx);
+                },
+            );
+
+            self._subscriptions.push(sub1);
+            self._subscriptions.push(sub2);
             self.min_input = Some(input);
         }
+
         if self.max_input.is_none() {
             let max_val = self.max.map(|v| format_number(v)).unwrap_or_default();
+            let range_min = self.range_min;
+            let range_max = self.range_max;
+
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
                     .placeholder("Max")
                     .default_value(max_val)
                     .clean_on_escape()
             });
+
+            // Subscribe to input text changes
+            let sub1 = cx.subscribe(
+                &input,
+                move |this: &mut Self, state, event: &InputEvent, cx| {
+                    if let InputEvent::Change = event {
+                        let text = state.read(cx).value().to_string();
+                        if let Ok(val) = text.parse::<f64>() {
+                            let clamped = val.clamp(range_min, range_max);
+                            this.max = Some(clamped);
+                        } else if text.is_empty() {
+                            this.max = None;
+                        }
+                        this.last_changed = LastChanged::MaxInput;
+                        this.schedule_debounced_apply(cx);
+                    }
+                },
+            );
+
+            // Subscribe to step actions
+            let sub2 = cx.subscribe(
+                &input,
+                move |this: &mut Self, _state, event: &NumberInputEvent, cx| {
+                    let NumberInputEvent::Step(action) = event;
+                    let current = this.max.unwrap_or(this.range_max);
+                    let step = this
+                        .step_size
+                        .unwrap_or((this.range_max - this.range_min) / 100.0);
+                    let new_val = match action {
+                        StepAction::Increment => (current + step).min(this.range_max),
+                        StepAction::Decrement => (current - step).max(this.range_min),
+                    };
+                    this.max = Some(new_val);
+                    this.last_changed = LastChanged::MaxInput;
+                    this.schedule_debounced_apply(cx);
+                },
+            );
+
+            self._subscriptions.push(sub1);
+            self._subscriptions.push(sub2);
             self.max_input = Some(input);
         }
+
         if self.slider_state.is_none() {
             let range_min = self.range_min;
             let range_max = self.range_max;
@@ -98,6 +238,7 @@ impl NumberRangeFilter {
                     .default_value(current_min as f32..current_max as f32)
             });
 
+            // Subscribe to slider changes
             let subscription = cx.subscribe(
                 &slider,
                 move |this: &mut Self, _, event: &SliderEvent, cx| {
@@ -107,10 +248,8 @@ impl NumberRangeFilter {
 
                     this.min = Some(start);
                     this.max = Some(end);
-
-                    // Note: We can't call on_change here because we don't have window access
-                    // The on_change will be triggered when the popover closes or via apply()
-                    cx.notify();
+                    this.last_changed = LastChanged::Slider;
+                    this.schedule_debounced_apply(cx);
                 },
             );
 
@@ -119,19 +258,52 @@ impl NumberRangeFilter {
         }
     }
 
-    fn sync_inputs_from_slider(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if let (Some(min_input), Some(max_input)) = (&self.min_input, &self.max_input) {
-            if let Some(min) = self.min {
-                min_input.update(cx, |state, cx| {
-                    state.set_value(format_number(min), window, cx);
-                });
-            }
-            if let Some(max) = self.max {
-                max_input.update(cx, |state, cx| {
-                    state.set_value(format_number(max), window, cx);
-                });
-            }
+    fn schedule_debounced_apply(&mut self, cx: &mut Context<Self>) {
+        // Cancel any pending debounce task and schedule a new one
+        self._debounce_task = Some(cx.spawn(async move |view, cx| {
+            Timer::after(Duration::from_millis(DEBOUNCE_MS)).await;
+            view.update(cx, |this, cx| {
+                this.pending_apply = true;
+                this._debounce_task = None;
+                cx.notify();
+            })
+            .ok();
+        }));
+        cx.notify();
+    }
+
+    fn sync_components(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        match self.last_changed {
+            LastChanged::Slider => {
+                // Slider changed - update input values
+                if let Some(min_input) = &self.min_input {
+                    if let Some(min) = self.min {
+                        min_input.update(cx, |state, cx| {
+                            state.set_value(format_number(min), window, cx);
+                        });
+                    }
+                }
+                if let Some(max_input) = &self.max_input {
+                    if let Some(max) = self.max {
+                        max_input.update(cx, |state, cx| {
+                            state.set_value(format_number(max), window, cx);
+                        });
+                    }
+                }
+            },
+            LastChanged::MinInput | LastChanged::MaxInput => {
+                // Input changed - update slider
+                if let Some(slider) = &self.slider_state {
+                    let min = self.min.unwrap_or(self.range_min) as f32;
+                    let max = self.max.unwrap_or(self.range_max) as f32;
+                    slider.update(cx, |state, cx| {
+                        state.set_value(min..max, window, cx);
+                    });
+                }
+            },
+            LastChanged::None => {},
         }
+        self.last_changed = LastChanged::None;
     }
 
     fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -155,7 +327,9 @@ impl NumberRangeFilter {
                 state.set_value(range_min..range_max, window, cx);
             });
         }
+        // Clear applies immediately (no debounce for clear action)
         (self.on_change)((None, None), window, cx);
+        self.last_changed = LastChanged::None;
         cx.notify();
     }
 
@@ -188,7 +362,7 @@ fn format_number(n: f64) -> String {
     if n.fract() == 0.0 {
         format!("{:.0}", n)
     } else {
-        format!("{}", n)
+        format!("{:.1}", n)
     }
 }
 
@@ -197,8 +371,14 @@ impl Render for NumberRangeFilter {
         // Ensure input states exist
         self.ensure_inputs(window, cx);
 
-        // Sync inputs from slider values (in case slider changed)
-        self.sync_inputs_from_slider(window, cx);
+        // Sync components based on what changed last
+        self.sync_components(window, cx);
+
+        // Apply pending changes now that we have window access
+        if self.pending_apply {
+            self.pending_apply = false;
+            (self.on_change)((self.min, self.max), window, cx);
+        }
 
         let title = self.title.clone();
         let has_value = self.has_value();
@@ -240,17 +420,8 @@ impl Render for NumberRangeFilter {
                     .child(range_display)
             });
 
-        let apply_view = view.clone();
         Popover::new("number-range-popover")
             .trigger(trigger)
-            .on_open_change(move |open, window, cx| {
-                // When popover closes, apply the filter
-                if !open {
-                    apply_view.update(cx, |this, cx| {
-                        this.apply(window, cx);
-                    });
-                }
-            })
             .content(move |_, _window, cx| {
                 let clear_view_inner = view.clone();
                 v_flex()
@@ -261,14 +432,14 @@ impl Render for NumberRangeFilter {
                         h_flex()
                             .gap_2()
                             .items_center()
-                            .child(Input::new(&min_input).small().w_full())
+                            .child(NumberInput::new(&min_input).small().w_full())
                             .child(
                                 gpui::div()
                                     .text_sm()
                                     .text_color(cx.theme().muted_foreground)
                                     .child("to"),
                             )
-                            .child(Input::new(&max_input).small().w_full()),
+                            .child(NumberInput::new(&max_input).small().w_full()),
                     )
                     .child(Slider::new(&slider_state))
                     .when(has_value, |this| {

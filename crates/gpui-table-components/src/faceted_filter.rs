@@ -21,6 +21,23 @@ pub struct FacetedFilter {
     selected_values: HashSet<String>,
     search_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(HashSet<String>, &mut Window, &mut App) + 'static>,
+    /// Whether to show the search input (default: false)
+    show_search: bool,
+}
+
+/// Extension trait for configuring FacetedFilter via method chaining.
+pub trait FacetedFilterExt {
+    /// Enable search functionality for filtering options.
+    fn searchable(self, cx: &mut App) -> Self;
+}
+
+impl FacetedFilterExt for Entity<FacetedFilter> {
+    fn searchable(self, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.show_search = true;
+        });
+        self
+    }
 }
 
 impl TableFilterComponent for FacetedFilter {
@@ -29,7 +46,7 @@ impl TableFilterComponent for FacetedFilter {
     const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
         gpui_table_core::registry::RegistryFilterType::Faceted;
 
-    fn build(
+    fn new(
         title: impl Into<String>,
         value: Self::Value,
         on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,
@@ -43,6 +60,7 @@ impl TableFilterComponent for FacetedFilter {
             selected_values: value,
             search_state: None,
             on_change: Rc::new(on_change),
+            show_search: false,
         })
     }
 }
@@ -66,14 +84,14 @@ impl FacetedFilter {
     ///     High,
     /// }
     ///
-    /// let filter = FacetedFilter::build_for::<Priority>(
+    /// let filter = FacetedFilter::new_for::<Priority>(
     ///     "Priority",
     ///     HashSet::new(),
     ///     move |value, _window, cx| { /* handle change */ },
     ///     cx,
     /// );
     /// ```
-    pub fn build_for<T: Filterable + 'static>(
+    pub fn new_for<T: Filterable + 'static>(
         title: impl Fn() -> String + 'static,
         selected_values: HashSet<String>,
         on_change: impl Fn(HashSet<String>, &mut Window, &mut App) + 'static,
@@ -85,14 +103,15 @@ impl FacetedFilter {
             selected_values,
             search_state: None,
             on_change: Rc::new(on_change),
+            show_search: false,
         })
     }
 
-    /// Build a faceted filter with options.
+    /// Create a faceted filter with options.
     ///
     /// Use this constructor when you need to provide options dynamically
     /// (e.g., for i18n support where labels need to update on language change).
-    pub fn build_with_options(
+    pub fn new_with_options(
         title: impl Fn() -> String + 'static,
         options: impl Fn() -> Vec<FacetedFilterOption> + 'static,
         selected_values: HashSet<String>,
@@ -105,6 +124,7 @@ impl FacetedFilter {
             selected_values,
             search_state: None,
             on_change: Rc::new(on_change),
+            show_search: false,
         })
     }
 
@@ -154,8 +174,10 @@ impl FacetedFilter {
 
 impl Render for FacetedFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        // Ensure search state exists
-        self.ensure_search_state(window, cx);
+        // Only create search state if searchable is enabled
+        if self.show_search {
+            self.ensure_search_state(window, cx);
+        }
 
         let title = (self.title)();
         let selected_count = self.selected_values.len();
@@ -165,7 +187,8 @@ impl Render for FacetedFilter {
         let view = cx.entity().clone();
         let options_fn = self.options.clone();
         let selected_values = self.selected_values.clone();
-        let search_state = self.search_state.clone().unwrap();
+        let search_state = self.search_state.clone();
+
 
         // Icon: CircleX when has selection (to clear), Plus otherwise
         let trigger_icon = if has_selection {
@@ -223,8 +246,10 @@ impl Render for FacetedFilter {
                 // Get fresh options (for i18n reactivity)
                 let options = options_fn();
 
-                // Get search query to filter options
-                let search_query = search_state.read(cx).text().to_string().to_lowercase();
+                // Get search query to filter options (only if search is enabled)
+                let search_query = search_state.as_ref()
+                    .map(|s| s.read(cx).text().to_string().to_lowercase())
+                    .unwrap_or_default();
 
                 // Filter options based on search query
                 let filtered_options: Vec<_> = options
@@ -311,14 +336,16 @@ impl Render for FacetedFilter {
 
                 v_flex()
                     .w_56()
-                    .child(
-                        div().p_2().child(
-                            Input::new(&search_state)
-                                .small()
-                                .prefix(Icon::new(IconName::Search).xsmall()),
-                        ),
-                    )
-                    .child(Divider::horizontal())
+                    .when_some(search_state.clone(), |this, search_state| {
+                        this.child(
+                            div().p_2().child(
+                                Input::new(&search_state)
+                                    .small()
+                                    .prefix(Icon::new(IconName::Search).xsmall()),
+                            ),
+                        )
+                        .child(Divider::horizontal())
+                    })
                     .child(
                         v_flex()
                             .id("options-list")

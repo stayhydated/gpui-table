@@ -2,7 +2,6 @@ use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use gpui_table::GpuiTable;
-use gpui_table::components::{DateRangeFilter, NumberRangeFilter, TextFilter};
 
 #[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
@@ -13,19 +12,19 @@ pub struct Item {
     #[allow(dead_code)]
     id: uuid::Uuid,
 
-    #[gpui_table(width = 100., filter = TextFilter)]
+    #[gpui_table(width = 100., filter(text()))]
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80., resizable = false, filter = TextFilter)]
+    #[gpui_table(width = 80., resizable = false, filter(text()))]
     #[dummy(faker = "HexColor()")]
     color: String,
 
-    #[gpui_table(width = 120., movable = false, ascending, filter = NumberRangeFilter)]
+    #[gpui_table(width = 120., movable = false, ascending, filter(number_range()))]
     #[dummy(faker = "1..67")]
     weight: u8,
 
-    #[gpui_table(width = 250., filter = DateRangeFilter)]
+    #[gpui_table(width = 250., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
 }

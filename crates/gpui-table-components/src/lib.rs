@@ -3,6 +3,11 @@ pub mod faceted_filter;
 pub mod number_range_filter;
 pub mod text_filter;
 
+// Re-export extension traits for convenience
+pub use faceted_filter::FacetedFilterExt;
+pub use number_range_filter::NumberRangeFilterExt;
+pub use text_filter::TextFilterExt;
+
 use gpui::{App, Entity, Window};
 use std::collections::HashSet;
 
@@ -26,8 +31,8 @@ pub trait TableFilterComponent: Sized {
     /// The filter type identifier for registry purposes.
     const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType;
 
-    /// Build the filter component with the given configuration.
-    fn build(
+    /// Create the filter component with the given configuration.
+    fn new(
         title: impl Into<String>,
         value: Self::Value,
         on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,

@@ -2,7 +2,6 @@ use es_fluent::{EsFluentKv, EsFluentThis};
 use gpui::{Context, Window};
 use gpui_component::IconName;
 use gpui_component::table::TableState;
-use gpui_table::components::{FacetedFilter, TextFilter};
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use gpui_tokio::Tokio;
 use heck::ToKebabCase;
@@ -90,11 +89,11 @@ pub struct Product {
     pub id: u32,
 
     /// Product title - server-side searchable
-    #[gpui_table(sortable, width = 200., filter = TextFilter)]
+    #[gpui_table(sortable, width = 200., filter(text()))]
     pub title: String,
 
     /// Product category - server-side filterable
-    #[gpui_table(width = 120., filter = FacetedFilter)]
+    #[gpui_table(width = 120., filter(faceted()))]
     pub category: ProductCategory,
 
     /// Brand name

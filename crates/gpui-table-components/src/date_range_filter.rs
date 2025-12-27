@@ -25,7 +25,7 @@ impl TableFilterComponent for DateRangeFilter {
     const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
         gpui_table_core::registry::RegistryFilterType::DateRange;
 
-    fn build(
+    fn new(
         title: impl Into<String>,
         value: Self::Value,
         on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,

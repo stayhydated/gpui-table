@@ -5,7 +5,6 @@ use fake::{Dummy, Fake, Faker};
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
-use gpui_table::components::TextFilter;
 use std::time::Duration;
 
 #[derive(Clone, Debug, Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
@@ -21,12 +20,12 @@ pub struct InfiniteRow {
 
     #[dummy(faker = "Name()")]
     // Use the component type directly - no strings!
-    #[gpui_table(sortable, ascending, filter = TextFilter)]
+    #[gpui_table(sortable, ascending, filter(text()))]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
     // Both short form (TextFilter) and full path work
-    #[gpui_table(width = 300., filter = TextFilter)]
+    #[gpui_table(width = 300., filter(text()))]
     pub description: String,
 }
 

@@ -53,7 +53,7 @@ impl InfiniteScrollStory {
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
         let table_entity = table.clone();
-        let filter_name = TextFilter::build(
+        let filter_name = TextFilter::new(
             "Name",
             String::new(),
             move |value, _window, cx| {
@@ -66,7 +66,7 @@ impl InfiniteScrollStory {
         );
 
         let table_entity = table.clone();
-        let filter_description = TextFilter::build(
+        let filter_description = TextFilter::new(
             "Description",
             String::new(),
             move |value, _window, cx| {
