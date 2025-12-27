@@ -51,11 +51,6 @@ impl InfiniteRowTableDelegate {
         cx.notify();
 
         cx.spawn(async move |view, cx| {
-            // Simulate network delay
-            cx.background_executor()
-                .timer(Duration::from_millis(500))
-                .await;
-
             // Generate fake data - in a real app, this would be an API call
             // that includes the filter values as query parameters
             let new_rows: Vec<InfiniteRow> = (0..50)

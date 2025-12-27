@@ -81,7 +81,7 @@ pub enum ProductCategory {
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
-#[gpui_table(load_more = "Self::load_more_products")]
+#[gpui_table(load_more = "Self::load_more")]
 #[gpui_table(load_more_threshold = 20)]
 pub struct Product {
     /// Product ID from the API
@@ -220,7 +220,7 @@ impl ProductTableDelegate {
     }
 
     /// Load more products from the API
-    pub fn load_more_products(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+    pub fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             debug!(
                 "Skipping load_more: loading={}, eof={}",
@@ -366,6 +366,6 @@ impl ProductTableDelegate {
         self.loading = false;
         // Reset the API skip to start from the beginning
         API_SKIP.store(0, std::sync::atomic::Ordering::SeqCst);
-        self.load_more_products(window, cx);
+        self.load_more(window, cx);
     }
 }

@@ -5,9 +5,13 @@ use fake::faker::{
     name::en::Name,
 };
 use fake::uuid::UUIDv4;
+use fake::{Fake, Faker};
+use gpui::{Context, Window};
 use gpui_component::IconName;
+use gpui_component::table::TableState;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
+use std::time::Duration;
 
 /// Priority levels for tasks/items
 #[derive(
@@ -62,6 +66,8 @@ pub enum Category {
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
+#[gpui_table(load_more = "Self::load_more_data")]
+#[gpui_table(load_more_threshold = 20)]
 pub struct FilterShowcase {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
@@ -127,4 +133,43 @@ pub struct FilterShowcase {
     #[gpui_table(sortable, width = 180., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     pub due_date: chrono::DateTime<chrono::Utc>,
+}
+
+impl FilterShowcaseTableDelegate {
+    /// Load more filter showcase data with fake data generation.
+    pub fn load_more_data(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        if self.loading || self.eof {
+            return;
+        }
+
+        self.loading = true;
+        cx.notify();
+
+        cx.spawn(async move |view, cx| {
+            // Simulate network delay
+            cx.background_executor()
+                .timer(Duration::from_millis(100))
+                .await;
+
+            // Generate fake data
+            let new_rows: Vec<FilterShowcase> = (0..50).map(|_| Faker.fake()).collect();
+
+            _ = cx.update(|cx| {
+                view.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+                    delegate.rows.extend(new_rows);
+                    delegate.loading = false;
+
+                    // Stop after 500 rows for demo purposes
+                    if delegate.rows.len() >= 500 {
+                        delegate.eof = true;
+                    }
+
+                    cx.notify();
+                })
+                .unwrap();
+            });
+        })
+        .detach();
+    }
 }

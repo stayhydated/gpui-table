@@ -1,9 +1,39 @@
-use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
-use gpui_component::table::Column;
+use gpui::{
+    AnyElement, App, Context, Div, InteractiveElement as _, IntoElement, Stateful, Window, div,
+};
+use gpui_component::table::{Column, TableDelegate, TableState};
 
 pub mod filter;
 pub mod filter_helpers;
 pub mod registry;
+
+/// Trait for table delegates that support loading data.
+///
+/// This trait provides the interface for loading initial and additional data
+/// into a table. It's used by the generated code to trigger data loading
+/// without needing to know the specific implementation details.
+///
+/// # Example
+///
+/// ```ignore
+/// impl TableDataLoader for MyTableDelegate {
+///     fn load_data(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+///         // Load initial batch of data
+///         self.load_more_items(window, cx);
+///     }
+/// }
+/// ```
+pub trait TableDataLoader: TableDelegate {
+    /// Load data into the table.
+    ///
+    /// This method is called to trigger data loading (either initial load
+    /// or loading more data). The implementation should handle:
+    /// - Setting loading state
+    /// - Fetching data (sync or async)
+    /// - Appending to rows
+    /// - Updating eof flag when no more data
+    fn load_data(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+}
 
 /// A value that can be displayed in a table cell.
 pub trait TableCell {

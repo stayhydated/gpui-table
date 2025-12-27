@@ -1,4 +1,4 @@
-use some_lib::structs::item::*;
+use some_lib::structs::product::*;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
     Styled, Subscription, Window,
@@ -11,30 +11,30 @@ use es_fluent::ThisFtl as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
-pub struct ItemTableStory {
-    table: Entity<TableState<ItemTableDelegate>>,
-    filters: ItemFilterEntities,
+pub struct ProductTableStory {
+    table: Entity<TableState<ProductTableDelegate>>,
+    filters: ProductFilterEntities,
     _subscription: Subscription,
 }
-impl gpui_storybook::Story for ItemTableStory {
+impl gpui_storybook::Story for ProductTableStory {
     fn title() -> String {
-        Item::this_ftl()
+        Product::this_ftl()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)
     }
 }
-impl Focusable for ItemTableStory {
+impl Focusable for ProductTableStory {
     fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
-impl ItemTableStory {
+impl ProductTableStory {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self::new(window, cx))
     }
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let delegate = ItemTableDelegate::new(vec![]);
+        let delegate = ProductTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
         table
             .update(
@@ -45,7 +45,7 @@ impl ItemTableStory {
                 },
             );
         let table_for_reload = table.clone();
-        let filters = ItemFilterEntities::build(
+        let filters = ProductFilterEntities::build(
             &table,
             Some(
                 std::sync::Arc::new(move |window, cx| {
@@ -71,7 +71,7 @@ impl ItemTableStory {
         }
     }
 }
-impl Render for ItemTableStory {
+impl Render for ProductTableStory {
     fn render(
         &mut self,
         _window: &mut Window,

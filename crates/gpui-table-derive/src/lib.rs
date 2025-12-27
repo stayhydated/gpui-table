@@ -129,39 +129,42 @@ fn get_registry_filter_type(filter: &FilterComponents) -> proc_macro2::TokenStre
     match filter {
         FilterComponents::Text(_) => {
             quote! { gpui_table::registry::RegistryFilterType::Text }
-        }
+        },
         FilterComponents::NumberRange(_) => {
             quote! { gpui_table::registry::RegistryFilterType::NumberRange }
-        }
+        },
         FilterComponents::DateRange(_) => {
             quote! { gpui_table::registry::RegistryFilterType::DateRange }
-        }
+        },
         FilterComponents::Faceted(_) => {
             quote! { gpui_table::registry::RegistryFilterType::Faceted }
-        }
+        },
     }
 }
 
 /// Get the FilterType enum for runtime filter config.
-fn get_filter_type_expr(filter: &FilterComponents, field_ty: &syn::Type) -> proc_macro2::TokenStream {
+fn get_filter_type_expr(
+    filter: &FilterComponents,
+    field_ty: &syn::Type,
+) -> proc_macro2::TokenStream {
     match filter {
         FilterComponents::Text(_) => quote! { gpui_table::filter::FilterType::Text },
         FilterComponents::NumberRange(_) => quote! { gpui_table::filter::FilterType::NumberRange },
         FilterComponents::DateRange(_) => quote! { gpui_table::filter::FilterType::DateRange },
         FilterComponents::Faceted(_) => {
             quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
-        }
+        },
     }
 }
 
 /// Generate chain method calls for filter options.
 fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::TokenStream {
     use components::TextValidation;
-    
+
     match filter {
         FilterComponents::Text(opts) => {
             let mut chain = quote! {};
-            
+
             // Generate validation method if specified
             if let Some(ref validation) = opts.validate {
                 let validation_chain = match validation {
@@ -184,12 +187,12 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                 };
                 chain = quote! { #chain #validation_chain };
             }
-            
+
             chain
-        }
+        },
         FilterComponents::NumberRange(opts) => {
             let mut chain = quote! {};
-            
+
             // Generate .range() call if min or max is specified
             if opts.min.is_some() || opts.max.is_some() {
                 let min_val = opts.min.unwrap_or(0.0);
@@ -200,7 +203,7 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                     let filter = filter.range(#min_val, #max_val, cx);
                 };
             }
-            
+
             // Generate .step() call if step is specified
             if let Some(step_val) = opts.step {
                 chain = quote! {
@@ -208,16 +211,16 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                     let filter = filter.step(#step_val, cx);
                 };
             }
-            
+
             chain
-        }
+        },
         FilterComponents::DateRange(_opts) => {
             // Date range filter has no configurable options yet
             quote! {}
-        }
+        },
         FilterComponents::Faceted(opts) => {
             let mut chain = quote! {};
-            
+
             // Generate .searchable() call if enabled
             if opts.searchable {
                 chain = quote! {
@@ -226,9 +229,9 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                     let filter = filter.searchable(cx);
                 };
             }
-            
+
             chain
-        }
+        },
     }
 }
 
@@ -752,6 +755,20 @@ fn generate_delegate(
         quote! {}
     };
 
+    // Generate TableDataLoader impl when load_more is specified
+    let data_loader_impl = if has_load_more {
+        quote! {
+            impl gpui_table::TableDataLoader for #delegate_name {
+                fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                    use #TableDelegate as _;
+                    self.load_more(window, cx);
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
 
     // Generate a separate Filters struct if there are any filters
@@ -897,6 +914,8 @@ fn generate_delegate(
                 }
             }
         }
+
+        #data_loader_impl
     }
 }
 
@@ -945,7 +964,7 @@ fn generate_filter_entities(
             if f.filter_config.is_faceted() {
                 // Generate chain methods for options
                 let chain_methods = generate_filter_chain_methods(&f.filter_config);
-                
+
                 // For FacetedFilter, use new_for with the field type
                 quote! {
                     let #field_ident = {
@@ -1240,7 +1259,7 @@ fn generate_filter_match_impl(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            
+
             match &f.filter_config {
                 FilterComponents::Text(_) => {
                     // Text filter: case-insensitive contains

@@ -50,7 +50,7 @@ impl ProductStory {
 
         // Trigger initial load
         table.update(cx, |table, cx| {
-            table.delegate_mut().load_more_products(window, cx);
+            table.delegate_mut().load_more(window, cx);
         });
 
         // Build all filter entities using the generated builder

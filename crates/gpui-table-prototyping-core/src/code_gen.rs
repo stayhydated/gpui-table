@@ -1,4 +1,4 @@
-use gpui_table_core::registry::{ColumnVariant, GpuiTableShape, RegistryFilterType};
+use gpui_table_core::registry::{ColumnVariant, GpuiTableShape};
 use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -113,23 +113,16 @@ impl TableIdentities for ShapeIdentities<'_> {
 pub struct TableShapeAdapter<'a> {
     pub shape: &'a GpuiTableShape,
     pub identities: ShapeIdentities<'a>,
+    pub use_filter_helpers: bool,
 }
 
 impl<'a> TableShapeAdapter<'a> {
-    pub fn new(shape: &'a GpuiTableShape) -> Self {
+    pub fn new(shape: &'a GpuiTableShape, use_filter_helpers: bool) -> Self {
         Self {
             shape,
             identities: ShapeIdentities::new(shape),
+            use_filter_helpers,
         }
-    }
-
-    fn get_column_title(&self, field_name: &str) -> String {
-        self.shape
-            .columns
-            .iter()
-            .find(|c| c.field_name == field_name)
-            .map(|c| c.title.to_string())
-            .unwrap_or_else(|| field_name.to_string())
     }
 }
 
@@ -138,160 +131,104 @@ impl TableShape for TableShapeAdapter<'_> {
         let delegate_struct_ident = self.identities.delegate_struct_ident();
 
         quote! {
-            let mut delegate = #delegate_struct_ident::new(vec![]);
-            for _ in 0..100 {
-                delegate.rows.push(fake::Faker.fake());
-            }
+            let delegate = #delegate_struct_ident::new(vec![]);
         }
     }
 
     fn table_state_creation(&self) -> TokenStream {
+        let struct_name_ident = self.identities.struct_name_ident();
+        let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
+
         quote! {
             let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+            // Trigger initial data load
+            table.update(cx, |table, cx| {
+                use gpui_table::TableDataLoader as _;
+                table.delegate_mut().load_data(window, cx);
+            });
+
+            // Build filter entities with reload callback
+            let table_for_reload = table.clone();
+            let filters = #filter_entities_ident::build(
+                &table,
+                Some(std::sync::Arc::new(move |window, cx| {
+                    table_for_reload.update(cx, |table, cx| {
+                        table.delegate_mut().rows.clear();
+                        table.delegate_mut().eof = false;
+                        use gpui_table::TableDataLoader as _;
+                        table.delegate_mut().load_data(window, cx);
+                    });
+                })),
+                cx,
+            );
+
+            let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         }
     }
 
     fn field_initializers(&self) -> TokenStream {
-        let mut initializers = quote! {
+        quote! {
             table,
-        };
-
-        for filter in self.shape.filters {
-            let field_ident = format_ident!("filter_{}", filter.field_name);
-            let init = match filter.filter_type {
-                RegistryFilterType::Faceted => quote! { Default::default() },
-                RegistryFilterType::DateRange => quote! { (None, None) },
-                RegistryFilterType::NumberRange => quote! { (None, None) },
-                RegistryFilterType::Text => quote! { String::new() },
-            };
-            initializers.extend(quote! { #field_ident: #init, });
+            filters,
+            _subscription,
         }
-        initializers
     }
 
     fn struct_fields(&self) -> TokenStream {
         let delegate_struct_ident = self.identities.delegate_struct_ident();
+        let struct_name_ident = self.identities.struct_name_ident();
+        let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
 
-        let mut fields = quote! {
+        quote! {
             table: Entity<TableState<#delegate_struct_ident>>,
-        };
-
-        for filter in self.shape.filters {
-            let field_ident = format_ident!("filter_{}", filter.field_name);
-            let ty = match filter.filter_type {
-                RegistryFilterType::Faceted => quote! { std::collections::HashSet<String> },
-                RegistryFilterType::DateRange => {
-                    quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) }
-                },
-                RegistryFilterType::NumberRange => quote! { (Option<f64>, Option<f64>) },
-                RegistryFilterType::Text => quote! { String },
-            };
-            fields.extend(quote! { #field_ident: #ty, });
+            filters: #filter_entities_ident,
+            _subscription: Subscription,
         }
-        fields
     }
 
     fn render_children(&self) -> TokenStream {
-        let mut filter_views = quote! {};
-
-        for filter in self.shape.filters {
-            let field_name = filter.field_name;
-            let field_ident = format_ident!("filter_{}", field_name);
-            let title = self.get_column_title(field_name);
-
-            // Look up column for type if needed
-            let col = self
-                .shape
-                .columns
-                .iter()
-                .find(|c| c.field_name == field_name)
-                .expect("Filter field not found in columns");
-
-            // Handle generic types or complex types by using syn::parse_str
-            // If it fails, it might be a simple identifier.
-            let field_type_str = col.field_type;
-            let field_type: syn::Type = syn::parse_str(field_type_str).unwrap_or_else(|_| {
-                syn::parse_str(&format!("crate::{}", field_type_str)).unwrap_or_else(|_| {
-                    panic!("Could not parse type for filter: {}", field_type_str)
-                })
-            });
-
-            let component = match filter.filter_type {
-                RegistryFilterType::Faceted => {
-                    quote! {
-                         gpui_table_components::faceted_filter::FacetedFilter::build_with_options(
-                            #title,
-                            <#field_type as gpui_table::filter::Filterable>::options(),
-                            self.#field_ident.clone(),
-                            move |new_val, window, cx| {
-                                view.update(cx, |this, cx| {
-                                    this.#field_ident = new_val;
-                                    cx.notify();
-                                });
-                            },
-                            cx
-                        )
-                    }
-                },
-                RegistryFilterType::DateRange => {
-                    quote! {
-                        gpui_table_components::date_range_filter::DateRangeFilter::build(
-                            #title,
-                            self.#field_ident,
-                            move |new_val, window, cx| {
-                                view.update(cx, |this, cx| {
-                                    this.#field_ident = new_val;
-                                    cx.notify();
-                                });
-                            },
-                            cx
-                        )
-                    }
-                },
-                RegistryFilterType::NumberRange => {
-                    quote! {
-                        gpui_table_components::number_range_filter::NumberRangeFilter::build(
-                            #title,
-                            self.#field_ident,
-                            move |new_val, window, cx| {
-                                view.update(cx, |this, cx| {
-                                    this.#field_ident = new_val;
-                                    cx.notify();
-                                });
-                            },
-                            cx
-                        )
-                    }
-                },
-                RegistryFilterType::Text => {
-                    quote! {
-                        gpui_table_components::text_filter::TextFilter::build(
-                            #title,
-                            self.#field_ident.clone(),
-                            move |new_val, window, cx| {
-                                view.update(cx, |this, cx| {
-                                    this.#field_ident = new_val;
-                                    cx.notify();
-                                });
-                            },
-                            cx
-                        )
-                    }
-                },
-            };
-
-            filter_views.extend(quote! { .child(#component) });
-        }
+        let filter_views = if self.use_filter_helpers {
+            // Use all_filters() helper method for cleaner code
+            quote! {
+                .child(
+                    h_flex()
+                        .gap_2()
+                        .flex_wrap()
+                        .child(self.filters.all_filters())
+                )
+            }
+        } else {
+            // Manually list each filter entity
+            let mut views = quote! {};
+            for filter in self.shape.filters {
+                let field_ident = format_ident!("{}", filter.field_name);
+                views.extend(quote! { .child(self.filters.#field_ident.clone()) });
+            }
+            quote! {
+                .child(
+                    h_flex()
+                        .gap_2()
+                        .flex_wrap()
+                        #views
+                )
+            }
+        };
 
         quote! {
+            #filter_views
             .child(
-                gpui_component::h_flex()
-                    .gap_2()
-                    .flex_wrap()
-                    #filter_views
+                h_flex()
+                    .gap_4()
+                    .child(format!("Rows Loaded: {}", delegate.rows.len()))
+                    .child(if delegate.loading { "Loading..." } else { "Idle" })
+                    .child(if delegate.eof { "All data loaded" } else { "Scroll for more" })
             )
-            .child(format!("Total Rows: {}", rows_count))
-            .child(Table::new(&self.table))
+            .child(
+                Table::new(&self.table)
+                    .stripe(true)
+                    .scrollbar_visible(true, true)
+            )
         }
     }
 

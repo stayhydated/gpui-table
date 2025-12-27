@@ -1,11 +1,17 @@
 use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
+use fake::{Fake, Faker};
+use gpui::{Context, Window};
+use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
+use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[gpui_table(fluent, custom_style)]
+#[gpui_table(load_more = "Self::load_more_items")]
+#[gpui_table(load_more_threshold = 20)]
 pub struct Item {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
@@ -27,6 +33,45 @@ pub struct Item {
     #[gpui_table(width = 250., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
+}
+
+impl ItemTableDelegate {
+    /// Load more items with fake data generation.
+    pub fn load_more_items(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        if self.loading || self.eof {
+            return;
+        }
+
+        self.loading = true;
+        cx.notify();
+
+        cx.spawn(async move |view, cx| {
+            // Simulate network delay
+            cx.background_executor()
+                .timer(Duration::from_millis(100))
+                .await;
+
+            // Generate fake data
+            let new_rows: Vec<Item> = (0..50).map(|_| Faker.fake()).collect();
+
+            _ = cx.update(|cx| {
+                view.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+                    delegate.rows.extend(new_rows);
+                    delegate.loading = false;
+
+                    // Stop after 500 rows for demo purposes
+                    if delegate.rows.len() >= 500 {
+                        delegate.eof = true;
+                    }
+
+                    cx.notify();
+                })
+                .unwrap();
+            });
+        })
+        .detach();
+    }
 }
 
 impl gpui_table::TableRowStyle for Item {

@@ -3,6 +3,9 @@ pub use gpui_table_derive::*;
 
 pub use gpui_table_core::*;
 
+// Re-export TableDataLoader at the crate root for convenience
+pub use gpui_table_core::TableDataLoader;
+
 pub mod components {
     pub use gpui_table_components::TableFilterComponent;
     pub use gpui_table_components::date_range_filter::DateRangeFilter;

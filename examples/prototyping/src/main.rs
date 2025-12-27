@@ -64,7 +64,8 @@ fn main() {
 }
 
 fn layout(data: &GpuiTableShape) -> syn::File {
-    let adapter = TableShapeAdapter::new(data);
+    // Generate with all_filters() helper for cleaner code (use_filter_helpers = true)
+    let adapter = TableShapeAdapter::new(data, true);
 
     // Access identities for various idents
     let struct_name_ident = adapter.identities.struct_name_ident();
@@ -87,16 +88,16 @@ fn layout(data: &GpuiTableShape) -> syn::File {
 
     let import_tokens = quote! {
         #target_types_import
-        use fake::Fake;
         use gpui::{
-            App, AppContext, Context, Entity, Focusable, IntoElement,
-            ParentElement, Render, Styled, Window,
+            App, AppContext as _, Context, Entity, Focusable, IntoElement,
+            ParentElement, Render, Styled, Subscription, Window,
         };
         use gpui_component::{
-            table::{Table, TableState, TableDelegate as _},
+            h_flex,
+            table::{Table, TableState},
             v_flex,
         };
-        use es_fluent::{ToFluentString as _, ThisFtl as _};
+        use es_fluent::ThisFtl as _;
     };
 
     let layout_tokens = quote! {
@@ -142,16 +143,14 @@ fn layout(data: &GpuiTableShape) -> syn::File {
         }
 
         impl Render for #story_struct_ident {
-            fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-                let table = &self.table.read(cx);
+            fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+                let table = self.table.read(cx);
                 let delegate = table.delegate();
-                let rows_count = delegate.rows_count(cx);
-                let view = cx.entity().clone();
 
                 v_flex()
                     .size_full()
-                    .text_sm()
                     .gap_4()
+                    .p_4()
                     #render_children_tokens
             }
         }
