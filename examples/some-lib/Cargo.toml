@@ -29,6 +29,7 @@ serde = { features = [ "derive" ], workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 urlencoding = "2"
 uuid = { workspace = true }
+tokio = { workspace = true }
 
 [lints]
 workspace = true

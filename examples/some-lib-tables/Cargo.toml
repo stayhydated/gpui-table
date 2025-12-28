@@ -1,3 +1,4 @@
+
 [package]
 name = "some-lib-tables"
 version = "0.1.0"
@@ -6,6 +7,7 @@ license = "Unlicense"
 publish = false
 
 [dependencies]
+anyhow = { workspace = true }
 chrono = { workspace = true }
 env_logger = { workspace = true }
 es-fluent = { workspace = true }
@@ -20,12 +22,14 @@ gpui-table-components = { workspace = true }
 gpui_tokio = { workspace = true }
 heck = { workspace = true }
 inventory = { workspace = true }
+log = { workspace = true }
 reqwest_client = { workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
 serde = { workspace = true }
 some-lib = { path = "../some-lib" }
 strum = { workspace = true }
+tokio = { features = ["rt-multi-thread", "macros"], workspace = true }
 
 [lints]
 workspace = true
