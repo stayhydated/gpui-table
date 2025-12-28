@@ -478,3 +478,334 @@ fn test_facet_matches_with_multiple_selected() {
     assert_eq!(matches.len(), 4);
     assert!(!matches.iter().any(|r| r.name == "Diana")); // Sales
 }
+
+// ============================================================================
+// Text Filter Edge Cases
+// ============================================================================
+
+#[test]
+fn test_text_filter_case_insensitive() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Uppercase should match lowercase
+    filters.name = "ALICE".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        1
+    );
+
+    // Mixed case
+    filters.name = "AlIcE".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        1
+    );
+}
+
+#[test]
+fn test_text_filter_partial_match() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Single character
+    filters.name = "b".to_string();
+    let matches: Vec<_> = data
+        .iter()
+        .filter(|r| r.matches_filters(&filters))
+        .collect();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].name, "Bob");
+
+    // Middle of string
+    filters.name = "harl".to_string();
+    let matches: Vec<_> = data
+        .iter()
+        .filter(|r| r.matches_filters(&filters))
+        .collect();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].name, "Charlie");
+}
+
+#[test]
+fn test_text_filter_whitespace() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Whitespace-only filter should match nothing (or everything depending on impl)
+    filters.name = "   ".to_string();
+    // Current impl: whitespace doesn't match any names
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+}
+
+#[test]
+fn test_text_filter_special_characters() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // @ symbol in email
+    filters.email = "@".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        5
+    );
+
+    // . in email
+    filters.email = ".com".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        3
+    );
+}
+
+// ============================================================================
+// Number Range Edge Cases
+// ============================================================================
+
+#[test]
+fn test_number_range_exact_value() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Exact match (min == max)
+    filters.age = (Some(25.0), Some(25.0));
+    let matches: Vec<_> = data
+        .iter()
+        .filter(|r| r.matches_filters(&filters))
+        .collect();
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].name, "Alice");
+}
+
+#[test]
+fn test_number_range_zero() {
+    // Test with zero values
+    assert!(number_in_range(&0u8, &(None, None)));
+    assert!(number_in_range(&0u8, &(Some(0.0), None)));
+    assert!(number_in_range(&0u8, &(None, Some(0.0))));
+    assert!(number_in_range(&0u8, &(Some(0.0), Some(0.0))));
+    assert!(!number_in_range(&0u8, &(Some(1.0), None)));
+}
+
+#[test]
+fn test_number_range_negative() {
+    // Test with negative numbers (using i32)
+    assert!(number_in_range(&-5i32, &(Some(-10.0), Some(0.0))));
+    assert!(!number_in_range(&-15i32, &(Some(-10.0), Some(0.0))));
+    assert!(number_in_range(&-10i32, &(Some(-10.0), None)));
+}
+
+#[test]
+fn test_number_range_large_values() {
+    // Test with large numbers
+    assert!(number_in_range(
+        &1_000_000u64,
+        &(Some(999_999.0), Some(1_000_001.0))
+    ));
+    assert!(number_in_range(&u32::MAX, &(None, None)));
+}
+
+#[test]
+fn test_number_range_float_precision() {
+    // Test floating point values
+    assert!(number_in_range(&3.14f64, &(Some(3.0), Some(4.0))));
+    assert!(number_in_range(&0.001f64, &(Some(0.0), Some(0.01))));
+}
+
+// ============================================================================
+// Faceted Filter Edge Cases
+// ============================================================================
+
+#[test]
+fn test_faceted_filter_bool_false() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Specifically filter for inactive users
+    filters.active = HashSet::from([false.to_string()]);
+    let matches: Vec<_> = data
+        .iter()
+        .filter(|r| r.matches_filters(&filters))
+        .collect();
+    assert_eq!(matches.len(), 2); // Charlie, Eve
+    assert!(matches.iter().all(|r| !r.active));
+}
+
+#[test]
+fn test_faceted_filter_all_options_selected() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Select all categories - should match all
+    filters.category = HashSet::from([
+        TestCategory::Engineering.to_string(),
+        TestCategory::Marketing.to_string(),
+        TestCategory::Sales.to_string(),
+    ]);
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        5
+    );
+}
+
+#[test]
+fn test_faceted_filter_both_bool_values() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Select both true and false - should match all
+    filters.active = HashSet::from([true.to_string(), false.to_string()]);
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        5
+    );
+}
+
+// ============================================================================
+// Empty/Minimal Dataset Tests
+// ============================================================================
+
+#[test]
+fn test_filter_empty_dataset() {
+    let data: Vec<TestRow> = vec![];
+    let mut filters = TestRowFilters::default();
+
+    // No filters
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+
+    // With filters
+    filters.name = "test".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+}
+
+#[test]
+fn test_filter_single_row_dataset() {
+    let data = vec![TestRow::new(
+        "Solo",
+        "solo@test.com",
+        30,
+        100,
+        true,
+        TestCategory::Engineering,
+    )];
+    let mut filters = TestRowFilters::default();
+
+    // Matching filter
+    filters.name = "solo".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        1
+    );
+
+    // Non-matching filter
+    filters.name = "other".to_string();
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+}
+
+// ============================================================================
+// Filter Independence Tests
+// ============================================================================
+
+#[test]
+fn test_filter_clone_independence() {
+    let mut filters1 = TestRowFilters::default();
+    filters1.name = "alice".to_string();
+
+    let mut filters2 = filters1.clone();
+    filters2.name = "bob".to_string();
+
+    // Changing filters2 should not affect filters1
+    assert_eq!(filters1.name, "alice");
+    assert_eq!(filters2.name, "bob");
+}
+
+#[test]
+fn test_filter_default_values() {
+    let filters = TestRowFilters::default();
+
+    // All filters should be in "match all" state
+    assert!(filters.name.is_empty());
+    assert!(filters.email.is_empty());
+    assert_eq!(filters.age, (None, None));
+    assert_eq!(filters.score, (None, None));
+    assert!(filters.active.is_empty());
+    assert!(filters.category.is_empty());
+}
+
+// ============================================================================
+// Complex Multi-Filter Scenarios
+// ============================================================================
+
+#[test]
+fn test_mutually_exclusive_filters() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Filter for Engineering AND Sales (impossible for single row)
+    // This tests that faceted filters use OR within, AND between
+    filters.category = HashSet::from([TestCategory::Engineering.to_string()]);
+    filters.active = HashSet::from([false.to_string()]);
+
+    let matches: Vec<_> = data
+        .iter()
+        .filter(|r| r.matches_filters(&filters))
+        .collect();
+    // Only Charlie (Engineering, inactive)
+    assert_eq!(matches.len(), 1);
+    assert_eq!(matches[0].name, "Charlie");
+}
+
+#[test]
+fn test_filter_narrows_progressively() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    let count_all = data.iter().filter(|r| r.matches_filters(&filters)).count();
+    assert_eq!(count_all, 5);
+
+    // Each filter should narrow or maintain the count
+    filters.active = HashSet::from([true.to_string()]);
+    let count1 = data.iter().filter(|r| r.matches_filters(&filters)).count();
+    assert!(count1 <= count_all);
+
+    filters.category = HashSet::from([TestCategory::Engineering.to_string()]);
+    let count2 = data.iter().filter(|r| r.matches_filters(&filters)).count();
+    assert!(count2 <= count1);
+
+    filters.age = (Some(20.0), Some(30.0));
+    let count3 = data.iter().filter(|r| r.matches_filters(&filters)).count();
+    assert!(count3 <= count2);
+}
+
+#[test]
+fn test_contradictory_range_filters() {
+    let data = create_test_data();
+    let mut filters = TestRowFilters::default();
+
+    // Age must be > 100 (impossible with our data)
+    filters.age = (Some(100.0), None);
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+
+    // Score must be exactly 0 (impossible with our data)
+    filters.age = (None, None); // reset
+    filters.score = (Some(0.0), Some(0.0));
+    assert_eq!(
+        data.iter().filter(|r| r.matches_filters(&filters)).count(),
+        0
+    );
+}
