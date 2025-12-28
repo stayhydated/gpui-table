@@ -4,7 +4,6 @@ use gpui::{
 use gpui_component::table::{Column, TableDelegate, TableState};
 
 pub mod filter;
-pub mod filter_helpers;
 pub mod registry;
 
 /// Trait for table delegates that support loading data.

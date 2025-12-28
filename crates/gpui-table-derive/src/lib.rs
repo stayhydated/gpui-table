@@ -104,7 +104,8 @@ struct FilterFieldMeta {
     field_ident: Ident,
     /// The filter component configuration
     filter_config: FilterComponents,
-    /// The value type for this filter (derived from TableFilterComponent::Value)
+    /// The value type for this filter (reserved for future use)
+    #[allow(dead_code)]
     value_type: proc_macro2::TokenStream,
     /// The field type (e.g., String, bool, Priority enum, chrono::DateTime)
     field_type: syn::Type,
@@ -608,6 +609,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     let variants = meta.data.take_enum().unwrap();
 
     let mut options = Vec::new();
+    let mut variant_name_arms = Vec::new();
 
     for variant in variants {
         let variant_ident = variant.ident;
@@ -637,6 +639,11 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 icon: #icon,
             }
         });
+
+        // Generate variant_name match arm
+        variant_name_arms.push(quote! {
+            Self::#variant_ident => #value,
+        });
     }
 
     Ok(quote! {
@@ -645,6 +652,16 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 vec![
                     #(#options),*
                 ]
+            }
+        }
+
+        impl #enum_name {
+            /// Returns the variant name as a static string.
+            /// Useful for matching against filter values in client-side filtering.
+            pub fn variant_name(&self) -> &'static str {
+                match self {
+                    #(#variant_name_arms)*
+                }
             }
         }
     })
@@ -771,59 +788,7 @@ fn generate_delegate(
 
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
 
-    // Generate a separate Filters struct if there are any filters
-    let filters_struct_name = Ident::new(&format!("{}Filters", struct_name), struct_name.span());
-    let has_filters = !filter_fields.is_empty();
-
-    let filter_field_defs: Vec<proc_macro2::TokenStream> = filter_fields
-        .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            let value_type = &f.value_type;
-            quote! {
-                pub #field_ident: #value_type,
-            }
-        })
-        .collect();
-
-    let filter_field_inits: Vec<proc_macro2::TokenStream> = filter_fields
-        .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            quote! {
-                #field_ident: Default::default(),
-            }
-        })
-        .collect();
-
-    // Generate the Filters struct (only if there are filters)
-    let filters_struct_def = if has_filters {
-        quote! {
-            /// Filter values for the #struct_name table.
-            #[derive(Clone, Debug, Default)]
-            pub struct #filters_struct_name {
-                #(#filter_field_defs)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    // Delegate field for filters
-    let delegate_filters_field = if has_filters {
-        quote! { pub filters: #filters_struct_name, }
-    } else {
-        quote! {}
-    };
-
-    let delegate_filters_init = if has_filters {
-        quote! { filters: #filters_struct_name { #(#filter_field_inits)* }, }
-    } else {
-        quote! {}
-    };
-
     quote! {
-        #filters_struct_def
 
         pub struct #delegate_name {
             pub rows: Vec<#struct_name>,
@@ -833,7 +798,6 @@ fn generate_delegate(
             pub eof: bool,
             pub loading: bool,
             pub full_loading: bool,
-            #delegate_filters_field
         }
 
         impl #delegate_name {
@@ -846,7 +810,6 @@ fn generate_delegate(
                     eof: false,
                     loading: false,
                     full_loading: false,
-                    #delegate_filters_init
                 }
             }
         }
@@ -934,7 +897,6 @@ fn generate_filter_entities(
         &format!("{}FilterEntities", struct_name),
         struct_name.span(),
     );
-    let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
 
     // Generate Entity fields for each filter
     let entity_field_defs: Vec<proc_macro2::TokenStream> = filter_fields
@@ -968,17 +930,12 @@ fn generate_filter_entities(
                 // For FacetedFilter, use new_for with the field type
                 quote! {
                     let #field_ident = {
-                        let table_entity = table.clone();
                         let on_filter_change = on_filter_change.clone();
                         let filter = #filter_type_tokens::new_for::<#field_type>(
                             || #title_expr,
                             Default::default(),
-                            move |value, window, cx| {
-                                table_entity.update(cx, |table, cx| {
-                                    table.delegate_mut().filters.#field_ident = value;
-                                    cx.notify();
-                                });
-                                // Defer callback to avoid re-entrant updates
+                            move |_value, window, cx| {
+                                // Notify callback for server-side filtering
                                 if let Some(ref on_change) = on_filter_change {
                                     let on_change = on_change.clone();
                                     window.defer(cx, move |window, cx| {
@@ -999,17 +956,12 @@ fn generate_filter_entities(
                 // For other filters (TextFilter, NumberRangeFilter, DateRangeFilter)
                 quote! {
                     let #field_ident = {
-                        let table_entity = table.clone();
                         let on_filter_change = on_filter_change.clone();
                         let filter = #filter_type_tokens::new(
                             #title_expr,
                             Default::default(),
-                            move |value, window, cx| {
-                                table_entity.update(cx, |table, cx| {
-                                    table.delegate_mut().filters.#field_ident = value;
-                                    cx.notify();
-                                });
-                                // Defer callback to avoid re-entrant updates
+                            move |_value, window, cx| {
+                                // Notify callback for server-side filtering
                                 if let Some(ref on_change) = on_filter_change {
                                     let on_change = on_change.clone();
                                     window.defer(cx, move |window, cx| {
@@ -1036,6 +988,50 @@ fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             quote! { #field_ident: self.#field_ident.clone(), }
+        })
+        .collect();
+
+    // Generate value getter methods for each filter
+    let value_getters: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
+            
+            match &f.filter_config {
+                FilterComponents::Text(_) => {
+                    quote! {
+                        /// Get the current value of the #field_ident text filter.
+                        pub fn #getter_name(&self, cx: &#App) -> String {
+                            self.#field_ident.read(cx).value().to_string()
+                        }
+                    }
+                }
+                FilterComponents::NumberRange(_) => {
+                    quote! {
+                        /// Get the current value of the #field_ident number range filter.
+                        pub fn #getter_name(&self, cx: &#App) -> (Option<f64>, Option<f64>) {
+                            self.#field_ident.read(cx).value()
+                        }
+                    }
+                }
+                FilterComponents::Faceted(_) => {
+                    quote! {
+                        /// Get the current value of the #field_ident faceted filter.
+                        pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<String> {
+                            self.#field_ident.read(cx).value().clone()
+                        }
+                    }
+                }
+                FilterComponents::DateRange(_) => {
+                    quote! {
+                        /// Get the current value of the #field_ident date range filter.
+                        pub fn #getter_name(&self, cx: &#App) -> (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
+                            self.#field_ident.read(cx).value()
+                        }
+                    }
+                }
+            }
         })
         .collect();
 
@@ -1132,8 +1128,39 @@ fn generate_filter_entities(
         })
         .collect();
 
-    // Generate client-side filter matching logic
-    let filter_match_impl = generate_filter_match_impl(struct_name, filter_fields);
+    // Generate FilterValues struct for client-side filtering
+    let filter_values_name = Ident::new(
+        &format!("{}FilterValues", struct_name),
+        struct_name.span(),
+    );
+
+    let filter_values_fields: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let field_type = match &f.filter_config {
+                FilterComponents::Text(_) => quote! { String },
+                FilterComponents::NumberRange(_) => quote! { (Option<f64>, Option<f64>) },
+                FilterComponents::Faceted(_) => quote! { std::collections::HashSet<String> },
+                FilterComponents::DateRange(_) => quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) },
+            };
+            quote! {
+                pub #field_ident: #field_type,
+            }
+        })
+        .collect();
+
+    // Generate read_values method that populates FilterValues from FilterEntities
+    let read_values_fields: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
+            quote! {
+                #field_ident: self.#getter_name(cx),
+            }
+        })
+        .collect();
 
     quote! {
         /// Entity handles for all filter UI components.
@@ -1151,15 +1178,13 @@ fn generate_filter_entities(
         }
 
         impl #filter_entities_name {
-            /// Build all filter entities, wiring them to update the delegate's filters.
+            /// Build all filter entities for server-side filtering.
             ///
             /// # Arguments
-            /// * `table` - The table state entity to update when filters change
             /// * `on_filter_change` - Optional callback invoked after any filter changes.
-            ///   Use this for triggering re-filtering (client-side) or API reload (server-side).
+            ///   Use this for triggering data reload with new filter parameters.
             /// * `cx` - The application context
             pub fn build(
-                table: &#Entity<gpui_component::table::TableState<#delegate_name>>,
                 on_filter_change: Option<std::sync::Arc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
             ) -> Self {
@@ -1183,9 +1208,26 @@ fn generate_filter_entities(
             #number_filter_render
             #faceted_filter_render
             #date_filter_render
+
+            // Value getters for server-side filtering
+            #(#value_getters)*
+
+            /// Read all current filter values into a FilterValues struct.
+            /// Useful for client-side filtering where you need all values at once.
+            pub fn read_values(&self, cx: &#App) -> #filter_values_name {
+                #filter_values_name {
+                    #(#read_values_fields)*
+                }
+            }
         }
 
-        #filter_match_impl
+        /// Plain data struct holding all filter values.
+        /// Generated by the `#[derive(GpuiTable)]` macro for client-side filtering.
+        #[derive(Default, Clone, Debug)]
+        pub struct #filter_values_name {
+            #(#filter_values_fields)*
+        }
+
     }
 }
 
@@ -1243,63 +1285,7 @@ fn determine_filter_title_expr(
     }
 }
 
-/// Generate client-side filter matching implementation for the row struct.
-fn generate_filter_match_impl(
-    struct_name: &Ident,
-    filter_fields: &[FilterFieldMeta],
-) -> proc_macro2::TokenStream {
-    if filter_fields.is_empty() {
-        return quote! {};
-    }
 
-    let filters_struct_name = Ident::new(&format!("{}Filters", struct_name), struct_name.span());
-
-    // Generate match expressions for each filter field
-    let match_exprs: Vec<proc_macro2::TokenStream> = filter_fields
-        .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-
-            match &f.filter_config {
-                FilterComponents::Text(_) => {
-                    // Text filter: case-insensitive contains
-                    quote! {
-                        (filters.#field_ident.is_empty() ||
-                         self.#field_ident.to_lowercase().contains(&filters.#field_ident.to_lowercase()))
-                    }
-                }
-                FilterComponents::NumberRange(_) => {
-                    // Number range filter
-                    quote! {
-                        gpui_table::filter_helpers::number_in_range(&self.#field_ident, &filters.#field_ident)
-                    }
-                }
-                FilterComponents::Faceted(_) => {
-                    // Faceted filter: check if value is in selected set
-                    quote! {
-                        gpui_table::filter_helpers::facet_matches(&self.#field_ident, &filters.#field_ident)
-                    }
-                }
-                FilterComponents::DateRange(_) => {
-                    // Date range filter
-                    quote! {
-                        gpui_table::filter_helpers::date_in_range(&self.#field_ident, &filters.#field_ident)
-                    }
-                }
-            }
-        })
-        .collect();
-
-    quote! {
-        impl #struct_name {
-            /// Check if this row matches all the given filters.
-            /// Use this for client-side filtering.
-            pub fn matches_filters(&self, filters: &#filters_struct_name) -> bool {
-                #(#match_exprs)&&*
-            }
-        }
-    }
-}
 
 #[proc_macro_derive(TableCell)]
 pub fn derive_table_cell(input: TokenStream) -> TokenStream {

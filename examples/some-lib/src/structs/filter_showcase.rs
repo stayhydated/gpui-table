@@ -1,3 +1,4 @@
+
 use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{
@@ -5,13 +6,13 @@ use fake::faker::{
     name::en::Name,
 };
 use fake::uuid::UUIDv4;
-use fake::{Fake, Faker};
+
 use gpui::{Context, Window};
 use gpui_component::IconName;
 use gpui_component::table::TableState;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
-use std::time::Duration;
+
 
 /// Priority levels for tasks/items
 #[derive(
@@ -35,6 +36,8 @@ pub enum Priority {
     #[filter(icon = IconName::TriangleAlert)]
     Critical,
 }
+
+
 
 /// Categories for classification
 #[derive(
@@ -60,6 +63,8 @@ pub enum Category {
     #[filter(icon = IconName::User)]
     Support,
 }
+
+
 
 /// A comprehensive example struct that showcases all filter types
 #[derive(Clone, fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
@@ -136,40 +141,105 @@ pub struct FilterShowcase {
 }
 
 impl FilterShowcaseTableDelegate {
-    /// Load more filter showcase data with fake data generation.
-    pub fn load_more_data(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        if self.loading || self.eof {
-            return;
+    /// Initialize with a pre-generated data pool
+    pub fn with_data_pool(all_data: Vec<FilterShowcase>) -> Self {
+        let rows = all_data.clone();
+        Self {
+            rows,
+            columns: <FilterShowcase as gpui_table::TableRowMeta>::table_columns(),
+            visible_rows: Default::default(),
+            visible_cols: Default::default(),
+            eof: true, // All data is already loaded
+            loading: false,
+            full_loading: false,
         }
+    }
 
-        self.loading = true;
-        cx.notify();
+    /// Apply all filters to the data pool and update displayed rows
+    pub fn apply_filters(
+        &mut self,
+        all_data: &[FilterShowcase],
+        filters: &FilterShowcaseFilterValues,
+        _window: &mut Window,
+        cx: &mut Context<TableState<Self>>,
+    ) {
+        self.rows = all_data
+            .iter()
+            .filter(|row| {
+                // Text filters
+                let name_matches = filters.name.is_empty()
+                    || row.name.to_lowercase().contains(&filters.name.to_lowercase());
+                let email_matches = filters.email.is_empty()
+                    || row.email.to_lowercase().contains(&filters.email.to_lowercase());
+                let company_matches = filters.company.is_empty()
+                    || row.company.to_lowercase().contains(&filters.company.to_lowercase());
+                let desc_matches = filters.description.is_empty()
+                    || row.description.to_lowercase().contains(&filters.description.to_lowercase());
 
-        cx.spawn(async move |view, cx| {
-            // Simulate network delay
-            cx.background_executor()
-                .timer(Duration::from_millis(100))
-                .await;
+                // Number range filters
+                let age_matches = match (filters.age.0, filters.age.1) {
+                    (Some(min), Some(max)) => (row.age as f64) >= min && (row.age as f64) <= max,
+                    (Some(min), None) => (row.age as f64) >= min,
+                    (None, Some(max)) => (row.age as f64) <= max,
+                    (None, None) => true,
+                };
+                let score_matches = match (filters.score.0, filters.score.1) {
+                    (Some(min), Some(max)) => (row.score as f64) >= min && (row.score as f64) <= max,
+                    (Some(min), None) => (row.score as f64) >= min,
+                    (None, Some(max)) => (row.score as f64) <= max,
+                    (None, None) => true,
+                };
 
-            // Generate fake data
-            let new_rows: Vec<FilterShowcase> = (0..50).map(|_| Faker.fake()).collect();
+                // Faceted filters (empty means no filter applied)
+                let active_matches = filters.active.is_empty()
+                    || filters.active.contains(&row.active.to_string().to_lowercase())
+                    || filters.active.contains(if row.active { "True" } else { "False" });
+                let verified_matches = filters.verified.is_empty()
+                    || filters.verified.contains(&row.verified.to_string().to_lowercase())
+                    || filters.verified.contains(if row.verified { "True" } else { "False" });
+                let priority_matches = filters.priority.is_empty()
+                    || filters.priority.contains(row.priority.variant_name());
+                let category_matches = filters.category.is_empty()
+                    || filters.category.contains(row.category.variant_name());
 
-            _ = cx.update(|cx| {
-                view.update(cx, |table, cx| {
-                    let delegate = table.delegate_mut();
-                    delegate.rows.extend(new_rows);
-                    delegate.loading = false;
-
-                    // Stop after 500 rows for demo purposes
-                    if delegate.rows.len() >= 500 {
-                        delegate.eof = true;
+                // Date range filters
+                let created_at_matches = match (filters.created_at.0, filters.created_at.1) {
+                    (Some(start), Some(end)) => {
+                        let date = row.created_at.date_naive();
+                        date >= start && date <= end
                     }
+                    (Some(start), None) => row.created_at.date_naive() >= start,
+                    (None, Some(end)) => row.created_at.date_naive() <= end,
+                    (None, None) => true,
+                };
 
-                    cx.notify();
-                })
-                .unwrap();
-            });
-        })
-        .detach();
+                name_matches
+                    && email_matches
+                    && company_matches
+                    && desc_matches
+                    && age_matches
+                    && score_matches
+                    && active_matches
+                    && verified_matches
+                    && priority_matches
+                    && category_matches
+                    && created_at_matches
+            })
+            .cloned()
+            .collect();
+
+        log::info!("Filtered to {} rows from {} total", self.rows.len(), all_data.len());
+        cx.notify();
+    }
+
+    /// Load more data (no-op: all data is pre-loaded)
+    pub fn load_more_data(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
+        // No-op: all data is pre-loaded
+    }
+
+    /// Reset and reload data (for compatibility)
+    pub fn reset_and_reload(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
+        // This is now handled by the story calling apply_filters directly
     }
 }
+

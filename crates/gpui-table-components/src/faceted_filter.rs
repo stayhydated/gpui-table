@@ -170,6 +170,11 @@ impl FacetedFilter {
             .map(|opt| opt.label.clone())
             .collect()
     }
+
+    /// Get the current filter value (selected values).
+    pub fn value(&self) -> &HashSet<String> {
+        &self.selected_values
+    }
 }
 
 impl Render for FacetedFilter {

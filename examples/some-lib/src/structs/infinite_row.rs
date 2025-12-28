@@ -1,11 +1,10 @@
 use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::lorem::en::Sentence;
 use fake::faker::name::en::Name;
-use fake::{Dummy, Fake, Faker};
+use fake::Dummy;
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
 use gpui_table::GpuiTable;
-use std::time::Duration;
 
 #[derive(Clone, Debug, Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
@@ -19,75 +18,88 @@ pub struct InfiniteRow {
     pub id: u64,
 
     #[dummy(faker = "Name()")]
-    // Use the component type directly - no strings!
     #[gpui_table(sortable, ascending, filter(text()))]
     pub name: String,
 
     #[dummy(faker = "Sentence(3..6)")]
-    // Both short form (TextFilter) and full path work
     #[gpui_table(width = 300., filter(text()))]
     pub description: String,
 }
 
 impl InfiniteRowTableDelegate {
-    pub fn load_more_data(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        if self.loading || self.eof {
-            return;
-        }
 
-        // Type-safe access to filter values via the filters struct
-        let name_filter = self.filters.name.clone();
-        let description_filter = self.filters.description.clone();
-
-        // Log active filters (in a real app, these would be sent to an API)
-        if !name_filter.is_empty() {
-            println!("Fetching with name filter: {}", name_filter);
+    /// Initialize with a pre-generated data pool
+    pub fn with_data_pool(all_data: Vec<InfiniteRow>) -> Self {
+        let rows = all_data.clone();
+        Self {
+            rows,
+            columns: <InfiniteRow as gpui_table::TableRowMeta>::table_columns(),
+            visible_rows: Default::default(),
+            visible_cols: Default::default(),
+            eof: true, // All data is already loaded
+            loading: false,
+            full_loading: false,
         }
-        if !description_filter.is_empty() {
-            println!("Fetching with description filter: {}", description_filter);
-        }
+    }
 
-        self.loading = true;
+    /// Apply filters to the data pool and update displayed rows
+    pub fn apply_filters(
+        &mut self,
+        all_data: &[InfiniteRow],
+        name_filter: &str,
+        description_filter: &str,
+        _window: &mut Window,
+        cx: &mut Context<TableState<Self>>,
+    ) {
+        log::info!("Applying filters - name: '{}', description: '{}'", name_filter, description_filter);
+        
+        let name_filter_lower = name_filter.to_lowercase();
+        let description_filter_lower = description_filter.to_lowercase();
+        
+        self.rows = all_data
+            .iter()
+            .filter(|row| {
+                let name_matches = name_filter.is_empty() 
+                    || row.name.to_lowercase().contains(&name_filter_lower);
+                let desc_matches = description_filter.is_empty() 
+                    || row.description.to_lowercase().contains(&description_filter_lower);
+                name_matches && desc_matches
+            })
+            .cloned()
+            .collect();
+        
+        log::info!("Filtered to {} rows from {} total", self.rows.len(), all_data.len());
         cx.notify();
+    }
 
-        cx.spawn(async move |view, cx| {
-            // Generate fake data - in a real app, this would be an API call
-            // that includes the filter values as query parameters
-            let new_rows: Vec<InfiniteRow> = (0..50)
-                .map(|_| Faker.fake())
-                .filter(|row: &InfiniteRow| {
-                    // Apply client-side filtering for demo purposes
-                    // In production, filtering would happen server-side
-                    let name_match = name_filter.is_empty()
-                        || row
-                            .name
-                            .to_lowercase()
-                            .contains(&name_filter.to_lowercase());
-                    let desc_match = description_filter.is_empty()
-                        || row
-                            .description
-                            .to_lowercase()
-                            .contains(&description_filter.to_lowercase());
-                    name_match && desc_match
-                })
-                .collect();
+    /// Load more data with filter values for server-side filtering
+    /// (For compatibility - but this example now uses client-side filtering)
+    pub fn load_more_with_filters(
+        &mut self,
+        _name_filter: String,
+        _description_filter: String,
+        _window: &mut Window,
+        _cx: &mut Context<TableState<Self>>,
+    ) {
+        // No-op: all data is pre-loaded, filtering is done client-side
+    }
 
-            _ = cx.update(|cx| {
-                view.update(cx, |table, cx| {
-                    let delegate = table.delegate_mut();
-                    delegate.rows.extend(new_rows);
-                    delegate.loading = false;
+    /// Load more data (without filters - for initial load)
+    pub fn load_more_data(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
+        // No-op: all data is pre-loaded
+    }
 
-                    // Stop after 500 rows
-                    if delegate.rows.len() >= 500 {
-                        delegate.eof = true;
-                    }
-
-                    cx.notify();
-                })
-                .unwrap();
-            });
-        })
-        .detach();
+    /// Reset and reload data with new filter values
+    /// (For compatibility - delegates to apply_filters in the story)
+    pub fn reset_and_reload_with_filters(
+        &mut self,
+        _name_filter: String,
+        _description_filter: String,
+        _window: &mut Window,
+        _cx: &mut Context<TableState<Self>>,
+    ) {
+        // This is now handled by the story calling apply_filters directly
+        // with access to the data pool
     }
 }
+
