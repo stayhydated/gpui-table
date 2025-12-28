@@ -18,56 +18,28 @@ pub struct Item {
     #[allow(dead_code)]
     id: uuid::Uuid,
 
-    #[gpui_table(width = 100., filter(text()))]
+    #[gpui_table(width = 100.)]
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80., resizable = false, filter(text()))]
+    #[gpui_table(width = 80., resizable = false)]
     #[dummy(faker = "HexColor()")]
     color: String,
 
-    #[gpui_table(width = 120., movable = false, ascending, filter(number_range()))]
+    #[gpui_table(width = 120., movable = false, ascending)]
     #[dummy(faker = "1..67")]
     weight: u8,
 
-    #[gpui_table(width = 250., filter(date_range()))]
+    #[gpui_table(width = 250.)]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
 }
 
-/// Filter parameters for Item queries
-#[derive(Clone, Default)]
-pub struct ItemFilterParams {
-    pub name: String,
-    pub color: String,
-    pub weight: (Option<f64>, Option<f64>),
-    pub acquired_on: (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>),
-}
-
 impl ItemTableDelegate {
-    /// Load more items with filter parameters for server-side filtering.
-    pub fn load_more_with_filters(
-        &mut self,
-        filters: ItemFilterParams,
-        _window: &mut Window,
-        cx: &mut Context<TableState<Self>>,
-    ) {
+    /// Load more items
+    pub fn load_more_items(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
-        }
-
-        // Log filter values (in a real app, these would be sent to an API)
-        if !filters.name.is_empty() {
-            log::info!("Fetching with name filter: {}", filters.name);
-        }
-        if !filters.color.is_empty() {
-            log::info!("Fetching with color filter: {}", filters.color);
-        }
-        if filters.weight.0.is_some() || filters.weight.1.is_some() {
-            log::info!("Fetching with weight range: {:?}", filters.weight);
-        }
-        if filters.acquired_on.0.is_some() || filters.acquired_on.1.is_some() {
-            log::info!("Fetching with acquired_on range: {:?}", filters.acquired_on);
         }
 
         self.loading = true;
@@ -99,25 +71,6 @@ impl ItemTableDelegate {
             });
         })
         .detach();
-    }
-
-    /// Load more items (without filters - for initial load)
-    pub fn load_more_items(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.load_more_with_filters(ItemFilterParams::default(), window, cx);
-    }
-
-    /// Reset and reload data with new filter values
-    pub fn reset_and_reload_with_filters(
-        &mut self,
-        filters: ItemFilterParams,
-        window: &mut Window,
-        cx: &mut Context<TableState<Self>>,
-    ) {
-        log::info!("Resetting and reloading data (filters changed)");
-        self.rows.clear();
-        self.eof = false;
-        self.loading = false;
-        self.load_more_with_filters(filters, window, cx);
     }
 }
 

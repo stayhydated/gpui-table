@@ -1,4 +1,3 @@
-
 use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{
@@ -12,7 +11,6 @@ use gpui_component::IconName;
 use gpui_component::table::TableState;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
-
 
 /// Priority levels for tasks/items
 #[derive(
@@ -36,8 +34,6 @@ pub enum Priority {
     #[filter(icon = IconName::TriangleAlert)]
     Critical,
 }
-
-
 
 /// Categories for classification
 #[derive(
@@ -63,8 +59,6 @@ pub enum Category {
     #[filter(icon = IconName::User)]
     Support,
 }
-
-
 
 /// A comprehensive example struct that showcases all filter types
 #[derive(Clone, fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
@@ -120,7 +114,7 @@ pub struct FilterShowcase {
     #[gpui_table(width = 80., filter(faceted()))]
     pub verified: bool,
 
-    #[gpui_table(width = 100., filter(faceted(searchable)))]
+    #[gpui_table(width = 100., filter(faceted()))]
     pub priority: Priority,
 
     #[gpui_table(width = 120., filter(faceted(searchable)))]
@@ -168,13 +162,25 @@ impl FilterShowcaseTableDelegate {
             .filter(|row| {
                 // Text filters
                 let name_matches = filters.name.is_empty()
-                    || row.name.to_lowercase().contains(&filters.name.to_lowercase());
+                    || row
+                        .name
+                        .to_lowercase()
+                        .contains(&filters.name.to_lowercase());
                 let email_matches = filters.email.is_empty()
-                    || row.email.to_lowercase().contains(&filters.email.to_lowercase());
+                    || row
+                        .email
+                        .to_lowercase()
+                        .contains(&filters.email.to_lowercase());
                 let company_matches = filters.company.is_empty()
-                    || row.company.to_lowercase().contains(&filters.company.to_lowercase());
+                    || row
+                        .company
+                        .to_lowercase()
+                        .contains(&filters.company.to_lowercase());
                 let desc_matches = filters.description.is_empty()
-                    || row.description.to_lowercase().contains(&filters.description.to_lowercase());
+                    || row
+                        .description
+                        .to_lowercase()
+                        .contains(&filters.description.to_lowercase());
 
                 // Number range filters
                 let age_matches = match (filters.age.0, filters.age.1) {
@@ -184,7 +190,9 @@ impl FilterShowcaseTableDelegate {
                     (None, None) => true,
                 };
                 let score_matches = match (filters.score.0, filters.score.1) {
-                    (Some(min), Some(max)) => (row.score as f64) >= min && (row.score as f64) <= max,
+                    (Some(min), Some(max)) => {
+                        (row.score as f64) >= min && (row.score as f64) <= max
+                    },
                     (Some(min), None) => (row.score as f64) >= min,
                     (None, Some(max)) => (row.score as f64) <= max,
                     (None, None) => true,
@@ -192,11 +200,19 @@ impl FilterShowcaseTableDelegate {
 
                 // Faceted filters (empty means no filter applied)
                 let active_matches = filters.active.is_empty()
-                    || filters.active.contains(&row.active.to_string().to_lowercase())
-                    || filters.active.contains(if row.active { "True" } else { "False" });
+                    || filters
+                        .active
+                        .contains(&row.active.to_string().to_lowercase())
+                    || filters
+                        .active
+                        .contains(if row.active { "True" } else { "False" });
                 let verified_matches = filters.verified.is_empty()
-                    || filters.verified.contains(&row.verified.to_string().to_lowercase())
-                    || filters.verified.contains(if row.verified { "True" } else { "False" });
+                    || filters
+                        .verified
+                        .contains(&row.verified.to_string().to_lowercase())
+                    || filters
+                        .verified
+                        .contains(if row.verified { "True" } else { "False" });
                 let priority_matches = filters.priority.is_empty()
                     || filters.priority.contains(row.priority.variant_name());
                 let category_matches = filters.category.is_empty()
@@ -207,7 +223,7 @@ impl FilterShowcaseTableDelegate {
                     (Some(start), Some(end)) => {
                         let date = row.created_at.date_naive();
                         date >= start && date <= end
-                    }
+                    },
                     (Some(start), None) => row.created_at.date_naive() >= start,
                     (None, Some(end)) => row.created_at.date_naive() <= end,
                     (None, None) => true,
@@ -228,7 +244,11 @@ impl FilterShowcaseTableDelegate {
             .cloned()
             .collect();
 
-        log::info!("Filtered to {} rows from {} total", self.rows.len(), all_data.len());
+        log::info!(
+            "Filtered to {} rows from {} total",
+            self.rows.len(),
+            all_data.len()
+        );
         cx.notify();
     }
 
@@ -242,4 +262,3 @@ impl FilterShowcaseTableDelegate {
         // This is now handled by the story calling apply_filters directly
     }
 }
-
