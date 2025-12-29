@@ -7,8 +7,10 @@ members = [
   "crates/gpui-table-derive",
   "crates/gpui-table-prototyping-core",
   "examples/prototyping",
+  "examples/seaorm-migration",
   "examples/some-lib",
   "examples/some-lib-tables",
+  "examples/spacetimedb-server",
 ]
 resolver = "3"
 
@@ -22,7 +24,10 @@ rust-version = "1.88"
 version = "0.5.0"
 
 [workspace.dependencies]
+spacetimedb = "1.11.1"
 toasty = { git = "https://github.com/tokio-rs/toasty", features = ["postgresql", "rust_decimal"] }
+sea-orm = "1.1.19"
+sqlx = "0.8.6"
 anyhow = "1.0.96"
 automod = "1.0.15"
 bon = "3.3.2"

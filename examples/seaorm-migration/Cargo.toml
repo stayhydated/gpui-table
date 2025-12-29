@@ -1,0 +1,15 @@
+[package]
+name = "seaorm-migration"
+version = "0.1.0"
+edition = "2024"
+license = "Unlicense"
+publish = false
+
+[dependencies]
+sea-orm-migration = { version = "1.1", features = ["runtime-tokio-rustls", "sqlx-postgres"] }
+async-trait = "0.1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+
+[[bin]]
+name = "migrate"
+path = "src/main.rs"

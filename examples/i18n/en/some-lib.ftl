@@ -1,73 +1,3 @@
-## Category
-
-category-Design = Design
-category-Engineering = Engineering
-category-Marketing = Marketing
-category-Sales = Sales
-category-Support = Support
-
-## FilterShowcase
-
-filter_showcase_this = Filter Showcase
-
-## FilterShowcaseDescriptionKvFtl
-
-filter_showcase_description_kv_ftl-active = Active
-filter_showcase_description_kv_ftl-age = Age
-filter_showcase_description_kv_ftl-amount = Amount
-filter_showcase_description_kv_ftl-category = Category
-filter_showcase_description_kv_ftl-company = Company
-filter_showcase_description_kv_ftl-created_at = Created At
-filter_showcase_description_kv_ftl-description = Description
-filter_showcase_description_kv_ftl-due_date = Due Date
-filter_showcase_description_kv_ftl-email = Email
-filter_showcase_description_kv_ftl-id = Id
-filter_showcase_description_kv_ftl-name = Name
-filter_showcase_description_kv_ftl-priority = Priority
-filter_showcase_description_kv_ftl-quantity = Quantity
-filter_showcase_description_kv_ftl-score = Score
-filter_showcase_description_kv_ftl-updated_at = Updated At
-filter_showcase_description_kv_ftl-verified = Verified
-filter_showcase_description_kv_ftl_this = Filter Showcase Description Kv Ftl
-
-## FilterShowcaseLabelKvFtl
-
-filter_showcase_label_kv_ftl-active = Active
-filter_showcase_label_kv_ftl-age = Age
-filter_showcase_label_kv_ftl-amount = Amount
-filter_showcase_label_kv_ftl-category = Category
-filter_showcase_label_kv_ftl-company = Company
-filter_showcase_label_kv_ftl-created_at = Created At
-filter_showcase_label_kv_ftl-description = Description
-filter_showcase_label_kv_ftl-due_date = Due Date
-filter_showcase_label_kv_ftl-email = Email
-filter_showcase_label_kv_ftl-id = Id
-filter_showcase_label_kv_ftl-name = Name
-filter_showcase_label_kv_ftl-priority = Priority
-filter_showcase_label_kv_ftl-quantity = Quantity
-filter_showcase_label_kv_ftl-score = Score
-filter_showcase_label_kv_ftl-updated_at = Updated At
-filter_showcase_label_kv_ftl-verified = Verified
-filter_showcase_label_kv_ftl_this = Filter Showcase Label Kv Ftl
-
-## InfiniteRow
-
-infinite_row_this = Infinite Row
-
-## InfiniteRowDescriptionKvFtl
-
-infinite_row_description_kv_ftl-description = Description
-infinite_row_description_kv_ftl-id = ID
-infinite_row_description_kv_ftl-name = Name
-infinite_row_description_kv_ftl_this = Infinite Row Description Kv Ftl
-
-## InfiniteRowLabelKvFtl
-
-infinite_row_label_kv_ftl-description = Description
-infinite_row_label_kv_ftl-id = ID
-infinite_row_label_kv_ftl-name = Name
-infinite_row_label_kv_ftl_this = Infinite Row Label Kv Ftl
-
 ## Item
 
 item_this = Item
@@ -80,40 +10,6 @@ item_kv_ftl-id = ID
 item_kv_ftl-name = Name
 item_kv_ftl-weight = Weight
 item_kv_ftl_this = Item Kv Ftl
-
-## Pokemon
-
-pokemon_this = Pokemon
-
-## PokemonDescriptionKvFtl
-
-pokemon_description_kv_ftl-id = ID
-pokemon_description_kv_ftl-name = Name
-pokemon_description_kv_ftl-primary_type = Primary Type
-pokemon_description_kv_ftl-secondary_type = Secondary Type
-pokemon_description_kv_ftl-height = Height
-pokemon_description_kv_ftl-weight = Weight
-pokemon_description_kv_ftl-base_experience = Base XP
-pokemon_description_kv_ftl-hp = HP
-pokemon_description_kv_ftl-attack = Attack
-pokemon_description_kv_ftl-defense = Defense
-pokemon_description_kv_ftl-speed = Speed
-pokemon_description_kv_ftl_this = Pokemon Description Kv Ftl
-
-## PokemonLabelKvFtl
-
-pokemon_label_kv_ftl-id = ID
-pokemon_label_kv_ftl-name = Name
-pokemon_label_kv_ftl-primary_type = Primary Type
-pokemon_label_kv_ftl-secondary_type = Secondary Type
-pokemon_label_kv_ftl-height = Height
-pokemon_label_kv_ftl-weight = Weight
-pokemon_label_kv_ftl-base_experience = Base XP
-pokemon_label_kv_ftl-hp = HP
-pokemon_label_kv_ftl-attack = Attack
-pokemon_label_kv_ftl-defense = Defense
-pokemon_label_kv_ftl-speed = Speed
-pokemon_label_kv_ftl_this = Pokemon Label Kv Ftl
 
 ## Product
 
@@ -170,35 +66,6 @@ product_category-WomensJewellery = Women's Jewellery
 product_category-WomensShoes = Women's Shoes
 product_category-WomensWatches = Women's Watches
 
-## PokemonType
-
-pokemon_type-Normal = Normal
-pokemon_type-Fire = Fire
-pokemon_type-Water = Water
-pokemon_type-Grass = Grass
-pokemon_type-Electric = Electric
-pokemon_type-Ice = Ice
-pokemon_type-Fighting = Fighting
-pokemon_type-Poison = Poison
-pokemon_type-Ground = Ground
-pokemon_type-Flying = Flying
-pokemon_type-Psychic = Psychic
-pokemon_type-Bug = Bug
-pokemon_type-Rock = Rock
-pokemon_type-Ghost = Ghost
-pokemon_type-Dragon = Dragon
-pokemon_type-Dark = Dark
-pokemon_type-Steel = Steel
-pokemon_type-Fairy = Fairy
-pokemon_type-None = None
-
-## Priority
-
-priority-Critical = Critical
-priority-High = High
-priority-Low = Low
-priority-Medium = Medium
-
 ## User
 
 user_this = User
@@ -232,3 +99,103 @@ user_label_kv_ftl_this = User Label Kv Ftl
 user_status-Active = Active
 user_status-Offline = Offline
 user_status-Suspended = Suspended
+
+## SpacetimedbPlayer
+
+spacetimedb_player_this = SpacetimeDB Player
+
+## SpacetimedbPlayerDescriptionKvFtl
+
+spacetimedb_player_description_kv_ftl-id = ID
+spacetimedb_player_description_kv_ftl-username = Username
+spacetimedb_player_description_kv_ftl-level = Level
+spacetimedb_player_description_kv_ftl-experience = Experience
+spacetimedb_player_description_kv_ftl-guild = Guild
+spacetimedb_player_description_kv_ftl-status = Status
+spacetimedb_player_description_kv_ftl-score = Score
+spacetimedb_player_description_kv_ftl-games_played = Games Played
+spacetimedb_player_description_kv_ftl-win_rate = Win Rate
+spacetimedb_player_description_kv_ftl_this = SpacetimeDB Player Description
+spacetimedb_player_description_kv_ftl-created_at = Created At
+spacetimedb_player_description_kv_ftl-identity = Identity
+spacetimedb_player_description_kv_ftl-last_seen = Last Seen
+
+## SpacetimedbPlayerLabelKvFtl
+
+spacetimedb_player_label_kv_ftl-id = ID
+spacetimedb_player_label_kv_ftl-username = Username
+spacetimedb_player_label_kv_ftl-level = Level
+spacetimedb_player_label_kv_ftl-experience = XP
+spacetimedb_player_label_kv_ftl-guild = Guild
+spacetimedb_player_label_kv_ftl-status = Status
+spacetimedb_player_label_kv_ftl-score = Score
+spacetimedb_player_label_kv_ftl-games_played = Games
+spacetimedb_player_label_kv_ftl-win_rate = Win %
+spacetimedb_player_label_kv_ftl_this = SpacetimeDB Player Label
+spacetimedb_player_label_kv_ftl-created_at = Created At
+spacetimedb_player_label_kv_ftl-identity = Identity
+spacetimedb_player_label_kv_ftl-last_seen = Last Seen
+
+## PlayerStatus
+
+player_status-Online = Online
+player_status-Away = Away
+player_status-Offline = Offline
+player_status-InGame = In Game
+
+## Guild
+
+guild-None = No Guild
+guild-Warriors = Warriors
+guild-Mages = Mages
+guild-Defenders = Defenders
+guild-Rogues = Rogues
+guild-Healers = Healers
+
+## OrderStatus
+
+order_status-Pending = Pending
+order_status-Confirmed = Confirmed
+order_status-Processing = Processing
+order_status-Shipped = Shipped
+order_status-Delivered = Delivered
+order_status-Cancelled = Cancelled
+order_status-Refunded = Refunded
+
+## ShippingMethod
+
+shipping_method-Standard = Standard
+shipping_method-Express = Express
+shipping_method-Overnight = Overnight
+shipping_method-LocalPickup = Local Pickup
+shipping_method-International = International
+
+## Model
+
+model_this = Model
+
+## ModelDescriptionKvFtl
+
+model_description_kv_ftl_this = Model Description Kv Ftl
+model_description_kv_ftl-created_at = Created At
+model_description_kv_ftl-customer_email = Customer Email
+model_description_kv_ftl-customer_name = Customer Name
+model_description_kv_ftl-id = Id
+model_description_kv_ftl-item_count = Item Count
+model_description_kv_ftl-shipping_method = Shipping Method
+model_description_kv_ftl-status = Status
+model_description_kv_ftl-total_amount = Total Amount
+model_description_kv_ftl-updated_at = Updated At
+
+## ModelLabelKvFtl
+
+model_label_kv_ftl_this = Model Label Kv Ftl
+model_label_kv_ftl-created_at = Created At
+model_label_kv_ftl-customer_email = Customer Email
+model_label_kv_ftl-customer_name = Customer Name
+model_label_kv_ftl-id = Id
+model_label_kv_ftl-item_count = Item Count
+model_label_kv_ftl-shipping_method = Shipping Method
+model_label_kv_ftl-status = Status
+model_label_kv_ftl-total_amount = Total Amount
+model_label_kv_ftl-updated_at = Updated At

@@ -1,0 +1,119 @@
+# Examples justfile
+# Run `just --list` to see available commands
+
+set dotenv-load := true
+
+# Default: run the storybook
+default:
+    cargo run -p some-lib-tables
+
+# Run the storybook example
+run:
+    cargo run -p some-lib-tables
+
+# ============================================================================
+# PostgreSQL / SeaORM
+# ============================================================================
+
+# Start PostgreSQL in Docker
+postgres-start:
+    docker run -d \
+        --name gpui-table-postgres \
+        -e POSTGRES_PASSWORD=password \
+        -e POSTGRES_DB=orders \
+        -p 5432:5432 \
+        postgres:16
+
+# Stop PostgreSQL
+postgres-stop:
+    docker stop gpui-table-postgres && docker rm gpui-table-postgres
+
+# Check PostgreSQL status
+postgres-status:
+    docker ps -f name=gpui-table-postgres
+
+# Run SeaORM migrations
+seaorm-migrate:
+    cd seaorm-migration && \
+    DATABASE_URL="postgres://postgres:password@localhost:5432/orders" \
+    cargo run -- up
+
+# Reset SeaORM database (drop and recreate)
+seaorm-reset:
+    cd seaorm-migration && \
+    DATABASE_URL="postgres://postgres:password@localhost:5432/orders" \
+    cargo run -- fresh
+
+# Seed SeaORM with test orders
+seaorm-seed count="100":
+    psql "postgres://postgres:password@localhost:5432/orders" -c " \
+        INSERT INTO orders (customer_name, customer_email, status, total_amount, item_count, shipping_method, created_at, updated_at) \
+        SELECT \
+            'Customer ' || i, \
+            'customer' || i || '@example.com', \
+            (ARRAY['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded'])[1 + (random() * 6)::int], \
+            (random() * 1000)::decimal(10,2), \
+            (1 + random() * 20)::int, \
+            (ARRAY['standard', 'express', 'overnight', 'pickup', 'international'])[1 + (random() * 4)::int], \
+            NOW() - (random() * 90 || ' days')::interval, \
+            NOW() \
+        FROM generate_series(1, {{ count }}) AS i; \
+    "
+
+# Full SeaORM setup: start postgres, migrate, seed
+seaorm-setup: postgres-start
+    @echo "Waiting for PostgreSQL to start..."
+    @sleep 3
+    just seaorm-migrate
+    just seaorm-seed
+
+# ============================================================================
+# SpacetimeDB
+# ============================================================================
+
+# Start SpacetimeDB server
+spacetime-start:
+    spacetime start
+
+# Publish the SpacetimeDB server module
+spacetime-publish:
+    cd spacetimedb-server && \
+    spacetime publish --project-path . gpui-table-players
+
+# Seed SpacetimeDB with test players
+spacetime-seed count="100":
+    spacetime call gpui-table-players seed_test_players {{ count }}
+
+# Generate SpacetimeDB client bindings
+spacetime-generate:
+    cd spacetimedb-server && \
+    spacetime generate --lang rust \
+        --out-dir ../some-lib/src/module_bindings \
+        --project-path .
+
+# Full SpacetimeDB setup: publish and seed
+spacetime-setup: spacetime-publish
+    @echo "Waiting for module to be ready..."
+    @sleep 2
+    just spacetime-seed
+
+# ============================================================================
+# Development
+# ============================================================================
+
+# Check all example crates compile
+check:
+    cargo check -p spacetimedb-server \
+                -p seaorm-migration \
+                -p some-lib \
+                -p some-lib-tables
+
+# Run with SeaORM database connection
+run-seaorm:
+    DATABASE_URL="postgres://postgres:password@localhost:5432/orders" \
+    cargo run -p some-lib-tables
+
+# Clean up everything
+clean:
+    -just postgres-stop
+    -spacetime stop

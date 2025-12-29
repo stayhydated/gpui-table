@@ -25,7 +25,9 @@ log = { workspace = true }
 reqwest = { features = [ "json" ], version = "0.12" }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
+sea-orm = { features = [ "runtime-tokio-rustls", "sqlx-postgres" ], workspace = true }
 serde = { features = [ "derive" ], workspace = true }
+spacetimedb = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 urlencoding = "2"
 uuid = { workspace = true }
