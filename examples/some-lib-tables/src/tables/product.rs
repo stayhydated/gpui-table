@@ -95,8 +95,7 @@ impl ProductStory {
 impl Render for ProductStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         // Capture values before reading table
-        let title_filter = self.filters.title_value(cx);
-        let category_filter = self.filters.category_value(cx);
+        let filters = self.filters.read_values(cx);
 
         let table = self.table.read(cx);
         let delegate = table.delegate();
@@ -121,14 +120,14 @@ impl Render for ProductStory {
                     .child(self.filters.all_filters()),
             )
             // Current filter values debug display
-            .when(!title_filter.is_empty() || !category_filter.is_empty(), |this| {
+            .when(filters.has_active_filters(), |this| {
                 this.child(
                     h_flex()
                         .gap_2()
                         .text_xs()
                         .text_color(cx.theme().muted_foreground)
-                        .when(!title_filter.is_empty(), |c| c.child(format!("title: \"{}\"", title_filter)))
-                        .when(!category_filter.is_empty(), |c| c.child(format!("category: {:?}", category_filter)))
+                        .when(filters.title.is_active(), |c| c.child(format!("title: \"{}\"", filters.title)))
+                        .when(filters.category.is_active(), |c| c.child(format!("category: {:?}", filters.category)))
                 )
             })
             // Status bar

@@ -1174,14 +1174,14 @@ fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let value_type = match &f.filter_config {
-                FilterComponents::Text(_) => quote! { String },
-                FilterComponents::NumberRange(_) => quote! { (Option<f64>, Option<f64>) },
+                FilterComponents::Text(_) => quote! { gpui_table::filter::TextValue },
+                FilterComponents::NumberRange(_) => quote! { gpui_table::filter::RangeValue<f64> },
                 FilterComponents::Faceted(_) => {
                     let ty = &f.field_type;
-                    quote! { std::collections::HashSet<#ty> }
+                    quote! { gpui_table::filter::FacetedValue<#ty> }
                 },
                 FilterComponents::DateRange(_) => {
-                    quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) }
+                    quote! { gpui_table::filter::RangeValue<chrono::NaiveDate> }
                 },
             };
             quote! {
@@ -1196,9 +1196,29 @@ fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
-            quote! {
-                #field_ident: self.#getter_name(cx),
+            match &f.filter_config {
+                FilterComponents::Text(_) => quote! {
+                    #field_ident: gpui_table::filter::TextValue::from(self.#getter_name(cx)),
+                },
+                FilterComponents::NumberRange(_) => quote! {
+                    #field_ident: gpui_table::filter::RangeValue::from(self.#getter_name(cx)),
+                },
+                FilterComponents::Faceted(_) => quote! {
+                    #field_ident: gpui_table::filter::FacetedValue::from(self.#getter_name(cx)),
+                },
+                FilterComponents::DateRange(_) => quote! {
+                    #field_ident: gpui_table::filter::RangeValue::from(self.#getter_name(cx)),
+                },
             }
+        })
+        .collect();
+
+    // Generate has_active_filters check expressions
+    let has_active_checks: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            quote! { self.#field_ident.is_active() }
         })
         .collect();
 
@@ -1266,6 +1286,13 @@ fn generate_filter_entities(
         #[derive(Default, Clone, Debug)]
         pub struct #filter_values_name {
             #(#filter_values_fields)*
+        }
+
+        impl #filter_values_name {
+            /// Check if any filter has an active value.
+            pub fn has_active_filters(&self) -> bool {
+                #(#has_active_checks)||*
+            }
         }
 
     }

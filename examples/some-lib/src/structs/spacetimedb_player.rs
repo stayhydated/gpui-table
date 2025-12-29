@@ -160,16 +160,10 @@ impl SpacetimedbPlayerTableDelegate {
             let mut players = generate_mock_players(offset, batch_size, seed);
 
             players.retain(|p| {
-                let username_match = filters.username.is_empty()
-                    || p.username
-                        .to_lowercase()
-                        .contains(&filters.username.to_lowercase());
-                let level_match = filters.level.0.map_or(true, |min| p.level >= min as u32)
-                    && filters.level.1.map_or(true, |max| p.level <= max as u32);
-                let guild_match = filters.guild.is_empty() || filters.guild.contains(&p.guild);
-                let status_match = filters.status.is_empty() || filters.status.contains(&p.status);
-
-                username_match && level_match && guild_match && status_match
+                filters.username.matches(&p.username)
+                    && filters.level.matches(&(p.level as f64))
+                    && filters.guild.matches(&p.guild)
+                    && filters.status.matches(&p.status)
             });
 
             (players, batch_size)

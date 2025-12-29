@@ -106,11 +106,7 @@ impl Render for SpacetimedbPlayerStory {
         let loading = delegate.loading;
         let eof = delegate.eof;
 
-        let has_filters = !filters.username.is_empty()
-            || filters.level.0.is_some()
-            || filters.level.1.is_some()
-            || !filters.guild.is_empty()
-            || !filters.status.is_empty();
+        let has_filters = filters.has_active_filters();
 
         v_flex()
             .size_full()

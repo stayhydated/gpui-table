@@ -98,25 +98,13 @@ impl SeaormOrderStory {
 
 impl Render for SeaormOrderStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
-        let customer_filter = self.filters.customer_name_value(cx);
-        let amount_range = self.filters.total_amount_value(cx);
-        let status_filter = self.filters.status_value(cx);
-        let shipping_filter = self.filters.shipping_method_value(cx);
-        let date_range = self.filters.created_at_value(cx);
+        let filters = self.filters.read_values(cx);
 
         let table = self.table.read(cx);
         let delegate = table.delegate();
         let row_count = delegate.rows.len();
         let loading = delegate.loading;
         let eof = delegate.eof;
-
-        let has_filters = !customer_filter.is_empty()
-            || amount_range.0.is_some()
-            || amount_range.1.is_some()
-            || !status_filter.is_empty()
-            || !shipping_filter.is_empty()
-            || date_range.0.is_some()
-            || date_range.1.is_some();
 
         v_flex()
             .size_full()
@@ -152,7 +140,7 @@ impl Render for SeaormOrderStory {
                     .child(self.filters.all_filters()),
             )
             // Active filter display
-            .when(has_filters, |this| {
+            .when(filters.has_active_filters(), |this| {
                 this.child(
                     h_flex()
                         .flex_wrap()
@@ -160,19 +148,19 @@ impl Render for SeaormOrderStory {
                         .text_xs()
                         .text_color(cx.theme().muted_foreground)
                         .child("Query:")
-                        .when(!customer_filter.is_empty(), |c| {
-                            c.child(format!(".filter(customer LIKE '%{}%')", customer_filter))
+                        .when(filters.customer_name.is_active(), |c| {
+                            c.child(format!(".filter(customer LIKE '%{}%')", filters.customer_name))
                         })
-                        .when(amount_range.0.is_some() || amount_range.1.is_some(), |c| {
-                            let min = amount_range.0.map_or("*".to_string(), |v| format!("${:.2}", v));
-                            let max = amount_range.1.map_or("*".to_string(), |v| format!("${:.2}", v));
+                        .when(filters.total_amount.is_active(), |c| {
+                            let min = filters.total_amount.min().map_or("*".to_string(), |v| format!("${:.2}", v));
+                            let max = filters.total_amount.max().map_or("*".to_string(), |v| format!("${:.2}", v));
                             c.child(format!(".filter(amount: {}..{})", min, max))
                         })
-                        .when(!status_filter.is_empty(), |c| {
-                            c.child(format!(".filter(status IN {:?})", status_filter))
+                        .when(filters.status.is_active(), |c| {
+                            c.child(format!(".filter(status IN {:?})", filters.status))
                         })
-                        .when(!shipping_filter.is_empty(), |c| {
-                            c.child(format!(".filter(shipping IN {:?})", shipping_filter))
+                        .when(filters.shipping_method.is_active(), |c| {
+                            c.child(format!(".filter(shipping IN {:?})", filters.shipping_method))
                         }),
                 )
             })

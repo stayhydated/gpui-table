@@ -172,11 +172,9 @@ static API_SKIP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::ne
 impl ProductTableDelegate {
     /// Build API URL with server-side filters
     fn build_api_url(skip: u32, limit: u32, filters: &ProductFilterValues) -> String {
-        let title_filter = &filters.title;
-        let category_filter = &filters.category;
         // If we have a category filter with exactly one category, use the category endpoint
-        if category_filter.len() == 1 {
-            let category = category_filter.iter().next().unwrap();
+        if filters.category.len() == 1 {
+            let category = filters.category.iter().next().unwrap();
             // Convert PascalCase variant name to kebab-case for API
             use gpui_table::filter::FilterValue;
             let api_category = category.to_filter_string().to_kebab_case();
@@ -188,10 +186,10 @@ impl ProductTableDelegate {
         }
 
         // If we have a search query, use the search endpoint
-        if !title_filter.is_empty() {
+        if filters.title.is_active() {
             return format!(
                 "https://dummyjson.com/products/search?q={}&limit={}&skip={}",
-                urlencoding::encode(title_filter),
+                urlencoding::encode(&filters.title),
                 limit,
                 skip
             );
@@ -234,10 +232,10 @@ impl ProductTableDelegate {
             "Fetching: skip={}, limit={}, current_rows={}",
             skip, limit, current_row_count
         );
-        if !filters.title.is_empty() {
+        if filters.title.is_active() {
             info!("  title_filter: {}", filters.title);
         }
-        if !filters.category.is_empty() {
+        if filters.category.is_active() {
             info!("  category_filter: {:?}", filters.category);
         }
         info!("GET {}", url);
@@ -359,10 +357,10 @@ impl ProductTableDelegate {
         cx: &mut Context<TableState<Self>>,
     ) {
         info!("Resetting and reloading data (filters changed)");
-        if !filters.title.is_empty() {
+        if filters.title.is_active() {
             info!("  title_filter: {}", filters.title);
         }
-        if !filters.category.is_empty() {
+        if filters.category.is_active() {
             info!("  category_filter: {:?}", filters.category);
         }
 

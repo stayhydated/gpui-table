@@ -11,7 +11,6 @@ use rust_decimal::Decimal;
 use sea_orm::{
     ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter, QueryOrder,
 };
-use std::collections::HashSet;
 use std::sync::{
     Arc,
     atomic::{AtomicU64, Ordering},
@@ -123,39 +122,36 @@ impl ModelTableDelegate {
     /// Fetch orders from PostgreSQL with filters
     async fn fetch_orders(
         db: &DatabaseConnection,
-        customer_filter: &str,
-        amount_range: (Option<f64>, Option<f64>),
-        status_filter: &HashSet<OrderStatus>,
-        shipping_filter: &HashSet<ShippingMethod>,
+        filters: &ModelFilterValues,
         page: u64,
         page_size: u64,
     ) -> Result<Vec<Model>, sea_orm::DbErr> {
         let mut query = Entity::find();
 
         // Apply customer name filter
-        if !customer_filter.is_empty() {
-            query = query.filter(Column::CustomerName.contains(customer_filter));
+        if filters.customer_name.is_active() {
+            query = query.filter(Column::CustomerName.contains(filters.customer_name.as_str()));
         }
 
         // Apply amount range filters
-        if let Some(min) = amount_range.0 {
+        if let Some(min) = filters.total_amount.min() {
             query =
-                query.filter(Column::TotalAmount.gte(Decimal::try_from(min).unwrap_or_default()));
+                query.filter(Column::TotalAmount.gte(Decimal::try_from(*min).unwrap_or_default()));
         }
-        if let Some(max) = amount_range.1 {
+        if let Some(max) = filters.total_amount.max() {
             query =
-                query.filter(Column::TotalAmount.lte(Decimal::try_from(max).unwrap_or_default()));
+                query.filter(Column::TotalAmount.lte(Decimal::try_from(*max).unwrap_or_default()));
         }
 
         // Apply status filter
-        if !status_filter.is_empty() {
-            let statuses: Vec<OrderStatus> = status_filter.iter().cloned().collect();
+        if filters.status.is_active() {
+            let statuses: Vec<OrderStatus> = filters.status.iter().cloned().collect();
             query = query.filter(Column::Status.is_in(statuses));
         }
 
         // Apply shipping method filter
-        if !shipping_filter.is_empty() {
-            let methods: Vec<ShippingMethod> = shipping_filter.iter().cloned().collect();
+        if filters.shipping_method.is_active() {
+            let methods: Vec<ShippingMethod> = filters.shipping_method.iter().cloned().collect();
             query = query.filter(Column::ShippingMethod.is_in(methods));
         }
 
@@ -194,16 +190,7 @@ impl ModelTableDelegate {
         );
 
         let tokio_task = Tokio::spawn(cx, async move {
-            Self::fetch_orders(
-                &db,
-                &filters.customer_name,
-                filters.total_amount,
-                &filters.status,
-                &filters.shipping_method,
-                page,
-                page_size,
-            )
-            .await
+            Self::fetch_orders(&db, &filters, page, page_size).await
         });
 
         cx.spawn(async move |view, cx| match tokio_task.await {
