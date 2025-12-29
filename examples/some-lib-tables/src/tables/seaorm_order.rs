@@ -16,23 +16,21 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
-use some_lib::structs::seaorm_order::{
-    SeaormOrder, SeaormOrderFilterEntities, SeaormOrderTableDelegate,
-};
+use some_lib::structs::seaorm_order::{Model, ModelFilterEntities, ModelTableDelegate};
 
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 
 #[gpui_storybook::story("seaorm")]
 pub struct SeaormOrderStory {
-    table: Entity<TableState<SeaormOrderTableDelegate>>,
-    filters: SeaormOrderFilterEntities,
+    table: Entity<TableState<ModelTableDelegate>>,
+    filters: ModelFilterEntities,
     _subscription: Subscription,
 }
 
 impl gpui_storybook::Story for SeaormOrderStory {
     fn title() -> String {
-        SeaormOrder::this_ftl()
+        Model::this_ftl()
     }
 
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
@@ -52,7 +50,7 @@ impl SeaormOrderStory {
     }
 
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let delegate = SeaormOrderTableDelegate::new(vec![]);
+        let delegate = ModelTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
         // Trigger initial load
@@ -61,13 +59,12 @@ impl SeaormOrderStory {
         });
 
         // Use holder pattern for filter callback
-        let filter_holder: Rc<RefCell<Option<SeaormOrderFilterEntities>>> =
-            Rc::new(RefCell::new(None));
+        let filter_holder: Rc<RefCell<Option<ModelFilterEntities>>> = Rc::new(RefCell::new(None));
         let filter_holder_for_callback = filter_holder.clone();
         let table_for_reload = table.clone();
 
         // Build filters with callback
-        let filters = SeaormOrderFilterEntities::build(
+        let filters = ModelFilterEntities::build(
             Some(Arc::new(move |window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
                     let filter_values = filters.read_values(cx);

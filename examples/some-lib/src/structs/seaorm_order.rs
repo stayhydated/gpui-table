@@ -83,11 +83,6 @@ pub struct Model {
     pub updated_at: DateTime<Utc>,
 }
 
-/// Type alias for external use with gpui-table
-pub type SeaormOrder = Model;
-pub type SeaormOrderTableDelegate = ModelTableDelegate;
-pub type SeaormOrderFilterEntities = ModelFilterEntities;
-
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
