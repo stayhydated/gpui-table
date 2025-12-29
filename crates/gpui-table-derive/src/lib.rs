@@ -115,12 +115,27 @@ struct FilterFieldMeta {
 }
 
 /// Get the filter component type tokens for code generation.
-fn get_filter_type_tokens(filter: &FilterComponents) -> proc_macro2::TokenStream {
+/// For FacetedFilter, the field_ty is required to generate the generic parameter.
+///
+/// Returns a tuple of (type_tokens, type_with_turbofish) where:
+/// - type_tokens: For use in type position (e.g., `Entity<FacetedFilter<T>>`)
+/// - type_with_turbofish: For use in expression position (e.g., `FacetedFilter::<T>::new_for()`)
+fn get_filter_type_tokens(
+    filter: &FilterComponents,
+    field_ty: Option<&syn::Type>,
+) -> proc_macro2::TokenStream {
     match filter {
         FilterComponents::Text(_) => quote! { gpui_table::components::TextFilter },
         FilterComponents::NumberRange(_) => quote! { gpui_table::components::NumberRangeFilter },
         FilterComponents::DateRange(_) => quote! { gpui_table::components::DateRangeFilter },
-        FilterComponents::Faceted(_) => quote! { gpui_table::components::FacetedFilter },
+        FilterComponents::Faceted(_) => {
+            if let Some(ty) = field_ty {
+                quote! { gpui_table::components::FacetedFilter::<#ty> }
+            } else {
+                // Fallback for cases where field_ty is not available (shouldn't happen in practice)
+                quote! { gpui_table::components::FacetedFilter::<String> }
+            }
+        },
     }
 }
 
@@ -342,7 +357,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
 
         if let Some(ref filter_config) = field.filter {
             let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
-            let filter_type_tokens = get_filter_type_tokens(filter_config);
+            let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
 
             filters_init.push(quote! {
                 gpui_table::filter::FilterConfig {
@@ -610,9 +625,10 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
     let mut options = Vec::new();
     let mut variant_name_arms = Vec::new();
+    let mut from_filter_string_arms = Vec::new();
 
-    for variant in variants {
-        let variant_ident = variant.ident;
+    for variant in &variants {
+        let variant_ident = &variant.ident;
         let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
 
         let label_expr = if meta.fluent {
@@ -620,11 +636,12 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         } else {
             let label = variant
                 .label
+                .clone()
                 .unwrap_or_else(|| value.clone().to_title_case());
             quote! { #label.to_string() }
         };
 
-        let icon = match variant.icon {
+        let icon = match &variant.icon {
             Some(path) => {
                 quote! { Some(#path) }
             },
@@ -640,13 +657,33 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
             }
         });
 
-        // Generate variant_name match arm
+        // Generate variant_name match arm (to_filter_string)
         variant_name_arms.push(quote! {
             Self::#variant_ident => #value,
+        });
+
+        // Generate from_filter_string match arm
+        from_filter_string_arms.push(quote! {
+            #value => Some(Self::#variant_ident),
         });
     }
 
     Ok(quote! {
+        impl gpui_table::filter::FilterValue for #enum_name {
+            fn to_filter_string(&self) -> String {
+                match self {
+                    #(#variant_name_arms)*
+                }.to_string()
+            }
+
+            fn from_filter_string(s: &str) -> Option<Self> {
+                match s {
+                    #(#from_filter_string_arms)*
+                    _ => None,
+                }
+            }
+        }
+
         impl gpui_table::filter::Filterable for #enum_name {
             fn options() -> Vec<gpui_table::filter::FacetedFilterOption> {
                 vec![
@@ -903,7 +940,7 @@ fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_type_tokens = get_filter_type_tokens(&f.filter_config);
+            let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
             quote! {
                 pub #field_ident: #Entity<#filter_type_tokens>,
             }
@@ -915,8 +952,7 @@ fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_type_tokens = get_filter_type_tokens(&f.filter_config);
-            let field_type = &f.field_type;
+            let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
 
             // Determine the title expression based on fluent config
             let title_expr =
@@ -927,11 +963,11 @@ fn generate_filter_entities(
                 // Generate chain methods for options
                 let chain_methods = generate_filter_chain_methods(&f.filter_config);
 
-                // For FacetedFilter, use new_for with the field type
+                // For FacetedFilter<T>, use new_for (type is already in the generic parameter)
                 quote! {
                     let #field_ident = {
                         let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new_for::<#field_type>(
+                        let filter = #filter_type_tokens::new_for(
                             || #title_expr,
                             Default::default(),
                             move |_value, window, cx| {
@@ -997,7 +1033,7 @@ fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
-            
+
             match &f.filter_config {
                 FilterComponents::Text(_) => {
                     quote! {
@@ -1016,9 +1052,10 @@ fn generate_filter_entities(
                     }
                 }
                 FilterComponents::Faceted(_) => {
+                    let field_type = &f.field_type;
                     quote! {
                         /// Get the current value of the #field_ident faceted filter.
-                        pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<String> {
+                        pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<#field_type> {
                             self.#field_ident.read(cx).value().clone()
                         }
                     }
@@ -1129,23 +1166,26 @@ fn generate_filter_entities(
         .collect();
 
     // Generate FilterValues struct for client-side filtering
-    let filter_values_name = Ident::new(
-        &format!("{}FilterValues", struct_name),
-        struct_name.span(),
-    );
+    let filter_values_name =
+        Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
 
     let filter_values_fields: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let field_type = match &f.filter_config {
+            let value_type = match &f.filter_config {
                 FilterComponents::Text(_) => quote! { String },
                 FilterComponents::NumberRange(_) => quote! { (Option<f64>, Option<f64>) },
-                FilterComponents::Faceted(_) => quote! { std::collections::HashSet<String> },
-                FilterComponents::DateRange(_) => quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) },
+                FilterComponents::Faceted(_) => {
+                    let ty = &f.field_type;
+                    quote! { std::collections::HashSet<#ty> }
+                },
+                FilterComponents::DateRange(_) => {
+                    quote! { (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) }
+                },
             };
             quote! {
-                pub #field_ident: #field_type,
+                pub #field_ident: #value_type,
             }
         })
         .collect();
@@ -1284,8 +1324,6 @@ fn determine_filter_title_expr(
         quote! { #raw_title.to_string() }
     }
 }
-
-
 
 #[proc_macro_derive(TableCell)]
 pub fn derive_table_cell(input: TokenStream) -> TokenStream {

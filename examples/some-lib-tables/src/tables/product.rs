@@ -65,14 +65,11 @@ impl ProductStory {
         let filters = ProductFilterEntities::build(
             Some(Arc::new(move |window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
-                    // Read the current filter values from the filter entities
-                    let title_filter = filters.title_value(cx);
-                    let category_filter = filters.category_value(cx);
+                    let filter_values = filters.read_values(cx);
 
                     table_for_reload.update(cx, |table, cx| {
                         table.delegate_mut().reset_and_reload_with_filters(
-                            title_filter,
-                            category_filter,
+                            filter_values,
                             window,
                             cx,
                         );

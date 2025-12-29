@@ -7,7 +7,6 @@ use gpui_tokio::Tokio;
 use heck::ToKebabCase;
 use log::{debug, info, warn};
 use serde::Deserialize;
-use std::collections::HashSet;
 
 /// Product categories from DummyJSON
 #[derive(
@@ -172,12 +171,15 @@ static API_SKIP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::ne
 
 impl ProductTableDelegate {
     /// Build API URL with server-side filters
-    fn build_api_url(skip: u32, limit: u32, title_filter: &str, category_filter: &HashSet<String>) -> String {
+    fn build_api_url(skip: u32, limit: u32, filters: &ProductFilterValues) -> String {
+        let title_filter = &filters.title;
+        let category_filter = &filters.category;
         // If we have a category filter with exactly one category, use the category endpoint
         if category_filter.len() == 1 {
-            let category_str = category_filter.iter().next().unwrap();
+            let category = category_filter.iter().next().unwrap();
             // Convert PascalCase variant name to kebab-case for API
-            let api_category = category_str.to_kebab_case();
+            use gpui_table::filter::FilterValue;
+            let api_category = category.to_filter_string().to_kebab_case();
 
             return format!(
                 "https://dummyjson.com/products/category/{}?limit={}&skip={}",
@@ -205,8 +207,7 @@ impl ProductTableDelegate {
     /// Load more products from the API with filter parameters
     pub fn load_more_with_filters(
         &mut self,
-        title_filter: String,
-        category_filter: HashSet<String>,
+        filters: ProductFilterValues,
         _window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
@@ -227,17 +228,17 @@ impl ProductTableDelegate {
         let current_row_count = self.rows.len();
 
         // Build URL with filters
-        let url = Self::build_api_url(skip, limit, &title_filter, &category_filter);
+        let url = Self::build_api_url(skip, limit, &filters);
 
         info!(
             "Fetching: skip={}, limit={}, current_rows={}",
             skip, limit, current_row_count
         );
-        if !title_filter.is_empty() {
-            info!("  title_filter: {}", title_filter);
+        if !filters.title.is_empty() {
+            info!("  title_filter: {}", filters.title);
         }
-        if !category_filter.is_empty() {
-            info!("  category_filter: {:?}", category_filter);
+        if !filters.category.is_empty() {
+            info!("  category_filter: {:?}", filters.category);
         }
         info!("GET {}", url);
 
@@ -347,23 +348,22 @@ impl ProductTableDelegate {
 
     /// Load more products (without filters - for initial load)
     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.load_more_with_filters(String::new(), HashSet::new(), window, cx);
+        self.load_more_with_filters(ProductFilterValues::default(), window, cx);
     }
 
     /// Reset and reload data with new filter values
     pub fn reset_and_reload_with_filters(
         &mut self,
-        title_filter: String,
-        category_filter: HashSet<String>,
+        filters: ProductFilterValues,
         window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
         info!("Resetting and reloading data (filters changed)");
-        if !title_filter.is_empty() {
-            info!("  title_filter: {}", title_filter);
+        if !filters.title.is_empty() {
+            info!("  title_filter: {}", filters.title);
         }
-        if !category_filter.is_empty() {
-            info!("  category_filter: {:?}", category_filter);
+        if !filters.category.is_empty() {
+            info!("  category_filter: {:?}", filters.category);
         }
 
         self.rows.clear();
@@ -371,11 +371,11 @@ impl ProductTableDelegate {
         self.loading = false;
         // Reset the API skip to start from the beginning
         API_SKIP.store(0, std::sync::atomic::Ordering::SeqCst);
-        self.load_more_with_filters(title_filter, category_filter, window, cx);
+        self.load_more_with_filters(filters, window, cx);
     }
 
     /// Reset and reload data (without filters)
     pub fn reset_and_reload(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.reset_and_reload_with_filters(String::new(), HashSet::new(), window, cx);
+        self.reset_and_reload_with_filters(ProductFilterValues::default(), window, cx);
     }
 }

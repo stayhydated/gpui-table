@@ -7,7 +7,6 @@ use gpui_table::GpuiTable;
 use gpui_tokio::Tokio;
 use log::info;
 use spacetimedb::{Identity, Timestamp, table};
-use std::collections::HashSet;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 // Use enums from the local enums module
@@ -135,10 +134,7 @@ fn generate_mock_players(offset: u64, count: usize, seed: u64) -> Vec<Spacetimed
 impl SpacetimedbPlayerTableDelegate {
     pub fn load_more_with_filters(
         &mut self,
-        username_filter: String,
-        level_range: (Option<f64>, Option<f64>),
-        guild_filter: HashSet<String>,
-        status_filter: HashSet<String>,
+        filters: SpacetimedbPlayerFilterValues,
         _window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
@@ -155,7 +151,7 @@ impl SpacetimedbPlayerTableDelegate {
 
         info!(
             "SpacetimeDB: SELECT * FROM player WHERE username LIKE '%{}%' ...",
-            username_filter
+            filters.username
         );
 
         let tokio_task = Tokio::spawn(cx, async move {
@@ -164,16 +160,14 @@ impl SpacetimedbPlayerTableDelegate {
             let mut players = generate_mock_players(offset, batch_size, seed);
 
             players.retain(|p| {
-                let username_match = username_filter.is_empty()
+                let username_match = filters.username.is_empty()
                     || p.username
                         .to_lowercase()
-                        .contains(&username_filter.to_lowercase());
-                let level_match = level_range.0.map_or(true, |min| p.level >= min as u32)
-                    && level_range.1.map_or(true, |max| p.level <= max as u32);
-                let guild_match =
-                    guild_filter.is_empty() || guild_filter.contains(&format!("{:?}", p.guild));
-                let status_match =
-                    status_filter.is_empty() || status_filter.contains(&format!("{:?}", p.status));
+                        .contains(&filters.username.to_lowercase());
+                let level_match = filters.level.0.map_or(true, |min| p.level >= min as u32)
+                    && filters.level.1.map_or(true, |max| p.level <= max as u32);
+                let guild_match = filters.guild.is_empty() || filters.guild.contains(&p.guild);
+                let status_match = filters.status.is_empty() || filters.status.contains(&p.status);
 
                 username_match && level_match && guild_match && status_match
             });
@@ -206,22 +200,12 @@ impl SpacetimedbPlayerTableDelegate {
     }
 
     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.load_more_with_filters(
-            String::new(),
-            (None, None),
-            HashSet::new(),
-            HashSet::new(),
-            window,
-            cx,
-        );
+        self.load_more_with_filters(SpacetimedbPlayerFilterValues::default(), window, cx);
     }
 
     pub fn reset_and_reload_with_filters(
         &mut self,
-        username_filter: String,
-        level_range: (Option<f64>, Option<f64>),
-        guild_filter: HashSet<String>,
-        status_filter: HashSet<String>,
+        filters: SpacetimedbPlayerFilterValues,
         window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
@@ -232,13 +216,6 @@ impl SpacetimedbPlayerTableDelegate {
         PLAYER_OFFSET.store(0, Ordering::SeqCst);
         PLAYER_SEED.fetch_add(1, Ordering::SeqCst);
 
-        self.load_more_with_filters(
-            username_filter,
-            level_range,
-            guild_filter,
-            status_filter,
-            window,
-            cx,
-        );
+        self.load_more_with_filters(filters, window, cx);
     }
 }

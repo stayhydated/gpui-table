@@ -17,6 +17,9 @@ use std::sync::{
     atomic::{AtomicU64, Ordering},
 };
 
+// Re-export the generated FilterValues type
+pub use ModelFilterValues as SeaormOrderFilterValues;
+
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -122,8 +125,8 @@ impl ModelTableDelegate {
         db: &DatabaseConnection,
         customer_filter: &str,
         amount_range: (Option<f64>, Option<f64>),
-        status_filter: &HashSet<String>,
-        shipping_filter: &HashSet<String>,
+        status_filter: &HashSet<OrderStatus>,
+        shipping_filter: &HashSet<ShippingMethod>,
         page: u64,
         page_size: u64,
     ) -> Result<Vec<Model>, sea_orm::DbErr> {
@@ -146,40 +149,14 @@ impl ModelTableDelegate {
 
         // Apply status filter
         if !status_filter.is_empty() {
-            let statuses: Vec<OrderStatus> = status_filter
-                .iter()
-                .filter_map(|s| match s.as_str() {
-                    "Pending" => Some(OrderStatus::Pending),
-                    "Confirmed" => Some(OrderStatus::Confirmed),
-                    "Processing" => Some(OrderStatus::Processing),
-                    "Shipped" => Some(OrderStatus::Shipped),
-                    "Delivered" => Some(OrderStatus::Delivered),
-                    "Cancelled" => Some(OrderStatus::Cancelled),
-                    "Refunded" => Some(OrderStatus::Refunded),
-                    _ => None,
-                })
-                .collect();
-            if !statuses.is_empty() {
-                query = query.filter(Column::Status.is_in(statuses));
-            }
+            let statuses: Vec<OrderStatus> = status_filter.iter().cloned().collect();
+            query = query.filter(Column::Status.is_in(statuses));
         }
 
         // Apply shipping method filter
         if !shipping_filter.is_empty() {
-            let methods: Vec<ShippingMethod> = shipping_filter
-                .iter()
-                .filter_map(|s| match s.as_str() {
-                    "Standard" => Some(ShippingMethod::Standard),
-                    "Express" => Some(ShippingMethod::Express),
-                    "Overnight" => Some(ShippingMethod::Overnight),
-                    "LocalPickup" => Some(ShippingMethod::LocalPickup),
-                    "International" => Some(ShippingMethod::International),
-                    _ => None,
-                })
-                .collect();
-            if !methods.is_empty() {
-                query = query.filter(Column::ShippingMethod.is_in(methods));
-            }
+            let methods: Vec<ShippingMethod> = shipping_filter.iter().cloned().collect();
+            query = query.filter(Column::ShippingMethod.is_in(methods));
         }
 
         // Order by created_at descending and paginate
@@ -192,12 +169,7 @@ impl ModelTableDelegate {
 
     pub fn load_more_with_filters(
         &mut self,
-        customer_filter: String,
-        _email_filter: String,
-        amount_range: (Option<f64>, Option<f64>),
-        status_filter: HashSet<String>,
-        shipping_filter: HashSet<String>,
-        _date_range: (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>),
+        filters: ModelFilterValues,
         _window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
@@ -218,16 +190,16 @@ impl ModelTableDelegate {
 
         info!(
             "SeaORM: Fetching page {} from PostgreSQL (filters: customer='{}', statuses={:?})",
-            page, customer_filter, status_filter
+            page, filters.customer_name, filters.status
         );
 
         let tokio_task = Tokio::spawn(cx, async move {
             Self::fetch_orders(
                 &db,
-                &customer_filter,
-                amount_range,
-                &status_filter,
-                &shipping_filter,
+                &filters.customer_name,
+                filters.total_amount,
+                &filters.status,
+                &filters.shipping_method,
                 page,
                 page_size,
             )
@@ -276,26 +248,12 @@ impl ModelTableDelegate {
     }
 
     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.load_more_with_filters(
-            String::new(),
-            String::new(),
-            (None, None),
-            HashSet::new(),
-            HashSet::new(),
-            (None, None),
-            window,
-            cx,
-        );
+        self.load_more_with_filters(ModelFilterValues::default(), window, cx);
     }
 
     pub fn reset_and_reload_with_filters(
         &mut self,
-        customer_filter: String,
-        email_filter: String,
-        amount_range: (Option<f64>, Option<f64>),
-        status_filter: HashSet<String>,
-        shipping_filter: HashSet<String>,
-        date_range: (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>),
+        filters: ModelFilterValues,
         window: &mut Window,
         cx: &mut Context<TableState<Self>>,
     ) {
@@ -305,15 +263,6 @@ impl ModelTableDelegate {
         self.loading = false;
         CURRENT_PAGE.store(0, Ordering::SeqCst);
 
-        self.load_more_with_filters(
-            customer_filter,
-            email_filter,
-            amount_range,
-            status_filter,
-            shipping_filter,
-            date_range,
-            window,
-            cx,
-        );
+        self.load_more_with_filters(filters, window, cx);
     }
 }

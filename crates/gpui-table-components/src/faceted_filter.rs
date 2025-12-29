@@ -11,18 +11,20 @@ use gpui_component::{
     tag::Tag,
     v_flex,
 };
-use gpui_table_core::filter::{FacetedFilterOption, Filterable};
+use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
 use std::collections::HashSet;
+use std::marker::PhantomData;
 use std::rc::Rc;
 
-pub struct FacetedFilter {
+pub struct FacetedFilter<T: FilterValue> {
     title: Rc<dyn Fn() -> String>,
     options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
-    selected_values: HashSet<String>,
+    selected_values: HashSet<T>,
     search_state: Option<Entity<InputState>>,
-    on_change: Rc<dyn Fn(HashSet<String>, &mut Window, &mut App) + 'static>,
+    on_change: Rc<dyn Fn(HashSet<T>, &mut Window, &mut App) + 'static>,
     /// Whether to show the search input (default: false)
     show_search: bool,
+    _marker: PhantomData<T>,
 }
 
 /// Extension trait for configuring FacetedFilter via method chaining.
@@ -31,7 +33,7 @@ pub trait FacetedFilterExt {
     fn searchable(self, cx: &mut App) -> Self;
 }
 
-impl FacetedFilterExt for Entity<FacetedFilter> {
+impl<T: FilterValue> FacetedFilterExt for Entity<FacetedFilter<T>> {
     fn searchable(self, cx: &mut App) -> Self {
         self.update(cx, |this, _| {
             this.show_search = true;
@@ -40,8 +42,8 @@ impl FacetedFilterExt for Entity<FacetedFilter> {
     }
 }
 
-impl TableFilterComponent for FacetedFilter {
-    type Value = HashSet<String>;
+impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
+    type Value = HashSet<T>;
 
     const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
         gpui_table_core::registry::RegistryFilterType::Faceted;
@@ -61,73 +63,12 @@ impl TableFilterComponent for FacetedFilter {
             search_state: None,
             on_change: Rc::new(on_change),
             show_search: false,
+            _marker: PhantomData,
         })
     }
 }
 
-impl FacetedFilter {
-    /// Build a faceted filter with options derived from a type implementing `Filterable`.
-    ///
-    /// This is the preferred constructor for enum-based filters. The options are
-    /// automatically generated from the enum's `Filterable` implementation, which
-    /// includes labels (from `#[filter(fluent)]` or `#[filter(label = "...")]`) and
-    /// icons (from `#[filter(icon = IconName::...)]`).
-    ///
-    /// # Example
-    /// ```ignore
-    /// #[derive(strum::EnumIter, Filterable)]
-    /// #[filter(fluent)]
-    /// pub enum Priority {
-    ///     #[filter(icon = IconName::ArrowDown)]
-    ///     Low,
-    ///     #[filter(icon = IconName::ArrowUp)]
-    ///     High,
-    /// }
-    ///
-    /// let filter = FacetedFilter::new_for::<Priority>(
-    ///     "Priority",
-    ///     HashSet::new(),
-    ///     move |value, _window, cx| { /* handle change */ },
-    ///     cx,
-    /// );
-    /// ```
-    pub fn new_for<T: Filterable + 'static>(
-        title: impl Fn() -> String + 'static,
-        selected_values: HashSet<String>,
-        on_change: impl Fn(HashSet<String>, &mut Window, &mut App) + 'static,
-        cx: &mut App,
-    ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(T::options),
-            selected_values,
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-        })
-    }
-
-    /// Create a faceted filter with options.
-    ///
-    /// Use this constructor when you need to provide options dynamically
-    /// (e.g., for i18n support where labels need to update on language change).
-    pub fn new_with_options(
-        title: impl Fn() -> String + 'static,
-        options: impl Fn() -> Vec<FacetedFilterOption> + 'static,
-        selected_values: HashSet<String>,
-        on_change: impl Fn(HashSet<String>, &mut Window, &mut App) + 'static,
-        cx: &mut App,
-    ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(options),
-            selected_values,
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-        })
-    }
-
+impl<T: FilterValue> FacetedFilter<T> {
     fn ensure_search_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.search_state.is_none() {
             let input = cx.new(|cx| {
@@ -141,7 +82,7 @@ impl FacetedFilter {
 
     fn toggle_option(
         &mut self,
-        value: String,
+        value: T,
         checked: bool,
         window: &mut Window,
         cx: &mut Context<Self>,
@@ -164,20 +105,98 @@ impl FacetedFilter {
     /// Get the labels of selected values for display.
     fn get_selected_labels(&self) -> Vec<String> {
         let options = (self.options)();
+        let selected_strings: HashSet<String> = self
+            .selected_values
+            .iter()
+            .map(|v| v.to_filter_string())
+            .collect();
         options
             .iter()
-            .filter(|opt| self.selected_values.contains(&opt.value))
+            .filter(|opt| selected_strings.contains(&opt.value))
             .map(|opt| opt.label.clone())
             .collect()
     }
 
     /// Get the current filter value (selected values).
-    pub fn value(&self) -> &HashSet<String> {
+    pub fn value(&self) -> &HashSet<T> {
         &self.selected_values
+    }
+
+    /// Check if a value is currently selected.
+    fn is_selected(&self, value_str: &str) -> bool {
+        self.selected_values
+            .iter()
+            .any(|v| v.to_filter_string() == value_str)
     }
 }
 
-impl Render for FacetedFilter {
+impl<T: Filterable> FacetedFilter<T> {
+    /// Build a faceted filter with options derived from a type implementing `Filterable`.
+    ///
+    /// This is the preferred constructor for enum-based filters. The options are
+    /// automatically generated from the enum's `Filterable` implementation, which
+    /// includes labels (from `#[filter(fluent)]` or `#[filter(label = "...")]`) and
+    /// icons (from `#[filter(icon = IconName::...)]`).
+    ///
+    /// # Example
+    /// ```ignore
+    /// #[derive(strum::EnumIter, Filterable)]
+    /// #[filter(fluent)]
+    /// pub enum Priority {
+    ///     #[filter(icon = IconName::ArrowDown)]
+    ///     Low,
+    ///     #[filter(icon = IconName::ArrowUp)]
+    ///     High,
+    /// }
+    ///
+    /// let filter = FacetedFilter::<Priority>::new_for(
+    ///     || "Priority".to_string(),
+    ///     HashSet::new(),
+    ///     move |value, _window, cx| { /* handle change */ },
+    ///     cx,
+    /// );
+    /// ```
+    pub fn new_for(
+        title: impl Fn() -> String + 'static,
+        selected_values: HashSet<T>,
+        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        cx.new(|_cx| Self {
+            title: Rc::new(title),
+            options: Rc::new(T::options),
+            selected_values,
+            search_state: None,
+            on_change: Rc::new(on_change),
+            show_search: false,
+            _marker: PhantomData,
+        })
+    }
+
+    /// Create a faceted filter with options.
+    ///
+    /// Use this constructor when you need to provide options dynamically
+    /// (e.g., for i18n support where labels need to update on language change).
+    pub fn new_with_options(
+        title: impl Fn() -> String + 'static,
+        options: impl Fn() -> Vec<FacetedFilterOption> + 'static,
+        selected_values: HashSet<T>,
+        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        cx.new(|_cx| Self {
+            title: Rc::new(title),
+            options: Rc::new(options),
+            selected_values,
+            search_state: None,
+            on_change: Rc::new(on_change),
+            show_search: false,
+            _marker: PhantomData,
+        })
+    }
+}
+
+impl<T: FilterValue> Render for FacetedFilter<T> {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Only create search state if searchable is enabled
         if self.show_search {
@@ -191,9 +210,13 @@ impl Render for FacetedFilter {
 
         let view = cx.entity().clone();
         let options_fn = self.options.clone();
-        let selected_values = self.selected_values.clone();
+        // Convert selected values to strings for use in the closure
+        let selected_strings: HashSet<String> = self
+            .selected_values
+            .iter()
+            .map(|v| v.to_filter_string())
+            .collect();
         let search_state = self.search_state.clone();
-
 
         // Icon: CircleX when has selection (to clear), Plus otherwise
         let trigger_icon = if has_selection {
@@ -252,7 +275,8 @@ impl Render for FacetedFilter {
                 let options = options_fn();
 
                 // Get search query to filter options (only if search is enabled)
-                let search_query = search_state.as_ref()
+                let search_query = search_state
+                    .as_ref()
                     .map(|s| s.read(cx).text().to_string().to_lowercase())
                     .unwrap_or_default();
 
@@ -272,8 +296,8 @@ impl Render for FacetedFilter {
                 let options_view = v_flex()
                     .gap_1()
                     .children(filtered_options.iter().map(|opt| {
-                        let is_selected = selected_values.contains(&opt.value);
-                        let val = opt.value.clone();
+                        let is_selected = selected_strings.contains(&opt.value);
+                        let val_str = opt.value.clone();
                         let view = view.clone();
                         let label = opt.label.clone();
                         let count = opt.count;
@@ -285,7 +309,7 @@ impl Render for FacetedFilter {
                             .items_center()
                             .justify_between()
                             .child(
-                                Button::new(format!("opt-btn-{}", val))
+                                Button::new(format!("opt-btn-{}", val_str))
                                     .ghost()
                                     .flex_1()
                                     .justify_start()
@@ -295,7 +319,7 @@ impl Render for FacetedFilter {
                                             .items_center()
                                             .gap_2()
                                             .child(
-                                                Checkbox::new(format!("opt-{}", val))
+                                                Checkbox::new(format!("opt-{}", val_str))
                                                     .checked(is_selected),
                                             )
                                             .when_some(icon, |this, icon_name| {
@@ -309,18 +333,33 @@ impl Render for FacetedFilter {
                                     )
                                     .on_click({
                                         let view = view.clone();
-                                        let val = val.clone();
+                                        let val_str = val_str.clone();
                                         move |_, window, cx| {
                                             view.update(cx, |this, cx| {
                                                 // Toggle: if selected, deselect; if not, select
-                                                let new_state =
-                                                    !this.selected_values.contains(&val);
-                                                this.toggle_option(
-                                                    val.clone(),
-                                                    new_state,
-                                                    window,
-                                                    cx,
-                                                );
+                                                let is_currently_selected =
+                                                    this.is_selected(&val_str);
+                                                if is_currently_selected {
+                                                    // Remove: find and remove the matching value
+                                                    this.selected_values.retain(|v| {
+                                                        v.to_filter_string() != val_str
+                                                    });
+                                                    (this.on_change)(
+                                                        this.selected_values.clone(),
+                                                        window,
+                                                        cx,
+                                                    );
+                                                    cx.notify();
+                                                } else {
+                                                    // Add: parse the string back to T
+                                                    if let Some(typed_val) =
+                                                        T::from_filter_string(&val_str)
+                                                    {
+                                                        this.toggle_option(
+                                                            typed_val, true, window, cx,
+                                                        );
+                                                    }
+                                                }
                                             });
                                         }
                                     }),

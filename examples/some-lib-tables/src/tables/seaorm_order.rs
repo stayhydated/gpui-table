@@ -70,21 +70,11 @@ impl SeaormOrderStory {
         let filters = SeaormOrderFilterEntities::build(
             Some(Arc::new(move |window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
-                    let customer_filter = filters.customer_name_value(cx);
-                    let email_filter = filters.customer_email_value(cx);
-                    let amount_range = filters.total_amount_value(cx);
-                    let status_filter = filters.status_value(cx);
-                    let shipping_filter = filters.shipping_method_value(cx);
-                    let date_range = filters.created_at_value(cx);
+                    let filter_values = filters.read_values(cx);
 
                     table_for_reload.update(cx, |table, cx| {
                         table.delegate_mut().reset_and_reload_with_filters(
-                            customer_filter,
-                            email_filter,
-                            amount_range,
-                            status_filter,
-                            shipping_filter,
-                            date_range,
+                            filter_values,
                             window,
                             cx,
                         );

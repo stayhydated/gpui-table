@@ -10,7 +10,9 @@ use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 use std::time::Duration;
 
-#[derive(Clone, Debug, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell)]
+#[derive(
+    Clone, Debug, Eq, Hash, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell,
+)]
 #[filter(fluent)]
 pub enum UserStatus {
     #[filter(icon = IconName::Check)]

@@ -70,17 +70,11 @@ impl SpacetimedbPlayerStory {
         let filters = SpacetimedbPlayerFilterEntities::build(
             Some(Arc::new(move |window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
-                    let username_filter = filters.username_value(cx);
-                    let level_range = filters.level_value(cx);
-                    let guild_filter = filters.guild_value(cx);
-                    let status_filter = filters.status_value(cx);
+                    let filter_values = filters.read_values(cx);
 
                     table_for_reload.update(cx, |table, cx| {
                         table.delegate_mut().reset_and_reload_with_filters(
-                            username_filter,
-                            level_range,
-                            guild_filter,
-                            status_filter,
+                            filter_values,
                             window,
                             cx,
                         );
@@ -104,10 +98,7 @@ impl SpacetimedbPlayerStory {
 
 impl Render for SpacetimedbPlayerStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
-        let username_filter = self.filters.username_value(cx);
-        let level_range = self.filters.level_value(cx);
-        let guild_filter = self.filters.guild_value(cx);
-        let status_filter = self.filters.status_value(cx);
+        let filters = self.filters.read_values(cx);
 
         let table = self.table.read(cx);
         let delegate = table.delegate();
@@ -115,11 +106,11 @@ impl Render for SpacetimedbPlayerStory {
         let loading = delegate.loading;
         let eof = delegate.eof;
 
-        let has_filters = !username_filter.is_empty()
-            || level_range.0.is_some()
-            || level_range.1.is_some()
-            || !guild_filter.is_empty()
-            || !status_filter.is_empty();
+        let has_filters = !filters.username.is_empty()
+            || filters.level.0.is_some()
+            || filters.level.1.is_some()
+            || !filters.guild.is_empty()
+            || !filters.status.is_empty();
 
         v_flex()
             .size_full()
@@ -162,19 +153,19 @@ impl Render for SpacetimedbPlayerStory {
                         .text_xs()
                         .text_color(cx.theme().muted_foreground)
                         .child("Active filters:")
-                        .when(!username_filter.is_empty(), |c| {
-                            c.child(format!("username LIKE '%{}%'", username_filter))
+                        .when(!filters.username.is_empty(), |c| {
+                            c.child(format!("username LIKE '%{}%'", filters.username))
                         })
-                        .when(level_range.0.is_some() || level_range.1.is_some(), |c| {
-                            let min = level_range.0.map_or("*".to_string(), |v| v.to_string());
-                            let max = level_range.1.map_or("*".to_string(), |v| v.to_string());
+                        .when(filters.level.0.is_some() || filters.level.1.is_some(), |c| {
+                            let min = filters.level.0.map_or("*".to_string(), |v| v.to_string());
+                            let max = filters.level.1.map_or("*".to_string(), |v| v.to_string());
                             c.child(format!("level: {}..{}", min, max))
                         })
-                        .when(!guild_filter.is_empty(), |c| {
-                            c.child(format!("guild IN {:?}", guild_filter))
+                        .when(!filters.guild.is_empty(), |c| {
+                            c.child(format!("guild IN {:?}", filters.guild))
                         })
-                        .when(!status_filter.is_empty(), |c| {
-                            c.child(format!("status IN {:?}", status_filter))
+                        .when(!filters.status.is_empty(), |c| {
+                            c.child(format!("status IN {:?}", filters.status))
                         }),
                 )
             })
