@@ -1,64 +1,101 @@
-## InfiniteRow
-
-infinite_row = 无限行
-
-## InfiniteRowDescriptionKvFtl
-
-infinite_row_description_kv_ftl = 无限行 – 描述
-infinite_row_description_kv_ftl-description = 描述
-infinite_row_description_kv_ftl-id = ID
-infinite_row_description_kv_ftl-name = 名称
-
-## InfiniteRowLabelKvFtl
-
-infinite_row_label_kv_ftl = 无限行 – 标签
-infinite_row_label_kv_ftl-description = 描述
-infinite_row_label_kv_ftl-id = ID
-infinite_row_label_kv_ftl-name = 名称
-
 ## Item
 
-item = 物品
+item_this = Item
 
 ## ItemKvFtl
 
-item_kv_ftl = 物品 – 属性
-item_kv_ftl-acquired_on = 获取时间
-item_kv_ftl-color = 颜色
+item_kv_ftl-acquired_on = Acquired On
+item_kv_ftl-color = Color
 item_kv_ftl-id = ID
-item_kv_ftl-name = 名称
-item_kv_ftl-weight = 重量
+item_kv_ftl-name = Name
+item_kv_ftl-weight = Weight
+item_kv_ftl_this = Item Kv Ftl
+
+## Product
+
+product_this = Product
+
+## ProductDescriptionKvFtl
+
+product_description_kv_ftl-id = ID
+product_description_kv_ftl-title = Title
+product_description_kv_ftl-category = Category
+product_description_kv_ftl-brand = Brand
+product_description_kv_ftl-price = Price
+product_description_kv_ftl-discount_percentage = Discount %
+product_description_kv_ftl-rating = Rating
+product_description_kv_ftl-stock = Stock
+product_description_kv_ftl_this = Product Description Kv Ftl
+
+## ProductLabelKvFtl
+
+product_label_kv_ftl-id = ID
+product_label_kv_ftl-title = Title
+product_label_kv_ftl-category = Category
+product_label_kv_ftl-brand = Brand
+product_label_kv_ftl-price = Price
+product_label_kv_ftl-discount_percentage = Discount %
+product_label_kv_ftl-rating = Rating
+product_label_kv_ftl-stock = Stock
+product_label_kv_ftl_this = Product Label Kv Ftl
+
+## ProductCategory
+
+product_category-Beauty = Beauty
+product_category-Fragrances = Fragrances
+product_category-Furniture = Furniture
+product_category-Groceries = Groceries
+product_category-HomeDecoration = Home Decoration
+product_category-KitchenAccessories = Kitchen Accessories
+product_category-Laptops = Laptops
+product_category-MensShirts = Men's Shirts
+product_category-MensShoes = Men's Shoes
+product_category-MensWatches = Men's Watches
+product_category-MobileAccessories = Mobile Accessories
+product_category-Motorcycle = Motorcycle
+product_category-SkinCare = Skin Care
+product_category-Smartphones = Smartphones
+product_category-SportsAccessories = Sports Accessories
+product_category-Sunglasses = Sunglasses
+product_category-Tablets = Tablets
+product_category-Tops = Tops
+product_category-Vehicle = Vehicle
+product_category-WomensBags = Women's Bags
+product_category-WomensDresses = Women's Dresses
+product_category-WomensJewellery = Women's Jewellery
+product_category-WomensShoes = Women's Shoes
+product_category-WomensWatches = Women's Watches
 
 ## User
 
-user = 用户
+user_this = User
 
 ## UserDescriptionKvFtl
 
-user_description_kv_ftl = 用户 – 描述
-user_description_kv_ftl-active = 活跃
-user_description_kv_ftl-age = 年龄
-user_description_kv_ftl-created_at = 创建时间
-user_description_kv_ftl-debt = 债务
-user_description_kv_ftl-email = 邮箱
+user_description_kv_ftl-active = Active
+user_description_kv_ftl-age = Age
+user_description_kv_ftl-created_at = Created At
+user_description_kv_ftl-debt = Debt
+user_description_kv_ftl-email = Email
 user_description_kv_ftl-id = ID
-user_description_kv_ftl-name = 名称
-user_description_kv_ftl-status = 状态
+user_description_kv_ftl-name = Name
+user_description_kv_ftl-status = Status
+user_description_kv_ftl_this = User Description Kv Ftl
 
 ## UserLabelKvFtl
 
-user_label_kv_ftl = 用户 – 标签
-user_label_kv_ftl-active = 活跃
-user_label_kv_ftl-age = 年龄
-user_label_kv_ftl-created_at = 创建时间
-user_label_kv_ftl-debt = 债务
-user_label_kv_ftl-email = 邮箱
+user_label_kv_ftl-active = Active
+user_label_kv_ftl-age = Age
+user_label_kv_ftl-created_at = Created At
+user_label_kv_ftl-debt = Debt
+user_label_kv_ftl-email = Email
 user_label_kv_ftl-id = ID
-user_label_kv_ftl-name = 名称
-user_label_kv_ftl-status = 状态
+user_label_kv_ftl-name = Name
+user_label_kv_ftl-status = Status
+user_label_kv_ftl_this = User Label Kv Ftl
 
 ## UserStatus
 
-user_status-Active = 活跃
-user_status-Offline = 离线
-user_status-Suspended = 已暂停
+user_status-Active = Active
+user_status-Offline = Offline
+user_status-Suspended = Suspended
