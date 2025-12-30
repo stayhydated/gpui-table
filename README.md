@@ -10,7 +10,7 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 
 | `gpui-table` | `gpui-component` |
 | :----------- | :--------------- |
-| `0.5.x`      | `0.5.x`          |
+| `0.6.x`      | `0.6.x`          |
 
 ## Showcase
 
