@@ -104,13 +104,11 @@ struct FilterFieldMeta {
     field_ident: Ident,
     /// The filter component configuration
     filter_config: FilterComponents,
-    /// The value type for this filter (reserved for future use)
-    #[allow(dead_code)]
+    /// The value type for this filter
     value_type: proc_macro2::TokenStream,
     /// The field type (e.g., String, bool, Priority enum, chrono::DateTime)
     field_type: syn::Type,
-    /// Column index for this filter (reserved for future use)
-    #[allow(dead_code)]
+    /// Column index for this filter
     column_index: usize,
 }
 

@@ -76,7 +76,6 @@ impl FilterComponents {
     }
 
     /// Get text filter options if this is a text filter
-    #[allow(dead_code)]
     pub fn text_options(&self) -> Option<&TextFilterOptions> {
         match self {
             FilterComponents::Text(opts) => Some(opts),
@@ -85,7 +84,6 @@ impl FilterComponents {
     }
 
     /// Get faceted filter options if this is a faceted filter
-    #[allow(dead_code)]
     pub fn faceted_options(&self) -> Option<&FacetedFilterOptions> {
         match self {
             FilterComponents::Faceted(opts) => Some(opts),
