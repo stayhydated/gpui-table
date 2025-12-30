@@ -19,12 +19,12 @@ pub mod validators {
     pub fn ascii_only(s: &str) -> String {
         s.chars().filter(|c| c.is_ascii()).collect()
     }
-    
+
     /// Only allow numeric characters (0-9)
     pub fn numeric_only(s: &str) -> String {
         s.chars().filter(|c| c.is_ascii_digit()).collect()
     }
-    
+
     /// Only allow alphanumeric characters
     pub fn alphanumeric_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphanumeric()).collect()
@@ -65,21 +65,18 @@ impl TextFilterExt for Entity<TextFilter> {
             cx,
         )
     }
-    
+
     fn numeric_only(self, cx: &mut App) -> Self {
-        self.validate(
-            |text| text.chars().filter(|c| c.is_numeric()).collect(),
-            cx,
-        )
+        self.validate(|text| text.chars().filter(|c| c.is_numeric()).collect(), cx)
     }
-    
+
     fn alphanumeric_only(self, cx: &mut App) -> Self {
         self.validate(
             |text| text.chars().filter(|c| c.is_alphanumeric()).collect(),
             cx,
         )
     }
-    
+
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
         self.update(cx, |this, _| {
             this.validator = Some(Rc::new(validator));
@@ -130,7 +127,7 @@ impl TextFilter {
                 |this: &mut Self, state, event: &InputEvent, cx| match event {
                     InputEvent::Change => {
                         let raw_value = state.read(cx).value().to_string();
-                        
+
                         // Apply validator if set
                         let new_value = if let Some(ref validator) = this.validator {
                             let validated = validator(&raw_value);
@@ -143,7 +140,7 @@ impl TextFilter {
                         } else {
                             raw_value
                         };
-                        
+
                         this.value = new_value;
 
                         // Cancel any pending debounce task and schedule a new one

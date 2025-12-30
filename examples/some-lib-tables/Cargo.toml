@@ -29,7 +29,7 @@ rust_decimal = { workspace = true }
 serde = { workspace = true }
 some-lib = { path = "../some-lib" }
 strum = { workspace = true }
-tokio = { features = ["rt-multi-thread", "macros"], workspace = true }
+tokio = { features = [ "rt-multi-thread", "macros" ], workspace = true }
 
 [lints]
 workspace = true

@@ -100,58 +100,6 @@ user_status-Active = Active
 user_status-Offline = Offline
 user_status-Suspended = Suspended
 
-## SpacetimedbPlayer
-
-spacetimedb_player_this = SpacetimeDB Player
-
-## SpacetimedbPlayerDescriptionKvFtl
-
-spacetimedb_player_description_kv_ftl-id = ID
-spacetimedb_player_description_kv_ftl-username = Username
-spacetimedb_player_description_kv_ftl-level = Level
-spacetimedb_player_description_kv_ftl-experience = Experience
-spacetimedb_player_description_kv_ftl-guild = Guild
-spacetimedb_player_description_kv_ftl-status = Status
-spacetimedb_player_description_kv_ftl-score = Score
-spacetimedb_player_description_kv_ftl-games_played = Games Played
-spacetimedb_player_description_kv_ftl-win_rate = Win Rate
-spacetimedb_player_description_kv_ftl_this = SpacetimeDB Player Description
-spacetimedb_player_description_kv_ftl-created_at = Created At
-spacetimedb_player_description_kv_ftl-identity = Identity
-spacetimedb_player_description_kv_ftl-last_seen = Last Seen
-
-## SpacetimedbPlayerLabelKvFtl
-
-spacetimedb_player_label_kv_ftl-id = ID
-spacetimedb_player_label_kv_ftl-username = Username
-spacetimedb_player_label_kv_ftl-level = Level
-spacetimedb_player_label_kv_ftl-experience = XP
-spacetimedb_player_label_kv_ftl-guild = Guild
-spacetimedb_player_label_kv_ftl-status = Status
-spacetimedb_player_label_kv_ftl-score = Score
-spacetimedb_player_label_kv_ftl-games_played = Games
-spacetimedb_player_label_kv_ftl-win_rate = Win %
-spacetimedb_player_label_kv_ftl_this = SpacetimeDB Player Label
-spacetimedb_player_label_kv_ftl-created_at = Created At
-spacetimedb_player_label_kv_ftl-identity = Identity
-spacetimedb_player_label_kv_ftl-last_seen = Last Seen
-
-## PlayerStatus
-
-player_status-Online = Online
-player_status-Away = Away
-player_status-Offline = Offline
-player_status-InGame = In Game
-
-## Guild
-
-guild-None = No Guild
-guild-Warriors = Warriors
-guild-Mages = Mages
-guild-Defenders = Defenders
-guild-Rogues = Rogues
-guild-Healers = Healers
-
 ## OrderStatus
 
 order_status-Pending = Pending

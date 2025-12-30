@@ -109,7 +109,7 @@ use derive_more::{Deref, DerefMut, From, Into};
 ///
 /// This type provides convenient methods for checking if a filter is active
 /// and matching values against the filter.
-#[derive(Clone, Debug, PartialEq, Eq, Deref, DerefMut, From, Into)]
+#[derive(Clone, Debug, Deref, DerefMut, Eq, From, Into, PartialEq)]
 pub struct FacetedValue<T: FilterValue>(pub std::collections::HashSet<T>);
 
 impl<T: FilterValue> Default for FacetedValue<T> {
@@ -140,7 +140,7 @@ impl<T: FilterValue> FacetedValue<T> {
 ///
 /// This type provides convenient methods for checking if a range filter is active
 /// and matching values against the range.
-#[derive(Clone, Debug, Default, PartialEq, From, Into)]
+#[derive(Clone, Debug, Default, From, Into, PartialEq)]
 pub struct RangeValue<T: Clone + PartialOrd>(pub Option<T>, pub Option<T>);
 
 impl<T: Clone + PartialOrd> RangeValue<T> {
