@@ -1,6 +1,3 @@
-# Examples justfile
-# Run `just --list` to see available commands
-
 set dotenv-load := true
 
 # Default: run the storybook
@@ -10,10 +7,6 @@ default:
 # Run the storybook example
 run:
     cargo run -p some-lib-tables
-
-# ============================================================================
-# PostgreSQL / SeaORM
-# ============================================================================
 
 # Start PostgreSQL in Docker
 postgres-start:
@@ -67,47 +60,6 @@ seaorm-setup: postgres-start
     just seaorm-migrate
     just seaorm-seed
 
-# ============================================================================
-# SpacetimeDB
-# ============================================================================
-
-# Start SpacetimeDB server
-spacetime-start:
-    spacetime start
-
-# Publish the SpacetimeDB server module
-spacetime-publish:
-    cd spacetimedb-server && \
-    spacetime publish --project-path . gpui-table-players
-
-# Seed SpacetimeDB with test players
-spacetime-seed count="100":
-    spacetime call gpui-table-players seed_test_players {{ count }}
-
-# Generate SpacetimeDB client bindings
-spacetime-generate:
-    cd spacetimedb-server && \
-    spacetime generate --lang rust \
-        --out-dir ../some-lib/src/module_bindings \
-        --project-path .
-
-# Full SpacetimeDB setup: publish and seed
-spacetime-setup: spacetime-publish
-    @echo "Waiting for module to be ready..."
-    @sleep 2
-    just spacetime-seed
-
-# ============================================================================
-# Development
-# ============================================================================
-
-# Check all example crates compile
-check:
-    cargo check -p spacetimedb-server \
-                -p seaorm-migration \
-                -p some-lib \
-                -p some-lib-tables
-
 # Run with SeaORM database connection
 run-seaorm:
     DATABASE_URL="postgres://postgres:password@localhost:5432/orders" \
@@ -116,4 +68,3 @@ run-seaorm:
 # Clean up everything
 clean:
     -just postgres-stop
-    -spacetime stop

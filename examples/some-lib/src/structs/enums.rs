@@ -1,77 +1,9 @@
-//! Shared enums with all derives for SpacetimeDB, SeaORM, and gpui-table
+//! SeaORM enums for order management
 
 use gpui_component::IconName;
 use gpui_table::{Filterable, TableCell};
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
-
-// ============================================================================
-// SpacetimeDB Player Enums
-// ============================================================================
-
-/// Player status in the game
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    Hash,
-    spacetimedb::SpacetimeType,
-    es_fluent::EsFluent,
-    Filterable,
-    TableCell,
-    strum::EnumIter,
-)]
-#[filter(fluent)]
-pub enum PlayerStatus {
-    #[default]
-    #[filter(icon = IconName::CircleCheck)]
-    Online,
-    #[filter(icon = IconName::Moon)]
-    Away,
-    #[filter(icon = IconName::CircleX)]
-    Offline,
-    #[filter(icon = IconName::Star)]
-    InGame,
-}
-
-/// Guild affiliation
-#[derive(
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    PartialEq,
-    Eq,
-    Hash,
-    spacetimedb::SpacetimeType,
-    es_fluent::EsFluent,
-    Filterable,
-    TableCell,
-    strum::EnumIter,
-)]
-#[filter(fluent)]
-pub enum Guild {
-    #[default]
-    #[filter(icon = IconName::User)]
-    None,
-    #[filter(icon = IconName::ArrowUp)]
-    Warriors,
-    #[filter(icon = IconName::Star)]
-    Mages,
-    #[filter(icon = IconName::Settings)]
-    Defenders,
-    #[filter(icon = IconName::Sun)]
-    Rogues,
-    #[filter(icon = IconName::Check)]
-    Healers,
-}
-
-// ============================================================================
-// SeaORM Order Enums
-// ============================================================================
 
 /// Order status enum
 #[derive(
