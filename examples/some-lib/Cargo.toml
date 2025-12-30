@@ -22,12 +22,13 @@ gpui-table = { features = [ "fluent", "inventory", "rust_decimal", "chrono" ], w
 gpui_tokio = { workspace = true }
 heck = { workspace = true }
 log = { workspace = true }
-reqwest = { features = [ "json" ], version = "0.12" }
+reqwest = { features = [ "json" ], workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 strum = { features = [ "derive" ], workspace = true }
-urlencoding = "2"
+tokio = { workspace = true }
+urlencoding = { workspace = true }
 uuid = { workspace = true }
 
 [lints]

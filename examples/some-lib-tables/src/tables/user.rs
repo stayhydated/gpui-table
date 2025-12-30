@@ -22,7 +22,7 @@ use some_lib::structs::user::{User, UserTableDelegate};
 #[action(namespace = user_table, no_json)]
 pub struct ChangeSize(Size);
 
-#[gpui_storybook::story]
+#[gpui_storybook::story("fake")]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
     stripe: bool,

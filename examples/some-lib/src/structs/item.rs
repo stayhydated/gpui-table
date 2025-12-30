@@ -18,25 +18,25 @@ pub struct Item {
     #[allow(dead_code)]
     id: uuid::Uuid,
 
-    #[gpui_table(width = 100., filter(text()))]
+    #[gpui_table(width = 100.)]
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80., resizable = false, filter(text()))]
+    #[gpui_table(width = 80., resizable = false)]
     #[dummy(faker = "HexColor()")]
     color: String,
 
-    #[gpui_table(width = 120., movable = false, ascending, filter(number_range()))]
+    #[gpui_table(width = 120., movable = false, ascending)]
     #[dummy(faker = "1..67")]
     weight: u8,
 
-    #[gpui_table(width = 250., filter(date_range()))]
+    #[gpui_table(width = 250.)]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
 }
 
 impl ItemTableDelegate {
-    /// Load more items with fake data generation.
+    /// Load more items
     pub fn load_more_items(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
@@ -51,7 +51,7 @@ impl ItemTableDelegate {
                 .timer(Duration::from_millis(100))
                 .await;
 
-            // Generate fake data
+            // Generate fake data - in a real app, this would be an API call
             let new_rows: Vec<Item> = (0..50).map(|_| Faker.fake()).collect();
 
             _ = cx.update(|cx| {

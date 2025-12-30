@@ -170,13 +170,14 @@ impl Product {
 static API_SKIP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
 impl ProductTableDelegate {
-    /// Build URL with server-side filters
-    fn build_api_url(skip: u32, limit: u32, filters: &ProductFilters) -> String {
+    /// Build API URL with server-side filters
+    fn build_api_url(skip: u32, limit: u32, filters: &ProductFilterValues) -> String {
         // If we have a category filter with exactly one category, use the category endpoint
         if filters.category.len() == 1 {
-            let category_str = filters.category.iter().next().unwrap();
+            let category = filters.category.iter().next().unwrap();
             // Convert PascalCase variant name to kebab-case for API
-            let api_category = category_str.to_kebab_case();
+            use gpui_table::filter::FilterValue;
+            let api_category = category.to_filter_string().to_kebab_case();
 
             return format!(
                 "https://dummyjson.com/products/category/{}?limit={}&skip={}",
@@ -185,7 +186,7 @@ impl ProductTableDelegate {
         }
 
         // If we have a search query, use the search endpoint
-        if !filters.title.is_empty() {
+        if filters.title.is_active() {
             return format!(
                 "https://dummyjson.com/products/search?q={}&limit={}&skip={}",
                 urlencoding::encode(&filters.title),
@@ -201,26 +202,13 @@ impl ProductTableDelegate {
         )
     }
 
-    /// Log current filter state
-    fn log_filter_state(filters: &ProductFilters) {
-        let mut active_filters = Vec::new();
-
-        if !filters.title.is_empty() {
-            active_filters.push(format!("title=\"{}\"", filters.title));
-        }
-        if !filters.category.is_empty() {
-            active_filters.push(format!("category={:?}", filters.category));
-        }
-
-        if active_filters.is_empty() {
-            debug!("No active filters");
-        } else {
-            info!("Active filters: {}", active_filters.join(", "));
-        }
-    }
-
-    /// Load more products from the API
-    pub fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+    /// Load more products from the API with filter parameters
+    pub fn load_more_with_filters(
+        &mut self,
+        filters: ProductFilterValues,
+        _window: &mut Window,
+        cx: &mut Context<TableState<Self>>,
+    ) {
         if self.loading || self.eof {
             debug!(
                 "Skipping load_more: loading={}, eof={}",
@@ -235,21 +223,21 @@ impl ProductTableDelegate {
         let skip = API_SKIP.load(std::sync::atomic::Ordering::SeqCst);
         let limit = 20u32;
 
-        // Clone filter values for use in async block
-        let filters = self.filters.clone();
-
-        // Log filter state
-        Self::log_filter_state(&filters);
-
         let current_row_count = self.rows.len();
 
-        // Build URL with server-side filters
+        // Build URL with filters
         let url = Self::build_api_url(skip, limit, &filters);
 
         info!(
             "Fetching: skip={}, limit={}, current_rows={}",
             skip, limit, current_row_count
         );
+        if filters.title.is_active() {
+            info!("  title_filter: {}", filters.title);
+        }
+        if filters.category.is_active() {
+            info!("  category_filter: {:?}", filters.category);
+        }
         info!("GET {}", url);
 
         // Collect existing IDs to prevent duplicates
@@ -356,16 +344,36 @@ impl ProductTableDelegate {
         .detach();
     }
 
-    /// Reset and reload data (call when server-side filters change)
-    pub fn reset_and_reload(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+    /// Load more products (without filters - for initial load)
+    pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        self.load_more_with_filters(ProductFilterValues::default(), window, cx);
+    }
+
+    /// Reset and reload data with new filter values
+    pub fn reset_and_reload_with_filters(
+        &mut self,
+        filters: ProductFilterValues,
+        window: &mut Window,
+        cx: &mut Context<TableState<Self>>,
+    ) {
         info!("Resetting and reloading data (filters changed)");
-        Self::log_filter_state(&self.filters);
+        if filters.title.is_active() {
+            info!("  title_filter: {}", filters.title);
+        }
+        if filters.category.is_active() {
+            info!("  category_filter: {:?}", filters.category);
+        }
 
         self.rows.clear();
         self.eof = false;
         self.loading = false;
         // Reset the API skip to start from the beginning
         API_SKIP.store(0, std::sync::atomic::Ordering::SeqCst);
-        self.load_more(window, cx);
+        self.load_more_with_filters(filters, window, cx);
+    }
+
+    /// Reset and reload data (without filters)
+    pub fn reset_and_reload(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        self.reset_and_reload_with_filters(ProductFilterValues::default(), window, cx);
     }
 }
