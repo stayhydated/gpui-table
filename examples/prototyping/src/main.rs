@@ -5,7 +5,7 @@ use gpui_table_prototyping_core::code_gen::{TableIdentities as _, TableShape, Ta
 use heck::ToSnakeCase as _;
 
 use quote::quote;
-use std::{fs, path::Path};
+use std::{collections::BTreeSet, fs, path::Path};
 
 // Import target lib to trigger inventory registrations
 #[allow(unused_imports)]
@@ -43,9 +43,11 @@ fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
 }
 
 fn main() {
-    let output_dir = &Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
-    fs::create_dir_all(output_dir).expect("Failed to create output directory");
+    let output_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
+    fs::create_dir_all(&output_dir).expect("Failed to create output directory");
     println!("Generating table stories in: {}", output_dir.display());
+
+    let mut modules: BTreeSet<String> = BTreeSet::new();
 
     for table_shape in inventory::iter::<GpuiTableShape>() {
         println!("Table: {:?}", table_shape.struct_name);
@@ -58,8 +60,22 @@ fn main() {
         fs::write(&file_path, formatted_code)
             .unwrap_or_else(|_| panic!("Failed to write file: {}", file_path.display()));
 
+        modules.insert(struct_snake_case_name);
+
         println!("Generated and formatted: {}", file_path.display());
     }
+
+    let mod_rs_path = output_dir.join("mod.rs");
+    let mut mod_rs = String::new();
+
+    for m in modules {
+        mod_rs.push_str(&format!("pub mod {m};\n"));
+    }
+
+    fs::write(&mod_rs_path, mod_rs)
+        .unwrap_or_else(|_| panic!("Failed to write file: {}", mod_rs_path.display()));
+
+    println!("Generated module index: {}", mod_rs_path.display());
     println!("Table story generation complete.");
 }
 
