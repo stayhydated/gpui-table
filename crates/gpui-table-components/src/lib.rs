@@ -1,11 +1,13 @@
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod number_range_filter;
+pub mod table_status_bar;
 pub mod text_filter;
 
 // Re-export extension traits for convenience
 pub use faceted_filter::FacetedFilterExt;
 pub use number_range_filter::NumberRangeFilterExt;
+pub use table_status_bar::TableStatusBar;
 pub use text_filter::TextFilterExt;
 
 use gpui::{App, Entity, Window};

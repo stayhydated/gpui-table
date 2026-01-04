@@ -84,13 +84,11 @@ impl Render for ProductTableStory {
             .p_4()
             .child(h_flex().gap_2().flex_wrap().child(self.filters.all_filters()))
             .child(
-                h_flex()
-                    .gap_4()
-                    .child(format!("Items Loaded: {}", delegate.rows.len()))
-                    .child(if delegate.loading { "Loading..." } else { "Idle" })
-                    .child(
-                        if delegate.eof { "All data loaded" } else { "Scroll for more" },
-                    ),
+                gpui_table_components::TableStatusBar::new(
+                    delegate.rows.len(),
+                    delegate.loading,
+                    delegate.eof,
+                ),
             )
             .child(Table::new(&self.table).stripe(true).scrollbar_visible(true, true))
     }
