@@ -5135,6 +5135,7 @@ name = "prototyping"
 version = "0.1.0"
 dependencies = [
  "gpui-table",
+ "gpui-table-components",
  "gpui-table-prototyping-core",
  "heck 0.5.0",
  "inventory",

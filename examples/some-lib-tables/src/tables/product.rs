@@ -12,6 +12,7 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table_components::TableStatusBar;
 use some_lib::structs::product::{Product, ProductFilterEntities, ProductTableDelegate};
 
 #[gpui_storybook::story_init]
@@ -130,22 +131,7 @@ impl Render for ProductTableStory {
                         .when(filters.category.is_active(), |c| c.child(format!("category: {:?}", filters.category)))
                 )
             })
-            // Status bar
-            .child(
-                h_flex()
-                    .gap_4()
-                    .child(format!("Products Loaded: {}", row_count))
-                    .child(if loading {
-                        "Fetching from DummyJSON..."
-                    } else {
-                        "Idle"
-                    })
-                    .child(if eof {
-                        "All data loaded"
-                    } else {
-                        "Scroll for more"
-                    }),
-            )
+            .child(TableStatusBar::new(row_count, loading, eof))
             // Table
             .child(
                 Table::new(&self.table)

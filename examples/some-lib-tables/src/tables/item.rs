@@ -1,13 +1,13 @@
 use es_fluent::ThisFtl as _;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, ParentElement, Render, Styled, Subscription,
-    Window, prelude::FluentBuilder,
+    Window,
 };
 use gpui_component::{
-    ActiveTheme, h_flex,
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table_components::TableStatusBar;
 use some_lib::structs::item::{Item, ItemTableDelegate};
 
 #[gpui_storybook::story_init]
@@ -70,17 +70,7 @@ impl Render for ItemTableStory {
             .size_full()
             .gap_4()
             .p_4()
-            .child(
-                h_flex()
-                    .gap_4()
-                    .child(format!("Items Loaded: {}", row_count))
-                    .child(if loading { "Loading..." } else { "Idle" })
-                    .child(if eof {
-                        "All data loaded"
-                    } else {
-                        "Scroll for more"
-                    }),
-            )
+            .child(TableStatusBar::new(row_count, loading, eof))
             .child(
                 Table::new(&self.table)
                     .stripe(true)

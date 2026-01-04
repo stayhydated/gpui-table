@@ -259,13 +259,11 @@ impl TableShape for TableShapeAdapter<'_> {
 
         quote! {
             #filter_views
-            .child(
-                h_flex()
-                    .gap_4()
-                    .child(format!("Items Loaded: {}", delegate.rows.len()))
-                    .child(if delegate.loading { "Loading..." } else { "Idle" })
-                    .child(if delegate.eof { "All data loaded" } else { "Scroll for more" })
-            )
+            .child(gpui_table_components::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
             .child(
                 Table::new(&self.table)
                     .stripe(true)
