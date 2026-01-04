@@ -14,12 +14,12 @@ use some_lib::structs::item::{Item, ItemTableDelegate};
 pub fn init(_cx: &mut App) {}
 
 #[gpui_storybook::story("fake")]
-pub struct ItemStory {
+pub struct ItemTableStory {
     table: Entity<TableState<ItemTableDelegate>>,
     _subscription: Subscription,
 }
 
-impl gpui_storybook::Story for ItemStory {
+impl gpui_storybook::Story for ItemTableStory {
     fn title() -> String {
         Item::this_ftl()
     }
@@ -29,13 +29,13 @@ impl gpui_storybook::Story for ItemStory {
     }
 }
 
-impl Focusable for ItemStory {
+impl Focusable for ItemTableStory {
     fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
 
-impl ItemStory {
+impl ItemTableStory {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self::new(window, cx))
     }
@@ -58,7 +58,7 @@ impl ItemStory {
     }
 }
 
-impl Render for ItemStory {
+impl Render for ItemTableStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
         let table = self.table.read(cx);
         let delegate = table.delegate();

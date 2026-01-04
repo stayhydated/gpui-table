@@ -46,7 +46,6 @@ impl UserTableStory {
             );
         let table_for_reload = table.clone();
         let filters = UserFilterEntities::build(
-            &table,
             Some(
                 std::sync::Arc::new(move |window, cx| {
                     table_for_reload
@@ -87,7 +86,7 @@ impl Render for UserTableStory {
             .child(
                 h_flex()
                     .gap_4()
-                    .child(format!("Rows Loaded: {}", delegate.rows.len()))
+                    .child(format!("Items Loaded: {}", delegate.rows.len()))
                     .child(if delegate.loading { "Loading..." } else { "Idle" })
                     .child(
                         if delegate.eof { "All data loaded" } else { "Scroll for more" },
