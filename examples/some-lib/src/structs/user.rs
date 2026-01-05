@@ -23,7 +23,7 @@ pub enum UserStatus {
     Offline,
 }
 
-#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[derive(Clone, fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
@@ -33,33 +33,52 @@ pub struct User {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
     #[allow(dead_code)]
-    id: uuid::Uuid,
+    pub id: uuid::Uuid,
 
     #[gpui_table(sortable, width = 150., filter(text()))]
     #[dummy(faker = "Name()")]
-    name: String,
+    pub name: String,
 
     #[gpui_table(sortable, width = 80., filter(number_range()))]
     #[dummy(faker = "18..67")]
-    age: u8,
+    pub age: u8,
 
     #[gpui_table(sortable, width = 150., filter(number_range()))]
     #[dummy(faker = "PositiveDecimal")]
-    debt: Decimal,
+    pub debt: Decimal,
 
     #[gpui_table(width = 200., filter(text()))]
     #[dummy(faker = "SafeEmail()")]
-    email: String,
+    pub email: String,
 
     #[gpui_table(width = 70., filter(faceted()))]
-    active: bool,
+    pub active: bool,
 
     #[gpui_table(width = 100., filter(faceted()))]
-    status: UserStatus,
+    pub status: UserStatus,
 
     #[gpui_table(sortable, width = 300., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
-    created_at: chrono::DateTime<chrono::Utc>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+impl User {
+    /// Check if this user matches the given filters.
+    pub fn matches_filters(&self, filters: &UserFilterValues) -> bool {
+        // Text filters
+        filters.name.matches(&self.name)
+            && filters.email.matches(&self.email)
+            // Number range filters - convert to f64 for comparison
+            && filters.age.matches(&(self.age as f64))
+            && filters.debt.matches(
+                &rust_decimal::prelude::ToPrimitive::to_f64(&self.debt).unwrap_or(0.0),
+            )
+            // Faceted filters
+            && filters.active.matches(&self.active)
+            && filters.status.matches(&self.status)
+            // Date range filter - convert DateTime to NaiveDate
+            && filters.created_at.matches(&self.created_at.date_naive())
+    }
 }
 
 impl UserTableDelegate {

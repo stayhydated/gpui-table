@@ -14,6 +14,8 @@ use std::rc::Rc;
 pub struct DateRangeFilter {
     title: String,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
+    /// Value when the popover was opened, used to detect changes
+    value_on_open: (Option<NaiveDate>, Option<NaiveDate>),
     calendar: Option<Entity<CalendarState>>,
     on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
@@ -36,6 +38,7 @@ impl TableFilterComponent for DateRangeFilter {
         cx.new(|_cx| Self {
             title,
             selected_range: value,
+            value_on_open: value,
             calendar: None,
             on_change: Rc::new(on_change),
             _subscriptions: Vec::new(),
@@ -85,6 +88,19 @@ impl DateRangeFilter {
 
     fn has_value(&self) -> bool {
         self.selected_range.0.is_some() || self.selected_range.1.is_some()
+    }
+
+    /// Record the current value when popover opens.
+    fn on_popover_open(&mut self) {
+        self.value_on_open = self.selected_range;
+    }
+
+    /// Apply the current filter value via callback, only if it changed.
+    /// Call this from parent when you want to trigger the on_change.
+    pub fn apply_if_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        if self.selected_range != self.value_on_open {
+            (self.on_change)(self.selected_range, window, cx);
+        }
     }
 
     /// Apply the current filter value via callback.
@@ -166,12 +182,15 @@ impl Render for DateRangeFilter {
         Popover::new("date-range-popover")
             .trigger(trigger)
             .on_open_change(move |open, window, cx| {
-                // When popover closes, apply the filter
-                if !open {
-                    apply_view.update(cx, |this, cx| {
-                        this.apply(window, cx);
-                    });
-                }
+                apply_view.update(cx, |this, cx| {
+                    if *open {
+                        // Record the value when popover opens
+                        this.on_popover_open();
+                    } else {
+                        // When popover closes, apply only if value changed
+                        this.apply_if_changed(window, cx);
+                    }
+                });
             })
             .content(move |_, _window, _cx| {
                 let clear_view_inner = view.clone();
