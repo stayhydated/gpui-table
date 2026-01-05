@@ -18,3 +18,4 @@ gpui-storybook = { workspace = true }
 gpui-table-core = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 strum = { features = [ "derive" ], workspace = true }
+rust_decimal = { workspace = true }

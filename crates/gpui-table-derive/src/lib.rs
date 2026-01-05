@@ -57,6 +57,12 @@ struct TableMeta {
     threshold: Option<usize>,
     #[darling(default)]
     load_more_threshold: Option<usize>,
+
+    /// Enable filter support. When set, generates FilterEntities, FilterValues,
+    /// and matches_filters() method. Field-level `filter(...)` attributes are
+    /// only processed when this is enabled.
+    #[darling(default)]
+    filters: bool,
 }
 
 fn default_delegate() -> bool {
@@ -211,18 +217,26 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
             if opts.min.is_some() || opts.max.is_some() {
                 let min_val = opts.min.unwrap_or(0.0);
                 let max_val = opts.max.unwrap_or(100.0);
+                // Convert f64 to string for Decimal parsing at compile time
+                let min_str = min_val.to_string();
+                let max_str = max_val.to_string();
                 chain = quote! {
                     #chain
                     use gpui_table::components::NumberRangeFilterExt as _;
-                    let filter = filter.range(#min_val, #max_val, cx);
+                    let filter = filter.range(
+                        rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
+                        rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
+                        cx,
+                    );
                 };
             }
 
             // Generate .step() call if step is specified
             if let Some(step_val) = opts.step {
+                let step_str = step_val.to_string();
                 chain = quote! {
                     #chain
-                    let filter = filter.step(#step_val, cx);
+                    let filter = filter.step(rust_decimal::Decimal::from_str_exact(#step_str).unwrap(), cx);
                 };
             }
 
@@ -263,6 +277,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         loading,
         threshold,
         load_more_threshold,
+        filters: filters_enabled,
     } = meta;
 
     let threshold = load_more_threshold.or(threshold);
@@ -353,38 +368,41 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             #i => Box::new(self.#ident.clone()),
         });
 
-        if let Some(ref filter_config) = field.filter {
-            let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
-            let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
+        // Only process filter attributes when filters are enabled at struct level
+        if filters_enabled {
+            if let Some(ref filter_config) = field.filter {
+                let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
+                let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
 
-            filters_init.push(quote! {
-                gpui_table::filter::FilterConfig {
-                    column_index: #i,
-                    filter_type: #filter_type_ts,
-                }
-            });
-
-            // Collect filter field metadata for delegate generation
-            // The value type is derived from TableFilterComponent::Value
-            filter_fields.push(FilterFieldMeta {
-                field_ident: ident.clone(),
-                filter_config: filter_config.clone(),
-                value_type: quote! { <#filter_type_tokens as gpui_table::components::TableFilterComponent>::Value },
-                field_type: field.ty.clone(),
-                column_index: i,
-            });
-
-            #[cfg(feature = "inventory")]
-            {
-                let field_name_str = ident.to_string();
-                let registry_filter_type = get_registry_filter_type(filter_config);
-
-                filter_variant_constructions.push(quote! {
-                    gpui_table::registry::FilterVariant::new(
-                        #field_name_str,
-                        #registry_filter_type,
-                    )
+                filters_init.push(quote! {
+                    gpui_table::filter::FilterConfig {
+                        column_index: #i,
+                        filter_type: #filter_type_ts,
+                    }
                 });
+
+                // Collect filter field metadata for delegate generation
+                // The value type is derived from TableFilterComponent::Value
+                filter_fields.push(FilterFieldMeta {
+                    field_ident: ident.clone(),
+                    filter_config: filter_config.clone(),
+                    value_type: quote! { <#filter_type_tokens as gpui_table::components::TableFilterComponent>::Value },
+                    field_type: field.ty.clone(),
+                    column_index: i,
+                });
+
+                #[cfg(feature = "inventory")]
+                {
+                    let field_name_str = ident.to_string();
+                    let registry_filter_type = get_registry_filter_type(filter_config);
+
+                    filter_variant_constructions.push(quote! {
+                        gpui_table::registry::FilterVariant::new(
+                            #field_name_str,
+                            #registry_filter_type,
+                        )
+                    });
+                }
             }
         }
 
@@ -525,8 +543,11 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         quote! {}
     };
 
-    // Generate FilterEntities struct for UI components
+    // Generate FilterEntities struct for UI components (only when filters enabled)
     let filter_entities_impl = generate_filter_entities(&struct_name, &filter_fields, &fluent);
+
+    // Generate matches_filters() method on the struct (only when filters enabled)
+    let matches_filters_impl = generate_matches_filters_method(&struct_name, &filter_fields);
 
     #[cfg(feature = "inventory")]
     let shape_impl = {
@@ -584,6 +605,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         #style_impl
         #delegate_impl
         #filter_entities_impl
+        #matches_filters_impl
     })
 }
 
@@ -1044,7 +1066,7 @@ fn generate_filter_entities(
                 FilterComponents::NumberRange(_) => {
                     quote! {
                         /// Get the current value of the #field_ident number range filter.
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<f64>, Option<f64>) {
+                        pub fn #getter_name(&self, cx: &#App) -> (Option<rust_decimal::Decimal>, Option<rust_decimal::Decimal>) {
                             self.#field_ident.read(cx).value()
                         }
                     }
@@ -1173,7 +1195,9 @@ fn generate_filter_entities(
             let field_ident = &f.field_ident;
             let value_type = match &f.filter_config {
                 FilterComponents::Text(_) => quote! { gpui_table::filter::TextValue },
-                FilterComponents::NumberRange(_) => quote! { gpui_table::filter::RangeValue<f64> },
+                FilterComponents::NumberRange(_) => {
+                    quote! { gpui_table::filter::RangeValue<rust_decimal::Decimal> }
+                },
                 FilterComponents::Faceted(_) => {
                     let ty = &f.field_type;
                     quote! { gpui_table::filter::FacetedValue<#ty> }
@@ -1293,6 +1317,59 @@ fn generate_filter_entities(
             }
         }
 
+    }
+}
+
+/// Generate the matches_filters() method on the struct.
+/// This method checks if all filter values match the struct's fields.
+fn generate_matches_filters_method(
+    struct_name: &Ident,
+    filter_fields: &[FilterFieldMeta],
+) -> proc_macro2::TokenStream {
+    if filter_fields.is_empty() {
+        return quote! {};
+    }
+
+    let filter_values_name =
+        Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
+
+    // Generate match expressions for each filter field
+    let match_exprs: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+
+            match &f.filter_config {
+                FilterComponents::Text(_) => {
+                    // TextValue::matches takes &str
+                    quote! { filters.#field_ident.matches(&self.#field_ident) }
+                }
+                FilterComponents::NumberRange(_) => {
+                    // RangeValue<Decimal>::matches takes &Decimal
+                    // Convert numeric types to Decimal
+                    quote! { filters.#field_ident.matches(&gpui_table::filter::IntoDecimal::into_decimal(&self.#field_ident)) }
+                }
+                FilterComponents::DateRange(_) => {
+                    // RangeValue<NaiveDate>::matches takes &NaiveDate
+                    // Convert DateTime to NaiveDate if needed
+                    quote! { filters.#field_ident.matches(&gpui_table::filter::IntoNaiveDate::into_naive_date(&self.#field_ident)) }
+                }
+                FilterComponents::Faceted(_) => {
+                    // FacetedValue<T>::matches takes &T
+                    quote! { filters.#field_ident.matches(&self.#field_ident) }
+                }
+            }
+        })
+        .collect();
+
+    quote! {
+        impl #struct_name {
+            /// Check if this struct matches the given filter values.
+            /// Returns true if all active filters match their corresponding fields.
+            pub fn matches_filters(&self, filters: &#filter_values_name) -> bool {
+                #(#match_exprs)&&*
+            }
+        }
     }
 }
 

@@ -80,7 +80,7 @@ pub enum ProductCategory {
 #[derive(Clone, Debug, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
-#[gpui_table(fluent = "label")]
+#[gpui_table(fluent = "label", filters)]
 #[gpui_table(load_more = "Self::load_more")]
 #[gpui_table(load_more_threshold = 20)]
 pub struct Product {

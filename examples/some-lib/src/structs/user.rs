@@ -26,7 +26,7 @@ pub enum UserStatus {
 #[derive(Clone, fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
-#[gpui_table(fluent = "label")]
+#[gpui_table(fluent = "label", filters)]
 #[gpui_table(load_more = "Self::load_more_users")]
 #[gpui_table(load_more_threshold = 20)]
 pub struct User {
@@ -60,25 +60,6 @@ pub struct User {
     #[gpui_table(sortable, width = 300., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-impl User {
-    /// Check if this user matches the given filters.
-    pub fn matches_filters(&self, filters: &UserFilterValues) -> bool {
-        // Text filters
-        filters.name.matches(&self.name)
-            && filters.email.matches(&self.email)
-            // Number range filters - convert to f64 for comparison
-            && filters.age.matches(&(self.age as f64))
-            && filters.debt.matches(
-                &rust_decimal::prelude::ToPrimitive::to_f64(&self.debt).unwrap_or(0.0),
-            )
-            // Faceted filters
-            && filters.active.matches(&self.active)
-            && filters.status.matches(&self.status)
-            // Date range filter - convert DateTime to NaiveDate
-            && filters.created_at.matches(&self.created_at.date_naive())
-    }
 }
 
 impl UserTableDelegate {
