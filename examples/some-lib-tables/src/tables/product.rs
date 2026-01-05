@@ -12,6 +12,7 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table::filter::{FilterEntitiesExt as _, FilterValuesExt as _};
 use gpui_table_components::TableStatusBar;
 use some_lib::structs::product::{Product, ProductFilterEntities, ProductTableDelegate};
 

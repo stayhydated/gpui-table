@@ -14,6 +14,7 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 use some_lib::structs::user::*;
 
 #[gpui_storybook::story_init]

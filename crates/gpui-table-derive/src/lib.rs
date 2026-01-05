@@ -1279,13 +1279,6 @@ fn generate_filter_entities(
                 }
             }
 
-            /// Render all filters in a single row.
-            pub fn all_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().flex_wrap().items_center().gap_2()
-                    #(#all_filter_fields)*
-            }
-
             #text_filter_render
             #number_filter_render
             #faceted_filter_render
@@ -1293,13 +1286,21 @@ fn generate_filter_entities(
 
             // Value getters for server-side filtering
             #(#value_getters)*
+        }
 
-            /// Read all current filter values into a FilterValues struct.
-            /// Useful for client-side filtering where you need all values at once.
-            pub fn read_values(&self, cx: &#App) -> #filter_values_name {
+        impl gpui_table::filter::FilterEntitiesExt for #filter_entities_name {
+            type Values = #filter_values_name;
+
+            fn read_values(&self, cx: &#App) -> Self::Values {
                 #filter_values_name {
                     #(#read_values_fields)*
                 }
+            }
+
+            fn all_filters(&self) -> impl gpui::IntoElement {
+                use gpui::{ParentElement as _, Styled as _};
+                gpui::div().flex().flex_wrap().items_center().gap_2()
+                    #(#all_filter_fields)*
             }
         }
 
@@ -1310,9 +1311,8 @@ fn generate_filter_entities(
             #(#filter_values_fields)*
         }
 
-        impl #filter_values_name {
-            /// Check if any filter has an active value.
-            pub fn has_active_filters(&self) -> bool {
+        impl gpui_table::filter::FilterValuesExt for #filter_values_name {
+            fn has_active_filters(&self) -> bool {
                 #(#has_active_checks)||*
             }
         }
@@ -1363,10 +1363,8 @@ fn generate_matches_filters_method(
         .collect();
 
     quote! {
-        impl #struct_name {
-            /// Check if this struct matches the given filter values.
-            /// Returns true if all active filters match their corresponding fields.
-            pub fn matches_filters(&self, filters: &#filter_values_name) -> bool {
+        impl gpui_table::filter::Matchable<#filter_values_name> for #struct_name {
+            fn matches_filters(&self, filters: &#filter_values_name) -> bool {
                 #(#match_exprs)&&*
             }
         }
