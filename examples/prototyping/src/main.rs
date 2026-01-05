@@ -108,9 +108,10 @@ fn layout(data: &GpuiTableShape) -> syn::File {
             App, AppContext as _, Context, Entity, Focusable, IntoElement,
             ParentElement, Render, Styled, Subscription, Window,
         };
+        use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
         use gpui_component::{
             h_flex,
-            table::{Table, TableState},
+            table::{Table, TableState, TableDelegate as _},
             v_flex,
         };
         use es_fluent::ThisFtl as _;
