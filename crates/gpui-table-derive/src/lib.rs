@@ -897,6 +897,12 @@ fn generate_delegate(
                 }
             }
         }
+
+        impl gpui_table::TableDataLoader for #delegate_name {
+            fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
+            }
+        }
     }
 }
 

@@ -42,21 +42,6 @@ pub mod __private {
 }
 
 /// Trait for table delegates that support loading data.
-///
-/// This trait provides the interface for loading initial and additional data
-/// into a table. It's used by the generated code to trigger data loading
-/// without needing to know the specific implementation details.
-///
-/// # Example
-///
-/// ```ignore
-/// impl TableDataLoader for MyTableDelegate {
-///     fn load_data(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-///         // Load initial batch of data
-///         self.load_more_items(window, cx);
-///     }
-/// }
-/// ```
 pub trait TableDataLoader: TableDelegate {
     /// Load data into the table.
     ///
@@ -67,6 +52,46 @@ pub trait TableDataLoader: TableDelegate {
     /// - Appending to rows
     /// - Updating eof flag when no more data
     fn load_data(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+}
+
+/// Trait for defining table loading behavior.
+///
+/// Implement this trait on your table delegate to define how data is loaded.
+/// Then use `#[gpui_table_impl(TableLoader)]` to wire it up to the generated
+/// `TableDelegate` implementation.
+///
+/// # Example
+///
+/// ```ignore
+/// use gpui_table::TableLoader;
+///
+/// impl TableLoader for MyTableDelegate {
+///     const THRESHOLD: usize = 20;
+///
+///     fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+///         // Load more data...
+///     }
+/// }
+///
+/// #[gpui_table::gpui_table_impl(TableLoader)]
+/// impl MyTableDelegate {}
+/// ```
+pub trait TableLoader: TableDelegate {
+    /// Number of rows from the bottom at which to trigger loading more data.
+    const THRESHOLD: usize = 10;
+
+    /// Load more data into the table.
+    ///
+    /// This method is called when the user scrolls near the bottom of the table
+    /// (within `THRESHOLD` rows). The implementation should:
+    /// - Check if already loading (`self.loading`) and return early if so
+    /// - Check if at end of data (`self.eof`) and return early if so
+    /// - Set `self.loading = true` and notify
+    /// - Fetch data (typically async via `cx.spawn`)
+    /// - Append new rows to `self.rows`
+    /// - Set `self.eof = true` if no more data
+    /// - Set `self.loading = false` and notify
+    fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
 }
 
 /// A value that can be displayed in a table cell.

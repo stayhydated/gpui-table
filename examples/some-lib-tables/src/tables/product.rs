@@ -11,6 +11,7 @@ use gpui_component::{
     table::{Table, TableState},
     v_flex,
 };
+use gpui_table::TableDataLoader as _;
 use gpui_table::filter::{FilterEntitiesExt as _, FilterValuesExt as _};
 use gpui_table_components::TableStatusBar;
 use some_lib::structs::product::{Product, ProductFilterEntities, ProductTableDelegate};
@@ -53,7 +54,7 @@ impl ProductTableStory {
 
         // Trigger initial load
         table.update(cx, |table, cx| {
-            table.delegate_mut().load_more(window, cx);
+            table.delegate_mut().load_data(window, cx);
         });
 
         // Use a holder pattern to allow the callback to access filter values

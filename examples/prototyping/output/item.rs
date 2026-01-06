@@ -3,8 +3,9 @@ use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
     Styled, Subscription, Window,
 };
+use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 use gpui_component::{
-    h_flex, table::{Table, TableState},
+    h_flex, table::{Table, TableState, TableDelegate as _},
     v_flex,
 };
 use es_fluent::ThisFtl as _;
@@ -39,7 +40,8 @@ impl ItemTableStory {
             .update(
                 cx,
                 |table, cx| {
-                    table.delegate_mut().load_more(window, cx);
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
                 },
             );
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());

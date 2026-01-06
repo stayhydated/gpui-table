@@ -180,7 +180,8 @@ impl TableShape for TableShapeAdapter<'_> {
 
                 // Trigger initial data load
                 table.update(cx, |table, cx| {
-                    table.delegate_mut().load_more(window, cx);
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
                 });
 
                 let _subscription = cx.observe(&table, |_, _, cx| cx.notify());

@@ -4,7 +4,7 @@ use fake::uuid::UUIDv4;
 use fake::{Fake, Faker};
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
-use gpui_table::GpuiTable;
+use gpui_table::{GpuiTable, TableLoader};
 use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
@@ -33,14 +33,14 @@ pub struct Item {
     acquired_on: chrono::DateTime<chrono::Utc>,
 }
 
+/// Implement the TableLoader trait to define loading behavior.
+/// The #[gpui_table_impl] attribute on a trait impl block automatically
+/// wires up the trait to the generated TableDelegate implementation.
 #[gpui_table::gpui_table_impl]
-impl ItemTableDelegate {
-    #[threshold]
-    const LOAD_MORE_THRESHOLD: usize = 20;
+impl TableLoader for ItemTableDelegate {
+    const THRESHOLD: usize = 20;
 
-    /// Load more items
-    #[load_more]
-    pub fn load_more_items(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
         }

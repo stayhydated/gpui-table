@@ -3,10 +3,49 @@
 //! This module handles the processing of impl blocks marked with `#[gpui_table_impl]`,
 //! looking for method-level attributes like `#[load_more]` and `#[threshold]`
 //! and generating the appropriate trait implementations.
+//!
+//! # Usage
+//!
+//! ## Freestanding approach (define methods/consts directly)
+//!
+//! ```ignore
+//! #[gpui_table_impl]
+//! impl MyTableDelegate {
+//!     #[threshold]
+//!     const LOAD_MORE_THRESHOLD: usize = 20;
+//!
+//!     #[load_more]
+//!     pub fn load_more_items(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+//!         // Load data...
+//!     }
+//! }
+//! ```
+//!
+//! ## Trait-based approach (implement a loader trait)
+//!
+//! Apply `#[gpui_table_impl]` directly to a trait impl block. The macro will
+//! automatically detect the trait and wire it up:
+//!
+//! ```ignore
+//! use gpui_table::TableLoader;
+//!
+//! #[gpui_table_impl]
+//! impl TableLoader for MyTableDelegate {
+//!     const THRESHOLD: usize = 20;
+//!
+//!     fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+//!         // Load data...
+//!     }
+//! }
+//! ```
+//!
+//! The trait must provide:
+//! - `fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>)`
+//! - `const THRESHOLD: usize` (optional, defaults to 10)
 
 use proc_macro2::TokenStream;
 use quote::quote;
-use syn::{FnArg, ImplItem, ImplItemConst, ImplItemFn, ItemImpl, ReturnType, parse2};
+use syn::{FnArg, ImplItem, ImplItemConst, ImplItemFn, ItemImpl, Path, ReturnType, parse2};
 
 /// Information about a method marked with `#[load_more]`.
 struct LoadMoreMethod {
@@ -221,25 +260,82 @@ pub fn gpui_table_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
-    // The attribute should be empty - all config is via inner attributes
-    if !attr.is_empty() {
-        return Err(syn::Error::new_spanned(
-            attr,
-            "gpui_table_impl does not accept arguments. Use #[threshold] on a const inside the impl block.",
-        ));
-    }
-
     let mut impl_block: ItemImpl = parse2(item)?;
 
     // Get the type being implemented (clone to avoid borrow issues)
     let self_ty = impl_block.self_ty.clone();
 
-    // Find marked items
-    let load_more_method = find_load_more_method(&mut impl_block)?;
-    let threshold_const = find_threshold_const(&mut impl_block)?;
+    // Determine the loader trait:
+    // 1. If attr is non-empty, use the provided trait path
+    // 2. If the impl block is a trait impl (e.g., `impl TableLoader for Foo`), use that trait
+    // 3. Otherwise, use freestanding approach with #[load_more] and #[threshold]
+    let loader_trait: Option<Path> = if !attr.is_empty() {
+        Some(parse2(attr)?)
+    } else if let Some((_, ref trait_path, _)) = impl_block.trait_ {
+        // This is a trait impl block like `impl TableLoader for ItemTableDelegate`
+        Some(trait_path.clone())
+    } else {
+        None
+    };
 
     // Generate additional trait implementations
-    let mut additional_impls = TokenStream::new();
+    let additional_impls = if let Some(trait_path) = loader_trait {
+        // Trait-based approach: delegate to the specified trait
+        generate_trait_based_impl(&self_ty, &trait_path)
+    } else {
+        // Freestanding approach: look for #[load_more] and #[threshold] attributes
+        generate_freestanding_impl(&mut impl_block, &self_ty)?
+    };
+
+    // Output the original impl block plus any additional implementations
+    Ok(quote! {
+        #impl_block
+        #additional_impls
+    })
+}
+
+/// Generate implementations that delegate to a user-provided trait.
+fn generate_trait_based_impl(self_ty: &syn::Type, trait_path: &Path) -> TokenStream {
+    quote! {
+        // Private trait implementation for load_more delegation.
+        impl gpui_table::__private::HasLoadMore for #self_ty {
+            fn __load_more_impl(
+                &mut self,
+                window: &mut gpui::Window,
+                cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+            ) {
+                <Self as #trait_path>::load_more(self, window, cx);
+            }
+        }
+
+        // Extension trait that provides the load_more related TableDelegate methods.
+        impl gpui_table::__private::LoadMoreDelegate for #self_ty {
+            fn has_more(&self, _: &gpui::App) -> bool {
+                if self.loading {
+                    return false;
+                }
+                !self.eof
+            }
+
+            fn load_more_threshold(&self) -> usize {
+                <Self as #trait_path>::THRESHOLD
+            }
+
+            fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
+                <Self as gpui_table::__private::HasLoadMore>::__load_more_impl(self, window, cx);
+            }
+        }
+    }
+}
+
+/// Generate implementations from freestanding #[load_more] and #[threshold] attributes.
+fn generate_freestanding_impl(
+    impl_block: &mut ItemImpl,
+    self_ty: &syn::Type,
+) -> syn::Result<TokenStream> {
+    // Find marked items
+    let load_more_method = find_load_more_method(impl_block)?;
+    let threshold_const = find_threshold_const(impl_block)?;
 
     if let Some(load_more) = load_more_method {
         let method_name = &load_more.method_name;
@@ -267,7 +363,7 @@ fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<To
         };
 
         // Generate trait implementations
-        additional_impls = quote! {
+        Ok(quote! {
             // Private trait implementation for load_more delegation.
             impl gpui_table::__private::HasLoadMore for #self_ty {
                 fn __load_more_impl(
@@ -288,12 +384,8 @@ fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<To
                     <Self as gpui_table::__private::HasLoadMore>::__load_more_impl(self, window, cx);
                 }
             }
-        };
+        })
+    } else {
+        Ok(TokenStream::new())
     }
-
-    // Output the original impl block plus any additional implementations
-    Ok(quote! {
-        #impl_block
-        #additional_impls
-    })
 }
