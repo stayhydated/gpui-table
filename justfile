@@ -6,6 +6,9 @@ fmt:
     cargo fmt
     taplo fmt
 
+clippy:
+    cargo clippy --workspace --all-features --exclude some-lib --exclude some-lib-tables
+
 update_crate_paths:
     crates-paths -c gpui -o crates/gpui-table-derive/__crate_paths/gpui.rs
     crates-paths -c gpui-component -o crates/gpui-table-derive/__crate_paths/gpui_component.rs

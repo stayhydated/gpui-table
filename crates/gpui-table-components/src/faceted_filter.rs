@@ -1,8 +1,8 @@
 use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable,
-    button::{Button, ButtonVariants},
+    ActiveTheme as _, Icon, IconName, Sizable as _,
+    button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
     divider::Divider,
     h_flex,

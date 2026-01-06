@@ -2,7 +2,7 @@ use crate::TableFilterComponent;
 use chrono::NaiveDate;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
 use gpui_component::{
-    Icon, IconName, Sizable,
+    Icon, IconName, Sizable as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
     divider::Divider,

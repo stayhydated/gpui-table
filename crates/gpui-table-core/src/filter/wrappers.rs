@@ -56,8 +56,8 @@ impl<T: Clone + PartialOrd> RangeValue<T> {
     /// Check if the given value is within this range.
     /// Returns true if no bounds are set (no restrictions) or if the value is within bounds.
     pub fn matches(&self, value: &T) -> bool {
-        let min_ok = self.0.as_ref().map_or(true, |min| value >= min);
-        let max_ok = self.1.as_ref().map_or(true, |max| value <= max);
+        let min_ok = self.0.as_ref().is_none_or(|min| value >= min);
+        let max_ok = self.1.as_ref().is_none_or(|max| value <= max);
         min_ok && max_ok
     }
 

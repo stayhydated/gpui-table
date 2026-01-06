@@ -1,7 +1,7 @@
 use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Task, Timer, Window, prelude::*, px};
 use gpui_component::{
-    Icon, IconName, Sizable, h_flex,
+    Icon, IconName, Sizable as _, h_flex,
     input::{Input, InputEvent, InputState},
 };
 use std::rc::Rc;
@@ -187,12 +187,12 @@ impl Render for TextFilter {
         self.ensure_input_state(window, cx);
 
         // Apply pending validated value if any
-        if let Some(validated) = self.pending_validated_value.take() {
-            if let Some(input_state) = &self.input_state {
-                input_state.update(cx, |input, cx| {
-                    input.set_value(validated, window, cx);
-                });
-            }
+        if let Some(validated) = self.pending_validated_value.take()
+            && let Some(input_state) = &self.input_state
+        {
+            input_state.update(cx, |input, cx| {
+                input.set_value(validated, window, cx);
+            });
         }
 
         // Apply pending changes now that we have window access

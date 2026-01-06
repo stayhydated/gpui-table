@@ -3,7 +3,7 @@ use gpui::{
     App, Context, Entity, IntoElement, Render, Subscription, Task, Timer, Window, prelude::*, px,
 };
 use gpui_component::{
-    ActiveTheme, Icon, IconName, Sizable,
+    ActiveTheme as _, Icon, IconName, Sizable as _,
     button::Button,
     divider::Divider,
     h_flex,
@@ -119,7 +119,7 @@ impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
 impl NumberRangeFilter {
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
-            let min_val = self.min.map(|v| format_decimal(v)).unwrap_or_default();
+            let min_val = self.min.map(format_decimal).unwrap_or_default();
             let range_min = self.range_min;
             let range_max = self.range_max;
 
@@ -173,7 +173,7 @@ impl NumberRangeFilter {
         }
 
         if self.max_input.is_none() {
-            let max_val = self.max.map(|v| format_decimal(v)).unwrap_or_default();
+            let max_val = self.max.map(format_decimal).unwrap_or_default();
             let range_min = self.range_min;
             let range_max = self.range_max;
 
@@ -278,19 +278,20 @@ impl NumberRangeFilter {
         match self.last_changed {
             LastChanged::Slider => {
                 // Slider changed - update input values
-                if let Some(min_input) = &self.min_input {
-                    if let Some(min) = self.min {
-                        min_input.update(cx, |state, cx| {
-                            state.set_value(format_decimal(min), window, cx);
-                        });
-                    }
+                if let Some(min_input) = &self.min_input
+                    && let Some(min) = self.min
+                {
+                    min_input.update(cx, |state, cx| {
+                        state.set_value(format_decimal(min), window, cx);
+                    });
                 }
-                if let Some(max_input) = &self.max_input {
-                    if let Some(max) = self.max {
-                        max_input.update(cx, |state, cx| {
-                            state.set_value(format_decimal(max), window, cx);
-                        });
-                    }
+
+                if let Some(max_input) = &self.max_input
+                    && let Some(max) = self.max
+                {
+                    max_input.update(cx, |state, cx| {
+                        state.set_value(format_decimal(max), window, cx);
+                    });
                 }
             },
             LastChanged::MinInput | LastChanged::MaxInput => {

@@ -1,7 +1,9 @@
 #![allow(unused)]
 
 use gpui_table::registry::GpuiTableShape;
-use gpui_table_prototyping_core::code_gen::{TableIdentities as _, TableShape, TableShapeAdapter};
+use gpui_table_prototyping_core::code_gen::{
+    TableIdentities as _, TableShape as _, TableShapeAdapter,
+};
 use heck::ToSnakeCase as _;
 
 use quote::quote;

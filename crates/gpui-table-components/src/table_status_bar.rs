@@ -1,4 +1,4 @@
-use gpui::{App, IntoElement, ParentElement, RenderOnce, Styled, Window};
+use gpui::{App, IntoElement, ParentElement as _, RenderOnce, Styled as _, Window};
 use gpui_component::h_flex;
 
 /// Configuration for the table status bar display.

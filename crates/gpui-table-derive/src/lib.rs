@@ -387,21 +387,20 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         });
 
         // Only process filter attributes when filters are enabled at struct level
-        if filters_enabled {
-            if let Some(ref filter_config) = field.filter {
-                let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
-                let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
+        if filters_enabled && let Some(ref filter_config) = field.filter {
+            let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
+            let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
 
-                filters_init.push(quote! {
-                    gpui_table::filter::FilterConfig {
-                        column_index: #i,
-                        filter_type: #filter_type_ts,
-                    }
-                });
+            filters_init.push(quote! {
+                gpui_table::filter::FilterConfig {
+                    column_index: #i,
+                    filter_type: #filter_type_ts,
+                }
+            });
 
-                // Collect filter field metadata for delegate generation
-                // The value type is derived from TableFilterComponent::Value
-                filter_fields.push(FilterFieldMeta {
+            // Collect filter field metadata for delegate generation
+            // The value type is derived from TableFilterComponent::Value
+            filter_fields.push(FilterFieldMeta {
                     field_ident: ident.clone(),
                     filter_config: filter_config.clone(),
                     value_type: quote! { <#filter_type_tokens as gpui_table::components::TableFilterComponent>::Value },
@@ -409,18 +408,17 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     column_index: i,
                 });
 
-                #[cfg(feature = "inventory")]
-                {
-                    let field_name_str = ident.to_string();
-                    let registry_filter_type = get_registry_filter_type(filter_config);
+            #[cfg(feature = "inventory")]
+            {
+                let field_name_str = ident.to_string();
+                let registry_filter_type = get_registry_filter_type(filter_config);
 
-                    filter_variant_constructions.push(quote! {
-                        gpui_table::registry::FilterVariant::new(
-                            #field_name_str,
-                            #registry_filter_type,
-                        )
-                    });
-                }
+                filter_variant_constructions.push(quote! {
+                    gpui_table::registry::FilterVariant::new(
+                        #field_name_str,
+                        #registry_filter_type,
+                    )
+                });
             }
         }
 

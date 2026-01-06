@@ -28,20 +28,12 @@ fn validate_load_more_signature(method: &ImplItemFn) -> syn::Result<()> {
     let sig = &method.sig;
 
     // Check return type is unit (no return type or -> ())
-    if !matches!(&sig.output, ReturnType::Default) {
-        if let ReturnType::Type(_, ty) = &sig.output {
-            // Allow explicit () return type
-            if let syn::Type::Tuple(tuple) = ty.as_ref() {
-                if !tuple.elems.is_empty() {
-                    return Err(syn::Error::new_spanned(
-                        &sig.output,
-                        format!(
-                            "#[load_more] method must have no return type.\nExpected: {}",
-                            EXPECTED_LOAD_MORE_SIGNATURE
-                        ),
-                    ));
-                }
-            } else {
+    if !matches!(&sig.output, ReturnType::Default)
+        && let ReturnType::Type(_, ty) = &sig.output
+    {
+        // Allow explicit () return type
+        if let syn::Type::Tuple(tuple) = ty.as_ref() {
+            if !tuple.elems.is_empty() {
                 return Err(syn::Error::new_spanned(
                     &sig.output,
                     format!(
@@ -50,6 +42,14 @@ fn validate_load_more_signature(method: &ImplItemFn) -> syn::Result<()> {
                     ),
                 ));
             }
+        } else {
+            return Err(syn::Error::new_spanned(
+                &sig.output,
+                format!(
+                    "#[load_more] method must have no return type.\nExpected: {}",
+                    EXPECTED_LOAD_MORE_SIGNATURE
+                ),
+            ));
         }
     }
 
@@ -169,12 +169,11 @@ const VALID_THRESHOLD_TYPES: &[&str] = &["u8", "u16", "u32", "u64", "u128", "usi
 
 /// Validate that the threshold const has a valid unsigned integer type.
 fn validate_threshold_const(const_item: &ImplItemConst) -> syn::Result<()> {
-    if let syn::Type::Path(type_path) = &const_item.ty {
-        if let Some(ident) = type_path.path.get_ident() {
-            if VALID_THRESHOLD_TYPES.contains(&ident.to_string().as_str()) {
-                return Ok(());
-            }
-        }
+    if let syn::Type::Path(type_path) = &const_item.ty
+        && let Some(ident) = type_path.path.get_ident()
+        && VALID_THRESHOLD_TYPES.contains(&ident.to_string().as_str())
+    {
+        return Ok(());
     }
 
     Err(syn::Error::new_spanned(
