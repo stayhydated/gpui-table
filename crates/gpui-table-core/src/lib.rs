@@ -12,21 +12,10 @@ pub mod __private {
     use gpui::{App, Context, Window};
     use gpui_component::table::TableState;
 
-    /// Marker trait indicating a delegate has a `#[load_more]` method.
+    /// Internal trait implemented by `#[gpui_table_impl]` to provide loading behavior.
     ///
-    /// This trait is implemented by the `#[gpui_table_impl]` attribute macro
-    /// when it finds a method marked with `#[load_more]`. The derive macro
-    /// uses this to generate the proper `TableDelegate::load_more` delegation.
-    pub trait HasLoadMore: gpui_component::table::TableDelegate {
-        /// Internal method that delegates to the user's load_more implementation.
-        fn __load_more_impl(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
-    }
-
-    /// Trait providing load_more related TableDelegate method implementations.
-    ///
-    /// This trait is implemented by the `#[gpui_table_impl]` attribute macro
-    /// and provides the `load_more`, `has_more`, and `load_more_threshold` methods
-    /// that will be used by the generated `TableDelegate` implementation.
+    /// This trait bridges user-defined loading logic (via `TableLoader` trait or
+    /// freestanding `#[load_more]` methods) to the generated `TableDelegate` implementation.
     pub trait LoadMoreDelegate: gpui_component::table::TableDelegate {
         /// Check if there is more data to load.
         fn has_more(&self, app: &App) -> bool;
@@ -56,15 +45,15 @@ pub trait TableDataLoader: TableDelegate {
 
 /// Trait for defining table loading behavior.
 ///
-/// Implement this trait on your table delegate to define how data is loaded.
-/// Then use `#[gpui_table_impl(TableLoader)]` to wire it up to the generated
-/// `TableDelegate` implementation.
+/// Implement this trait on your table delegate and apply `#[gpui_table_impl]`
+/// to wire it up to the generated `TableDelegate` implementation.
 ///
 /// # Example
 ///
 /// ```ignore
 /// use gpui_table::TableLoader;
 ///
+/// #[gpui_table_impl]
 /// impl TableLoader for MyTableDelegate {
 ///     const THRESHOLD: usize = 20;
 ///
@@ -72,9 +61,6 @@ pub trait TableDataLoader: TableDelegate {
 ///         // Load more data...
 ///     }
 /// }
-///
-/// #[gpui_table::gpui_table_impl(TableLoader)]
-/// impl MyTableDelegate {}
 /// ```
 pub trait TableLoader: TableDelegate {
     /// Number of rows from the bottom at which to trigger loading more data.

@@ -297,18 +297,6 @@ fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<To
 /// Generate implementations that delegate to a user-provided trait.
 fn generate_trait_based_impl(self_ty: &syn::Type, trait_path: &Path) -> TokenStream {
     quote! {
-        // Private trait implementation for load_more delegation.
-        impl gpui_table::__private::HasLoadMore for #self_ty {
-            fn __load_more_impl(
-                &mut self,
-                window: &mut gpui::Window,
-                cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
-            ) {
-                <Self as #trait_path>::load_more(self, window, cx);
-            }
-        }
-
-        // Extension trait that provides the load_more related TableDelegate methods.
         impl gpui_table::__private::LoadMoreDelegate for #self_ty {
             fn has_more(&self, _: &gpui::App) -> bool {
                 if self.loading {
@@ -322,7 +310,7 @@ fn generate_trait_based_impl(self_ty: &syn::Type, trait_path: &Path) -> TokenStr
             }
 
             fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
-                <Self as gpui_table::__private::HasLoadMore>::__load_more_impl(self, window, cx);
+                <Self as #trait_path>::load_more(self, window, cx);
             }
         }
     }
@@ -362,26 +350,14 @@ fn generate_freestanding_impl(
             TokenStream::new()
         };
 
-        // Generate trait implementations
+        // Generate trait implementation
         Ok(quote! {
-            // Private trait implementation for load_more delegation.
-            impl gpui_table::__private::HasLoadMore for #self_ty {
-                fn __load_more_impl(
-                    &mut self,
-                    window: &mut gpui::Window,
-                    cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
-                ) {
-                    Self::#method_name(self, window, cx);
-                }
-            }
-
-            // Extension trait that provides the load_more related TableDelegate methods.
             impl gpui_table::__private::LoadMoreDelegate for #self_ty {
                 #has_more_impl
                 #threshold_impl
 
                 fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
-                    <Self as gpui_table::__private::HasLoadMore>::__load_more_impl(self, window, cx);
+                    Self::#method_name(self, window, cx);
                 }
             }
         })
