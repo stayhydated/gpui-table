@@ -19,7 +19,7 @@ use some_lib::structs::user::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 
-#[gpui_storybook::story]
+#[gpui_storybook::story("all data loaded")]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
     filters: UserFilterEntities,

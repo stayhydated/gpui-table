@@ -13,7 +13,7 @@ use some_lib::structs::item::{Item, ItemTableDelegate};
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 
-#[gpui_storybook::story("fake")]
+#[gpui_storybook::story("fake infinite")]
 pub struct ItemTableStory {
     table: Entity<TableState<ItemTableDelegate>>,
     _subscription: Subscription,
