@@ -10,8 +10,6 @@ use std::time::Duration;
 #[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
 #[gpui_table(fluent, custom_style)]
-#[gpui_table(load_more = "Self::load_more_items")]
-#[gpui_table(load_more_threshold = 20)]
 pub struct Item {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
@@ -35,8 +33,13 @@ pub struct Item {
     acquired_on: chrono::DateTime<chrono::Utc>,
 }
 
+#[gpui_table::gpui_table_impl]
 impl ItemTableDelegate {
+    #[threshold]
+    const LOAD_MORE_THRESHOLD: usize = 20;
+
     /// Load more items
+    #[load_more]
     pub fn load_more_items(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;

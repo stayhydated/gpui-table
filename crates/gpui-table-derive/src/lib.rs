@@ -1,6 +1,7 @@
 #[doc(hidden)]
 mod __crate_paths;
 mod components;
+mod impl_attr;
 
 use __crate_paths::gpui::{AnyElement, App, Context, Entity, IntoElement, Window};
 use __crate_paths::gpui_component::table::{
@@ -13,6 +14,37 @@ use heck::{ToPascalCase as _, ToTitleCase as _};
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Ident, Path};
+
+/// Attribute macro for table delegate impl blocks.
+///
+/// This macro processes an `impl` block for a table delegate and generates
+/// the appropriate `TableDelegate` trait method implementations based on
+/// inner attributes.
+///
+/// # Supported Attributes
+///
+/// - `#[load_more]` - Marks a method as the load_more handler
+/// - `#[threshold]` - Marks a const as the load_more threshold value
+/// - `#[eof]` - Marks a const containing the eof field name (defaults to "eof")
+///
+/// # Example
+///
+/// ```ignore
+/// #[gpui_table_impl]
+/// impl ProductTableDelegate {
+///     #[threshold]
+///     const LOAD_MORE_THRESHOLD: usize = 20;
+///
+///     #[load_more]
+///     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+///         // Load more data...
+///     }
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn gpui_table_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
+    impl_attr::gpui_table_impl(attr.into(), item.into()).into()
+}
 
 #[proc_macro_derive(GpuiTable, attributes(gpui_table))]
 pub fn derive_gpui_table(input: TokenStream) -> TokenStream {
@@ -48,15 +80,7 @@ struct TableMeta {
     fluent: Option<Override<String>>,
 
     #[darling(default)]
-    load_more: Option<Path>,
-    #[darling(default)]
-    eof: Option<Ident>,
-    #[darling(default)]
     loading: Option<Ident>,
-    #[darling(default)]
-    threshold: Option<usize>,
-    #[darling(default)]
-    load_more_threshold: Option<usize>,
 
     /// Enable filter support. When set, generates FilterEntities, FilterValues,
     /// and matches_filters() method. Field-level `filter(...)` attributes are
@@ -272,15 +296,9 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         delegate,
         custom_style,
         fluent,
-        load_more,
-        eof,
         loading,
-        threshold,
-        load_more_threshold,
         filters: filters_enabled,
     } = meta;
-
-    let threshold = load_more_threshold.or(threshold);
 
     let table_id = id.unwrap_or_else(|| struct_name.to_string());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
@@ -533,10 +551,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             &struct_name,
             &column_enum_name,
             sort_match_arms,
-            load_more,
-            eof,
             loading,
-            threshold,
             &filter_fields,
         )
     } else {
@@ -761,24 +776,30 @@ fn generate_delegate(
     struct_name: &Ident,
     column_enum_name: &Ident,
     sort_arms: Vec<proc_macro2::TokenStream>,
-    load_more: Option<Path>,
-    eof: Option<Ident>,
     loading: Option<Ident>,
-    threshold: Option<usize>,
     filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
-    let has_load_more = load_more.is_some();
     let _has_filters = !filter_fields.is_empty();
 
-    let load_more_impl = if let Some(load_fn) = load_more {
-        quote! {
-            fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
-                #load_fn(self, window, cx);
-            }
+    // Generate load_more related implementations.
+    // Always delegate to LoadMoreDelegate trait (implemented by #[gpui_table_impl] with #[load_more]).
+    let load_more_impl = quote! {
+        fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+            gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
         }
-    } else {
-        quote! {}
+    };
+
+    let has_more_impl = quote! {
+        fn has_more(&self, app: &#App) -> bool {
+            gpui_table::__private::LoadMoreDelegate::has_more(self, app)
+        }
+    };
+
+    let threshold_impl = quote! {
+        fn load_more_threshold(&self) -> usize {
+            gpui_table::__private::LoadMoreDelegate::load_more_threshold(self)
+        }
     };
 
     let loading_impl = if let Some(field) = loading {
@@ -793,54 +814,6 @@ fn generate_delegate(
                 self.full_loading
             }
         }
-    };
-
-    let has_more_impl = if has_load_more {
-        if let Some(field) = eof {
-            quote! {
-                fn has_more(&self, app: &#App) -> bool {
-                    if self.loading {
-                        return false;
-                    }
-                    !self.#field(app)
-                }
-            }
-        } else {
-            quote! {
-                fn has_more(&self, _: &#App) -> bool {
-                    if self.loading {
-                        return false;
-                    }
-                    !self.eof
-                }
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let threshold_impl = if let Some(val) = threshold {
-        quote! {
-            fn load_more_threshold(&self) -> usize {
-                #val
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    // Generate TableDataLoader impl when load_more is specified
-    let data_loader_impl = if has_load_more {
-        quote! {
-            impl gpui_table::TableDataLoader for #delegate_name {
-                fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
-                    use #TableDelegate as _;
-                    self.load_more(window, cx);
-                }
-            }
-        }
-    } else {
-        quote! {}
     };
 
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
@@ -934,8 +907,6 @@ fn generate_delegate(
                 }
             }
         }
-
-        #data_loader_impl
     }
 }
 

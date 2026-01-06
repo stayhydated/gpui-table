@@ -6,6 +6,41 @@ use gpui_component::table::{Column, TableDelegate, TableState};
 pub mod filter;
 pub mod registry;
 
+/// Private module for macro internals. Not part of public API.
+#[doc(hidden)]
+pub mod __private {
+    use gpui::{App, Context, Window};
+    use gpui_component::table::TableState;
+
+    /// Marker trait indicating a delegate has a `#[load_more]` method.
+    ///
+    /// This trait is implemented by the `#[gpui_table_impl]` attribute macro
+    /// when it finds a method marked with `#[load_more]`. The derive macro
+    /// uses this to generate the proper `TableDelegate::load_more` delegation.
+    pub trait HasLoadMore: gpui_component::table::TableDelegate {
+        /// Internal method that delegates to the user's load_more implementation.
+        fn __load_more_impl(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+    }
+
+    /// Trait providing load_more related TableDelegate method implementations.
+    ///
+    /// This trait is implemented by the `#[gpui_table_impl]` attribute macro
+    /// and provides the `load_more`, `has_more`, and `load_more_threshold` methods
+    /// that will be used by the generated `TableDelegate` implementation.
+    pub trait LoadMoreDelegate: gpui_component::table::TableDelegate {
+        /// Check if there is more data to load.
+        fn has_more(&self, app: &App) -> bool;
+
+        /// Threshold of rows from bottom to trigger load_more.
+        fn load_more_threshold(&self) -> usize {
+            10 // Default threshold
+        }
+
+        /// Load more data into the table.
+        fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+    }
+}
+
 /// Trait for table delegates that support loading data.
 ///
 /// This trait provides the interface for loading initial and additional data

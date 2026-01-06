@@ -81,8 +81,6 @@ pub enum ProductCategory {
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", filters)]
-#[gpui_table(load_more = "Self::load_more")]
-#[gpui_table(load_more_threshold = 20)]
 pub struct Product {
     /// Product ID from the API
     #[gpui_table(sortable, width = 50., resizable = false, movable = false)]
@@ -169,7 +167,10 @@ impl Product {
 /// Tracks the current API fetch state
 static API_SKIP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
+#[gpui_table::gpui_table_impl]
 impl ProductTableDelegate {
+    #[threshold]
+    const LOAD_MORE_THRESHOLD: usize = 20;
     /// Build API URL with server-side filters
     fn build_api_url(skip: u32, limit: u32, filters: &ProductFilterValues) -> String {
         // If we have a category filter with exactly one category, use the category endpoint
@@ -345,6 +346,7 @@ impl ProductTableDelegate {
     }
 
     /// Load more products (without filters - for initial load)
+    #[load_more]
     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
         self.load_more_with_filters(ProductFilterValues::default(), window, cx);
     }

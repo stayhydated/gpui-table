@@ -27,8 +27,6 @@ pub enum UserStatus {
 #[fluent_this(origin, members)]
 #[fluent_kv(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", filters)]
-#[gpui_table(load_more = "Self::load_more_users")]
-#[gpui_table(load_more_threshold = 20)]
 pub struct User {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
@@ -62,8 +60,13 @@ pub struct User {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[gpui_table::gpui_table_impl]
 impl UserTableDelegate {
+    #[threshold]
+    const LOAD_MORE_THRESHOLD: usize = 20;
+
     /// Load more users with fake data generation.
+    #[load_more]
     pub fn load_more_users(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
