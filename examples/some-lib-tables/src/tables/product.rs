@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 
 use es_fluent::ThisFtl as _;
 use gpui::{
@@ -65,7 +64,7 @@ impl ProductTableStory {
 
         // Build all filter entities with a callback that reads current filter values
         let filters = ProductFilterEntities::build(
-            Some(Arc::new(move |window, cx| {
+            Some(Rc::new(move |window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
                     let filter_values = filters.read_values(cx);
 

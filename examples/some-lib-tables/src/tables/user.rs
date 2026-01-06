@@ -1,6 +1,5 @@
 use std::cell::RefCell;
 use std::rc::Rc;
-use std::sync::Arc;
 use std::time::Duration;
 
 use es_fluent::ThisFtl as _;
@@ -69,7 +68,7 @@ impl UserTableStory {
 
         // Build all filter entities with a callback that reads current filter values
         let filters = UserFilterEntities::build(
-            Some(Arc::new(move |_window, cx| {
+            Some(Rc::new(move |_window, cx| {
                 if let Some(ref filters) = *filter_holder_for_callback.borrow() {
                     let filter_values = filters.read_values(cx);
 

@@ -161,7 +161,7 @@ impl TableShape for TableShapeAdapter<'_> {
                 // Build filter entities with reload callback
                 let table_for_reload = table.clone();
                 let filters = #filter_entities_ident::build(
-                    Some(std::sync::Arc::new(move |window, cx| {
+                    Some(std::rc::Rc::new(move |window, cx| {
                         table_for_reload.update(cx, |table, cx| {
                             table.delegate_mut().rows.clear();
                             table.delegate_mut().eof = false;

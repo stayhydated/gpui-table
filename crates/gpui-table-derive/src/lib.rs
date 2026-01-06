@@ -1238,7 +1238,7 @@ fn generate_filter_entities(
             ///   Use this for triggering data reload with new filter parameters.
             /// * `cx` - The application context
             pub fn build(
-                on_filter_change: Option<std::sync::Arc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
+                on_filter_change: Option<std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
             ) -> Self {
                 use gpui_table::components::TableFilterComponent as _;
