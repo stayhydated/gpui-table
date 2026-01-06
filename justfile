@@ -5,6 +5,7 @@ fmt:
     cargo sort-derives
     cargo fmt
     taplo fmt
+    uvx mdformat .
 
 clippy:
     cargo clippy --workspace --all-features --exclude some-lib --exclude some-lib-tables
