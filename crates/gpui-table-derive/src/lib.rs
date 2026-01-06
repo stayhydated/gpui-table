@@ -134,12 +134,8 @@ struct FilterFieldMeta {
     field_ident: Ident,
     /// The filter component configuration
     filter_config: FilterComponents,
-    /// The value type for this filter
-    value_type: proc_macro2::TokenStream,
     /// The field type (e.g., String, bool, Priority enum, chrono::DateTime)
     field_type: syn::Type,
-    /// Column index for this filter
-    column_index: usize,
 }
 
 /// Get the filter component type tokens for code generation.
@@ -389,7 +385,6 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         // Only process filter attributes when filters are enabled at struct level
         if filters_enabled && let Some(ref filter_config) = field.filter {
             let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
-            let filter_type_tokens = get_filter_type_tokens(filter_config, Some(&field.ty));
 
             filters_init.push(quote! {
                 gpui_table::filter::FilterConfig {
@@ -399,14 +394,11 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             });
 
             // Collect filter field metadata for delegate generation
-            // The value type is derived from TableFilterComponent::Value
             filter_fields.push(FilterFieldMeta {
-                    field_ident: ident.clone(),
-                    filter_config: filter_config.clone(),
-                    value_type: quote! { <#filter_type_tokens as gpui_table::components::TableFilterComponent>::Value },
-                    field_type: field.ty.clone(),
-                    column_index: i,
-                });
+                field_ident: ident.clone(),
+                filter_config: filter_config.clone(),
+                field_type: field.ty.clone(),
+            });
 
             #[cfg(feature = "inventory")]
             {
@@ -1316,12 +1308,12 @@ fn generate_matches_filters_method(
                 FilterComponents::NumberRange(_) => {
                     // RangeValue<Decimal>::matches takes &Decimal
                     // Convert numeric types to Decimal
-                    quote! { filters.#field_ident.matches(&gpui_table::filter::IntoDecimal::into_decimal(&self.#field_ident)) }
+                    quote! { filters.#field_ident.matches(&gpui_table::filter::ToDecimal::to_decimal(&self.#field_ident)) }
                 }
                 FilterComponents::DateRange(_) => {
                     // RangeValue<NaiveDate>::matches takes &NaiveDate
                     // Convert DateTime to NaiveDate if needed
-                    quote! { filters.#field_ident.matches(&gpui_table::filter::IntoNaiveDate::into_naive_date(&self.#field_ident)) }
+                    quote! { filters.#field_ident.matches(&gpui_table::filter::ToNaiveDate::to_naive_date(&self.#field_ident)) }
                 }
                 FilterComponents::Faceted(_) => {
                     // FacetedValue<T>::matches takes &T

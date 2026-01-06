@@ -74,20 +74,4 @@ impl FilterComponents {
     pub fn is_faceted(&self) -> bool {
         matches!(self, FilterComponents::Faceted(_))
     }
-
-    /// Get text filter options if this is a text filter
-    pub fn text_options(&self) -> Option<&TextFilterOptions> {
-        match self {
-            FilterComponents::Text(opts) => Some(opts),
-            _ => None,
-        }
-    }
-
-    /// Get faceted filter options if this is a faceted filter
-    pub fn faceted_options(&self) -> Option<&FacetedFilterOptions> {
-        match self {
-            FilterComponents::Faceted(opts) => Some(opts),
-            _ => None,
-        }
-    }
 }

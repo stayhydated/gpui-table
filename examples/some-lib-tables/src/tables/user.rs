@@ -23,8 +23,6 @@ pub fn init(_cx: &mut App) {}
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
     filters: UserFilterEntities,
-    /// Store all generated data here, filter into table.rows
-    all_data: Rc<RefCell<Vec<User>>>,
     _subscription: Subscription,
 }
 
@@ -96,7 +94,6 @@ impl UserTableStory {
         Self {
             table,
             filters,
-            all_data,
             _subscription,
         }
     }
