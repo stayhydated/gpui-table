@@ -57,15 +57,17 @@ impl DateRangeFilter {
             });
 
             // Subscribe to calendar selection changes
-            let subscription = cx.subscribe(
+            let subscription = cx.subscribe_in(
                 &calendar,
-                |this: &mut Self, _, event: &CalendarEvent, cx| {
+                window,
+                |this: &mut Self, _, event: &CalendarEvent, window, cx| {
                     let CalendarEvent::Selected(date) = event;
                     let (start, end) = match date {
                         Date::Range(start, end) => (*start, *end),
                         Date::Single(date) => (*date, None),
                     };
                     this.selected_range = (start, end);
+                    (this.on_change)(this.selected_range, window, cx);
                     cx.notify();
                 },
             );
