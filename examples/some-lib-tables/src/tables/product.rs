@@ -13,7 +13,7 @@ use gpui_component::{
 };
 use gpui_table::TableDataLoader as _;
 use gpui_table::filter::{FilterEntitiesExt as _, FilterValuesExt as _};
-use gpui_table_components::TableStatusBar;
+use gpui_table_component::TableStatusBar;
 use some_lib::structs::product::{Product, ProductFilterEntities, ProductTableDelegate};
 
 #[gpui_storybook::story_init]

@@ -56,7 +56,7 @@ impl Render for ItemTableStory {
             .size_full()
             .gap_4()
             .p_4()
-            .child(gpui_table_components::TableStatusBar::new(
+            .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,

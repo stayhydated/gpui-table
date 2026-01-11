@@ -2959,7 +2959,7 @@ dependencies = [
  "es-fluent",
  "gpui",
  "gpui-component",
- "gpui-table-components",
+ "gpui-table-component",
  "gpui-table-core",
  "gpui-table-derive",
  "insta",
@@ -2972,7 +2972,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui-table-components"
+name = "gpui-table-component"
 version = "0.5.0"
 dependencies = [
  "chrono",
@@ -5069,7 +5069,7 @@ name = "prototyping"
 version = "0.1.0"
 dependencies = [
  "gpui-table",
- "gpui-table-components",
+ "gpui-table-component",
  "gpui-table-prototyping-core",
  "heck 0.5.0",
  "inventory",
@@ -6412,7 +6412,7 @@ dependencies = [
  "gpui-component",
  "gpui-storybook",
  "gpui-table",
- "gpui-table-components",
+ "gpui-table-component",
  "gpui_tokio",
  "heck 0.5.0",
  "inventory",

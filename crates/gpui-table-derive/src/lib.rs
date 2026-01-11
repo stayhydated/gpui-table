@@ -149,15 +149,15 @@ fn get_filter_type_tokens(
     field_ty: Option<&syn::Type>,
 ) -> proc_macro2::TokenStream {
     match filter {
-        FilterComponents::Text(_) => quote! { gpui_table::components::TextFilter },
-        FilterComponents::NumberRange(_) => quote! { gpui_table::components::NumberRangeFilter },
-        FilterComponents::DateRange(_) => quote! { gpui_table::components::DateRangeFilter },
+        FilterComponents::Text(_) => quote! { gpui_table::component::TextFilter },
+        FilterComponents::NumberRange(_) => quote! { gpui_table::component::NumberRangeFilter },
+        FilterComponents::DateRange(_) => quote! { gpui_table::component::DateRangeFilter },
         FilterComponents::Faceted(_) => {
             if let Some(ty) = field_ty {
-                quote! { gpui_table::components::FacetedFilter::<#ty> }
+                quote! { gpui_table::component::FacetedFilter::<#ty> }
             } else {
                 // Fallback for cases where field_ty is not available (shouldn't happen in practice)
-                quote! { gpui_table::components::FacetedFilter::<String> }
+                quote! { gpui_table::component::FacetedFilter::<String> }
             }
         },
     }
@@ -209,19 +209,19 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
             if let Some(ref validation) = opts.validate {
                 let validation_chain = match validation {
                     TextValidation::Alphabetic => quote! {
-                        use gpui_table::components::TextFilterExt as _;
+                        use gpui_table::component::TextFilterExt as _;
                         let filter = filter.alphabetic_only(cx);
                     },
                     TextValidation::Numeric => quote! {
-                        use gpui_table::components::TextFilterExt as _;
+                        use gpui_table::component::TextFilterExt as _;
                         let filter = filter.numeric_only(cx);
                     },
                     TextValidation::Alphanumeric => quote! {
-                        use gpui_table::components::TextFilterExt as _;
+                        use gpui_table::component::TextFilterExt as _;
                         let filter = filter.alphanumeric_only(cx);
                     },
                     TextValidation::Custom(path) => quote! {
-                        use gpui_table::components::TextFilterExt as _;
+                        use gpui_table::component::TextFilterExt as _;
                         let filter = filter.validate(#path, cx);
                     },
                 };
@@ -242,7 +242,7 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                 let max_str = max_val.to_string();
                 chain = quote! {
                     #chain
-                    use gpui_table::components::NumberRangeFilterExt as _;
+                    use gpui_table::component::NumberRangeFilterExt as _;
                     let filter = filter.range(
                         rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
                         rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
@@ -273,7 +273,7 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
             if opts.searchable {
                 chain = quote! {
                     #chain
-                    use gpui_table::components::FacetedFilterExt as _;
+                    use gpui_table::component::FacetedFilterExt as _;
                     let filter = filter.searchable(cx);
                 };
             }
@@ -1237,7 +1237,7 @@ fn generate_filter_entities(
                 on_filter_change: Option<std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
             ) -> Self {
-                use gpui_table::components::TableFilterComponent as _;
+                use gpui_table::component::TableFilterComponent as _;
 
                 #(#filter_builders)*
 
