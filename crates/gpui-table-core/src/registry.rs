@@ -9,6 +9,10 @@ pub struct GpuiTableShape {
     pub table_id: &'static str,
     pub table_title: &'static str,
     pub columns: &'static [ColumnVariant],
+    pub filters: &'static [FilterVariant],
+    /// The source file path where the struct with #[derive(GpuiTable)] is declared.
+    /// This is the full path from file!() macro, useful for generating imports.
+    pub source_path: &'static str,
 }
 
 impl GpuiTableShape {
@@ -17,14 +21,43 @@ impl GpuiTableShape {
         table_id: &'static str,
         table_title: &'static str,
         columns: &'static [ColumnVariant],
+        filters: &'static [FilterVariant],
+        source_path: &'static str,
     ) -> Self {
         Self {
             struct_name,
             table_id,
             table_title,
             columns,
+            filters,
+            source_path,
         }
     }
+}
+
+/// Metadata for a single filter in a table.
+#[derive(Debug)]
+pub struct FilterVariant {
+    pub field_name: &'static str,
+    pub filter_type: RegistryFilterType,
+}
+
+impl FilterVariant {
+    pub const fn new(field_name: &'static str, filter_type: RegistryFilterType) -> Self {
+        Self {
+            field_name,
+            filter_type,
+        }
+    }
+}
+
+/// Type of filter for registry (metadata only).
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum RegistryFilterType {
+    Faceted,
+    DateRange,
+    NumberRange,
+    Text,
 }
 
 /// Metadata for a single column in a table.

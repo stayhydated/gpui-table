@@ -13,7 +13,7 @@ pub trait TableIdentities {
         syn::parse_str(self.struct_name()).unwrap()
     }
 
-    /// The table story struct name (e.g., "UserTableStory")
+    /// The table story struct name (e.g., "UserStory")
     fn story_struct_ident(&self) -> syn::Ident {
         format_ident!("{}TableStory", self.struct_name())
     }
@@ -53,6 +53,9 @@ pub trait TableIdentities {
     fn story_id_literal(&self) -> String {
         format!("{}-table-story", self.snake_case_name().replace('_', "-"))
     }
+
+    /// Whether this table has filters defined
+    fn has_filters(&self) -> bool;
 }
 
 /// Trait for generating different parts of the table story code.
@@ -107,19 +110,25 @@ impl TableIdentities for ShapeIdentities<'_> {
     fn table_title(&self) -> &'static str {
         self.0.table_title
     }
+
+    fn has_filters(&self) -> bool {
+        !self.0.filters.is_empty()
+    }
 }
 
 /// Adapter for generating code from a table shape.
 pub struct TableShapeAdapter<'a> {
     pub shape: &'a GpuiTableShape,
     pub identities: ShapeIdentities<'a>,
+    pub use_filter_helpers: bool,
 }
 
 impl<'a> TableShapeAdapter<'a> {
-    pub fn new(shape: &'a GpuiTableShape) -> Self {
+    pub fn new(shape: &'a GpuiTableShape, use_filter_helpers: bool) -> Self {
         Self {
             shape,
             identities: ShapeIdentities::new(shape),
+            use_filter_helpers,
         }
     }
 }
@@ -129,37 +138,138 @@ impl TableShape for TableShapeAdapter<'_> {
         let delegate_struct_ident = self.identities.delegate_struct_ident();
 
         quote! {
-            let mut delegate = #delegate_struct_ident::new(vec![]);
-            for _ in 0..100 {
-                delegate.rows.push(fake::Faker.fake());
-            }
+            let delegate = #delegate_struct_ident::new(vec![]);
         }
     }
 
     fn table_state_creation(&self) -> TokenStream {
-        quote! {
-            let table = cx.new(|cx| TableState::new(delegate, window, cx));
+        let has_filters = self.identities.has_filters();
+
+        if has_filters {
+            let struct_name_ident = self.identities.struct_name_ident();
+            let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
+
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                // Trigger initial data load
+                table.update(cx, |table, cx| {
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
+                });
+
+                // Build filter entities with reload callback
+                let table_for_reload = table.clone();
+                let filters = #filter_entities_ident::build(
+                    Some(std::rc::Rc::new(move |window, cx| {
+                        table_for_reload.update(cx, |table, cx| {
+                            table.delegate_mut().rows.clear();
+                            table.delegate_mut().eof = false;
+                            use gpui_table::TableDataLoader as _;
+                            table.delegate_mut().load_data(window, cx);
+                        });
+                    })),
+                    cx,
+                );
+
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+            }
+        } else {
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                // Trigger initial data load
+                table.update(cx, |table, cx| {
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
+                });
+
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+            }
         }
     }
 
     fn field_initializers(&self) -> TokenStream {
-        quote! {
-            table,
+        if self.identities.has_filters() {
+            quote! {
+                table,
+                filters,
+                _subscription,
+            }
+        } else {
+            quote! {
+                table,
+                _subscription,
+            }
         }
     }
 
     fn struct_fields(&self) -> TokenStream {
         let delegate_struct_ident = self.identities.delegate_struct_ident();
 
-        quote! {
-            table: Entity<TableState<#delegate_struct_ident>>,
+        if self.identities.has_filters() {
+            let struct_name_ident = self.identities.struct_name_ident();
+            let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
+
+            quote! {
+                table: Entity<TableState<#delegate_struct_ident>>,
+                filters: #filter_entities_ident,
+                _subscription: Subscription,
+            }
+        } else {
+            quote! {
+                table: Entity<TableState<#delegate_struct_ident>>,
+                _subscription: Subscription,
+            }
         }
     }
 
     fn render_children(&self) -> TokenStream {
+        let has_filters = self.identities.has_filters();
+
+        let filter_views = if has_filters {
+            if self.use_filter_helpers {
+                // Use all_filters() helper method for cleaner code
+                quote! {
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .flex_wrap()
+                            .child(self.filters.all_filters())
+                    )
+                }
+            } else {
+                // Manually list each filter entity
+                let mut views = quote! {};
+                for filter in self.shape.filters {
+                    let field_ident = format_ident!("{}", filter.field_name);
+                    views.extend(quote! { .child(self.filters.#field_ident.clone()) });
+                }
+                quote! {
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .flex_wrap()
+                            #views
+                    )
+                }
+            }
+        } else {
+            quote! {}
+        };
+
         quote! {
-            .child(format!("Total Rows: {}", rows_count))
-            .child(Table::new(&self.table))
+            #filter_views
+            .child(gpui_table_components::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
+            .child(
+                Table::new(&self.table)
+                    .stripe(true)
+                    .scrollbar_visible(true, true)
+            )
         }
     }
 

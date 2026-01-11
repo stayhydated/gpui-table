@@ -3,18 +3,18 @@ name = "gpui-table-core"
 description = """
 Core crate for gpui-table
 """
+version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-version.workspace = true
 repository.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [features]
 chrono = [ "dep:chrono" ]
 default = [ "chrono" ]
 fluent = [ "dep:es-fluent" ]
-jiff = [ "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal" ]
 
 [dependencies]
@@ -25,7 +25,6 @@ es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 inventory = { workspace = true }
-jiff = { optional = true, workspace = true }
 paste = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }

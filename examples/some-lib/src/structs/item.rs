@@ -1,10 +1,14 @@
-use es_fluent::EsFluentKv;
+use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
+use fake::{Fake, Faker};
+use gpui::{Context, Window};
+use gpui_component::table::TableState;
+use gpui_table::{GpuiTable, TableLoader};
+use std::time::Duration;
 
-use gpui_table::GpuiTable;
-#[derive(fake::Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this)]
+#[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
+#[fluent_this(origin, members)]
 #[gpui_table(fluent, custom_style)]
 pub struct Item {
     #[gpui_table(skip)]
@@ -27,6 +31,50 @@ pub struct Item {
     #[gpui_table(width = 250.)]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
+}
+
+/// Implement the TableLoader trait to define loading behavior.
+/// The #[gpui_table_impl] attribute on a trait impl block automatically
+/// wires up the trait to the generated TableDelegate implementation.
+#[gpui_table::gpui_table_impl]
+impl TableLoader for ItemTableDelegate {
+    const THRESHOLD: usize = 20;
+
+    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        if self.loading || self.eof {
+            return;
+        }
+
+        self.loading = true;
+        cx.notify();
+
+        cx.spawn(async move |view, cx| {
+            // Simulate network delay
+            cx.background_executor()
+                .timer(Duration::from_millis(100))
+                .await;
+
+            // Generate fake data - in a real app, this would be an API call
+            let new_rows: Vec<Item> = (0..50).map(|_| Faker.fake()).collect();
+
+            _ = cx.update(|cx| {
+                view.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+                    delegate.rows.extend(new_rows);
+                    delegate.loading = false;
+
+                    // Stop after 500 rows for demo purposes
+                    if delegate.rows.len() >= 500 {
+                        delegate.eof = true;
+                    }
+
+                    cx.notify();
+                })
+                .unwrap();
+            });
+        })
+        .detach();
+    }
 }
 
 impl gpui_table::TableRowStyle for Item {

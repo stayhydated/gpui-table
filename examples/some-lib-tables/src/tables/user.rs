@@ -1,48 +1,37 @@
-use std::time;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::Duration;
 
-use fake::Fake;
+use es_fluent::ThisFtl as _;
+use fake::{Fake, Faker};
 use gpui::{
-    Action, App, AppContext, Context, Entity, Focusable, InteractiveElement, ParentElement, Render,
-    Styled, Subscription, Task, Timer, Window, prelude::FluentBuilder as _,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window,
 };
 use gpui_component::{
-    Selectable, Sizable as _, Size,
-    button::Button,
-    checkbox::Checkbox,
     h_flex,
-    menu::DropdownMenu,
-    table::{Table, TableDelegate, TableEvent, TableState},
+    table::{Table, TableState},
     v_flex,
 };
-use serde::Deserialize;
-use some_lib::structs::user::{User, UserTableDelegate};
+use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
+use some_lib::structs::user::*;
 
-#[derive(Action, Clone, Deserialize, Eq, PartialEq)]
-#[action(namespace = user_table, no_json)]
-pub struct ChangeSize(Size);
+#[gpui_storybook::story_init]
+pub fn init(_cx: &mut App) {}
 
-#[gpui_storybook::story]
+#[gpui_storybook::story("all data loaded")]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
-    stripe: bool,
-    refresh_data: bool,
-    size: Size,
-
-    _subscriptions: Vec<Subscription>,
-    _load_task: Task<()>,
+    filters: UserFilterEntities,
+    _subscription: Subscription,
 }
 
 impl gpui_storybook::Story for UserTableStory {
     fn title() -> String {
         User::this_ftl()
     }
-
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)
-    }
-
-    fn closable() -> bool {
-        false
     }
 }
 
@@ -58,281 +47,117 @@ impl UserTableStory {
     }
 
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let mut delegate = UserTableDelegate::new(vec![]);
-        for _ in 0..100 {
-            delegate.rows.push(fake::Faker.fake());
-        }
-
+        let delegate = UserTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-        let _subscriptions = vec![cx.subscribe_in(&table, window, Self::on_table_event)];
+        // Shared storage for all generated data
+        let all_data: Rc<RefCell<Vec<User>>> = Rc::new(RefCell::new(Vec::new()));
 
-        let _load_task =
-            cx.spawn(async move |this, cx| {
-                loop {
-                    Timer::after(time::Duration::from_millis(33)).await;
+        // Trigger initial load
+        let all_data_for_load = all_data.clone();
+        let table_for_load = table.clone();
+        Self::load_initial_data(table_for_load, all_data_for_load, cx);
 
-                    this.update(cx, |this, cx| {
-                        if !this.refresh_data {
-                            return;
-                        }
+        // Use a holder pattern to allow the callback to access filter values
+        let filter_holder: Rc<RefCell<Option<UserFilterEntities>>> = Rc::new(RefCell::new(None));
+        let filter_holder_for_callback = filter_holder.clone();
+        let table_for_reload = table.clone();
+        let all_data_for_filter = all_data.clone();
 
-                        this.table.update(cx, |table, _| {
-                            table.delegate_mut().rows.iter_mut().enumerate().for_each(
-                                |(i, user)| {
-                                    let n = (3..10).fake::<usize>();
-                                    if i % n == 0 {
-                                        *user = fake::Faker.fake();
-                                    }
-                                },
-                            );
-                        });
+        // Build all filter entities with a callback that reads current filter values
+        let filters = UserFilterEntities::build(
+            Some(Rc::new(move |_window, cx| {
+                if let Some(ref filters) = *filter_holder_for_callback.borrow() {
+                    let filter_values = filters.read_values(cx);
+
+                    // Filter the stored data and update table rows
+                    let all = all_data_for_filter.borrow();
+                    let filtered: Vec<User> = all
+                        .iter()
+                        .filter(|user| user.matches_filters(&filter_values))
+                        .cloned()
+                        .collect();
+
+                    table_for_reload.update(cx, |table, cx| {
+                        table.delegate_mut().rows = filtered;
+                        cx.notify();
+                    });
+                }
+            })),
+            cx,
+        );
+
+        // Populate the holder so the callback can access filter values
+        *filter_holder.borrow_mut() = Some(filters.clone());
+
+        let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+        Self {
+            table,
+            filters,
+            _subscription,
+        }
+    }
+
+    fn load_initial_data(
+        table: Entity<TableState<UserTableDelegate>>,
+        all_data: Rc<RefCell<Vec<User>>>,
+        cx: &mut Context<Self>,
+    ) {
+        table.update(cx, |table, cx| {
+            table.delegate_mut().loading = true;
+            cx.notify();
+
+            cx.spawn(async move |view, cx| {
+                // Simulate network delay
+                cx.background_executor()
+                    .timer(Duration::from_millis(100))
+                    .await;
+
+                // Generate fake data
+                let new_rows: Vec<User> = (0..500).map(|_| Faker.fake()).collect();
+
+                _ = cx.update(|cx| {
+                    // Store in all_data
+                    *all_data.borrow_mut() = new_rows.clone();
+
+                    view.update(cx, |table, cx| {
+                        let delegate = table.delegate_mut();
+                        delegate.rows = new_rows;
+                        delegate.loading = false;
+                        delegate.eof = true;
                         cx.notify();
                     })
                     .ok();
-                }
-            });
-
-        Self {
-            table,
-            stripe: false,
-            refresh_data: false,
-            size: Size::default(),
-            _subscriptions,
-            _load_task,
-        }
-    }
-
-    fn toggle_loop_selection(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.loop_selection = *checked;
-            cx.notify();
+                });
+            })
+            .detach();
         });
-    }
-
-    fn toggle_col_resize(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.col_resizable = *checked;
-            cx.notify();
-        });
-    }
-
-    fn toggle_col_order(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.col_movable = *checked;
-            cx.notify();
-        });
-    }
-
-    fn toggle_col_sort(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.sortable = *checked;
-            cx.notify();
-        });
-    }
-
-    fn toggle_col_fixed(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.col_fixed = *checked;
-            cx.notify();
-        });
-    }
-
-    fn toggle_col_selection(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.table.update(cx, |table, cx| {
-            table.col_selectable = *checked;
-            cx.notify();
-        });
-    }
-
-    fn toggle_stripe(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.stripe = *checked;
-        cx.notify();
-    }
-
-    fn on_change_size(&mut self, a: &ChangeSize, _: &mut Window, cx: &mut Context<Self>) {
-        self.size = a.0;
-        cx.notify();
-    }
-
-    fn toggle_refresh_data(&mut self, checked: &bool, _: &mut Window, cx: &mut Context<Self>) {
-        self.refresh_data = *checked;
-        cx.notify();
-    }
-
-    fn on_table_event(
-        &mut self,
-        _: &Entity<TableState<UserTableDelegate>>,
-        event: &TableEvent,
-        _window: &mut Window,
-        _cx: &mut Context<Self>,
-    ) {
-        match event {
-            TableEvent::ColumnWidthsChanged(col_widths) => {
-                println!("Column widths changed: {:?}", col_widths)
-            },
-            TableEvent::SelectColumn(ix) => println!("Select col: {}", ix),
-            TableEvent::DoubleClickedRow(ix) => println!("Double clicked row: {}", ix),
-            TableEvent::SelectRow(ix) => println!("Select row: {}", ix),
-            TableEvent::MoveColumn(origin_idx, target_idx) => {
-                println!("Move col index: {} -> {}", origin_idx, target_idx);
-            },
-        }
     }
 }
 
 impl Render for UserTableStory {
-    fn render(&mut self, _: &mut Window, cx: &mut Context<Self>) -> impl gpui::IntoElement {
-        let table = &self.table.read(cx);
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let table = self.table.read(cx);
         let delegate = table.delegate();
-        let rows_count = delegate.rows_count(cx);
-        let size = self.size;
-
         v_flex()
-            .on_action(cx.listener(Self::on_change_size))
             .size_full()
-            .text_sm()
             .gap_4()
-            .child(
-                h_flex()
-                    .items_center()
-                    .gap_3()
-                    .flex_wrap()
-                    .child(
-                        Checkbox::new("loop-selection")
-                            .label("Loop Selection")
-                            .selected(table.loop_selection)
-                            .on_click(cx.listener(Self::toggle_loop_selection)),
-                    )
-                    .child(
-                        Checkbox::new("col-resize")
-                            .label("Column Resize")
-                            .selected(table.col_resizable)
-                            .on_click(cx.listener(Self::toggle_col_resize)),
-                    )
-                    .child(
-                        Checkbox::new("col-order")
-                            .label("Column Order")
-                            .selected(table.col_movable)
-                            .on_click(cx.listener(Self::toggle_col_order)),
-                    )
-                    .child(
-                        Checkbox::new("col-sort")
-                            .label("Sortable")
-                            .selected(table.sortable)
-                            .on_click(cx.listener(Self::toggle_col_sort)),
-                    )
-                    .child(
-                        Checkbox::new("col-selection")
-                            .label("Column Selectable")
-                            .selected(table.col_selectable)
-                            .on_click(cx.listener(Self::toggle_col_selection)),
-                    )
-                    .child(
-                        Checkbox::new("fixed")
-                            .label("Column Fixed")
-                            .selected(table.col_fixed)
-                            .on_click(cx.listener(Self::toggle_col_fixed)),
-                    )
-                    .child(
-                        Checkbox::new("stripe")
-                            .label("Stripe")
-                            .selected(self.stripe)
-                            .on_click(cx.listener(Self::toggle_stripe)),
-                    )
-                    .child(
-                        Checkbox::new("loading")
-                            .label("Loading")
-                            .checked(self.table.read(cx).delegate().full_loading)
-                            .on_click(cx.listener(|this, check: &bool, _, cx| {
-                                this.table.update(cx, |this, cx| {
-                                    this.delegate_mut().full_loading = *check;
-                                    cx.notify();
-                                })
-                            })),
-                    )
-                    .child(
-                        Checkbox::new("refresh-data")
-                            .label("Refresh Data")
-                            .selected(self.refresh_data)
-                            .on_click(cx.listener(Self::toggle_refresh_data)),
-                    ),
-            )
+            .p_4()
             .child(
                 h_flex()
                     .gap_2()
-                    .child(
-                        Button::new("size")
-                            .outline()
-                            .small()
-                            .label(format!("size: {:?}", self.size))
-                            .dropdown_menu(move |menu, _, _| {
-                                menu.menu_with_check(
-                                    "Large",
-                                    size == Size::Large,
-                                    Box::new(ChangeSize(Size::Large)),
-                                )
-                                .menu_with_check(
-                                    "Medium",
-                                    size == Size::Medium,
-                                    Box::new(ChangeSize(Size::Medium)),
-                                )
-                                .menu_with_check(
-                                    "Small",
-                                    size == Size::Small,
-                                    Box::new(ChangeSize(Size::Small)),
-                                )
-                                .menu_with_check(
-                                    "XSmall",
-                                    size == Size::XSmall,
-                                    Box::new(ChangeSize(Size::XSmall)),
-                                )
-                            }),
-                    )
-                    .child(
-                        Button::new("scroll-top")
-                            .outline()
-                            .small()
-                            .child("Scroll to Top")
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.table.update(cx, |table, cx| {
-                                    table.scroll_to_row(0, cx);
-                                })
-                            })),
-                    )
-                    .child(
-                        Button::new("scroll-bottom")
-                            .outline()
-                            .small()
-                            .child("Scroll to Bottom")
-                            .on_click(cx.listener(|this, _, _, cx| {
-                                this.table.update(cx, |table, cx| {
-                                    table.scroll_to_row(table.delegate().rows_count(cx) - 1, cx);
-                                })
-                            })),
-                    ),
+                    .flex_wrap()
+                    .child(self.filters.all_filters()),
             )
-            .child(
-                h_flex().items_center().gap_2().child(
-                    h_flex()
-                        .w_full()
-                        .items_center()
-                        .justify_between()
-                        .gap_2()
-                        .child(
-                            h_flex()
-                                .gap_2()
-                                .child(format!("Total Rows: {}", rows_count))
-                                .child(format!("Visible Rows: {:?}", delegate.visible_rows))
-                                .child(format!("Visible Cols: {:?}", delegate.visible_cols))
-                                .when(delegate.eof, |this| this.child("All data loaded.")),
-                        ),
-                ),
-            )
+            .child(gpui_table_components::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
             .child(
                 Table::new(&self.table)
-                    .with_size(self.size)
-                    .stripe(self.stripe),
+                    .stripe(true)
+                    .scrollbar_visible(true, true),
             )
     }
 }

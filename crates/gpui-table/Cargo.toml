@@ -3,12 +3,13 @@ name = "gpui-table"
 description = """
 The gpui-table crate
 """
+version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-version.workspace = true
 repository.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [features]
 chrono = [ "gpui-table-core/chrono" ]
@@ -16,15 +17,14 @@ default = [ "derive", "chrono" ]
 derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 inventory = [ "gpui-table-derive/inventory" ]
-jiff = [ "gpui-table-core/jiff" ]
 rust_decimal = [ "gpui-table-core/rust_decimal" ]
 
 [dependencies]
 anyhow = { workspace = true }
-derive-new = { workspace = true }
 es-fluent = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
+gpui-table-components = { workspace = true }
 gpui-table-core = { workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
 inventory = { workspace = true }
@@ -35,6 +35,7 @@ tracing-subscriber = { features = [ "env-filter" ], workspace = true }
 
 [dev-dependencies]
 insta = { features = [ "yaml" ], workspace = true }
+strum = { features = [ "derive" ], workspace = true }
 
 [lints]
 workspace = true
