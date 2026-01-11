@@ -18,6 +18,7 @@ derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 inventory = [ "gpui-table-derive/inventory" ]
 rust_decimal = [ "gpui-table-core/rust_decimal" ]
+component = []
 
 [dependencies]
 anyhow = { workspace = true }

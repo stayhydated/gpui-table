@@ -7,6 +7,7 @@ pub use gpui_table_core::*;
 pub use gpui_table_core::TableDataLoader;
 pub use gpui_table_core::TableLoader;
 
+#[cfg(feature = "component")]
 pub mod component {
     pub use gpui_table_component::TableFilterComponent;
     pub use gpui_table_component::date_range_filter::DateRangeFilter;
