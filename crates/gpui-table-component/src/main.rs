@@ -6,7 +6,7 @@ use strum::EnumIter;
 
 // bring the stories in scope for inventory
 #[allow(unused_imports, clippy::single_component_path_imports)]
-use gpui_table_components;
+use gpui_table_component;
 
 #[es_fluent_language]
 #[derive(Clone, Copy, Debug, EnumIter, EsFluent, PartialEq)]

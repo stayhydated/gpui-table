@@ -149,7 +149,7 @@ impl Render for UserTableStory {
                     .flex_wrap()
                     .child(self.filters.all_filters()),
             )
-            .child(gpui_table_components::TableStatusBar::new(
+            .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,

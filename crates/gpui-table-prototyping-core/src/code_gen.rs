@@ -260,7 +260,7 @@ impl TableShape for TableShapeAdapter<'_> {
 
         quote! {
             #filter_views
-            .child(gpui_table_components::TableStatusBar::new(
+            .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,

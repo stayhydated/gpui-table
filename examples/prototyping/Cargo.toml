@@ -7,7 +7,7 @@ publish = false
 
 [dependencies]
 gpui-table = { features = [ "inventory", "fluent", "rust_decimal", "chrono" ], workspace = true }
-gpui-table-components = { workspace = true }
+gpui-table-component = { workspace = true }
 gpui-table-prototyping-core = { workspace = true }
 heck = { workspace = true }
 inventory = { workspace = true }

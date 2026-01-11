@@ -1,5 +1,5 @@
 [package]
-name = "gpui-table-components"
+name = "gpui-table-component"
 version.workspace = true
 rust-version.workspace = true
 edition.workspace = true
