@@ -2913,7 +2913,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=git#d9b9f129c3439d7499f20c76bd70bb40b305e836"
+source = "git+https://github.com/stayhydated/gpui-storybook#ebf14efecaec160250cd6d9a4bb3c4abbfe96f2e"
 dependencies = [
  "gpui",
  "gpui-storybook-core",
@@ -2925,7 +2925,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=git#d9b9f129c3439d7499f20c76bd70bb40b305e836"
+source = "git+https://github.com/stayhydated/gpui-storybook#ebf14efecaec160250cd6d9a4bb3c4abbfe96f2e"
 dependencies = [
  "anyhow",
  "es-fluent",
@@ -2944,7 +2944,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=git#d9b9f129c3439d7499f20c76bd70bb40b305e836"
+source = "git+https://github.com/stayhydated/gpui-storybook#ebf14efecaec160250cd6d9a4bb3c4abbfe96f2e"
 dependencies = [
  "proc-macro2",
  "quote",

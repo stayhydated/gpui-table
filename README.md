@@ -9,8 +9,11 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 ## Compatibility
 
 | `gpui-table` | `gpui-component` |
-| :----------- | :--------------- |
-| `0.6.x`      | `0.6.x`          |
+| :------------ | :--------------- |
+| **git** | |
+| `master` | `main` |
+| **crates.io** | |
+| `0.6.x` | `0.6.x` |
 
 ## Showcase
 
