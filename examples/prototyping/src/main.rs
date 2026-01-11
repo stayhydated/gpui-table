@@ -9,9 +9,8 @@ use heck::ToSnakeCase as _;
 use quote::quote;
 use std::{collections::BTreeSet, fs, path::Path};
 
-// Import target lib to trigger inventory registrations
-#[allow(unused_imports)]
-use some_lib::*;
+// import targeted lib to get inventory registrations
+extern crate some_lib;
 
 fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
     let path = Path::new(source_path);
