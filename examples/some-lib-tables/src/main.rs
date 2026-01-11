@@ -13,6 +13,8 @@ use some_lib_tables;
 pub enum Languages {}
 
 fn main() {
+    env_logger::init();
+
     let app = Application::new().with_assets(Assets);
     let name_arg = std::env::args().nth(1);
 
@@ -20,6 +22,12 @@ fn main() {
         gpui_component::init(app_cx);
         gpui_storybook::init(Languages::default(), app_cx);
         gpui_storybook::change_locale(Languages::default());
+
+        gpui_tokio::init(app_cx);
+
+        let http_client = std::sync::Arc::new(reqwest_client::ReqwestClient::new());
+        app_cx.set_http_client(http_client);
+
         app_cx.activate(true);
 
         gpui_storybook::create_new_window(

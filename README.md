@@ -9,8 +9,11 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 ## Compatibility
 
 | `gpui-table` | `gpui-component` |
-| :----------- | :--------------- |
-| `0.5.x`      | `0.5.x`          |
+| :------------ | :--------------- |
+| **git** | |
+| `master` | `main` |
+| **crates.io** | |
+| `0.6.x` | `0.6.x` |
 
 ## Showcase
 
@@ -20,8 +23,6 @@ declaring:
 #[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this, keys = ["description", "label"])]
 #[gpui_table(fluent = "label")]
-#[gpui_table(load_more = "Self::load_more_data")]
-#[gpui_table(load_more_threshold = 30)]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
     #[gpui_table(width = 80., resizable = false, movable = false)]
@@ -36,7 +37,12 @@ pub struct InfiniteRow {
     pub description: String,
 }
 
+#[gpui_table_impl]
 impl InfiniteRowTableDelegate {
+    #[threshold]
+    const LOAD_MORE_THRESHOLD: usize = 30;
+
+    #[load_more]
     pub fn load_more_data(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
@@ -232,21 +238,18 @@ impl gpui_component::table::TableDelegate for InfiniteRowTableDelegate {
     fn loading(&self, _: &gpui::App) -> bool {
         self.full_loading
     }
-    fn has_more(&self, _: &gpui::App) -> bool {
-        if self.loading {
-            return false;
-        }
-        !self.eof
+    fn has_more(&self, app: &gpui::App) -> bool {
+        gpui_table::__private::LoadMoreDelegate::has_more(self, app)
     }
     fn load_more(
         &mut self,
         window: &mut gpui::Window,
         cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
     ) {
-        Self::load_more_data(self, window, cx);
+        gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
     }
     fn load_more_threshold(&self) -> usize {
-        30usize
+        gpui_table::__private::LoadMoreDelegate::load_more_threshold(self)
     }
     fn perform_sort(
         &mut self,

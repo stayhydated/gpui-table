@@ -1,7 +1,84 @@
-use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
-use gpui_component::table::Column;
+use gpui::{
+    AnyElement, App, Context, Div, InteractiveElement as _, IntoElement, Stateful, Window, div,
+};
+use gpui_component::table::{Column, TableDelegate, TableState};
 
+pub mod filter;
 pub mod registry;
+
+/// Private module for macro internals. Not part of public API.
+#[doc(hidden)]
+pub mod __private {
+    use gpui::{App, Context, Window};
+    use gpui_component::table::TableState;
+
+    /// Internal trait implemented by `#[gpui_table_impl]` to provide loading behavior.
+    ///
+    /// This trait bridges user-defined loading logic (via `TableLoader` trait or
+    /// freestanding `#[load_more]` methods) to the generated `TableDelegate` implementation.
+    pub trait LoadMoreDelegate: gpui_component::table::TableDelegate {
+        /// Check if there is more data to load.
+        fn has_more(&self, app: &App) -> bool;
+
+        /// Threshold of rows from bottom to trigger load_more.
+        fn load_more_threshold(&self) -> usize {
+            10 // Default threshold
+        }
+
+        /// Load more data into the table.
+        fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+    }
+}
+
+/// Trait for table delegates that support loading data.
+pub trait TableDataLoader: TableDelegate {
+    /// Load data into the table.
+    ///
+    /// This method is called to trigger data loading (either initial load
+    /// or loading more data). The implementation should handle:
+    /// - Setting loading state
+    /// - Fetching data (sync or async)
+    /// - Appending to rows
+    /// - Updating eof flag when no more data
+    fn load_data(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+}
+
+/// Trait for defining table loading behavior.
+///
+/// Implement this trait on your table delegate and apply `#[gpui_table_impl]`
+/// to wire it up to the generated `TableDelegate` implementation.
+///
+/// # Example
+///
+/// ```ignore
+/// use gpui_table::TableLoader;
+///
+/// #[gpui_table_impl]
+/// impl TableLoader for MyTableDelegate {
+///     const THRESHOLD: usize = 20;
+///
+///     fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+///         // Load more data...
+///     }
+/// }
+/// ```
+pub trait TableLoader: TableDelegate {
+    /// Number of rows from the bottom at which to trigger loading more data.
+    const THRESHOLD: usize = 10;
+
+    /// Load more data into the table.
+    ///
+    /// This method is called when the user scrolls near the bottom of the table
+    /// (within `THRESHOLD` rows). The implementation should:
+    /// - Check if already loading (`self.loading`) and return early if so
+    /// - Check if at end of data (`self.eof`) and return early if so
+    /// - Set `self.loading = true` and notify
+    /// - Fetch data (typically async via `cx.spawn`)
+    /// - Append new rows to `self.rows`
+    /// - Set `self.eof = true` if no more data
+    /// - Set `self.loading = false` and notify
+    fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>);
+}
 
 /// A value that can be displayed in a table cell.
 pub trait TableCell {
@@ -111,6 +188,11 @@ pub trait TableRowMeta {
 
     /// Returns the value for a specific column index.
     fn cell_value(&self, col_ix: usize) -> Box<dyn TableCell + '_>;
+
+    /// Returns the filter configuration for the table.
+    fn table_filters() -> Vec<crate::filter::FilterConfig> {
+        Vec::new()
+    }
 }
 
 /// Styling hooks for a table row.

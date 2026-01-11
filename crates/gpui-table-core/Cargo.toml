@@ -3,12 +3,13 @@ name = "gpui-table-core"
 description = """
 Core crate for gpui-table
 """
+version.workspace = true
+rust-version.workspace = true
 edition.workspace = true
 license.workspace = true
 publish.workspace = true
-version.workspace = true
 repository.workspace = true
-readme.workspace = true
+readme = "README.md"
 
 [features]
 chrono = [ "dep:chrono" ]
