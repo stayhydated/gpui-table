@@ -1,7 +1,5 @@
 use crate::TableFilterComponent;
-use gpui::{
-    App, Context, Entity, IntoElement, Render, Subscription, Task, Timer, Window, prelude::*, px,
-};
+use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Task, Window, prelude::*, px};
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _,
     button::Button,
@@ -263,7 +261,9 @@ impl NumberRangeFilter {
     fn schedule_debounced_apply(&mut self, cx: &mut Context<Self>) {
         // Cancel any pending debounce task and schedule a new one
         self._debounce_task = Some(cx.spawn(async move |view, cx| {
-            Timer::after(Duration::from_millis(DEBOUNCE_MS)).await;
+            cx.background_executor()
+                .timer(Duration::from_millis(DEBOUNCE_MS))
+                .await;
             view.update(cx, |this, cx| {
                 this.pending_apply = true;
                 this._debounce_task = None;

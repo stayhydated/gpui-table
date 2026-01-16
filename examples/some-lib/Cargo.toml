@@ -18,7 +18,13 @@ fake = { features = [
 ], workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table = { features = [ "fluent", "inventory", "rust_decimal", "chrono", "component" ], workspace = true }
+gpui-table = { features = [
+  "fluent",
+  "inventory",
+  "rust_decimal",
+  "chrono",
+  "component",
+], workspace = true }
 gpui_tokio = { workspace = true }
 heck = { workspace = true }
 log = { workspace = true }

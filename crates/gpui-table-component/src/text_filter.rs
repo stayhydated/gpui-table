@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use gpui::{App, Context, Entity, IntoElement, Render, Task, Timer, Window, prelude::*, px};
+use gpui::{App, Context, Entity, IntoElement, Render, Task, Window, prelude::*, px};
 use gpui_component::{
     Icon, IconName, Sizable as _, h_flex,
     input::{Input, InputEvent, InputState},
@@ -145,7 +145,9 @@ impl TextFilter {
 
                         // Cancel any pending debounce task and schedule a new one
                         this._debounce_task = Some(cx.spawn(async move |view, cx| {
-                            Timer::after(Duration::from_millis(DEBOUNCE_MS)).await;
+                            cx.background_executor()
+                                .timer(Duration::from_millis(DEBOUNCE_MS))
+                                .await;
                             view.update(cx, |this, cx| {
                                 this.pending_apply = true;
                                 this._debounce_task = None;
