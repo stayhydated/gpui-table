@@ -1,6 +1,5 @@
 use gpui::{Context, TextAlign, Window};
-use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableState};
-use gpui_table::__private::LoadMoreDelegate;
+use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
 use gpui_table::{GpuiTable, TableRowMeta, gpui_table_impl};
 use serde::Serialize;
 
@@ -14,9 +13,6 @@ struct BasicRow {
     age: u8,
     active: bool,
 }
-
-#[gpui_table_impl]
-impl BasicRowTableDelegate {}
 
 // =============================================================================
 // Styled row with custom column settings
@@ -181,9 +177,16 @@ fn styled_table_rendering_snapshot() {
 // =============================================================================
 
 #[test]
-fn test_default_threshold() {
-    // BasicRowTableDelegate has no #[threshold] const, so it uses the default (10)
+fn test_default_threshold_no_load_more() {
+    // BasicRowTableDelegate has load_more disabled, so it uses the default (10)
     let delegate = BasicRowTableDelegate::new(vec![]);
+    assert_eq!(delegate.load_more_threshold(), 10);
+}
+
+#[test]
+fn test_default_threshold_load_more_enabled() {
+    // StyledRowTableDelegate enables load_more but has no #[threshold] const.
+    let delegate = StyledRowTableDelegate::new(vec![]);
     assert_eq!(delegate.load_more_threshold(), 10);
 }
 

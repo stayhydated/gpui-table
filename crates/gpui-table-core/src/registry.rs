@@ -10,6 +10,8 @@ pub struct GpuiTableShape {
     pub table_title: &'static str,
     pub columns: &'static [ColumnVariant],
     pub filters: &'static [FilterVariant],
+    /// Whether load_more is enabled on the table via #[gpui_table(load_more)].
+    pub load_more: bool,
     /// The source file path where the struct with #[derive(GpuiTable)] is declared.
     /// This is the full path from file!() macro, useful for generating imports.
     pub source_path: &'static str,
@@ -22,6 +24,7 @@ impl GpuiTableShape {
         table_title: &'static str,
         columns: &'static [ColumnVariant],
         filters: &'static [FilterVariant],
+        load_more: bool,
         source_path: &'static str,
     ) -> Self {
         Self {
@@ -30,6 +33,7 @@ impl GpuiTableShape {
             table_title,
             columns,
             filters,
+            load_more,
             source_path,
         }
     }

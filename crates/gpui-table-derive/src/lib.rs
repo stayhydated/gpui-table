@@ -578,6 +578,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     &[
                         #(#filter_variant_constructions),*
                     ],
+                    #load_more,
                     file!()
                 )
             }
