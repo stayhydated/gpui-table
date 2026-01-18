@@ -2,13 +2,9 @@ use es_fluent::{EsFluentKv, EsFluentThis};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use fake::{Fake, Faker};
-use gpui::{Context, Window};
 use gpui_component::IconName;
-use gpui_component::table::TableState;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
-use std::time::Duration;
 
 #[derive(
     Clone, Debug, Eq, Hash, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell,
@@ -58,48 +54,4 @@ pub struct User {
     #[gpui_table(sortable, width = 300., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
-}
-
-#[gpui_table::gpui_table_impl]
-impl UserTableDelegate {
-    #[threshold]
-    const LOAD_MORE_THRESHOLD: usize = 20;
-
-    /// Load more users with fake data generation.
-    #[load_more]
-    pub fn load_more_users(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        if self.loading || self.eof {
-            return;
-        }
-
-        self.loading = true;
-        cx.notify();
-
-        cx.spawn(async move |view, cx| {
-            // Simulate network delay
-            cx.background_executor()
-                .timer(Duration::from_millis(100))
-                .await;
-
-            // Generate fake data
-            let new_rows: Vec<User> = (0..50).map(|_| Faker.fake()).collect();
-
-            _ = cx.update(|cx| {
-                view.update(cx, |table, cx| {
-                    let delegate = table.delegate_mut();
-                    delegate.rows.extend(new_rows);
-                    delegate.loading = false;
-
-                    // Stop after 500 rows for demo purposes
-                    if delegate.rows.len() >= 500 {
-                        delegate.eof = true;
-                    }
-
-                    cx.notify();
-                })
-                .unwrap();
-            });
-        })
-        .detach();
-    }
 }

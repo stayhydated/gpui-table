@@ -22,7 +22,7 @@ declaring:
 ```rs
 #[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
 #[fluent_kv(this, keys = ["description", "label"])]
-#[gpui_table(fluent = "label")]
+#[gpui_table(fluent = "label", load_more)]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]
     #[gpui_table(width = 80., resizable = false, movable = false)]
@@ -79,6 +79,9 @@ impl InfiniteRowTableDelegate {
     }
 }
 ```
+
+If you load all data up front, omit `load_more` from `#[gpui_table(...)]` and skip the
+`#[gpui_table_impl]` block entirely; load_more becomes a no-op and no further loading is requested.
 
 this would expand to a structure we normally would have to declare ourselves, reducing boilerplate
 

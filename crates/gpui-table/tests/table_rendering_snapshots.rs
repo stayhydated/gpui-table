@@ -16,19 +16,14 @@ struct BasicRow {
 }
 
 #[gpui_table_impl]
-impl BasicRowTableDelegate {
-    #[load_more]
-    fn load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
-        // No-op for tests
-    }
-}
+impl BasicRowTableDelegate {}
 
 // =============================================================================
 // Styled row with custom column settings
 // =============================================================================
 
 #[derive(GpuiTable)]
-#[gpui_table(id = "custom-row", title = "Custom Row Table")]
+#[gpui_table(id = "custom-row", title = "Custom Row Table", load_more)]
 struct StyledRow {
     #[gpui_table(width = 120., sortable)]
     name: String,
@@ -57,6 +52,7 @@ impl StyledRowTableDelegate {
 // =============================================================================
 
 #[derive(GpuiTable)]
+#[gpui_table(load_more)]
 struct ThresholdRow {
     value: u32,
 }
@@ -77,6 +73,7 @@ impl ThresholdRowTableDelegate {
 // =============================================================================
 
 #[derive(GpuiTable)]
+#[gpui_table(load_more)]
 struct AnotherThresholdRow {
     data: String,
 }
@@ -97,6 +94,7 @@ impl AnotherThresholdRowTableDelegate {
 // =============================================================================
 
 #[derive(GpuiTable)]
+#[gpui_table(load_more)]
 struct CallbackRow {
     id: u32,
 }
@@ -215,7 +213,7 @@ fn test_has_more_default_eof() {
     // Test has_more with default eof field
     let delegate = BasicRowTableDelegate::new(vec![]);
 
-    // Initially eof is false, loading is false -> has_more should be true
+    // With no #[load_more], has_more defaults to false even though eof/loading are false.
     assert!(!delegate.eof);
     assert!(!delegate.loading);
     // Note: has_more requires &App which we can't easily create in unit tests

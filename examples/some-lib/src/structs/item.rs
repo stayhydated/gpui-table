@@ -9,7 +9,7 @@ use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentKv, EsFluentThis, GpuiTable)]
 #[fluent_this(origin, members)]
-#[gpui_table(fluent, custom_style)]
+#[gpui_table(fluent, custom_style, load_more)]
 pub struct Item {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
