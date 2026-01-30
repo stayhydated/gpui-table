@@ -20,8 +20,8 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 declaring:
 
 ```rs
-#[derive(Clone, Debug, Dummy, EsFluentKv, GpuiTable)]
-#[fluent_kv(this, keys = ["description", "label"])]
+#[derive(Clone, Debug, Dummy, EsFluentVariants, GpuiTable)]
+#[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", load_more)]
 pub struct InfiniteRow {
     #[dummy(faker = "1..10000")]

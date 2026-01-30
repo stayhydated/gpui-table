@@ -39,14 +39,14 @@ pub trait TableIdentities {
         syn::parse_str(&self.snake_case_name()).unwrap()
     }
 
-    /// Fluent label enum identifier (e.g., "UserLabelKvFtl")
+    /// Fluent label enum identifier (e.g., "UserLabelVariants")
     fn ftl_label_ident(&self) -> syn::Ident {
-        format_ident!("{}LabelKvFtl", self.struct_name())
+        format_ident!("{}LabelVariants", self.struct_name())
     }
 
-    /// Fluent description enum identifier (e.g., "UserDescriptionKvFtl")
+    /// Fluent description enum identifier (e.g., "UserDescriptionVariants")
     fn ftl_description_ident(&self) -> syn::Ident {
-        format_ident!("{}DescriptionKvFtl", self.struct_name())
+        format_ident!("{}DescriptionVariants", self.struct_name())
     }
 
     /// The story ID literal (e.g., "user-table-story")

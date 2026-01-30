@@ -1,4 +1,4 @@
-use es_fluent::{EsFluentKv, EsFluentThis};
+use es_fluent::{EsFluentThis, EsFluentVariants};
 use gpui::{Context, Window};
 use gpui_component::IconName;
 use gpui_component::table::TableState;
@@ -77,9 +77,9 @@ pub enum ProductCategory {
 }
 
 /// A Product entry for the table - from DummyJSON API
-#[derive(Clone, Debug, EsFluentKv, EsFluentThis, GpuiTable)]
+#[derive(Clone, Debug, EsFluentThis, EsFluentVariants, GpuiTable)]
 #[fluent_this(origin, members)]
-#[fluent_kv(keys = ["description", "label"])]
+#[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", filters, load_more)]
 pub struct Product {
     /// Product ID from the API

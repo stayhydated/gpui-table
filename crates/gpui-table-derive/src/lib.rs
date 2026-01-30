@@ -479,7 +479,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         Some(Override::Explicit(key)) => {
             let key_cap = key.to_pascal_case();
             let fluent_enum = Ident::new(
-                &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
+                &format!("{}{}{}Variants", struct_name, key_cap, ""),
                 struct_name.span(),
             );
             quote! { fn table_title() -> String {
@@ -756,11 +756,13 @@ fn determine_title_expr(
             Override::Explicit(key) => {
                 let key_cap = key.to_pascal_case();
                 Ident::new(
-                    &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
+                    &format!("{}{}{}Variants", struct_name, key_cap, ""),
                     struct_name.span(),
                 )
             },
-            Override::Inherit => Ident::new(&format!("{}KvFtl", struct_name), struct_name.span()),
+            Override::Inherit => {
+                Ident::new(&format!("{}Variants", struct_name), struct_name.span())
+            },
         };
 
         let field_name = ident.to_string().to_pascal_case();
@@ -1427,11 +1429,13 @@ fn determine_filter_title_expr(
             Override::Explicit(key) => {
                 let key_cap = key.to_pascal_case();
                 Ident::new(
-                    &format!("{}{}KvFtl", struct_name, key_cap),
+                    &format!("{}{}Variants", struct_name, key_cap),
                     struct_name.span(),
                 )
             },
-            Override::Inherit => Ident::new(&format!("{}KvFtl", struct_name), struct_name.span()),
+            Override::Inherit => {
+                Ident::new(&format!("{}Variants", struct_name), struct_name.span())
+            },
         };
 
         let field_name = field_ident.to_string().to_pascal_case();
