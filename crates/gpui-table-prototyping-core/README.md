@@ -1,31 +1,22 @@
 # gpui-table-prototyping-core
 
-opinionated core for prototyping table stories. inventory collects
-`GpuiTableShape` metadata so we can generate table scaffolds without digging
-into each row type by hand.
+Utilities for generating GPUI table stories or prototypes from registry data.
 
-This crate exposes small adapters that mirror the gpui-form prototyping core:
-identify shapes, generate delegate/table wiring, and optionally render column
-debug helpers.
+## Typical usage
+This crate is designed to consume `GpuiTableShape` entries registered via
+`inventory` and emit code (often for storybook or prototyping workflows).
 
-```rust
-use gpui_table_core::registry::GpuiTableShape;
-use gpui_table_prototyping_core::code_gen::{TableShape, TableShapeAdapter};
-
-// import your library so inventory registrations run
-use your_lib::*;
+```rs
+use gpui_table::registry::GpuiTableShape;
+use gpui_table_prototyping_core::code_gen::{TableShape as _, TableShapeAdapter};
 
 for shape in inventory::iter::<GpuiTableShape>() {
-    let adapter = TableShapeAdapter::new(shape);
-
-    let imports = adapter.additional_imports().unwrap_or_default();
-    let table_setup = adapter.table_state_creation();
-    let columns_debug = adapter.column_debug_children().unwrap_or_default();
-    let story_children = adapter.render_children();
-
-    // assemble a syn::File with the tokens above...
+    let adapter = TableShapeAdapter::new(shape, true);
+    let _delegate_tokens = adapter.delegate_creation();
+    let _render_tokens = adapter.render_children();
 }
 ```
 
-Best consumed from a small codegen binary (see `examples/prototyping`) rather
-than directly in application code.
+## Notes
+- Intended for tooling and prototyping, not runtime UI logic.
+- See `examples/prototyping` for a full generator.

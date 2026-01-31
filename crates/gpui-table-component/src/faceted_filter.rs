@@ -1,3 +1,5 @@
+//! Faceted filter component for multi-select categorical filters.
+
 use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
@@ -16,6 +18,9 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
+/// A faceted filter for selecting one or more categorical values.
+///
+/// Options can come from a `Filterable` enum or a custom options provider.
 pub struct FacetedFilter<T: FilterValue> {
     title: Rc<dyn Fn() -> String>,
     options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
@@ -27,7 +32,7 @@ pub struct FacetedFilter<T: FilterValue> {
     _marker: PhantomData<T>,
 }
 
-/// Extension trait for configuring FacetedFilter via method chaining.
+/// Extension trait for configuring `FacetedFilter` via method chaining.
 pub trait FacetedFilterExt {
     /// Enable search functionality for filtering options.
     fn searchable(self, cx: &mut App) -> Self;

@@ -1,3 +1,5 @@
+//! Numeric range filter with slider and min/max inputs.
+
 use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Task, Window, prelude::*, px};
 use gpui_component::{
@@ -27,6 +29,9 @@ enum LastChanged {
     MaxInput,
 }
 
+/// A numeric range filter with a slider and min/max inputs.
+///
+/// The slider and inputs stay in sync; updates are debounced.
 pub struct NumberRangeFilter {
     title: String,
     min: Option<Decimal>,
@@ -80,7 +85,7 @@ impl TableFilterComponent for NumberRangeFilter {
     }
 }
 
-/// Extension trait for chainable configuration on Entity<NumberRangeFilter>
+/// Extension trait for chainable configuration on `Entity<NumberRangeFilter>`.
 pub trait NumberRangeFilterExt {
     /// Set the range bounds for the slider (chainable).
     ///

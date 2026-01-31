@@ -1,3 +1,5 @@
+//! Debounced text filter component with optional input validation.
+
 use crate::TableFilterComponent;
 use gpui::{App, Context, Entity, IntoElement, Render, Task, Window, prelude::*, px};
 use gpui_component::{
@@ -10,10 +12,10 @@ use std::time::Duration;
 /// Debounce delay in milliseconds for filter changes
 const DEBOUNCE_MS: u64 = 300;
 
-/// Text validation function type
+/// Validator function used to sanitize or restrict input text.
 pub type TextValidator = Rc<dyn Fn(&str) -> String>;
 
-/// Built-in validators for common text filtering patterns
+/// Built-in validators for common text filtering patterns.
 pub mod validators {
     /// Only allow ASCII characters
     pub fn ascii_only(s: &str) -> String {
@@ -31,6 +33,10 @@ pub mod validators {
     }
 }
 
+/// A debounced text-input filter component.
+///
+/// Use this for simple string filtering. Values are applied after a short
+/// debounce or immediately on Enter.
 pub struct TextFilter {
     title: String,
     value: String,

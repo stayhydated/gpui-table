@@ -1,7 +1,9 @@
+//! Lightweight status bar showing row count and load state.
+
 use gpui::{App, IntoElement, ParentElement as _, RenderOnce, Styled as _, Window};
 use gpui_component::h_flex;
 
-/// Configuration for the table status bar display.
+/// Status bar that summarizes row count and loading state.
 #[derive(IntoElement)]
 pub struct TableStatusBar {
     row_count: usize,
