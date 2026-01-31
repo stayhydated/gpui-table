@@ -4,6 +4,7 @@ Proc-macros for generating table columns, delegates, filters, and optional
 registry metadata.
 
 ## Macros
+
 - `#[derive(GpuiTable)]`: derive table metadata + delegate
 - `#[derive(TableCell)]`: derive `TableCell` for newtypes and enums
 - `#[gpui_table_impl]`: wire load-more behavior into a generated delegate
@@ -41,6 +42,7 @@ impl TableLoader for UserTableDelegate {
 ```
 
 ## Filter attributes
+
 - `filter(text())`
 - `filter(number_range(min = 0, max = 100, step = 5))`
 - `filter(date_range())`

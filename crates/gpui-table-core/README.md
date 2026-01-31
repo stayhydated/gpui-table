@@ -4,6 +4,7 @@ Core traits and types for building tables with `gpui-component`. This crate is
 shared by the derive macros, runtime components, and tooling.
 
 ## What it provides
+
 - `TableRowMeta`, `TableRowStyle`, and `TableCell` traits
 - Load-more traits (`TableLoader`, `TableDataLoader`)
 - Filter types and helper wrappers (`TextValue`, `RangeValue`, `FacetedValue`)
@@ -11,6 +12,7 @@ shared by the derive macros, runtime components, and tooling.
 - Registry metadata types for tooling (`GpuiTableShape`)
 
 ## Feature flags
+
 - `chrono`: `TableCell` + date filter helpers
 - `rust_decimal`: numeric range helpers
 - `fluent`: localized title helpers used by generated code

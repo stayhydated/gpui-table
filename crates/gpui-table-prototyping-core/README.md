@@ -3,6 +3,7 @@
 Utilities for generating GPUI table stories or prototypes from registry data.
 
 ## Typical usage
+
 This crate is designed to consume `GpuiTableShape` entries registered via
 `inventory` and emit code (often for storybook or prototyping workflows).
 
@@ -18,5 +19,6 @@ for shape in inventory::iter::<GpuiTableShape>() {
 ```
 
 ## Notes
+
 - Intended for tooling and prototyping, not runtime UI logic.
 - See `examples/prototyping` for a full generator.

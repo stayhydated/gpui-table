@@ -3,6 +3,7 @@
 GPUI filter UI components and a table status bar used by `gpui-table`.
 
 ## Components
+
 - `TextFilter`
 - `FacetedFilter`
 - `NumberRangeFilter`
@@ -10,6 +11,7 @@ GPUI filter UI components and a table status bar used by `gpui-table`.
 - `TableStatusBar`
 
 ## Traits
+
 - `TableFilterComponent` for type-safe component construction in generated code
 - `FilterValue` for query-string conversion of filter values (separate from
   `gpui_table_core::filter::FilterValue`)
@@ -35,6 +37,7 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 ```
 
 ## Notes
+
 - Components are designed to be used via the generated `FilterEntities` in
   `gpui-table`, but can be instantiated directly.
 - `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses

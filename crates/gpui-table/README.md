@@ -11,6 +11,7 @@ gpui-table = { version = "0.5", features = ["component", "inventory", "fluent", 
 ```
 
 ## Features
+
 - `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
 - `component`: filter UI components under `gpui_table::component`
 - `inventory`: registers table metadata for tooling
@@ -47,6 +48,7 @@ impl TableLoader for UserTableDelegate {
 ```
 
 ## Exports
+
 - `gpui_table_core` traits and filter types (including `TableLoader`/`TableDataLoader`)
 - `gpui_table_derive` macros (with `derive`)
 - `gpui_table::component` filter components + extension traits (with `component`)

@@ -1,11 +1,13 @@
 # Architecture
 
 ## Purpose
+
 `gpui-table-component` provides GPUI UI components for table filtering and a
 status bar. These components are used by the generated filter entities when
 `#[gpui_table(filters)]` is enabled.
 
 ## Module map
+
 - `lib.rs`
   - `TableFilterComponent` trait for type-safe filter component construction
   - `FilterValue` trait for query-string conversion (distinct from
@@ -25,16 +27,19 @@ status bar. These components are used by the generated filter entities when
   - Simple status summary for row count + load state
 
 ## Data flow
+
 1. The derive macro generates `XxxFilterEntities` that instantiate these
    components using the `TableFilterComponent` trait.
-2. Each filter component calls the provided `on_change` callback with its value.
-3. Consumers read all filter values via `FilterEntitiesExt::read_values` and
+1. Each filter component calls the provided `on_change` callback with its value.
+1. Consumers read all filter values via `FilterEntitiesExt::read_values` and
    apply them client-side or pass them into load-more requests.
 
 ## Extension points
+
 - Add new filter component types by implementing `TableFilterComponent`.
 - Extend filter components with chainable configuration methods (extension traits).
 
 ## Notes
+
 - These components assume `gpui-component` primitives (inputs, popovers, sliders)
   and are intended for GPUI-based apps.
