@@ -1,4 +1,4 @@
-use es_fluent::{EsFluentKv, EsFluentThis};
+use es_fluent::{EsFluentThis, EsFluentVariants};
 use gpui::{Context, Window};
 use gpui_component::IconName;
 use gpui_component::table::TableState;
@@ -77,10 +77,10 @@ pub enum ProductCategory {
 }
 
 /// A Product entry for the table - from DummyJSON API
-#[derive(Clone, Debug, EsFluentKv, EsFluentThis, GpuiTable)]
+#[derive(Clone, Debug, EsFluentThis, EsFluentVariants, GpuiTable)]
 #[fluent_this(origin, members)]
-#[fluent_kv(keys = ["description", "label"])]
-#[gpui_table(fluent = "label", filters)]
+#[fluent_variants(keys = ["description", "label"])]
+#[gpui_table(fluent = "label", filters, load_more)]
 pub struct Product {
     /// Product ID from the API
     #[gpui_table(sortable, width = 50., resizable = false, movable = false)]
@@ -281,7 +281,7 @@ impl ProductTableDelegate {
         cx.spawn(async move |view, cx| {
             match tokio_task.await {
                 Ok((result, limit)) => {
-                    _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         view.update(cx, |table, cx| {
                             let delegate = table.delegate_mut();
 
@@ -333,7 +333,7 @@ impl ProductTableDelegate {
                 },
                 Err(e) => {
                     warn!("Tokio task failed: {:?}", e);
-                    _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         view.update(cx, |table, cx| {
                             let delegate = table.delegate_mut();
                             delegate.loading = false;

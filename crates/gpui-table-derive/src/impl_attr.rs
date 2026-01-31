@@ -21,6 +21,12 @@
 //! }
 //! ```
 //!
+//! The table struct must also set `#[gpui_table(load_more)]` to wire these hooks
+//! into the generated delegate.
+//!
+//! If no `#[load_more]` method is provided, load_more becomes a no-op and
+//! `has_more` returns false, which is useful for delegates that load all data up front.
+//!
 //! ## Trait-based approach (implement a loader trait)
 //!
 //! Apply `#[gpui_table_impl]` directly to a trait impl block. The macro will
@@ -325,43 +331,52 @@ fn generate_freestanding_impl(
     let load_more_method = find_load_more_method(impl_block)?;
     let threshold_const = find_threshold_const(impl_block)?;
 
-    if let Some(load_more) = load_more_method {
+    let threshold_impl = if let Some(threshold) = &threshold_const {
+        let const_name = &threshold.const_name;
+        quote! {
+            fn load_more_threshold(&self) -> usize {
+                Self::#const_name
+            }
+        }
+    } else {
+        TokenStream::new()
+    };
+
+    let (has_more_impl, load_more_impl) = if let Some(load_more) = load_more_method {
         let method_name = &load_more.method_name;
-
-        // Generate has_more impl - always uses the `eof` field from the generated delegate
-        let has_more_impl = quote! {
-            fn has_more(&self, _: &gpui::App) -> bool {
-                if self.loading {
-                    return false;
-                }
-                !self.eof
-            }
-        };
-
-        // Generate threshold impl if specified
-        let threshold_impl = if let Some(threshold) = &threshold_const {
-            let const_name = &threshold.const_name;
+        (
             quote! {
-                fn load_more_threshold(&self) -> usize {
-                    Self::#const_name
+                fn has_more(&self, _: &gpui::App) -> bool {
+                    if self.loading {
+                        return false;
+                    }
+                    !self.eof
                 }
-            }
-        } else {
-            TokenStream::new()
-        };
-
-        // Generate trait implementation
-        Ok(quote! {
-            impl gpui_table::__private::LoadMoreDelegate for #self_ty {
-                #has_more_impl
-                #threshold_impl
-
+            },
+            quote! {
                 fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
                     Self::#method_name(self, window, cx);
                 }
-            }
-        })
+            },
+        )
     } else {
-        Ok(TokenStream::new())
-    }
+        (
+            quote! {
+                fn has_more(&self, _: &gpui::App) -> bool {
+                    false
+                }
+            },
+            quote! {
+                fn load_more(&mut self, _: &mut gpui::Window, _: &mut gpui::Context<gpui_component::table::TableState<Self>>) {}
+            },
+        )
+    };
+
+    Ok(quote! {
+        impl gpui_table::__private::LoadMoreDelegate for #self_ty {
+            #has_more_impl
+            #threshold_impl
+            #load_more_impl
+        }
+    })
 }

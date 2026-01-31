@@ -47,6 +47,8 @@ pub trait TableDataLoader: TableDelegate {
 ///
 /// Implement this trait on your table delegate and apply `#[gpui_table_impl]`
 /// to wire it up to the generated `TableDelegate` implementation.
+/// The table struct must also set `#[gpui_table(load_more)]` to enable
+/// load-more wiring in the generated delegate.
 ///
 /// # Example
 ///

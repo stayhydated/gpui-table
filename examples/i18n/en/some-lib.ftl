@@ -1,43 +1,23 @@
-## Item
+## ItemVariants
 
-item_this = Item
-
-## ItemKvFtl
-
-item_kv_ftl_this = Item Kv Ftl
-item_kv_ftl-acquired_on = Acquired On
-item_kv_ftl-color = Color
-item_kv_ftl-id = ID
-item_kv_ftl-name = Name
-item_kv_ftl-weight = Weight
 
 ## Product
 
 product_this = Product
 
-## ProductDescriptionKvFtl
+## User
 
-product_description_kv_ftl_this = Product Description Kv Ftl
-product_description_kv_ftl-brand = Brand
-product_description_kv_ftl-category = Category
-product_description_kv_ftl-discount_percentage = Discount %
-product_description_kv_ftl-id = ID
-product_description_kv_ftl-price = Price
-product_description_kv_ftl-rating = Rating
-product_description_kv_ftl-stock = Stock
-product_description_kv_ftl-title = Title
+user_this = User
 
-## ProductLabelKvFtl
+## Item
 
-product_label_kv_ftl_this = Product Label Kv Ftl
-product_label_kv_ftl-brand = Brand
-product_label_kv_ftl-category = Category
-product_label_kv_ftl-discount_percentage = Discount %
-product_label_kv_ftl-id = ID
-product_label_kv_ftl-price = Price
-product_label_kv_ftl-rating = Rating
-product_label_kv_ftl-stock = Stock
-product_label_kv_ftl-title = Title
+item_this = Item
+item_this = Item Variants
+item-acquired_on = Acquired On
+item-color = Color
+item-id = Id
+item-name = Name
+item-weight = Weight
 
 ## ProductCategory
 
@@ -48,9 +28,9 @@ product_category-Groceries = Groceries
 product_category-HomeDecoration = Home Decoration
 product_category-KitchenAccessories = Kitchen Accessories
 product_category-Laptops = Laptops
-product_category-MensShirts = Men's Shirts
-product_category-MensShoes = Men's Shoes
-product_category-MensWatches = Men's Watches
+product_category-MensShirts = Mens Shirts
+product_category-MensShoes = Mens Shoes
+product_category-MensWatches = Mens Watches
 product_category-MobileAccessories = Mobile Accessories
 product_category-Motorcycle = Motorcycle
 product_category-SkinCare = Skin Care
@@ -60,39 +40,59 @@ product_category-Sunglasses = Sunglasses
 product_category-Tablets = Tablets
 product_category-Tops = Tops
 product_category-Vehicle = Vehicle
-product_category-WomensBags = Women's Bags
-product_category-WomensDresses = Women's Dresses
-product_category-WomensJewellery = Women's Jewellery
-product_category-WomensShoes = Women's Shoes
-product_category-WomensWatches = Women's Watches
+product_category-WomensBags = Womens Bags
+product_category-WomensDresses = Womens Dresses
+product_category-WomensJewellery = Womens Jewellery
+product_category-WomensShoes = Womens Shoes
+product_category-WomensWatches = Womens Watches
 
-## User
+## ProductDescriptionVariants
 
-user_this = User
+product_description_this = Product Description Variants
+product_description-brand = Brand
+product_description-category = Category
+product_description-discount_percentage = Discount Percentage
+product_description-id = Id
+product_description-price = Price
+product_description-rating = Rating
+product_description-stock = Stock
+product_description-title = Title
 
-## UserDescriptionKvFtl
+## ProductLabelVariants
 
-user_description_kv_ftl_this = User Description Kv Ftl
-user_description_kv_ftl-active = Active
-user_description_kv_ftl-age = Age
-user_description_kv_ftl-created_at = Created At
-user_description_kv_ftl-debt = Debt
-user_description_kv_ftl-email = Email
-user_description_kv_ftl-id = ID
-user_description_kv_ftl-name = Name
-user_description_kv_ftl-status = Status
+product_label_this = Product Label Variants
+product_label-brand = Brand
+product_label-category = Category
+product_label-discount_percentage = Discount Percentage
+product_label-id = Id
+product_label-price = Price
+product_label-rating = Rating
+product_label-stock = Stock
+product_label-title = Title
 
-## UserLabelKvFtl
+## UserDescriptionVariants
 
-user_label_kv_ftl_this = User Label Kv Ftl
-user_label_kv_ftl-active = Active
-user_label_kv_ftl-age = Age
-user_label_kv_ftl-created_at = Created At
-user_label_kv_ftl-debt = Debt
-user_label_kv_ftl-email = Email
-user_label_kv_ftl-id = ID
-user_label_kv_ftl-name = Name
-user_label_kv_ftl-status = Status
+user_description_this = User Description Variants
+user_description-active = Active
+user_description-age = Age
+user_description-created_at = Created At
+user_description-debt = Debt
+user_description-email = Email
+user_description-id = Id
+user_description-name = Name
+user_description-status = Status
+
+## UserLabelVariants
+
+user_label_this = User Label Variants
+user_label-active = Active
+user_label-age = Age
+user_label-created_at = Created At
+user_label-debt = Debt
+user_label-email = Email
+user_label-id = Id
+user_label-name = Name
+user_label-status = Status
 
 ## UserStatus
 

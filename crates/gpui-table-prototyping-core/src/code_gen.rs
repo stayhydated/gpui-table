@@ -39,14 +39,14 @@ pub trait TableIdentities {
         syn::parse_str(&self.snake_case_name()).unwrap()
     }
 
-    /// Fluent label enum identifier (e.g., "UserLabelKvFtl")
+    /// Fluent label enum identifier (e.g., "UserLabelVariants")
     fn ftl_label_ident(&self) -> syn::Ident {
-        format_ident!("{}LabelKvFtl", self.struct_name())
+        format_ident!("{}LabelVariants", self.struct_name())
     }
 
-    /// Fluent description enum identifier (e.g., "UserDescriptionKvFtl")
+    /// Fluent description enum identifier (e.g., "UserDescriptionVariants")
     fn ftl_description_ident(&self) -> syn::Ident {
-        format_ident!("{}DescriptionKvFtl", self.struct_name())
+        format_ident!("{}DescriptionVariants", self.struct_name())
     }
 
     /// The story ID literal (e.g., "user-table-story")
@@ -144,11 +144,48 @@ impl TableShape for TableShapeAdapter<'_> {
 
     fn table_state_creation(&self) -> TokenStream {
         let has_filters = self.identities.has_filters();
+        let load_more = self.shape.load_more;
 
         if has_filters {
             let struct_name_ident = self.identities.struct_name_ident();
             let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
 
+            if load_more {
+                quote! {
+                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                    // Trigger initial data load
+                    table.update(cx, |table, cx| {
+                        use gpui_table::TableDataLoader as _;
+                        table.delegate_mut().load_data(window, cx);
+                    });
+
+                    // Build filter entities with reload callback
+                    let table_for_reload = table.clone();
+                    let filters = #filter_entities_ident::build(
+                        Some(std::rc::Rc::new(move |window, cx| {
+                            table_for_reload.update(cx, |table, cx| {
+                                table.delegate_mut().rows.clear();
+                                table.delegate_mut().eof = false;
+                                use gpui_table::TableDataLoader as _;
+                                table.delegate_mut().load_data(window, cx);
+                            });
+                        })),
+                        cx,
+                    );
+
+                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+                }
+            } else {
+                quote! {
+                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                    let filters = #filter_entities_ident::build(None, cx);
+
+                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+                }
+            }
+        } else if load_more {
             quote! {
                 let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
@@ -157,32 +194,12 @@ impl TableShape for TableShapeAdapter<'_> {
                     use gpui_table::TableDataLoader as _;
                     table.delegate_mut().load_data(window, cx);
                 });
-
-                // Build filter entities with reload callback
-                let table_for_reload = table.clone();
-                let filters = #filter_entities_ident::build(
-                    Some(std::rc::Rc::new(move |window, cx| {
-                        table_for_reload.update(cx, |table, cx| {
-                            table.delegate_mut().rows.clear();
-                            table.delegate_mut().eof = false;
-                            use gpui_table::TableDataLoader as _;
-                            table.delegate_mut().load_data(window, cx);
-                        });
-                    })),
-                    cx,
-                );
 
                 let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
             }
         } else {
             quote! {
                 let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                // Trigger initial data load
-                table.update(cx, |table, cx| {
-                    use gpui_table::TableDataLoader as _;
-                    table.delegate_mut().load_data(window, cx);
-                });
 
                 let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
             }

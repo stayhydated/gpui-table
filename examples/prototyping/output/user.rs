@@ -1,15 +1,14 @@
-use es_fluent::ThisFtl as _;
+use some_lib::structs::user::*;
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window,
-};
-use gpui_component::{
-    h_flex,
-    table::{Table, TableDelegate as _, TableState},
-    v_flex,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
+    Styled, Subscription, Window,
 };
 use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
-use some_lib::structs::user::*;
+use gpui_component::{
+    h_flex, table::{Table, TableState, TableDelegate as _},
+    v_flex,
+};
+use es_fluent::ThisFtl as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
@@ -38,22 +37,7 @@ impl UserTableStory {
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = UserTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        table.update(cx, |table, cx| {
-            use gpui_table::TableDataLoader as _;
-            table.delegate_mut().load_data(window, cx);
-        });
-        let table_for_reload = table.clone();
-        let filters = UserFilterEntities::build(
-            Some(std::rc::Rc::new(move |window, cx| {
-                table_for_reload.update(cx, |table, cx| {
-                    table.delegate_mut().rows.clear();
-                    table.delegate_mut().eof = false;
-                    use gpui_table::TableDataLoader as _;
-                    table.delegate_mut().load_data(window, cx);
-                });
-            })),
-            cx,
-        );
+        let filters = UserFilterEntities::build(None, cx);
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {
             table,
@@ -63,28 +47,25 @@ impl UserTableStory {
     }
 }
 impl Render for UserTableStory {
-    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+    fn render(
+        &mut self,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> impl IntoElement {
         let table = self.table.read(cx);
         let delegate = table.delegate();
         v_flex()
             .size_full()
             .gap_4()
             .p_4()
+            .child(h_flex().gap_2().flex_wrap().child(self.filters.all_filters()))
             .child(
-                h_flex()
-                    .gap_2()
-                    .flex_wrap()
-                    .child(self.filters.all_filters()),
+                gpui_table_component::TableStatusBar::new(
+                    delegate.rows.len(),
+                    delegate.loading,
+                    delegate.eof,
+                ),
             )
-            .child(gpui_table_component::TableStatusBar::new(
-                delegate.rows.len(),
-                delegate.loading,
-                delegate.eof,
-            ))
-            .child(
-                Table::new(&self.table)
-                    .stripe(true)
-                    .scrollbar_visible(true, true),
-            )
+            .child(Table::new(&self.table).stripe(true).scrollbar_visible(true, true))
     }
 }

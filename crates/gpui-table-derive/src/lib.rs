@@ -27,6 +27,9 @@ use syn::{DeriveInput, Ident, Path};
 /// - `#[threshold]` - Marks a const as the load_more threshold value
 /// - `#[eof]` - Marks a const containing the eof field name (defaults to "eof")
 ///
+/// Note: the table struct must set `#[gpui_table(load_more)]` for the generated
+/// delegate to call these load_more hooks.
+///
 /// # Example
 ///
 /// ```ignore
@@ -81,6 +84,11 @@ struct TableMeta {
 
     #[darling(default)]
     loading: Option<Ident>,
+
+    /// Enable load_more wiring. When set, the generated delegate delegates
+    /// has_more/load_more/threshold to #[gpui_table_impl].
+    #[darling(default)]
+    load_more: bool,
 
     /// Enable filter support. When set, generates FilterEntities, FilterValues,
     /// and matches_filters() method. Field-level `filter(...)` attributes are
@@ -293,6 +301,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         custom_style,
         fluent,
         loading,
+        load_more,
         filters: filters_enabled,
     } = meta;
 
@@ -470,7 +479,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
         Some(Override::Explicit(key)) => {
             let key_cap = key.to_pascal_case();
             let fluent_enum = Ident::new(
-                &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
+                &format!("{}{}{}Variants", struct_name, key_cap, ""),
                 struct_name.span(),
             );
             quote! { fn table_title() -> String {
@@ -542,6 +551,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             &column_enum_name,
             sort_match_arms,
             loading,
+            load_more,
             &filter_fields,
         )
     } else {
@@ -568,6 +578,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                     &[
                         #(#filter_variant_constructions),*
                     ],
+                    #load_more,
                     file!()
                 )
             }
@@ -745,11 +756,13 @@ fn determine_title_expr(
             Override::Explicit(key) => {
                 let key_cap = key.to_pascal_case();
                 Ident::new(
-                    &format!("{}{}{}KvFtl", struct_name, key_cap, ""),
+                    &format!("{}{}{}Variants", struct_name, key_cap, ""),
                     struct_name.span(),
                 )
             },
-            Override::Inherit => Ident::new(&format!("{}KvFtl", struct_name), struct_name.span()),
+            Override::Inherit => {
+                Ident::new(&format!("{}Variants", struct_name), struct_name.span())
+            },
         };
 
         let field_name = ident.to_string().to_pascal_case();
@@ -767,29 +780,74 @@ fn generate_delegate(
     column_enum_name: &Ident,
     sort_arms: Vec<proc_macro2::TokenStream>,
     loading: Option<Ident>,
+    load_more: bool,
     filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
     let _has_filters = !filter_fields.is_empty();
 
-    // Generate load_more related implementations.
-    // Always delegate to LoadMoreDelegate trait (implemented by #[gpui_table_impl] with #[load_more]).
-    let load_more_impl = quote! {
-        fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
-            gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
-        }
-    };
+    let (load_more_impl, has_more_impl, threshold_impl, data_loader_impl) = if load_more {
+        let load_more_impl = quote! {
+            fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
+            }
+        };
 
-    let has_more_impl = quote! {
-        fn has_more(&self, app: &#App) -> bool {
-            gpui_table::__private::LoadMoreDelegate::has_more(self, app)
-        }
-    };
+        let has_more_impl = quote! {
+            fn has_more(&self, app: &#App) -> bool {
+                gpui_table::__private::LoadMoreDelegate::has_more(self, app)
+            }
+        };
 
-    let threshold_impl = quote! {
-        fn load_more_threshold(&self) -> usize {
-            gpui_table::__private::LoadMoreDelegate::load_more_threshold(self)
-        }
+        let threshold_impl = quote! {
+            fn load_more_threshold(&self) -> usize {
+                gpui_table::__private::LoadMoreDelegate::load_more_threshold(self)
+            }
+        };
+
+        let data_loader_impl = quote! {
+            impl gpui_table::TableDataLoader for #delegate_name {
+                fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                    gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
+                }
+            }
+        };
+
+        (
+            load_more_impl,
+            has_more_impl,
+            threshold_impl,
+            data_loader_impl,
+        )
+    } else {
+        let load_more_impl = quote! {
+            fn load_more(&mut self, _window: &mut #Window, _cx: &mut #Context<#TableState<Self>>) {}
+        };
+
+        let has_more_impl = quote! {
+            fn has_more(&self, _: &#App) -> bool {
+                false
+            }
+        };
+
+        let threshold_impl = quote! {
+            fn load_more_threshold(&self) -> usize {
+                10
+            }
+        };
+
+        let data_loader_impl = quote! {
+            impl gpui_table::TableDataLoader for #delegate_name {
+                fn load_data(&mut self, _window: &mut #Window, _cx: &mut #Context<#TableState<Self>>) {}
+            }
+        };
+
+        (
+            load_more_impl,
+            has_more_impl,
+            threshold_impl,
+            data_loader_impl,
+        )
     };
 
     let loading_impl = if let Some(field) = loading {
@@ -898,11 +956,7 @@ fn generate_delegate(
             }
         }
 
-        impl gpui_table::TableDataLoader for #delegate_name {
-            fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
-                gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
-            }
-        }
+        #data_loader_impl
     }
 }
 
@@ -1375,11 +1429,13 @@ fn determine_filter_title_expr(
             Override::Explicit(key) => {
                 let key_cap = key.to_pascal_case();
                 Ident::new(
-                    &format!("{}{}KvFtl", struct_name, key_cap),
+                    &format!("{}{}Variants", struct_name, key_cap),
                     struct_name.span(),
                 )
             },
-            Override::Inherit => Ident::new(&format!("{}KvFtl", struct_name), struct_name.span()),
+            Override::Inherit => {
+                Ident::new(&format!("{}Variants", struct_name), struct_name.span())
+            },
         };
 
         let field_name = field_ident.to_string().to_pascal_case();
