@@ -1,5 +1,5 @@
 [workspace]
-default-members = [ "examples/some-lib-tables" ]
+default-members = ["examples/some-lib-tables"]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-component",
@@ -32,9 +32,9 @@ darling = "0.23"
 derive_more = "2.1"
 dotenv = "0.15"
 env_logger = "0.11"
-es-fluent = "0.7"
-es-fluent-lang = "0.7"
-es-fluent-manager-embedded = "0.7"
+es-fluent = "0.8"
+es-fluent-lang = "0.8"
+es-fluent-manager-embedded = "0.8"
 fake = "4.4"
 fluent-bundle = "0.16"
 futures = "0.3"
