@@ -57,7 +57,7 @@ impl TableLoader for ItemTableDelegate {
             // Generate fake data - in a real app, this would be an API call
             let new_rows: Vec<Item> = (0..50).map(|_| Faker.fake()).collect();
 
-            _ = cx.update(|cx| {
+            cx.update(|cx| {
                 view.update(cx, |table, cx| {
                     let delegate = table.delegate_mut();
                     delegate.rows.extend(new_rows);

@@ -185,25 +185,23 @@ impl TableShape for TableShapeAdapter<'_> {
                     let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
                 }
             }
+        } else if load_more {
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                // Trigger initial data load
+                table.update(cx, |table, cx| {
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
+                });
+
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+            }
         } else {
-            if load_more {
-                quote! {
-                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-                    // Trigger initial data load
-                    table.update(cx, |table, cx| {
-                        use gpui_table::TableDataLoader as _;
-                        table.delegate_mut().load_data(window, cx);
-                    });
-
-                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-                }
-            } else {
-                quote! {
-                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-                }
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
             }
         }
     }

@@ -281,7 +281,7 @@ impl ProductTableDelegate {
         cx.spawn(async move |view, cx| {
             match tokio_task.await {
                 Ok((result, limit)) => {
-                    _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         view.update(cx, |table, cx| {
                             let delegate = table.delegate_mut();
 
@@ -333,7 +333,7 @@ impl ProductTableDelegate {
                 },
                 Err(e) => {
                     warn!("Tokio task failed: {:?}", e);
-                    _ = cx.update(|cx| {
+                    cx.update(|cx| {
                         view.update(cx, |table, cx| {
                             let delegate = table.delegate_mut();
                             delegate.loading = false;
