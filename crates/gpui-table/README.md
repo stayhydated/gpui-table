@@ -12,11 +12,12 @@ gpui-table = { version = "0.5", features = ["component", "inventory", "fluent", 
 
 ## Features
 
-- `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
-- `component`: filter UI components under `gpui_table::component`
-- `inventory`: registers table metadata for tooling
-- `fluent`: localized titles/labels via `es-fluent`
-- `chrono`, `rust_decimal`: extra `TableCell` + filter support
+* `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
+* `chrono` (default): date `TableCell` support + date-range filter helpers
+* `component`: filter UI components under `gpui_table::component`
+* `inventory`: registers table metadata for tooling
+* `fluent`: localized titles/labels via `es-fluent`
+* `rust_decimal`: numeric range helpers for filters
 
 ## Quick example
 

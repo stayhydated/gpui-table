@@ -4,61 +4,55 @@
 [![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
-# Project Overview
+A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpui-component) tables. It autogenerates column definitions, renderers, and delegate glue (i18n, sorting, load-more, ...).
 
-`gpui-table` is a table ecosystem written in **Rust**, built on top of `gpui`
-and `gpui-component`. It focuses on:
+## Compatibility
 
-1. **Type Safety**: Derive macros generate strongly-typed columns, filters, and metadata.
-1. **Ergonomics**: `#[derive(GpuiTable)]` and `#[gpui_table_impl]` minimize boilerplate.
-1. **Developer Experience**: Inventory-based shape registry (via the `inventory` feature)
-   enables prototyping and codegen.
+| `gpui-table` | `gpui-component` |
+| :------------ | :--------------- |
+| **git** | |
+| `master` | `main` |
+| **crates.io** | |
+| `0.6.x` | `0.6.x` |
 
-## Architecture Documentation Index
+## Quick Example
 
-| Crate | Link to Architecture Doc | Purpose |
-| --- | --- | --- |
-| **Core** | | |
-| `gpui-table` | [Architecture](crates/gpui-table/docs/ARCHITECTURE.md) | Facade crate; re-exports macros/core/components. |
-| `gpui-table-core` | [Architecture](crates/gpui-table-core/docs/ARCHITECTURE.md) | Core traits, filter types, and registry metadata. |
-| `gpui-table-derive` | [Architecture](crates/gpui-table-derive/docs/ARCHITECTURE.md) | Proc macros for table derivation and load-more wiring. |
-| **Components & Runtime** | | |
-| `gpui-table-component` | [Architecture](crates/gpui-table-component/docs/ARCHITECTURE.md) | GPUI filter components and status bar. |
-| **Prototyping** | | |
-| `gpui-table-prototyping-core` | [Architecture](crates/gpui-table-prototyping-core/docs/ARCHITECTURE.md) | Codegen from inventory shapes for prototyping. |
+```rs
+use gpui::{Context, Window};
+use gpui_component::table::TableState;
+use gpui_table::{GpuiTable, TableLoader};
 
-## Crate Descriptions
+#[derive(Clone, GpuiTable)]
+#[gpui_table(filters, load_more)]
+pub struct User {
+    #[gpui_table(sortable, width = 160., filter(text()))]
+    pub name: String,
 
-### Core Layers
+    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    pub age: u8,
 
-- **`gpui-table`**: User-facing facade. Re-exports derive macros, core metadata, and
-  optional UI components.
-- **`gpui-table-core`**: Shared metadata and traits for table rows, filters, and registry.
-- **`gpui-table-derive`**: Proc macros that expand row structs into columns, delegates,
-  filters, and optional inventory registrations.
+    #[gpui_table(width = 90., filter(faceted()))]
+    pub active: bool,
+}
 
-### Components & Runtime
+#[gpui_table::gpui_table_impl]
+impl TableLoader for UserTableDelegate {
+    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        // fetch + append rows
+        cx.notify();
+    }
+}
+```
 
-- **`gpui-table-component`**: GPUI UI components for text, faceted, number-range, and
-  date-range filters, plus `TableStatusBar`.
+## Prototyping
 
-### Prototyping
+Enable the `inventory` feature on `gpui-table` and use `gpui-table-prototyping-core`
+to generate gpui form scaffolding from `GpuiTableShape` registrations.
+See `examples/prototyping` for a working generator.
 
-- **`gpui-table-prototyping-core`**: Builds GPUI table scaffolding by consuming
-  `GpuiTableShape` inventory data.
+## Examples
 
-## Development
-
-| Task | Command |
-| --- | --- |
-| Format | `just fmt` |
-| Check | `just check` |
-| Clippy | `just clippy` |
-| Tests | `just test` |
-| Update crate paths | `just update_crate_paths` |
-
-## Agent Notes
-
-- Ignore all folders matching `**/__crate_paths/**` (generated files).
-- Prefer `rg` for search and keep edits minimal.
-- When changing public APIs or behavior in a crate, update that crate's `docs/ARCHITECTURE.md`.
+* `examples/i18n`: i18n resources
+* `examples/some-lib`: crate types shared by examples
+* `examples/some-lib-tables`: storybook-like GPUI app showcasing tables
+* `examples/prototyping`: generator for table stories and scaffolding

@@ -1,10 +1,3 @@
-# AGENTS
-
-## Scope and priorities
-
-- Ignore all folders matching "**/\_\_crate_paths/**" (generated; update via `just update_crate_paths`).
-- This is a Rust workspace for gpui table derive macros, core traits, UI components, and prototyping helpers.
-
 # Project Overview
 
 `gpui-table` is a table ecosystem written in **Rust**, built on top of `gpui`
@@ -48,6 +41,65 @@ and `gpui-component`. It focuses on:
 - **`gpui-table-prototyping-core`**: Builds GPUI table scaffolding by consuming
   `GpuiTableShape` inventory data.
 
+## Examples
+
+### Derive a table with filters and load-more
+
+```rs
+use gpui::{Context, Window};
+use gpui_component::table::TableState;
+use gpui_table::{GpuiTable, TableLoader};
+
+#[derive(Clone, GpuiTable)]
+#[gpui_table(filters, load_more)]
+pub struct User {
+    #[gpui_table(sortable, width = 160., filter(text()))]
+    pub name: String,
+
+    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    pub age: u8,
+
+    #[gpui_table(width = 90., filter(faceted()))]
+    pub active: bool,
+}
+
+#[gpui_table::gpui_table_impl]
+impl TableLoader for UserTableDelegate {
+    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        // fetch + append rows
+        cx.notify();
+    }
+}
+```
+
+### Custom TableCell rendering
+
+```rs
+use gpui_table_core::TableCell;
+use gpui::{AnyElement, App, Window};
+
+pub struct Rating(pub u8);
+
+impl TableCell for Rating {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        format!("{}*", self.0).into()
+    }
+}
+```
+
+### Prototyping from the inventory registry
+
+```rs
+use gpui_table::registry::GpuiTableShape;
+use gpui_table_prototyping_core::code_gen::{TableShape as _, TableShapeAdapter};
+
+for shape in inventory::iter::<GpuiTableShape>() {
+    let adapter = TableShapeAdapter::new(shape, true);
+    let _delegate_tokens = adapter.delegate_creation();
+    let _render_tokens = adapter.render_children();
+}
+```
+
 ## Repo layout
 
 - `crates/gpui-table`: facade crate that re-exports core traits, derive macros, and optional components
@@ -57,20 +109,8 @@ and `gpui-component`. It focuses on:
 - `crates/gpui-table-prototyping-core`: codegen helpers for prototyping
 - `examples/`: sample apps and storybook output
 
-## Development
-
-| Task | Command |
-| --- | --- |
-| Format | `just fmt` |
-| Check | `just check` |
-| Clippy | `just clippy` |
-| Tests | `just test` |
-| Update crate paths | `just update_crate_paths` |
-
 ## Agent Notes
 
 - Ignore all folders matching `**/__crate_paths/**` (generated files).
-- Prefer `rg` for search and keep edits minimal.
-- Do not edit generated `__crate_paths` files by hand; use `just update_crate_paths`.
 - When changing public APIs or behavior in a crate, update that crate's `docs/ARCHITECTURE.md`.
 - Prefer workspace dependencies and feature flags from the root `Cargo.toml`.

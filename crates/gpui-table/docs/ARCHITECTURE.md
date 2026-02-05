@@ -27,10 +27,11 @@ can depend on a single crate.
 ## Feature flags
 
 - `derive` (default): enables `GpuiTable` and `TableCell` derives.
+- `chrono` (default): adds `TableCell` + filter support for date types.
 - `component`: exposes filter UI components under `gpui_table::component`.
 - `inventory`: enables registry metadata for prototyping/codegen.
 - `fluent`: integrates with `es-fluent` for localized titles/labels.
-- `chrono`, `rust_decimal`: adds `TableCell` + filter support for those types.
+- `rust_decimal`: adds `TableCell` + filter support for decimal types.
 
 ## Extension points
 
