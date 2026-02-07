@@ -2983,7 +2983,6 @@ version = "0.5.0"
 dependencies = [
  "gpui",
  "gpui-component",
- "gpui-table-component",
  "gpui-table-core",
  "gpui-table-derive",
  "insta",
@@ -3017,11 +3016,8 @@ dependencies = [
  "gpui",
  "gpui-component",
  "inventory",
- "proc-macro2",
- "rust-embed",
  "rust_decimal",
  "strum 0.27.2",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -4113,15 +4109,6 @@ dependencies = [
  "markup5ever",
  "tendril",
  "xml5ever",
-]
-
-[[package]]
-name = "matchers"
-version = "0.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1525a2a28c7f4fa0fc98bb91ae755d1e2d1505079e05539e35bc876b5d65ae9"
-dependencies = [
- "regex-automata",
 ]
 
 [[package]]
@@ -6438,6 +6425,7 @@ dependencies = [
  "gpui",
  "gpui-component",
  "gpui-table",
+ "gpui-table-component",
  "gpui_tokio",
  "heck 0.5.0",
  "log",
@@ -7293,14 +7281,10 @@ version = "0.3.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f30143827ddab0d256fd843b7a66d164e9f271cfa0dde49142c5ca0ca291f1e"
 dependencies = [
- "matchers",
  "nu-ansi-term",
- "once_cell",
- "regex-automata",
  "sharded-slab",
  "smallvec",
  "thread_local",
- "tracing",
  "tracing-core",
  "tracing-log",
 ]

@@ -13,7 +13,6 @@ readme = "README.md"
 
 [features]
 chrono = [ "gpui-table-core/chrono" ]
-component = [  ]
 default = [ "derive", "chrono" ]
 derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
@@ -23,7 +22,6 @@ rust_decimal = [ "gpui-table-core/rust_decimal" ]
 [dependencies]
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table-component = { workspace = true }
 gpui-table-core = { workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
 serde = { features = [ "derive" ], workspace = true }
