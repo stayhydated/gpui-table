@@ -6,6 +6,7 @@ faceted_filter_ftl-SelectedCount = { $count } selected
 
 ## NumberRangeFilterFtl
 
+number_range_filter_ftl-Between = to
 number_range_filter_ftl-MaxPlaceholder = Max
 number_range_filter_ftl-MinPlaceholder = Min
 

@@ -6,6 +6,7 @@ faceted_filter_ftl-SelectedCount = { $count } 个已选
 
 ## NumberRangeFilterFtl
 
+number_range_filter_ftl-Between = 到
 number_range_filter_ftl-MaxPlaceholder = 最大
 number_range_filter_ftl-MinPlaceholder = 最小
 

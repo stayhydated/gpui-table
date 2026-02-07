@@ -18,6 +18,36 @@ use std::time::Duration;
 
 /// Debounce delay in milliseconds for filter changes
 const DEBOUNCE_MS: u64 = 300;
+/// Min number of characters used when sizing the localized "between" label.
+const BETWEEN_MIN_CHARS: usize = 2;
+/// Estimated width per character for the localized "between" label.
+const BETWEEN_CHAR_WIDTH_PX: f32 = 10.0;
+/// Extra horizontal padding applied to the "between" label width estimate.
+const BETWEEN_BASE_PADDING_PX: f32 = 20.0;
+/// Minimum width for the "between" label container.
+const BETWEEN_MIN_WIDTH_PX: f32 = 32.0;
+/// Base width for each NumberInput before locale-driven expansion.
+const INPUT_BASE_WIDTH_PX: f32 = 108.0;
+/// Extra expansion multiplier applied to locale-driven width growth.
+const INPUT_EXPANSION_FACTOR: f32 = 1.15;
+/// Min number of placeholder chars used for width heuristics.
+const PLACEHOLDER_MIN_CHARS: usize = 3;
+/// Estimated width per placeholder character.
+const PLACEHOLDER_CHAR_WIDTH_PX: f32 = 7.5;
+/// Baseline width budget for NumberInput chrome (buttons, paddings, etc.).
+const PLACEHOLDER_BASE_WIDTH_PX: f32 = 72.0;
+/// Total horizontal gap used in the min-max row (two `gap_2` slots).
+const ROW_GAP_TOTAL_PX: f32 = 16.0;
+/// Total horizontal padding from `v_flex().p_3()` (left + right).
+const POPOVER_HORIZONTAL_PADDING_PX: f32 = 24.0;
+/// Number of inputs in the min-max row.
+const ROW_INPUT_COUNT: f32 = 2.0;
+/// Default slider minimum when decimal conversion fails.
+const DEFAULT_RANGE_MIN_F32: f32 = 0.0;
+/// Default slider maximum when decimal conversion fails.
+const DEFAULT_RANGE_MAX_F32: f32 = 100.0;
+/// Slider step size.
+const DEFAULT_SLIDER_STEP_F32: f32 = 1.0;
 
 /// Tracks which component changed last to determine sync direction
 #[derive(Clone, Copy, PartialEq)]
@@ -32,6 +62,7 @@ enum LastChanged {
 enum NumberRangeFilterFtl {
     MinPlaceholder,
     MaxPlaceholder,
+    Between,
 }
 
 pub struct NumberRangeFilter {
@@ -118,6 +149,44 @@ impl NumberRangeFilter {
 
     fn max_placeholder_text() -> String {
         NumberRangeFilterFtl::MaxPlaceholder.to_fluent_string()
+    }
+
+    fn between_text() -> String {
+        NumberRangeFilterFtl::Between.to_fluent_string()
+    }
+
+    fn between_width_px(between: &str) -> f32 {
+        // Leave generous room for longer localized joiners (e.g. some Romance languages).
+        let char_count = between.trim().chars().count().max(BETWEEN_MIN_CHARS) as f32;
+        (char_count * BETWEEN_CHAR_WIDTH_PX + BETWEEN_BASE_PADDING_PX).max(BETWEEN_MIN_WIDTH_PX)
+    }
+
+    fn input_width_px(between_width_px: f32, min_placeholder: &str, max_placeholder: &str) -> f32 {
+        // Base input width is tuned for the original "to" layout.
+        // Expand each input as localized joiner/placeholder strings get longer.
+        let between_delta = (between_width_px - BETWEEN_MIN_WIDTH_PX).max(0.0);
+        let placeholder_chars = min_placeholder
+            .trim()
+            .chars()
+            .count()
+            .max(max_placeholder.trim().chars().count())
+            .max(PLACEHOLDER_MIN_CHARS) as f32;
+        let between_target = INPUT_BASE_WIDTH_PX + between_delta * INPUT_EXPANSION_FACTOR;
+        let placeholder_target = placeholder_chars
+            * (PLACEHOLDER_CHAR_WIDTH_PX * INPUT_EXPANSION_FACTOR)
+            + PLACEHOLDER_BASE_WIDTH_PX;
+
+        between_target.max(placeholder_target)
+    }
+
+    fn row_width_px(input_width_px: f32, between_width_px: f32) -> f32 {
+        // h_flex().gap_2() creates two gaps between the three row children.
+        input_width_px * ROW_INPUT_COUNT + between_width_px + ROW_GAP_TOTAL_PX
+    }
+
+    fn popover_width_px(row_width_px: f32) -> f32 {
+        // v_flex().p_3() contributes 12px padding on left and right.
+        row_width_px + POPOVER_HORIZONTAL_PADDING_PX
     }
 
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -236,8 +305,8 @@ impl NumberRangeFilter {
         }
 
         if self.slider_state.is_none() {
-            let range_min = self.range_min.to_f32().unwrap_or(0.0);
-            let range_max = self.range_max.to_f32().unwrap_or(100.0);
+            let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
+            let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
             let current_min = self.min.and_then(|d| d.to_f32()).unwrap_or(range_min);
             let current_max = self.max.and_then(|d| d.to_f32()).unwrap_or(range_max);
 
@@ -245,7 +314,7 @@ impl NumberRangeFilter {
                 SliderState::new()
                     .min(range_min)
                     .max(range_max)
-                    .step(1.0)
+                    .step(DEFAULT_SLIDER_STEP_F32)
                     .default_value(current_min..current_max)
             });
 
@@ -311,11 +380,11 @@ impl NumberRangeFilter {
                     let min = self
                         .min
                         .and_then(|d| d.to_f32())
-                        .unwrap_or(self.range_min.to_f32().unwrap_or(0.0));
+                        .unwrap_or(self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32));
                     let max = self
                         .max
                         .and_then(|d| d.to_f32())
-                        .unwrap_or(self.range_max.to_f32().unwrap_or(100.0));
+                        .unwrap_or(self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32));
                     slider.update(cx, |state, cx| {
                         state.set_value(min..max, window, cx);
                     });
@@ -341,8 +410,8 @@ impl NumberRangeFilter {
         }
         // Reset slider to full range
         if let Some(slider) = &self.slider_state {
-            let range_min = self.range_min.to_f32().unwrap_or(0.0);
-            let range_max = self.range_max.to_f32().unwrap_or(100.0);
+            let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
+            let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
             slider.update(cx, |state, cx| {
                 state.set_value(range_min..range_max, window, cx);
             });
@@ -395,22 +464,25 @@ impl Render for NumberRangeFilter {
         // Ensure input states exist
         self.ensure_inputs(window, cx);
 
+        let min_placeholder = Self::min_placeholder_text();
+        let max_placeholder = Self::max_placeholder_text();
+
         // Keep placeholders reactive to locale changes.
         if let Some(min_input) = &self.min_input {
-            let min_placeholder = Self::min_placeholder_text();
             if self.last_min_placeholder.as_deref() != Some(min_placeholder.as_str()) {
                 self.last_min_placeholder = Some(min_placeholder.clone());
+                let min_placeholder_for_input = min_placeholder.clone();
                 min_input.update(cx, |input, cx| {
-                    input.set_placeholder(min_placeholder, window, cx);
+                    input.set_placeholder(min_placeholder_for_input, window, cx);
                 });
             }
         }
         if let Some(max_input) = &self.max_input {
-            let max_placeholder = Self::max_placeholder_text();
             if self.last_max_placeholder.as_deref() != Some(max_placeholder.as_str()) {
                 self.last_max_placeholder = Some(max_placeholder.clone());
+                let max_placeholder_for_input = max_placeholder.clone();
                 max_input.update(cx, |input, cx| {
-                    input.set_placeholder(max_placeholder, window, cx);
+                    input.set_placeholder(max_placeholder_for_input, window, cx);
                 });
             }
         }
@@ -431,6 +503,12 @@ impl Render for NumberRangeFilter {
         let min_input = self.min_input.clone().unwrap();
         let max_input = self.max_input.clone().unwrap();
         let slider_state = self.slider_state.clone().unwrap();
+        let between = Self::between_text();
+        let between_width_px = Self::between_width_px(&between);
+        let input_width_px =
+            Self::input_width_px(between_width_px, &min_placeholder, &max_placeholder);
+        let row_width_px = Self::row_width_px(input_width_px, between_width_px);
+        let popover_width_px = Self::popover_width_px(row_width_px);
 
         // Icon: CircleX when has value (to clear), Plus otherwise
         let trigger_icon = if has_value {
@@ -471,19 +549,34 @@ impl Render for NumberRangeFilter {
                 v_flex()
                     .p_3()
                     .gap_3()
-                    .w_64()
+                    .w(px(popover_width_px))
                     .child(
                         h_flex()
+                            .w(px(row_width_px))
                             .gap_2()
                             .items_center()
-                            .child(NumberInput::new(&min_input).small().w_full())
                             .child(
                                 gpui::div()
-                                    .text_sm()
-                                    .text_color(cx.theme().muted_foreground)
-                                    .child("to"),
+                                    .w(px(input_width_px))
+                                    .child(NumberInput::new(&min_input).small().w_full()),
                             )
-                            .child(NumberInput::new(&max_input).small().w_full()),
+                            .child(
+                                gpui::div()
+                                    .w(px(between_width_px))
+                                    .flex()
+                                    .justify_center()
+                                    .child(
+                                        gpui::div()
+                                            .text_sm()
+                                            .text_color(cx.theme().muted_foreground)
+                                            .child(between.clone()),
+                                    ),
+                            )
+                            .child(
+                                gpui::div()
+                                    .w(px(input_width_px))
+                                    .child(NumberInput::new(&max_input).small().w_full()),
+                            ),
                     )
                     .child(Slider::new(&slider_state))
                     .when(has_value, |this| {
