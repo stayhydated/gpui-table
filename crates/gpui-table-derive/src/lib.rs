@@ -1034,12 +1034,12 @@ fn generate_filter_entities(
                 // Generate chain methods for options
                 let chain_methods = generate_filter_chain_methods(&f.filter_config);
 
-                // For other filters (TextFilter, NumberRangeFilter, DateRangeFilter)
+                // For other filters, use the reactive constructor for i18n updates.
                 quote! {
                     let #field_ident = {
                         let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new(
-                            #title_expr,
+                        let filter = #filter_type_tokens::new_for(
+                            || #title_expr,
                             Default::default(),
                             move |_value, window, cx| {
                                 // Notify callback for server-side filtering

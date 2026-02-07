@@ -12,20 +12,25 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [ "dep:chrono" ]
-default = [ "chrono" ]
-fluent = [ "dep:es-fluent" ]
-rust_decimal = [ "dep:rust_decimal" ]
+chrono = ["dep:chrono"]
+default = ["chrono"]
+fluent = ["dep:es-fluent", "dep:es-fluent-manager-embedded", "dep:rust-embed", "es-fluent/derive"]
+rust_decimal = ["dep:rust_decimal"]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-derive_more = { features = [ "full" ], workspace = true }
+derive_more = { features = ["full"], workspace = true }
 es-fluent = { optional = true, workspace = true }
+es-fluent-manager-embedded = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 inventory = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
-strum = { features = [ "derive" ], workspace = true }
+rust-embed = { optional = true, workspace = true }
+strum = { features = ["derive"], workspace = true }
+
+[build-dependencies]
+es-fluent = { features = ["build"], workspace = true }
 
 [lints]
 workspace = true

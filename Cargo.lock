@@ -3002,6 +3002,7 @@ dependencies = [
  "gpui-component",
  "gpui-storybook",
  "gpui-table-core",
+ "rust-embed",
  "rust_decimal",
  "strum 0.27.2",
 ]
@@ -3013,9 +3014,11 @@ dependencies = [
  "chrono",
  "derive_more 2.1.1",
  "es-fluent",
+ "es-fluent-manager-embedded",
  "gpui",
  "gpui-component",
  "inventory",
+ "rust-embed",
  "rust_decimal",
  "strum 0.27.2",
 ]

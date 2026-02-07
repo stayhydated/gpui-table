@@ -1,5 +1,6 @@
 pub mod date_range_filter;
 pub mod faceted_filter;
+pub mod i18n;
 pub mod number_range_filter;
 pub mod table_status_bar;
 pub mod text_filter;
