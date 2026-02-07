@@ -4,6 +4,8 @@ use gpui::{
 use gpui_component::table::{Column, TableDelegate, TableState};
 
 pub mod filter;
+#[cfg(feature = "fluent")]
+pub mod i18n;
 pub mod registry;
 
 /// Private module for macro internals. Not part of public API.

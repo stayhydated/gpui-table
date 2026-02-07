@@ -1,4 +1,5 @@
 use crate::TableFilterComponent;
+use es_fluent::{EsFluent, ToFluentString as _};
 use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _,
@@ -15,6 +16,12 @@ use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::rc::Rc;
+
+#[derive(Clone, Copy, EsFluent)]
+enum FacetedFilterFtl {
+    NoResultsFound,
+    ClearFilters,
+}
 
 pub struct FacetedFilter<T: FilterValue> {
     title: Rc<dyn Fn() -> String>,
@@ -406,7 +413,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                         .justify_center()
                                         .text_sm()
                                         .text_color(cx.theme().muted_foreground)
-                                        .child("No results found"),
+                                        .child(FacetedFilterFtl::NoResultsFound.to_fluent_string()),
                                 )
                             }),
                     )
@@ -417,7 +424,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .ghost()
                                     .w_full()
                                     .justify_center()
-                                    .label("Clear filters")
+                                    .label(FacetedFilterFtl::ClearFilters.to_fluent_string())
                                     .on_click(move |_, window, cx| {
                                         clear_view.update(cx, |this, cx| {
                                             this.clear_filters(window, cx);

@@ -1,4 +1,5 @@
 use crate::TableFilterComponent;
+use es_fluent::{EsFluent, ToFluentString as _};
 use gpui::{App, Context, Entity, IntoElement, Render, Task, Window, prelude::*, px};
 use gpui_component::{
     Icon, IconName, Sizable as _, h_flex,
@@ -29,6 +30,11 @@ pub mod validators {
     pub fn alphanumeric_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphanumeric()).collect()
     }
+}
+
+#[derive(Clone, EsFluent)]
+enum TextFilterFtl {
+    Placeholder { title: String },
 }
 
 pub struct TextFilter {
@@ -135,7 +141,10 @@ impl TextFilter {
     }
 
     fn placeholder_text(&self) -> String {
-        format!("Filter {}...", (self.title)())
+        TextFilterFtl::Placeholder {
+            title: (self.title)(),
+        }
+        .to_fluent_string()
     }
 
     fn ensure_input_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {

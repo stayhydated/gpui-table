@@ -1,4 +1,5 @@
 use crate::TableFilterComponent;
+use es_fluent::{EsFluent, ToFluentString as _};
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Task, Window, prelude::*, px};
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _,
@@ -27,6 +28,12 @@ enum LastChanged {
     MaxInput,
 }
 
+#[derive(Clone, Copy, EsFluent)]
+enum NumberRangeFilterFtl {
+    MinPlaceholder,
+    MaxPlaceholder,
+}
+
 pub struct NumberRangeFilter {
     title: Rc<dyn Fn() -> String>,
     min: Option<Decimal>,
@@ -45,6 +52,10 @@ pub struct NumberRangeFilter {
     _debounce_task: Option<Task<()>>,
     /// Tracks which component was last changed for sync direction
     last_changed: LastChanged,
+    /// Last placeholder applied to the min input.
+    last_min_placeholder: Option<String>,
+    /// Last placeholder applied to the max input.
+    last_max_placeholder: Option<String>,
 }
 
 impl TableFilterComponent for NumberRangeFilter {
@@ -86,6 +97,8 @@ impl NumberRangeFilter {
             pending_apply: false,
             _debounce_task: None,
             last_changed: LastChanged::None,
+            last_min_placeholder: None,
+            last_max_placeholder: None,
         })
     }
 
@@ -99,15 +112,25 @@ impl NumberRangeFilter {
         Self::new_with_title(Rc::new(title), value, on_change, cx)
     }
 
+    fn min_placeholder_text() -> String {
+        NumberRangeFilterFtl::MinPlaceholder.to_fluent_string()
+    }
+
+    fn max_placeholder_text() -> String {
+        NumberRangeFilterFtl::MaxPlaceholder.to_fluent_string()
+    }
+
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(format_decimal).unwrap_or_default();
             let range_min = self.range_min;
             let range_max = self.range_max;
+            let min_placeholder = Self::min_placeholder_text();
+            let initial_min_placeholder = min_placeholder.clone();
 
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
-                    .placeholder("Min")
+                    .placeholder(initial_min_placeholder)
                     .default_value(min_val)
                     .clean_on_escape()
             });
@@ -152,16 +175,19 @@ impl NumberRangeFilter {
             self._subscriptions.push(sub1);
             self._subscriptions.push(sub2);
             self.min_input = Some(input);
+            self.last_min_placeholder = Some(min_placeholder);
         }
 
         if self.max_input.is_none() {
             let max_val = self.max.map(format_decimal).unwrap_or_default();
             let range_min = self.range_min;
             let range_max = self.range_max;
+            let max_placeholder = Self::max_placeholder_text();
+            let initial_max_placeholder = max_placeholder.clone();
 
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
-                    .placeholder("Max")
+                    .placeholder(initial_max_placeholder)
                     .default_value(max_val)
                     .clean_on_escape()
             });
@@ -206,6 +232,7 @@ impl NumberRangeFilter {
             self._subscriptions.push(sub1);
             self._subscriptions.push(sub2);
             self.max_input = Some(input);
+            self.last_max_placeholder = Some(max_placeholder);
         }
 
         if self.slider_state.is_none() {
@@ -367,6 +394,26 @@ impl Render for NumberRangeFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure input states exist
         self.ensure_inputs(window, cx);
+
+        // Keep placeholders reactive to locale changes.
+        if let Some(min_input) = &self.min_input {
+            let min_placeholder = Self::min_placeholder_text();
+            if self.last_min_placeholder.as_deref() != Some(min_placeholder.as_str()) {
+                self.last_min_placeholder = Some(min_placeholder.clone());
+                min_input.update(cx, |input, cx| {
+                    input.set_placeholder(min_placeholder, window, cx);
+                });
+            }
+        }
+        if let Some(max_input) = &self.max_input {
+            let max_placeholder = Self::max_placeholder_text();
+            if self.last_max_placeholder.as_deref() != Some(max_placeholder.as_str()) {
+                self.last_max_placeholder = Some(max_placeholder.clone());
+                max_input.update(cx, |input, cx| {
+                    input.set_placeholder(max_placeholder, window, cx);
+                });
+            }
+        }
 
         // Sync components based on what changed last
         self.sync_components(window, cx);
