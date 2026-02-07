@@ -16,25 +16,27 @@ impl BoolFilterOption {
         if value { Self::True } else { Self::False }
     }
 
-    fn value(self) -> &'static str {
+    fn value(self) -> String {
         match self {
             Self::True => "true",
             Self::False => "false",
         }
+        .to_string()
     }
 
     fn label(self) -> String {
         #[cfg(feature = "fluent")]
         {
-            return self.to_fluent_string();
+            self.to_fluent_string()
         }
 
         #[cfg(not(feature = "fluent"))]
         {
             match self {
-                Self::True => "True".to_string(),
-                Self::False => "False".to_string(),
+                Self::True => "True",
+                Self::False => "False",
             }
+            .to_string()
         }
     }
 }
@@ -60,7 +62,7 @@ pub trait Filterable: FilterValue {
 
 impl FilterValue for bool {
     fn to_filter_string(&self) -> String {
-        BoolFilterOption::from_bool(*self).value().to_string()
+        BoolFilterOption::from_bool(*self).value()
     }
 
     fn from_filter_string(s: &str) -> Option<Self> {
@@ -77,13 +79,13 @@ impl Filterable for bool {
         vec![
             FacetedFilterOption {
                 label: BoolFilterOption::True.label(),
-                value: BoolFilterOption::True.value().to_string(),
+                value: BoolFilterOption::True.value(),
                 count: None,
                 icon: None,
             },
             FacetedFilterOption {
                 label: BoolFilterOption::False.label(),
-                value: BoolFilterOption::False.value().to_string(),
+                value: BoolFilterOption::False.value(),
                 count: None,
                 icon: None,
             },

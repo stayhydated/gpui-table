@@ -468,23 +468,23 @@ impl Render for NumberRangeFilter {
         let max_placeholder = Self::max_placeholder_text();
 
         // Keep placeholders reactive to locale changes.
-        if let Some(min_input) = &self.min_input {
-            if self.last_min_placeholder.as_deref() != Some(min_placeholder.as_str()) {
-                self.last_min_placeholder = Some(min_placeholder.clone());
-                let min_placeholder_for_input = min_placeholder.clone();
-                min_input.update(cx, |input, cx| {
-                    input.set_placeholder(min_placeholder_for_input, window, cx);
-                });
-            }
+        if let Some(min_input) = &self.min_input
+            && self.last_min_placeholder.as_deref() != Some(min_placeholder.as_str())
+        {
+            self.last_min_placeholder = Some(min_placeholder.clone());
+            let min_placeholder_for_input = min_placeholder.clone();
+            min_input.update(cx, |input, cx| {
+                input.set_placeholder(min_placeholder_for_input, window, cx);
+            });
         }
-        if let Some(max_input) = &self.max_input {
-            if self.last_max_placeholder.as_deref() != Some(max_placeholder.as_str()) {
-                self.last_max_placeholder = Some(max_placeholder.clone());
-                let max_placeholder_for_input = max_placeholder.clone();
-                max_input.update(cx, |input, cx| {
-                    input.set_placeholder(max_placeholder_for_input, window, cx);
-                });
-            }
+        if let Some(max_input) = &self.max_input
+            && self.last_max_placeholder.as_deref() != Some(max_placeholder.as_str())
+        {
+            self.last_max_placeholder = Some(max_placeholder.clone());
+            let max_placeholder_for_input = max_placeholder.clone();
+            max_input.update(cx, |input, cx| {
+                input.set_placeholder(max_placeholder_for_input, window, cx);
+            });
         }
 
         // Sync components based on what changed last
