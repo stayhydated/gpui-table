@@ -17,10 +17,11 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-#[derive(Clone, Copy, EsFluent)]
+#[derive(Clone, EsFluent)]
 enum FacetedFilterFtl {
     NoResultsFound,
     ClearFilters,
+    SelectedCount { count: String },
 }
 
 pub struct FacetedFilter<T: FilterValue> {
@@ -259,9 +260,12 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                     // Otherwise show individual tags for each selected value
                     if selected_count > 2 {
                         div().child(
-                            Tag::secondary()
-                                .small()
-                                .child(format!("{} selected", selected_count)),
+                            Tag::secondary().small().child(
+                                FacetedFilterFtl::SelectedCount {
+                                    count: selected_count.to_string(),
+                                }
+                                .to_fluent_string(),
+                            ),
                         )
                     } else {
                         div().flex().items_center().gap_1().children(
