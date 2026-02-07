@@ -28,7 +28,7 @@ enum LastChanged {
 }
 
 pub struct NumberRangeFilter {
-    title: String,
+    title: Rc<dyn Fn() -> String>,
     min: Option<Decimal>,
     max: Option<Decimal>,
     range_min: Decimal,
@@ -60,7 +60,17 @@ impl TableFilterComponent for NumberRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+}
 
+impl NumberRangeFilter {
+    fn new_with_title(
+        title: Rc<dyn Fn() -> String>,
+        value: (Option<Decimal>, Option<Decimal>),
+        on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
         cx.new(|_cx| Self {
             title,
             min: value.0,
@@ -78,43 +88,17 @@ impl TableFilterComponent for NumberRangeFilter {
             last_changed: LastChanged::None,
         })
     }
-}
 
-/// Extension trait for chainable configuration on Entity<NumberRangeFilter>
-pub trait NumberRangeFilterExt {
-    /// Set the range bounds for the slider (chainable).
-    ///
-    /// # Example
-    /// ```ignore
-    /// NumberRangeFilter::build("Price", (None, None), on_change, cx)
-    ///     .range(Decimal::ZERO, Decimal::new(1000, 0), cx)
-    ///     .step(Decimal::TEN, cx)
-    /// ```
-    fn range(self, min: Decimal, max: Decimal, cx: &mut App) -> Self;
-
-    /// Set the step size for increment/decrement (chainable).
-    /// Default is 1% of the range.
-    fn step(self, step: Decimal, cx: &mut App) -> Self;
-}
-
-impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
-    fn range(self, min: Decimal, max: Decimal, cx: &mut App) -> Self {
-        self.update(cx, |this, _cx| {
-            this.range_min = min;
-            this.range_max = max;
-        });
-        self
+    /// Create a number range filter with a reactive title provider (e.g. for i18n).
+    pub fn new_for(
+        title: impl Fn() -> String + 'static,
+        value: (Option<Decimal>, Option<Decimal>),
+        on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        Self::new_with_title(Rc::new(title), value, on_change, cx)
     }
 
-    fn step(self, step: Decimal, cx: &mut App) -> Self {
-        self.update(cx, |this, _cx| {
-            this.step_size = Some(step);
-        });
-        self
-    }
-}
-
-impl NumberRangeFilter {
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(format_decimal).unwrap_or_default();
@@ -393,7 +377,7 @@ impl Render for NumberRangeFilter {
             (self.on_change)((self.min, self.max), window, cx);
         }
 
-        let title = self.title.clone();
+        let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity().clone();
@@ -470,5 +454,39 @@ impl Render for NumberRangeFilter {
                         )
                     })
             })
+    }
+}
+
+/// Extension trait for chainable configuration on Entity<NumberRangeFilter>
+pub trait NumberRangeFilterExt {
+    /// Set the range bounds for the slider (chainable).
+    ///
+    /// # Example
+    /// ```ignore
+    /// NumberRangeFilter::build("Price", (None, None), on_change, cx)
+    ///     .range(Decimal::ZERO, Decimal::new(1000, 0), cx)
+    ///     .step(Decimal::TEN, cx)
+    /// ```
+    fn range(self, min: Decimal, max: Decimal, cx: &mut App) -> Self;
+
+    /// Set the step size for increment/decrement (chainable).
+    /// Default is 1% of the range.
+    fn step(self, step: Decimal, cx: &mut App) -> Self;
+}
+
+impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
+    fn range(self, min: Decimal, max: Decimal, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.range_min = min;
+            this.range_max = max;
+        });
+        self
+    }
+
+    fn step(self, step: Decimal, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.step_size = Some(step);
+        });
+        self
     }
 }

@@ -12,7 +12,7 @@ use gpui_component::{
 use std::rc::Rc;
 
 pub struct DateRangeFilter {
-    title: String,
+    title: Rc<dyn Fn() -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
     /// Value when the popover was opened, used to detect changes
     value_on_open: (Option<NaiveDate>, Option<NaiveDate>),
@@ -34,7 +34,17 @@ impl TableFilterComponent for DateRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+}
 
+impl DateRangeFilter {
+    fn new_with_title(
+        title: Rc<dyn Fn() -> String>,
+        value: (Option<NaiveDate>, Option<NaiveDate>),
+        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
         cx.new(|_cx| Self {
             title,
             selected_range: value,
@@ -44,9 +54,17 @@ impl TableFilterComponent for DateRangeFilter {
             _subscriptions: Vec::new(),
         })
     }
-}
 
-impl DateRangeFilter {
+    /// Create a date range filter with a reactive title provider (e.g. for i18n).
+    pub fn new_for(
+        title: impl Fn() -> String + 'static,
+        value: (Option<NaiveDate>, Option<NaiveDate>),
+        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        Self::new_with_title(Rc::new(title), value, on_change, cx)
+    }
+
     fn ensure_calendar(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.calendar.is_none() {
             let (start, end) = self.selected_range;
@@ -142,7 +160,7 @@ impl Render for DateRangeFilter {
         // Ensure calendar exists
         self.ensure_calendar(window, cx);
 
-        let title = self.title.clone();
+        let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity().clone();
