@@ -2981,20 +2981,14 @@ dependencies = [
 name = "gpui-table"
 version = "0.5.0"
 dependencies = [
- "anyhow",
- "es-fluent",
  "gpui",
  "gpui-component",
  "gpui-table-component",
  "gpui-table-core",
  "gpui-table-derive",
  "insta",
- "inventory",
- "rust-embed",
  "serde",
- "serde_json",
  "strum 0.27.2",
- "tracing-subscriber",
 ]
 
 [[package]]
@@ -3010,7 +3004,6 @@ dependencies = [
  "gpui-storybook",
  "gpui-table-core",
  "rust_decimal",
- "serde",
  "strum 0.27.2",
 ]
 
@@ -3018,20 +3011,15 @@ dependencies = [
 name = "gpui-table-core"
 version = "0.5.0"
 dependencies = [
- "anyhow",
  "chrono",
  "derive_more 2.1.1",
  "es-fluent",
  "gpui",
  "gpui-component",
  "inventory",
- "paste",
  "proc-macro2",
- "quote",
  "rust-embed",
  "rust_decimal",
- "serde",
- "serde_json",
  "strum 0.27.2",
  "tracing-subscriber",
 ]
@@ -3042,9 +3030,7 @@ version = "0.5.0"
 dependencies = [
  "crate-paths",
  "darling 0.23.0",
- "gpui-table-core",
  "heck 0.5.0",
- "inventory",
  "proc-macro2",
  "quote",
  "syn 2.0.114",
@@ -3056,8 +3042,6 @@ version = "0.5.0"
 dependencies = [
  "gpui-table-core",
  "heck 0.5.0",
- "inventory",
- "prettyplease",
  "proc-macro2",
  "quote",
  "syn 2.0.114",
@@ -5128,12 +5112,10 @@ name = "prototyping"
 version = "0.1.0"
 dependencies = [
  "gpui-table",
- "gpui-table-component",
  "gpui-table-prototyping-core",
  "heck 0.5.0",
  "inventory",
  "prettyplease",
- "proc-macro2",
  "quote",
  "some-lib",
  "syn 2.0.114",
@@ -6473,7 +6455,6 @@ dependencies = [
 name = "some-lib-tables"
 version = "0.1.0"
 dependencies = [
- "anyhow",
  "chrono",
  "env_logger",
  "es-fluent",
@@ -6486,13 +6467,9 @@ dependencies = [
  "gpui-table",
  "gpui-table-component",
  "gpui_tokio",
- "heck 0.5.0",
- "inventory",
- "log",
  "reqwest_client",
  "rust-embed",
  "rust_decimal",
- "serde",
  "some-lib",
  "strum 0.27.2",
  "tokio",

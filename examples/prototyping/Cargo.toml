@@ -7,12 +7,10 @@ publish = false
 
 [dependencies]
 gpui-table = { features = [ "inventory", "fluent", "rust_decimal", "chrono" ], workspace = true }
-gpui-table-component = { workspace = true }
 gpui-table-prototyping-core = { workspace = true }
 heck = { workspace = true }
 inventory = { workspace = true }
 prettyplease = { workspace = true }
-proc-macro2 = { workspace = true }
 quote = { workspace = true }
 some-lib = { path = "../some-lib" }
 syn = { features = [ "full", "parsing" ], workspace = true }

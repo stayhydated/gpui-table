@@ -7,7 +7,6 @@ license = "Unlicense"
 publish = false
 
 [dependencies]
-anyhow = { workspace = true }
 chrono = { workspace = true }
 env_logger = { workspace = true }
 es-fluent = { workspace = true }
@@ -16,20 +15,16 @@ es-fluent-manager-embedded = { workspace = true }
 fake = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-storybook = { features = ["macros"], workspace = true }
+gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
 gpui-table-component = { workspace = true }
 gpui_tokio = { workspace = true }
-heck = { workspace = true }
-inventory = { workspace = true }
-log = { workspace = true }
 reqwest_client = { workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
-serde = { workspace = true }
 some-lib = { path = "../some-lib" }
 strum = { workspace = true }
-tokio = { features = ["rt-multi-thread", "macros"], workspace = true }
+tokio = { features = [ "rt-multi-thread", "macros" ], workspace = true }
 
 [build-dependencies]
-es-fluent = { features = ["build"], workspace = true }
+es-fluent = { features = [ "build" ], workspace = true }

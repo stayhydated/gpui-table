@@ -14,8 +14,6 @@ readme = "README.md"
 [dependencies]
 gpui-table-core = { workspace = true }
 heck = { workspace = true }
-inventory = { workspace = true }
-prettyplease = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { features = [ "full", "parsing" ], workspace = true }

@@ -3,7 +3,6 @@ pub use gpui_table_derive::*;
 
 pub use gpui_table_core::*;
 
-// Re-export TableDataLoader and TableLoader at the crate root for convenience
 pub use gpui_table_core::TableDataLoader;
 pub use gpui_table_core::TableLoader;
 

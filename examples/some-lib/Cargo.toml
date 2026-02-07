@@ -7,9 +7,15 @@ publish = false
 
 [dependencies]
 chrono = { workspace = true }
-es-fluent = { features = ["derive"], workspace = true }
+es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-manager-embedded = { workspace = true }
-fake = { features = ["derive", "uuid", "random_color", "chrono", "rust_decimal"], workspace = true }
+fake = { features = [
+  "derive",
+  "uuid",
+  "random_color",
+  "chrono",
+  "rust_decimal",
+], workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-table = { features = [
@@ -22,14 +28,14 @@ gpui-table = { features = [
 gpui_tokio = { workspace = true }
 heck = { workspace = true }
 log = { workspace = true }
-reqwest = { features = ["json"], workspace = true }
+reqwest = { features = [ "json" ], workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
-serde = { features = ["derive"], workspace = true }
-strum = { features = ["derive"], workspace = true }
+serde = { features = [ "derive" ], workspace = true }
+strum = { features = [ "derive" ], workspace = true }
 tokio = { workspace = true }
 urlencoding = { workspace = true }
 uuid = { workspace = true }
 
 [build-dependencies]
-es-fluent = { features = ["build"], workspace = true }
+es-fluent = { features = [ "build" ], workspace = true }
