@@ -1,6 +1,5 @@
-//! Debounced text filter component with optional input validation.
-
 use crate::TableFilterComponent;
+use es_fluent::{EsFluent, ToFluentString as _};
 use gpui::{App, Context, Entity, IntoElement, Render, Task, Window, prelude::*, px};
 use gpui_component::{
     Icon, IconName, Sizable as _, h_flex,
@@ -12,10 +11,10 @@ use std::time::Duration;
 /// Debounce delay in milliseconds for filter changes
 const DEBOUNCE_MS: u64 = 300;
 
-/// Validator function used to sanitize or restrict input text.
+/// Text validation function type
 pub type TextValidator = Rc<dyn Fn(&str) -> String>;
 
-/// Built-in validators for common text filtering patterns.
+/// Built-in validators for common text filtering patterns
 pub mod validators {
     /// Only allow ASCII characters
     pub fn ascii_only(s: &str) -> String {
@@ -33,12 +32,13 @@ pub mod validators {
     }
 }
 
-/// A debounced text-input filter component.
-///
-/// Use this for simple string filtering. Values are applied after a short
-/// debounce or immediately on Enter.
+#[derive(Clone, EsFluent)]
+enum TextFilterFtl {
+    Placeholder { title: String },
+}
+
 pub struct TextFilter {
-    title: String,
+    title: Rc<dyn Fn() -> String>,
     value: String,
     input_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(String, &mut Window, &mut App) + 'static>,
@@ -50,6 +50,8 @@ pub struct TextFilter {
     validator: Option<TextValidator>,
     /// Pending validated value to apply to input during render
     pending_validated_value: Option<String>,
+    /// Last placeholder applied to the input state.
+    last_placeholder: Option<String>,
 }
 
 /// Extension trait for configuring TextFilter via method chaining.
@@ -103,8 +105,20 @@ impl TableFilterComponent for TextFilter {
         on_change: impl Fn(Self::Value, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+}
+
+impl TextFilter {
+    fn new_with_title(
+        title: Rc<dyn Fn() -> String>,
+        value: String,
+        on_change: impl Fn(String, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
         cx.new(|_cx| Self {
-            title: title.into(),
+            title,
             value,
             input_state: None,
             on_change: Rc::new(on_change),
@@ -112,17 +126,34 @@ impl TableFilterComponent for TextFilter {
             _debounce_task: None,
             validator: None,
             pending_validated_value: None,
+            last_placeholder: None,
         })
     }
-}
 
-impl TextFilter {
+    /// Create a text filter with a reactive title provider (e.g. for i18n).
+    pub fn new_for(
+        title: impl Fn() -> String + 'static,
+        value: String,
+        on_change: impl Fn(String, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        Self::new_with_title(Rc::new(title), value, on_change, cx)
+    }
+
+    fn placeholder_text(&self) -> String {
+        TextFilterFtl::Placeholder {
+            title: (self.title)(),
+        }
+        .to_fluent_string()
+    }
+
     fn ensure_input_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.input_state.is_none() {
-            let title = self.title.clone();
+            let placeholder = self.placeholder_text();
+            let initial_placeholder = placeholder.clone();
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
-                    .placeholder(format!("Filter {}...", title))
+                    .placeholder(initial_placeholder)
                     .default_value(self.value.clone())
                     .clean_on_escape()
             });
@@ -174,6 +205,7 @@ impl TextFilter {
             .detach();
 
             self.input_state = Some(input);
+            self.last_placeholder = Some(placeholder);
         }
     }
 
@@ -193,6 +225,17 @@ impl Render for TextFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure input state exists
         self.ensure_input_state(window, cx);
+
+        // Keep placeholder reactive to title changes (e.g. locale switches).
+        if let Some(input_state) = &self.input_state {
+            let placeholder = self.placeholder_text();
+            if self.last_placeholder.as_deref() != Some(placeholder.as_str()) {
+                self.last_placeholder = Some(placeholder.clone());
+                input_state.update(cx, |input, cx| {
+                    input.set_placeholder(placeholder, window, cx);
+                });
+            }
+        }
 
         // Apply pending validated value if any
         if let Some(validated) = self.pending_validated_value.take()

@@ -1,6 +1,5 @@
-//! Faceted filter component for multi-select categorical filters.
-
 use crate::TableFilterComponent;
+use es_fluent::{EsFluent, ToFluentString as _};
 use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _,
@@ -18,9 +17,13 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::rc::Rc;
 
-/// A faceted filter for selecting one or more categorical values.
-///
-/// Options can come from a `Filterable` enum or a custom options provider.
+#[derive(Clone, EsFluent)]
+enum FacetedFilterFtl {
+    NoResultsFound,
+    ClearFilters,
+    SelectedCount { count: String },
+}
+
 pub struct FacetedFilter<T: FilterValue> {
     title: Rc<dyn Fn() -> String>,
     options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
@@ -32,7 +35,7 @@ pub struct FacetedFilter<T: FilterValue> {
     _marker: PhantomData<T>,
 }
 
-/// Extension trait for configuring `FacetedFilter` via method chaining.
+/// Extension trait for configuring FacetedFilter via method chaining.
 pub trait FacetedFilterExt {
     /// Enable search functionality for filtering options.
     fn searchable(self, cx: &mut App) -> Self;
@@ -257,9 +260,12 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                     // Otherwise show individual tags for each selected value
                     if selected_count > 2 {
                         div().child(
-                            Tag::secondary()
-                                .small()
-                                .child(format!("{} selected", selected_count)),
+                            Tag::secondary().small().child(
+                                FacetedFilterFtl::SelectedCount {
+                                    count: selected_count.to_string(),
+                                }
+                                .to_fluent_string(),
+                            ),
                         )
                     } else {
                         div().flex().items_center().gap_1().children(
@@ -411,7 +417,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                         .justify_center()
                                         .text_sm()
                                         .text_color(cx.theme().muted_foreground)
-                                        .child("No results found"),
+                                        .child(FacetedFilterFtl::NoResultsFound.to_fluent_string()),
                                 )
                             }),
                     )
@@ -422,7 +428,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .ghost()
                                     .w_full()
                                     .justify_center()
-                                    .label("Clear filters")
+                                    .label(FacetedFilterFtl::ClearFilters.to_fluent_string())
                                     .on_click(move |_, window, cx| {
                                         clear_view.update(cx, |this, cx| {
                                             this.clear_filters(window, cx);

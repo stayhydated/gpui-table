@@ -1,5 +1,3 @@
-//! Calendar-backed date range filter component.
-
 use crate::TableFilterComponent;
 use chrono::NaiveDate;
 use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
@@ -13,9 +11,6 @@ use gpui_component::{
 };
 use std::rc::Rc;
 
-/// A date range filter built on the GPUI calendar control.
-///
-/// Selecting dates updates the range; changes are applied when the popover closes.
 pub struct DateRangeFilter {
     title: Rc<dyn Fn() -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
