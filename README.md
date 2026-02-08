@@ -52,7 +52,7 @@ See `examples/prototyping` for a working generator.
 
 ## Examples
 
-* `examples/i18n`: i18n resources
-* `examples/some-lib`: crate types shared by examples
-* `examples/some-lib-tables`: storybook-like GPUI app showcasing tables
-* `examples/prototyping`: generator for table stories and scaffolding
+- `examples/i18n`: i18n resources
+- `examples/some-lib`: crate types shared by examples
+- `examples/some-lib-tables`: storybook-like GPUI app showcasing tables
+- `examples/prototyping`: generator for table stories and scaffolding

@@ -1,23 +1,24 @@
 # gpui-table
 
-Facade crate for the `gpui-table` ecosystem. Re-exports core traits, derive macros,
-and optional filter UI components so applications only need one dependency.
+Facade crate for the `gpui-table` ecosystem. Re-exports core traits and derive
+macros so applications can use a single API for metadata and macro generation.
 
 ## Install
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["component", "inventory", "fluent", "rust_decimal", "chrono"] }
+gpui-table = { version = "0.5", features = ["inventory", "fluent", "rust_decimal", "chrono"] }
+# Needed when using #[gpui_table(filters)] generated filter entities:
+gpui-table-component = { version = "0.5" }
 ```
 
 ## Features
 
-* `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
-* `chrono` (default): date `TableCell` support + date-range filter helpers
-* `component`: filter UI components under `gpui_table::component`
-* `inventory`: registers table metadata for tooling
-* `fluent`: localized titles/labels via `es-fluent`
-* `rust_decimal`: numeric range helpers for filters
+- `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
+- `chrono` (default): date `TableCell` support + date-range filter helpers
+- `inventory`: registers table metadata for tooling
+- `fluent`: localized titles/labels via `es-fluent`
+- `rust_decimal`: numeric range helpers for filters
 
 ## Quick example
 
@@ -52,7 +53,6 @@ impl TableLoader for UserTableDelegate {
 
 - `gpui_table_core` traits and filter types (including `TableLoader`/`TableDataLoader`)
 - `gpui_table_derive` macros (with `derive`)
-- `gpui_table::component` filter components + extension traits (with `component`)
 
-Note: `TableStatusBar` lives in `gpui-table-component` and is not re-exported by
-the facade crate.
+Note: filter UI components and `TableStatusBar` live in `gpui-table-component`
+and are not re-exported by the facade crate.
