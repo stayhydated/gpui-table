@@ -1,95 +1,101 @@
-item-acquired_on = Acquired On
-item-color = Color
-item-id = Id
-item-name = Name
-item-weight = Weight
-item_this = Item Variants
+## 项目
 
-## ProductCategory
+item_this = 物品
 
-product_category-Beauty = Beauty
-product_category-Fragrances = Fragrances
-product_category-Furniture = Furniture
-product_category-Groceries = Groceries
-product_category-HomeDecoration = Home Decoration
-product_category-KitchenAccessories = Kitchen Accessories
-product_category-Laptops = Laptops
-product_category-MensShirts = Mens Shirts
-product_category-MensShoes = Mens Shoes
-product_category-MensWatches = Mens Watches
-product_category-MobileAccessories = Mobile Accessories
-product_category-Motorcycle = Motorcycle
-product_category-SkinCare = Skin Care
-product_category-Smartphones = Smartphones
-product_category-SportsAccessories = Sports Accessories
-product_category-Sunglasses = Sunglasses
-product_category-Tablets = Tablets
-product_category-Tops = Tops
-product_category-Vehicle = Vehicle
-product_category-WomensBags = Womens Bags
-product_category-WomensDresses = Womens Dresses
-product_category-WomensJewellery = Womens Jewellery
-product_category-WomensShoes = Womens Shoes
-product_category-WomensWatches = Womens Watches
-product_description-brand = Brand
-product_description-category = Category
-product_description-discount_percentage = Discount Percentage
-product_description-id = Id
-product_description-price = Price
-product_description-rating = Rating
-product_description-stock = Stock
-product_description-title = Title
+## 商品
 
-## ProductDescriptionVariants
+product_this = 商品
 
-product_description_this = Product Description Variants
-product_label-brand = Brand
-product_label-category = Category
-product_label-discount_percentage = Discount Percentage
-product_label-id = Id
-product_label-price = Price
-product_label-rating = Rating
-product_label-stock = Stock
-product_label-title = Title
+## 用户
 
-## ProductLabelVariants
+user_this = 用户
 
-product_label_this = Product Label Variants
+## ItemVariants
 
-## Product
+item_variants_this = 物品
+item_variants-acquired_on = 获取于
+item_variants-color = 颜色
+item_variants-id = 编号
+item_variants-name = 名称
+item_variants-weight = 重量
 
-product_this = Product
-user_description-active = Active
-user_description-age = Age
-user_description-created_at = Created At
-user_description-debt = Debt
-user_description-email = Email
-user_description-id = Id
-user_description-name = Name
-user_description-status = Status
+## 产品类别
 
-## UserDescriptionVariants
+product_category-Beauty = 美容
+product_category-Fragrances = 香水
+product_category-Furniture = 家具
+product_category-Groceries = 杂货
+product_category-HomeDecoration = 家居装饰
+product_category-KitchenAccessories = 厨房配件
+product_category-Laptops = 笔记本电脑
+product_category-MensShirts = 男士衬衫
+product_category-MensShoes = 男士鞋
+product_category-MensWatches = 男士手表
+product_category-MobileAccessories = 手机配件
+product_category-Motorcycle = 摩托车
+product_category-SkinCare = 护肤
+product_category-Smartphones = 智能手机
+product_category-SportsAccessories = 运动配件
+product_category-Sunglasses = 太阳镜
+product_category-Tablets = 平板电脑
+product_category-Tops = 上衣
+product_category-Vehicle = 车辆
+product_category-WomensBags = 女包
+product_category-WomensDresses = 女士连衣裙
+product_category-WomensJewellery = 女士珠宝
+product_category-WomensShoes = 女士鞋
+product_category-WomensWatches = 女士手表
 
-user_description_this = User Description Variants
-user_label-active = Active
-user_label-age = Age
-user_label-created_at = Created At
-user_label-debt = Debt
-user_label-email = Email
-user_label-id = Id
-user_label-name = Name
-user_label-status = Status
+## 商品描述变体
 
-## UserLabelVariants
+product_description_variants_this = 商品描述
+product_description_variants-brand = 品牌
+product_description_variants-category = 类别
+product_description_variants-discount_percentage = 折扣百分比
+product_description_variants-id = 编号
+product_description_variants-price = 价格
+product_description_variants-rating = 评分
+product_description_variants-stock = 库存
+product_description_variants-title = 标题
 
-user_label_this = User Label Variants
+## 商品标签变体
 
-## UserStatus
+product_label_variants_this = 商品标签
+product_label_variants-brand = 品牌
+product_label_variants-category = 类别
+product_label_variants-discount_percentage = 折扣百分比
+product_label_variants-id = 编号
+product_label_variants-price = 价格
+product_label_variants-rating = 评分
+product_label_variants-stock = 库存
+product_label_variants-title = 标题
 
-user_status-Active = Active
-user_status-Offline = Offline
-user_status-Suspended = Suspended
+## 用户描述变体
 
-## User
+user_description_variants_this = 用户描述
+user_description_variants-active = 活跃
+user_description_variants-age = 年龄
+user_description_variants-created_at = 创建时间
+user_description_variants-debt = 债务
+user_description_variants-email = 电子邮件
+user_description_variants-id = 编号
+user_description_variants-name = 姓名
+user_description_variants-status = 状态
 
-user_this = User
+## 用户标签变体
+
+user_label_variants_this = 用户标签
+user_label_variants-active = 活跃
+user_label_variants-age = 年龄
+user_label_variants-created_at = 创建时间
+user_label_variants-debt = 债务
+user_label_variants-email = 电子邮件
+user_label_variants-id = 编号
+user_label_variants-name = 姓名
+user_label_variants-status = 状态
+
+## 用户状态
+
+user_status-Active = 活跃
+user_status-Offline = 离线
+user_status-Suspended = 已暂停

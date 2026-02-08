@@ -18,13 +18,8 @@ fake = { features = [
 ], workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table = { features = [
-  "fluent",
-  "inventory",
-  "rust_decimal",
-  "chrono",
-  "component",
-], workspace = true }
+gpui-table = { features = [ "fluent", "inventory", "rust_decimal", "chrono" ], workspace = true }
+gpui-table-component = { workspace = true }
 gpui_tokio = { workspace = true }
 heck = { workspace = true }
 log = { workspace = true }
@@ -36,3 +31,9 @@ strum = { features = [ "derive" ], workspace = true }
 tokio = { workspace = true }
 urlencoding = { workspace = true }
 uuid = { workspace = true }
+
+[build-dependencies]
+es-fluent = { features = [ "build" ], workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = [ "rust-embed" ]

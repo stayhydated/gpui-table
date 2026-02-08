@@ -1,5 +1,6 @@
-## ItemVariants
+## Item
 
+item_this = Item
 
 ## Product
 
@@ -9,15 +10,14 @@ product_this = Product
 
 user_this = User
 
-## Item
+## ItemVariants
 
-item_this = Item
-item_this = Item Variants
-item-acquired_on = Acquired On
-item-color = Color
-item-id = Id
-item-name = Name
-item-weight = Weight
+item_variants_this = Item
+item_variants-acquired_on = Acquired On
+item_variants-color = Color
+item_variants-id = Id
+item_variants-name = Name
+item_variants-weight = Weight
 
 ## ProductCategory
 
@@ -48,51 +48,51 @@ product_category-WomensWatches = Womens Watches
 
 ## ProductDescriptionVariants
 
-product_description_this = Product Description Variants
-product_description-brand = Brand
-product_description-category = Category
-product_description-discount_percentage = Discount Percentage
-product_description-id = Id
-product_description-price = Price
-product_description-rating = Rating
-product_description-stock = Stock
-product_description-title = Title
+product_description_variants_this = Product Description
+product_description_variants-brand = Brand
+product_description_variants-category = Category
+product_description_variants-discount_percentage = Discount Percentage
+product_description_variants-id = Id
+product_description_variants-price = Price
+product_description_variants-rating = Rating
+product_description_variants-stock = Stock
+product_description_variants-title = Title
 
 ## ProductLabelVariants
 
-product_label_this = Product Label Variants
-product_label-brand = Brand
-product_label-category = Category
-product_label-discount_percentage = Discount Percentage
-product_label-id = Id
-product_label-price = Price
-product_label-rating = Rating
-product_label-stock = Stock
-product_label-title = Title
+product_label_variants_this = Product Label
+product_label_variants-brand = Brand
+product_label_variants-category = Category
+product_label_variants-discount_percentage = Discount Percentage
+product_label_variants-id = Id
+product_label_variants-price = Price
+product_label_variants-rating = Rating
+product_label_variants-stock = Stock
+product_label_variants-title = Title
 
 ## UserDescriptionVariants
 
-user_description_this = User Description Variants
-user_description-active = Active
-user_description-age = Age
-user_description-created_at = Created At
-user_description-debt = Debt
-user_description-email = Email
-user_description-id = Id
-user_description-name = Name
-user_description-status = Status
+user_description_variants_this = User Description
+user_description_variants-active = Active
+user_description_variants-age = Age
+user_description_variants-created_at = Created At
+user_description_variants-debt = Debt
+user_description_variants-email = Email
+user_description_variants-id = Id
+user_description_variants-name = Name
+user_description_variants-status = Status
 
 ## UserLabelVariants
 
-user_label_this = User Label Variants
-user_label-active = Active
-user_label-age = Age
-user_label-created_at = Created At
-user_label-debt = Debt
-user_label-email = Email
-user_label-id = Id
-user_label-name = Name
-user_label-status = Status
+user_label_variants_this = User Label
+user_label_variants-active = Active
+user_label_variants-age = Age
+user_label_variants-created_at = Created At
+user_label_variants-debt = Debt
+user_label_variants-email = Email
+user_label_variants-id = Id
+user_label_variants-name = Name
+user_label_variants-status = Status
 
 ## UserStatus
 

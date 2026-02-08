@@ -10,16 +10,19 @@ readme = "README.md"
 
 [dependencies]
 chrono = { features = [ "serde" ], workspace = true }
-es-fluent = { workspace = true }
+es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-lang = { workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-storybook = { workspace = true }
-gpui-table-core = { workspace = true }
+gpui-table-core = { features = [ "fluent" ], workspace = true }
+rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
-serde = { features = [ "derive" ], workspace = true }
 strum = { features = [ "derive" ], workspace = true }
+
+[build-dependencies]
+es-fluent = { features = [ "build" ], workspace = true }
 
 [lints]
 workspace = true

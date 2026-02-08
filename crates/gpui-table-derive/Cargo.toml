@@ -21,9 +21,7 @@ inventory = [  ]
 [dependencies]
 crate-paths = { workspace = true }
 darling = { workspace = true }
-gpui-table-core = { workspace = true }
 heck = { workspace = true }
-inventory = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { features = [ "full" ], workspace = true }

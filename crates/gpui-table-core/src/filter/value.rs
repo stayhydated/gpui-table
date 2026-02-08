@@ -1,6 +1,45 @@
 //! Filter value traits and implementations.
 
 use super::config::FacetedFilterOption;
+#[cfg(feature = "fluent")]
+use es_fluent::{EsFluent, ToFluentString as _};
+
+#[cfg_attr(feature = "fluent", derive(EsFluent))]
+#[derive(Clone, Copy)]
+enum BoolFilterOption {
+    True,
+    False,
+}
+
+impl BoolFilterOption {
+    fn from_bool(value: bool) -> Self {
+        if value { Self::True } else { Self::False }
+    }
+
+    fn value(self) -> String {
+        match self {
+            Self::True => "true",
+            Self::False => "false",
+        }
+        .to_string()
+    }
+
+    fn label(self) -> String {
+        #[cfg(feature = "fluent")]
+        {
+            self.to_fluent_string()
+        }
+
+        #[cfg(not(feature = "fluent"))]
+        {
+            match self {
+                Self::True => "True",
+                Self::False => "False",
+            }
+            .to_string()
+        }
+    }
+}
 
 /// Trait for types that can be used as filter values in a `HashSet<T>`.
 ///
@@ -23,7 +62,7 @@ pub trait Filterable: FilterValue {
 
 impl FilterValue for bool {
     fn to_filter_string(&self) -> String {
-        if *self { "true" } else { "false" }.to_string()
+        BoolFilterOption::from_bool(*self).value()
     }
 
     fn from_filter_string(s: &str) -> Option<Self> {
@@ -39,14 +78,14 @@ impl Filterable for bool {
     fn options() -> Vec<FacetedFilterOption> {
         vec![
             FacetedFilterOption {
-                label: "True".to_string(),
-                value: "true".to_string(),
+                label: BoolFilterOption::True.label(),
+                value: BoolFilterOption::True.value(),
                 count: None,
                 icon: None,
             },
             FacetedFilterOption {
-                label: "False".to_string(),
-                value: "false".to_string(),
+                label: BoolFilterOption::False.label(),
+                value: BoolFilterOption::False.value(),
                 count: None,
                 icon: None,
             },
