@@ -2,6 +2,7 @@ pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
 pub mod number_range_filter;
+pub mod reset_filters;
 mod stories;
 pub mod table_status_bar;
 pub mod text_filter;
@@ -10,6 +11,7 @@ pub mod text_filter;
 pub use date_range_filter::DateRangeFilterExt;
 pub use faceted_filter::FacetedFilterExt;
 pub use number_range_filter::NumberRangeFilterExt;
+pub use reset_filters::ResetFilters;
 pub use table_status_bar::TableStatusBar;
 pub use text_filter::TextFilterExt;
 

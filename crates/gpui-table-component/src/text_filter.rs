@@ -237,10 +237,39 @@ impl TextFilter {
         }
     }
 
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.value.clear();
+        self.pending_apply = false;
+        self._debounce_task = None;
+        self.pending_validated_value = None;
+
+        if let Some(input_state) = &self.input_state {
+            input_state.update(cx, |input, cx| {
+                input.set_value("", window, cx);
+            });
+        }
+
+        if notify_change {
+            (self.on_change)(self.value.clone(), window, cx);
+        }
+
+        cx.notify();
+    }
+
     /// Apply the current filter value via callback.
     /// Call this from parent when you want to trigger the on_change.
     pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         (self.on_change)(self.value.clone(), window, cx);
+    }
+
+    /// Reset the filter value and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset the filter value without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the current filter value.

@@ -38,7 +38,8 @@ columns, filters, and optional registry metadata.
    `TableDelegate` implementations.
 1. Filter metadata expands into `FilterEntities`, `FilterValues`, and
    `Matchable` implementations, plus grouped filter render helpers
-   (text/number/faceted/date/all).
+   (text/number/faceted/date/all), a localized reset-button binding, and
+   single-action filter reset wiring.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 
 ## Feature flags

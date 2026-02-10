@@ -106,15 +106,25 @@ impl DateRangeFilter {
         }
     }
 
-    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_range = (None, None);
+        self.value_on_open = (None, None);
+
         if let Some(calendar) = &self.calendar {
             calendar.update(cx, |cal, cx| {
                 cal.set_date(Date::Range(None, None), window, cx);
             });
         }
-        (self.on_change)((None, None), window, cx);
+
+        if notify_change {
+            (self.on_change)((None, None), window, cx);
+        }
+
         cx.notify();
+    }
+
+    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
     }
 
     fn has_value(&self) -> bool {
@@ -138,6 +148,16 @@ impl DateRangeFilter {
     /// Call this from parent when you want to trigger the on_change.
     pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         (self.on_change)(self.selected_range, window, cx);
+    }
+
+    /// Reset the date range and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset the date range without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the current filter value.

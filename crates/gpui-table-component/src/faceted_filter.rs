@@ -197,10 +197,28 @@ impl<T: FilterValue> FacetedFilter<T> {
         cx.notify();
     }
 
-    fn clear_filters(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_values.clear();
-        (self.on_change)(self.selected_values.clone(), window, cx);
+
+        if notify_change {
+            (self.on_change)(self.selected_values.clone(), window, cx);
+        }
+
         cx.notify();
+    }
+
+    fn clear_filters(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset selected values and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset selected values without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the labels of selected values for display.

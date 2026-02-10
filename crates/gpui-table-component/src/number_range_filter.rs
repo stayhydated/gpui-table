@@ -414,9 +414,12 @@ impl NumberRangeFilter {
         self.last_changed = LastChanged::None;
     }
 
-    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.min = None;
         self.max = None;
+        self.pending_apply = false;
+        self._debounce_task = None;
+
         if let Some(input) = &self.min_input {
             input.update(cx, |state, cx| {
                 state.set_value("", window, cx);
@@ -435,10 +438,18 @@ impl NumberRangeFilter {
                 state.set_value(range_min..range_max, window, cx);
             });
         }
-        // Clear applies immediately (no debounce for clear action)
-        (self.on_change)((None, None), window, cx);
+
+        if notify_change {
+            // Reset applies immediately (no debounce for clear action)
+            (self.on_change)((None, None), window, cx);
+        }
+
         self.last_changed = LastChanged::None;
         cx.notify();
+    }
+
+    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
     }
 
     fn has_value(&self) -> bool {
@@ -449,6 +460,16 @@ impl NumberRangeFilter {
     /// Call this from parent when you want to trigger the on_change.
     pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         (self.on_change)((self.min, self.max), window, cx);
+    }
+
+    /// Reset the range value and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset the range value without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the current filter value.

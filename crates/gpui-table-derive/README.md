@@ -47,3 +47,11 @@ impl TableLoader for UserTableDelegate {
 - `filter(number_range(min = 0, max = 100, step = 5))`
 - `filter(date_range())`
 - `filter(faceted(searchable))`
+
+## Generated reset bindings
+
+When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also include:
+
+- `reset_filters(&self, window, cx)` to clear all filters and trigger one reload callback.
+- `reset_button(&self)` to build a localized `ResetFilters` control.
+- `all_filters_with_reset(&self)` to render filters plus the reset control.

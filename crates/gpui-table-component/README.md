@@ -8,6 +8,7 @@ GPUI filter UI components and a table status bar used by `gpui-table`.
 - `FacetedFilter`
 - `NumberRangeFilter`
 - `DateRangeFilter`
+- `ResetFilters`
 - `TableStatusBar`
 
 ## Traits
