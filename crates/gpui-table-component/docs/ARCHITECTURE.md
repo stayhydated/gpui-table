@@ -38,6 +38,8 @@ status bar. These components are used by the generated filter entities when
 
 - Add new filter component types by implementing `TableFilterComponent`.
 - Extend filter components with chainable configuration methods (extension traits).
+- Style existing filter components via chainable extension-trait setters that accept
+  `gpui::StyleRefinement` (for example trigger/input/popover segment styles).
 
 ## Notes
 

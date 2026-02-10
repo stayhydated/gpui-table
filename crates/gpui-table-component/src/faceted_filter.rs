@@ -1,8 +1,10 @@
 use crate::TableFilterComponent;
 use es_fluent::{EsFluent, ToFluentString as _};
-use gpui::{App, Context, Entity, IntoElement, Render, Window, div, prelude::*, px};
+use gpui::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Window, div, prelude::*, px,
+};
 use gpui_component::{
-    ActiveTheme as _, Icon, IconName, Sizable as _,
+    ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
     divider::Divider,
@@ -28,6 +30,13 @@ pub struct FacetedFilter<T: FilterValue> {
     title: Rc<dyn Fn() -> String>,
     options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
     selected_values: HashSet<T>,
+    trigger_style: StyleRefinement,
+    selected_tag_style: StyleRefinement,
+    popover_style: StyleRefinement,
+    search_input_style: StyleRefinement,
+    options_list_style: StyleRefinement,
+    option_button_style: StyleRefinement,
+    clear_button_style: StyleRefinement,
     search_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(HashSet<T>, &mut Window, &mut App) + 'static>,
     /// Whether to show the search input (default: false)
@@ -36,15 +45,92 @@ pub struct FacetedFilter<T: FilterValue> {
 }
 
 /// Extension trait for configuring FacetedFilter via method chaining.
-pub trait FacetedFilterExt {
+pub trait FacetedFilterExt: Sized {
     /// Enable search functionality for filtering options.
     fn searchable(self, cx: &mut App) -> Self;
+    /// Set style refinement for the trigger button.
+    fn trigger_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for selected-value tags in the trigger.
+    fn selected_tag_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the popover root content.
+    fn popover_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the search input.
+    fn search_input_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the options list container.
+    fn options_list_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for each option button.
+    fn option_button_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the clear-filters button.
+    fn clear_button_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
 }
 
 impl<T: FilterValue> FacetedFilterExt for Entity<FacetedFilter<T>> {
     fn searchable(self, cx: &mut App) -> Self {
         self.update(cx, |this, _| {
             this.show_search = true;
+        });
+        self
+    }
+
+    fn trigger_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.trigger_style = style;
+        });
+        self
+    }
+
+    fn selected_tag_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.selected_tag_style = style;
+        });
+        self
+    }
+
+    fn popover_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.popover_style = style;
+        });
+        self
+    }
+
+    fn search_input_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.search_input_style = style;
+        });
+        self
+    }
+
+    fn options_list_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.options_list_style = style;
+        });
+        self
+    }
+
+    fn option_button_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.option_button_style = style;
+        });
+        self
+    }
+
+    fn clear_button_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.clear_button_style = style;
         });
         self
     }
@@ -68,6 +154,13 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
             title: Rc::new(move || title.clone()),
             options: Rc::new(Vec::new),
             selected_values: value,
+            trigger_style: StyleRefinement::default(),
+            selected_tag_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            search_input_style: StyleRefinement::default(),
+            options_list_style: StyleRefinement::default(),
+            option_button_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
             search_state: None,
             on_change: Rc::new(on_change),
             show_search: false,
@@ -174,6 +267,13 @@ impl<T: Filterable> FacetedFilter<T> {
             title: Rc::new(title),
             options: Rc::new(T::options),
             selected_values,
+            trigger_style: StyleRefinement::default(),
+            selected_tag_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            search_input_style: StyleRefinement::default(),
+            options_list_style: StyleRefinement::default(),
+            option_button_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
             search_state: None,
             on_change: Rc::new(on_change),
             show_search: false,
@@ -196,6 +296,13 @@ impl<T: Filterable> FacetedFilter<T> {
             title: Rc::new(title),
             options: Rc::new(options),
             selected_values,
+            trigger_style: StyleRefinement::default(),
+            selected_tag_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            search_input_style: StyleRefinement::default(),
+            options_list_style: StyleRefinement::default(),
+            option_button_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
             search_state: None,
             on_change: Rc::new(on_change),
             show_search: false,
@@ -218,6 +325,13 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
 
         let view = cx.entity().clone();
         let options_fn = self.options.clone();
+        let trigger_style = self.trigger_style.clone();
+        let selected_tag_style = self.selected_tag_style.clone();
+        let popover_style = self.popover_style.clone();
+        let search_input_style = self.search_input_style.clone();
+        let options_list_style = self.options_list_style.clone();
+        let option_button_style = self.option_button_style.clone();
+        let clear_button_style = self.clear_button_style.clone();
         // Convert selected values to strings for use in the closure
         let selected_strings: HashSet<String> = self
             .selected_values
@@ -236,6 +350,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
         let clear_view = view.clone();
         let trigger = Button::new("faceted-filter-trigger")
             .outline()
+            .refine_style(&trigger_style)
             .child(
                 div()
                     .id("clear-icon")
@@ -260,18 +375,24 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                     // Otherwise show individual tags for each selected value
                     if selected_count > 2 {
                         div().child(
-                            Tag::secondary().small().child(
-                                FacetedFilterFtl::SelectedCount {
-                                    count: selected_count.to_string(),
-                                }
-                                .to_fluent_string(),
-                            ),
+                            Tag::secondary()
+                                .small()
+                                .child(
+                                    FacetedFilterFtl::SelectedCount {
+                                        count: selected_count.to_string(),
+                                    }
+                                    .to_fluent_string(),
+                                )
+                                .refine_style(&selected_tag_style),
                         )
                     } else {
                         div().flex().items_center().gap_1().children(
-                            selected_labels
-                                .into_iter()
-                                .map(|label| Tag::secondary().small().child(label)),
+                            selected_labels.into_iter().map(|label| {
+                                Tag::secondary()
+                                    .small()
+                                    .child(label)
+                                    .refine_style(&selected_tag_style)
+                            }),
                         )
                     },
                 )
@@ -281,6 +402,11 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
             .trigger(trigger)
             .content(move |_, _window, cx| {
                 let clear_view = view.clone();
+                let option_button_style = option_button_style.clone();
+                let search_input_style = search_input_style.clone();
+                let options_list_style = options_list_style.clone();
+                let popover_style = popover_style.clone();
+                let clear_button_style = clear_button_style.clone();
 
                 // Get fresh options (for i18n reactivity)
                 let options = options_fn();
@@ -324,6 +450,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .ghost()
                                     .flex_1()
                                     .justify_start()
+                                    .refine_style(&option_button_style)
                                     .child(
                                         h_flex()
                                             .w_full()
@@ -391,12 +518,14 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
 
                 v_flex()
                     .w_56()
+                    .refine_style(&popover_style)
                     .when_some(search_state.clone(), |this, search_state| {
                         this.child(
                             div().p_2().child(
                                 Input::new(&search_state)
                                     .small()
-                                    .prefix(Icon::new(IconName::Search).xsmall()),
+                                    .prefix(Icon::new(IconName::Search).xsmall())
+                                    .refine_style(&search_input_style),
                             ),
                         )
                         .child(Divider::horizontal())
@@ -407,6 +536,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                             .max_h_72()
                             .overflow_y_scroll()
                             .p_1()
+                            .refine_style(&options_list_style)
                             .when(has_results, |this| this.child(options_view))
                             .when(!has_results, |this| {
                                 this.child(
@@ -429,6 +559,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .w_full()
                                     .justify_center()
                                     .label(FacetedFilterFtl::ClearFilters.to_fluent_string())
+                                    .refine_style(&clear_button_style)
                                     .on_click(move |_, window, cx| {
                                         clear_view.update(cx, |this, cx| {
                                             this.clear_filters(window, cx);

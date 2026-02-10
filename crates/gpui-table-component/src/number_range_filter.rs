@@ -1,8 +1,11 @@
 use crate::TableFilterComponent;
 use es_fluent::{EsFluent, ToFluentString as _};
-use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Task, Window, prelude::*, px};
+use gpui::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Task, Window,
+    prelude::*, px,
+};
 use gpui_component::{
-    ActiveTheme as _, Icon, IconName, Sizable as _,
+    ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     divider::Divider,
     h_flex,
@@ -72,6 +75,14 @@ pub struct NumberRangeFilter {
     range_min: Decimal,
     range_max: Decimal,
     step_size: Option<Decimal>,
+    trigger_style: StyleRefinement,
+    popover_style: StyleRefinement,
+    inputs_row_style: StyleRefinement,
+    min_input_style: StyleRefinement,
+    max_input_style: StyleRefinement,
+    between_style: StyleRefinement,
+    slider_style: StyleRefinement,
+    clear_button_style: StyleRefinement,
     min_input: Option<Entity<InputState>>,
     max_input: Option<Entity<InputState>>,
     slider_state: Option<Entity<SliderState>>,
@@ -120,6 +131,14 @@ impl NumberRangeFilter {
             range_min: Decimal::ZERO,
             range_max: Decimal::ONE_HUNDRED,
             step_size: None,
+            trigger_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            inputs_row_style: StyleRefinement::default(),
+            min_input_style: StyleRefinement::default(),
+            max_input_style: StyleRefinement::default(),
+            between_style: StyleRefinement::default(),
+            slider_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
             min_input: None,
             max_input: None,
             slider_state: None,
@@ -504,6 +523,14 @@ impl Render for NumberRangeFilter {
         let max_input = self.max_input.clone().unwrap();
         let slider_state = self.slider_state.clone().unwrap();
         let between = Self::between_text();
+        let trigger_style = self.trigger_style.clone();
+        let popover_style = self.popover_style.clone();
+        let inputs_row_style = self.inputs_row_style.clone();
+        let min_input_style = self.min_input_style.clone();
+        let max_input_style = self.max_input_style.clone();
+        let between_style = self.between_style.clone();
+        let slider_style = self.slider_style.clone();
+        let clear_button_style = self.clear_button_style.clone();
         let between_width_px = Self::between_width_px(&between);
         let input_width_px =
             Self::input_width_px(between_width_px, &min_placeholder, &max_placeholder);
@@ -520,6 +547,7 @@ impl Render for NumberRangeFilter {
         let clear_view = view.clone();
         let trigger = Button::new("number-range-trigger")
             .outline()
+            .refine_style(&trigger_style)
             .child(
                 gpui::div()
                     .id("clear-icon")
@@ -546,19 +574,26 @@ impl Render for NumberRangeFilter {
             .trigger(trigger)
             .content(move |_, _window, cx| {
                 let clear_view_inner = view.clone();
+                let between_style = between_style.clone();
+                let clear_button_style = clear_button_style.clone();
                 v_flex()
                     .p_3()
                     .gap_3()
                     .w(px(popover_width_px))
+                    .refine_style(&popover_style)
                     .child(
                         h_flex()
                             .w(px(row_width_px))
                             .gap_2()
                             .items_center()
+                            .refine_style(&inputs_row_style)
                             .child(
-                                gpui::div()
-                                    .w(px(input_width_px))
-                                    .child(NumberInput::new(&min_input).small().w_full()),
+                                gpui::div().w(px(input_width_px)).child(
+                                    NumberInput::new(&min_input)
+                                        .small()
+                                        .w_full()
+                                        .refine_style(&min_input_style),
+                                ),
                             )
                             .child(
                                 gpui::div()
@@ -569,16 +604,20 @@ impl Render for NumberRangeFilter {
                                         gpui::div()
                                             .text_sm()
                                             .text_color(cx.theme().muted_foreground)
+                                            .refine_style(&between_style)
                                             .child(between.clone()),
                                     ),
                             )
                             .child(
-                                gpui::div()
-                                    .w(px(input_width_px))
-                                    .child(NumberInput::new(&max_input).small().w_full()),
+                                gpui::div().w(px(input_width_px)).child(
+                                    NumberInput::new(&max_input)
+                                        .small()
+                                        .w_full()
+                                        .refine_style(&max_input_style),
+                                ),
                             ),
                     )
-                    .child(Slider::new(&slider_state))
+                    .child(Slider::new(&slider_state).refine_style(&slider_style))
                     .when(has_value, |this| {
                         this.child(
                             Button::new("clear-btn")
@@ -586,6 +625,7 @@ impl Render for NumberRangeFilter {
                                 .small()
                                 .w_full()
                                 .label("Clear")
+                                .refine_style(&clear_button_style)
                                 .on_click(move |_, window, cx| {
                                     clear_view_inner.update(cx, |this, cx| {
                                         this.clear(window, cx);
@@ -598,7 +638,7 @@ impl Render for NumberRangeFilter {
 }
 
 /// Extension trait for chainable configuration on Entity<NumberRangeFilter>
-pub trait NumberRangeFilterExt {
+pub trait NumberRangeFilterExt: Sized {
     /// Set the range bounds for the slider (chainable).
     ///
     /// # Example
@@ -612,6 +652,38 @@ pub trait NumberRangeFilterExt {
     /// Set the step size for increment/decrement (chainable).
     /// Default is 1% of the range.
     fn step(self, step: Decimal, cx: &mut App) -> Self;
+    /// Set style refinement for the trigger button.
+    fn trigger_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the popover root content.
+    fn popover_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the min/max input row.
+    fn inputs_row_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the minimum input.
+    fn min_input_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the maximum input.
+    fn max_input_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the localized "between" label.
+    fn between_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the slider.
+    fn slider_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the clear button in the popover.
+    fn clear_button_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
 }
 
 impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
@@ -626,6 +698,62 @@ impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
     fn step(self, step: Decimal, cx: &mut App) -> Self {
         self.update(cx, |this, _cx| {
             this.step_size = Some(step);
+        });
+        self
+    }
+
+    fn trigger_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.trigger_style = style;
+        });
+        self
+    }
+
+    fn popover_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.popover_style = style;
+        });
+        self
+    }
+
+    fn inputs_row_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.inputs_row_style = style;
+        });
+        self
+    }
+
+    fn min_input_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.min_input_style = style;
+        });
+        self
+    }
+
+    fn max_input_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.max_input_style = style;
+        });
+        self
+    }
+
+    fn between_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.between_style = style;
+        });
+        self
+    }
+
+    fn slider_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.slider_style = style;
+        });
+        self
+    }
+
+    fn clear_button_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _cx| {
+            this.clear_button_style = style;
         });
         self
     }
