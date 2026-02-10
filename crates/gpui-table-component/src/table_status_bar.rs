@@ -1,9 +1,15 @@
-use gpui::{App, IntoElement, ParentElement as _, RenderOnce, Styled as _, Window};
-use gpui_component::h_flex;
+use gpui::{
+    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
+};
+use gpui_component::{StyledExt as _, h_flex};
 
 /// Configuration for the table status bar display.
 #[derive(IntoElement)]
 pub struct TableStatusBar {
+    style: StyleRefinement,
+    row_count_style: StyleRefinement,
+    activity_style: StyleRefinement,
+    eof_style: StyleRefinement,
     row_count: usize,
     loading: bool,
     eof: bool,
@@ -18,6 +24,10 @@ impl TableStatusBar {
     /// Create a new status bar with the given state.
     pub fn new(row_count: usize, loading: bool, eof: bool) -> Self {
         Self {
+            style: StyleRefinement::default(),
+            row_count_style: StyleRefinement::default(),
+            activity_style: StyleRefinement::default(),
+            eof_style: StyleRefinement::default(),
             row_count,
             loading,
             eof,
@@ -58,6 +68,30 @@ impl TableStatusBar {
         self.more_available_text = Some(text.into());
         self
     }
+
+    /// Set style refinement for the row-count segment.
+    pub fn row_count_style(mut self, style: StyleRefinement) -> Self {
+        self.row_count_style = style;
+        self
+    }
+
+    /// Set style refinement for the loading/idle segment.
+    pub fn activity_style(mut self, style: StyleRefinement) -> Self {
+        self.activity_style = style;
+        self
+    }
+
+    /// Set style refinement for the eof/more-available segment.
+    pub fn eof_style(mut self, style: StyleRefinement) -> Self {
+        self.eof_style = style;
+        self
+    }
+}
+
+impl Styled for TableStatusBar {
+    fn style(&mut self) -> &mut StyleRefinement {
+        &mut self.style
+    }
 }
 
 impl RenderOnce for TableStatusBar {
@@ -73,16 +107,25 @@ impl RenderOnce for TableStatusBar {
 
         h_flex()
             .gap_4()
-            .child(format!("{}: {}", row_label, self.row_count))
-            .child(if self.loading {
-                loading_text.to_string()
-            } else {
-                idle_text.to_string()
-            })
-            .child(if self.eof {
+            .refine_style(&self.style)
+            .child(
+                div()
+                    .refine_style(&self.row_count_style)
+                    .child(format!("{}: {}", row_label, self.row_count)),
+            )
+            .child(
+                div()
+                    .refine_style(&self.activity_style)
+                    .child(if self.loading {
+                        loading_text.to_string()
+                    } else {
+                        idle_text.to_string()
+                    }),
+            )
+            .child(div().refine_style(&self.eof_style).child(if self.eof {
                 all_loaded_text.to_string()
             } else {
                 more_available_text.to_string()
-            })
+            }))
     }
 }

@@ -16,3 +16,7 @@ number_range_filter_ftl-MinPlaceholder = Minimum
 ## TextFilterFtl
 
 text_filter_ftl-Placeholder = Filtrer par { $title }...
+
+## ResetFiltersFtl
+
+reset_filters_ftl-Reset = Réinitialiser

@@ -15,6 +15,8 @@ status bar. These components are used by the generated filter entities when
   - Re-exports extension traits for filter configuration
 - `main.rs`
   - Storybook gallery entrypoint for previewing filter components
+- `stories/`
+  - Storybook registrations showcasing filter and status-bar modes
 - `faceted_filter.rs`
   - Multi-select filter with optional search and option providers
 - `text_filter.rs`
@@ -23,6 +25,8 @@ status bar. These components are used by the generated filter entities when
   - Range slider + inputs for numeric filtering (decimal-backed)
 - `date_range_filter.rs`
   - Calendar-based date range picker
+- `reset_filters.rs`
+  - Localized reset button for clearing all generated filters
 - `table_status_bar.rs`
   - Simple status summary for row count + load state
 
@@ -31,6 +35,7 @@ status bar. These components are used by the generated filter entities when
 1. The derive macro generates `XxxFilterEntities` that instantiate these
    components using the `TableFilterComponent` trait.
 1. Each filter component calls the provided `on_change` callback with its value.
+1. `ResetFilters` triggers generated reset bindings that clear all filters in one action.
 1. Consumers read all filter values via `FilterEntitiesExt::read_values` and
    apply them client-side or pass them into load-more requests.
 
@@ -38,6 +43,8 @@ status bar. These components are used by the generated filter entities when
 
 - Add new filter component types by implementing `TableFilterComponent`.
 - Extend filter components with chainable configuration methods (extension traits).
+- Style existing filter components via chainable extension-trait setters that accept
+  `gpui::StyleRefinement` (for example trigger/input/popover segment styles).
 
 ## Notes
 

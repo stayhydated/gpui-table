@@ -13,3 +13,7 @@ number_range_filter_ftl-MinPlaceholder = 最小
 ## TextFilterFtl
 
 text_filter_ftl-Placeholder = 按 { $title } 筛选...
+
+## ResetFiltersFtl
+
+reset_filters_ftl-Reset = 重置

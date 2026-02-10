@@ -1,8 +1,11 @@
 use crate::TableFilterComponent;
 use chrono::NaiveDate;
-use gpui::{App, Context, Entity, IntoElement, Render, Subscription, Window, div, prelude::*, px};
+use gpui::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Window, div,
+    prelude::*, px,
+};
 use gpui_component::{
-    Icon, IconName, Sizable as _,
+    Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
     divider::Divider,
@@ -16,6 +19,10 @@ pub struct DateRangeFilter {
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
     /// Value when the popover was opened, used to detect changes
     value_on_open: (Option<NaiveDate>, Option<NaiveDate>),
+    trigger_style: StyleRefinement,
+    popover_style: StyleRefinement,
+    calendar_style: StyleRefinement,
+    clear_button_style: StyleRefinement,
     calendar: Option<Entity<CalendarState>>,
     on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
@@ -49,6 +56,10 @@ impl DateRangeFilter {
             title,
             selected_range: value,
             value_on_open: value,
+            trigger_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            calendar_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
             calendar: None,
             on_change: Rc::new(on_change),
             _subscriptions: Vec::new(),
@@ -95,15 +106,25 @@ impl DateRangeFilter {
         }
     }
 
-    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_range = (None, None);
+        self.value_on_open = (None, None);
+
         if let Some(calendar) = &self.calendar {
             calendar.update(cx, |cal, cx| {
                 cal.set_date(Date::Range(None, None), window, cx);
             });
         }
-        (self.on_change)((None, None), window, cx);
+
+        if notify_change {
+            (self.on_change)((None, None), window, cx);
+        }
+
         cx.notify();
+    }
+
+    fn clear(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
     }
 
     fn has_value(&self) -> bool {
@@ -127,6 +148,16 @@ impl DateRangeFilter {
     /// Call this from parent when you want to trigger the on_change.
     pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         (self.on_change)(self.selected_range, window, cx);
+    }
+
+    /// Reset the date range and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset the date range without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the current filter value.
@@ -164,6 +195,10 @@ impl Render for DateRangeFilter {
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity().clone();
+        let trigger_style = self.trigger_style.clone();
+        let popover_style = self.popover_style.clone();
+        let calendar_style = self.calendar_style.clone();
+        let clear_button_style = self.clear_button_style.clone();
         let calendar = self.calendar.clone().unwrap();
 
         // Icon: CircleX when has value (to clear), Calendar otherwise
@@ -176,6 +211,7 @@ impl Render for DateRangeFilter {
         let clear_view = view.clone();
         let trigger = Button::new("date-range-trigger")
             .outline()
+            .refine_style(&trigger_style)
             .child(
                 div()
                     .id("clear-icon")
@@ -217,9 +253,13 @@ impl Render for DateRangeFilter {
                 v_flex()
                     .p_2()
                     .gap_2()
+                    .refine_style(&popover_style)
                     .child(
                         // Use Calendar directly with 2 months shown
-                        Calendar::new(&calendar).number_of_months(2).small(),
+                        Calendar::new(&calendar)
+                            .number_of_months(2)
+                            .small()
+                            .refine_style(&calendar_style),
                     )
                     .when(has_value, |this| {
                         this.child(
@@ -228,6 +268,7 @@ impl Render for DateRangeFilter {
                                 .small()
                                 .w_full()
                                 .label("Clear")
+                                .refine_style(&clear_button_style)
                                 .on_click(move |_, window, cx| {
                                     clear_view_inner.update(cx, |this, cx| {
                                         this.clear(window, cx);
@@ -236,5 +277,55 @@ impl Render for DateRangeFilter {
                         )
                     })
             })
+    }
+}
+
+/// Extension trait for chainable configuration on Entity<DateRangeFilter>.
+pub trait DateRangeFilterExt: Sized {
+    /// Set style refinement for the trigger button.
+    fn trigger_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the popover root content.
+    fn popover_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the calendar.
+    fn calendar_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the clear button in the popover.
+    fn clear_button_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+}
+
+impl DateRangeFilterExt for Entity<DateRangeFilter> {
+    fn trigger_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.trigger_style = style;
+        });
+        self
+    }
+
+    fn popover_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.popover_style = style;
+        });
+        self
+    }
+
+    fn calendar_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.calendar_style = style;
+        });
+        self
+    }
+
+    fn clear_button_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.clear_button_style = style;
+        });
+        self
     }
 }

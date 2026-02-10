@@ -1,8 +1,10 @@
 use crate::TableFilterComponent;
 use es_fluent::{EsFluent, ToFluentString as _};
-use gpui::{App, Context, Entity, IntoElement, Render, Task, Window, prelude::*, px};
+use gpui::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Task, Window, prelude::*, px,
+};
 use gpui_component::{
-    Icon, IconName, Sizable as _, h_flex,
+    Icon, IconName, Sizable as _, StyledExt as _, h_flex,
     input::{Input, InputEvent, InputState},
 };
 use std::rc::Rc;
@@ -40,6 +42,8 @@ enum TextFilterFtl {
 pub struct TextFilter {
     title: Rc<dyn Fn() -> String>,
     value: String,
+    container_style: StyleRefinement,
+    input_style: StyleRefinement,
     input_state: Option<Entity<InputState>>,
     on_change: Rc<dyn Fn(String, &mut Window, &mut App) + 'static>,
     /// Flag set by debounce task to trigger apply during next render
@@ -55,7 +59,7 @@ pub struct TextFilter {
 }
 
 /// Extension trait for configuring TextFilter via method chaining.
-pub trait TextFilterExt {
+pub trait TextFilterExt: Sized {
     /// Only allow alphabetic characters (a-z, A-Z) in the input.
     fn alphabetic_only(self, cx: &mut App) -> Self;
     /// Only allow numeric characters (0-9) in the input.
@@ -64,6 +68,14 @@ pub trait TextFilterExt {
     fn alphanumeric_only(self, cx: &mut App) -> Self;
     /// Set a custom validation function.
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self;
+    /// Set style refinement for the filter container.
+    fn container_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
+    /// Set style refinement for the input element.
+    fn input_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
+        self
+    }
 }
 
 impl TextFilterExt for Entity<TextFilter> {
@@ -88,6 +100,20 @@ impl TextFilterExt for Entity<TextFilter> {
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
         self.update(cx, |this, _| {
             this.validator = Some(Rc::new(validator));
+        });
+        self
+    }
+
+    fn container_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.container_style = style;
+        });
+        self
+    }
+
+    fn input_style(self, style: StyleRefinement, cx: &mut App) -> Self {
+        self.update(cx, |this, _| {
+            this.input_style = style;
         });
         self
     }
@@ -120,6 +146,8 @@ impl TextFilter {
         cx.new(|_cx| Self {
             title,
             value,
+            container_style: StyleRefinement::default(),
+            input_style: StyleRefinement::default().w(px(200.)),
             input_state: None,
             on_change: Rc::new(on_change),
             pending_apply: false,
@@ -209,10 +237,39 @@ impl TextFilter {
         }
     }
 
+    fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
+        self.value.clear();
+        self.pending_apply = false;
+        self._debounce_task = None;
+        self.pending_validated_value = None;
+
+        if let Some(input_state) = &self.input_state {
+            input_state.update(cx, |input, cx| {
+                input.set_value("", window, cx);
+            });
+        }
+
+        if notify_change {
+            (self.on_change)(self.value.clone(), window, cx);
+        }
+
+        cx.notify();
+    }
+
     /// Apply the current filter value via callback.
     /// Call this from parent when you want to trigger the on_change.
     pub fn apply(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         (self.on_change)(self.value.clone(), window, cx);
+    }
+
+    /// Reset the filter value and notify via callback.
+    pub fn reset(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(true, window, cx);
+    }
+
+    /// Reset the filter value without invoking callback.
+    pub fn reset_silent(&mut self, window: &mut Window, cx: &mut Context<Self>) {
+        self.reset_inner(false, window, cx);
     }
 
     /// Get the current filter value.
@@ -255,12 +312,16 @@ impl Render for TextFilter {
         let input_state = self.input_state.clone().unwrap();
 
         // Inline input without popover - similar to ts-ref data-table-filter-list.tsx
-        h_flex().gap_2().items_center().child(
-            Input::new(&input_state)
-                .small()
-                .w(px(200.))
-                .prefix(Icon::new(IconName::Search).xsmall())
-                .cleanable(true),
-        )
+        h_flex()
+            .gap_2()
+            .items_center()
+            .refine_style(&self.container_style)
+            .child(
+                Input::new(&input_state)
+                    .small()
+                    .prefix(Icon::new(IconName::Search).xsmall())
+                    .cleanable(true)
+                    .refine_style(&self.input_style),
+            )
     }
 }

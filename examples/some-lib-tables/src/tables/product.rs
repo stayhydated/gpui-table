@@ -119,7 +119,7 @@ impl Render for ProductTableStory {
                             .text_color(cx.theme().muted_foreground)
                             .child("Server-Side Filters (values passed to API)"),
                     )
-                    .child(self.filters.all_filters()),
+                    .child(self.filters.all_filters_with_reset()),
             )
             // Current filter values debug display
             .when(filters.has_active_filters(), |this| {
