@@ -15,6 +15,11 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 | **crates.io** | |
 | `0.6.x` | `0.6.x` |
 
+## Interactive examples
+```sh
+cargo run -p gpui-table-component
+```
+
 ## Quick Example
 
 ```rs

@@ -15,6 +15,8 @@ status bar. These components are used by the generated filter entities when
   - Re-exports extension traits for filter configuration
 - `main.rs`
   - Storybook gallery entrypoint for previewing filter components
+- `stories/`
+  - Storybook registrations showcasing filter and status-bar modes
 - `faceted_filter.rs`
   - Multi-select filter with optional search and option providers
 - `text_filter.rs`

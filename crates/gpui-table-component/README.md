@@ -48,3 +48,5 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses
   `chrono`.
 - This crate ships a small storybook binary (`main.rs`) for previewing filters.
+- Story definitions live in `src/stories` and are auto-registered via
+  `gpui-storybook` inventory macros.
