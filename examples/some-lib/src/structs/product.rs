@@ -78,7 +78,7 @@ pub enum ProductCategory {
 
 /// A Product entry for the table - from DummyJSON API
 #[derive(Clone, Debug, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, members)]
+#[fluent_this(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", filters, load_more)]
 pub struct Product {

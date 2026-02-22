@@ -8,7 +8,7 @@ use gpui_table::{GpuiTable, TableLoader};
 use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, members)]
+#[fluent_this(origin, variants)]
 #[gpui_table(fluent, custom_style, load_more)]
 pub struct Item {
     #[gpui_table(skip)]

@@ -20,7 +20,7 @@ pub enum UserStatus {
 }
 
 #[derive(Clone, fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, members)]
+#[fluent_this(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
