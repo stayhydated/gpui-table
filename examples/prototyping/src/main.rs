@@ -112,7 +112,7 @@ fn layout(data: &GpuiTableShape) -> syn::File {
         use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
         use gpui_component::{
             h_flex,
-            table::{Table, TableState, TableDelegate as _},
+            table::{DataTable, TableState, TableDelegate as _},
             v_flex,
         };
         use es_fluent::ThisFtl as _;

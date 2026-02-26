@@ -4,8 +4,7 @@ use gpui::{
     Subscription, Window,
 };
 use gpui_component::{
-    h_flex,
-    table::{Table, TableState},
+    table::{DataTable, TableState},
     v_flex,
 };
 use some_lib::structs::item::*;
@@ -62,7 +61,7 @@ impl Render for ItemTableStory {
                 delegate.eof,
             ))
             .child(
-                Table::new(&self.table)
+                DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true),
             )

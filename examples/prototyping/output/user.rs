@@ -1,14 +1,15 @@
-use some_lib::structs::user::*;
+use es_fluent::ThisFtl as _;
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
-    Styled, Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window,
 };
-use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 use gpui_component::{
-    h_flex, table::{Table, TableState, TableDelegate as _},
+    h_flex,
+    table::{DataTable, TableDelegate as _, TableState},
     v_flex,
 };
-use es_fluent::ThisFtl as _;
+use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
+use some_lib::structs::user::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
@@ -47,25 +48,28 @@ impl UserTableStory {
     }
 }
 impl Render for UserTableStory {
-    fn render(
-        &mut self,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let table = self.table.read(cx);
         let delegate = table.delegate();
         v_flex()
             .size_full()
             .gap_4()
             .p_4()
-            .child(h_flex().gap_2().flex_wrap().child(self.filters.all_filters()))
             .child(
-                gpui_table_component::TableStatusBar::new(
-                    delegate.rows.len(),
-                    delegate.loading,
-                    delegate.eof,
-                ),
+                h_flex()
+                    .gap_2()
+                    .flex_wrap()
+                    .child(self.filters.all_filters()),
             )
-            .child(Table::new(&self.table).stripe(true).scrollbar_visible(true, true))
+            .child(gpui_table_component::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
+            .child(
+                DataTable::new(&self.table)
+                    .stripe(true)
+                    .scrollbar_visible(true, true),
+            )
     }
 }
