@@ -1,7 +1,40 @@
-use gpui_table_core::registry::{ColumnVariant, GpuiTableShape};
+use gpui_table_core::registry::GpuiTableShape;
 use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
+use std::path::Path;
+
+use crate::imports::{Alias, ImportItem, ImportSet};
+
+/// Imports every generated table story needs regardless of configuration.
+const FRAMEWORK_IMPORTS: &[ImportItem] = &[
+    // gpui core
+    ImportItem::path("gpui::App"),
+    ImportItem::aliased("gpui::AppContext", Alias::Anonymous),
+    ImportItem::path("gpui::Context"),
+    ImportItem::path("gpui::Entity"),
+    ImportItem::path("gpui::Focusable"),
+    ImportItem::path("gpui::IntoElement"),
+    ImportItem::path("gpui::ParentElement"),
+    ImportItem::path("gpui::Render"),
+    ImportItem::path("gpui::Styled"),
+    ImportItem::path("gpui::Subscription"),
+    ImportItem::path("gpui::Window"),
+    // gpui_component table
+    ImportItem::path("gpui_component::table::DataTable"),
+    ImportItem::path("gpui_component::table::TableState"),
+    ImportItem::aliased("gpui_component::table::TableDelegate", Alias::Anonymous),
+    ImportItem::path("gpui_component::v_flex"),
+    // i18n / fluent
+    ImportItem::aliased("es_fluent::ThisFtl", Alias::Anonymous),
+];
+
+/// Extra imports needed when the table has filters.
+const FILTER_IMPORTS: &[ImportItem] = &[
+    ImportItem::path("gpui_component::h_flex"),
+    ImportItem::aliased("gpui_table::filter::FilterEntitiesExt", Alias::Anonymous),
+    ImportItem::aliased("gpui_table::filter::Matchable", Alias::Anonymous),
+];
 
 /// Trait for deriving various identifier names from a table shape.
 pub trait TableIdentities {
@@ -13,7 +46,7 @@ pub trait TableIdentities {
         syn::parse_str(self.struct_name()).unwrap()
     }
 
-    /// The table story struct name (e.g., "UserStory")
+    /// The table story struct name (e.g., "UserTableStory")
     fn story_struct_ident(&self) -> syn::Ident {
         format_ident!("{}TableStory", self.struct_name())
     }
@@ -93,7 +126,7 @@ impl<'a> ShapeIdentities<'a> {
     }
 
     /// Get columns
-    pub fn columns(&self) -> &'static [ColumnVariant] {
+    pub fn columns(&self) -> &'static [gpui_table_core::registry::ColumnVariant] {
         self.0.columns
     }
 }
@@ -131,7 +164,176 @@ impl<'a> TableShapeAdapter<'a> {
             use_filter_helpers,
         }
     }
+
+    /// Collect all imports needed by this table's generated file.
+    ///
+    /// Starts with the universal [`FRAMEWORK_IMPORTS`] base, then conditionally
+    /// adds filter imports. The result can be rendered as grouped `use`
+    /// statements via [`ImportSet::to_token_stream`].
+    pub fn required_imports(&self) -> ImportSet {
+        let mut set = ImportSet::default();
+        set.extend_items(FRAMEWORK_IMPORTS);
+        if self.identities.has_filters() {
+            set.extend_items(FILTER_IMPORTS);
+        }
+        set
+    }
+
+    /// Compute all token-stream fragments and identifiers for this table.
+    ///
+    /// Prefer this when you want to assemble a fully custom `quote!{}` template.
+    /// All conditional / derived fragments are pre-evaluated so you only need
+    /// to splice them in.
+    pub fn parts(&self) -> TableParts {
+        let struct_name_ident = self.identities.struct_name_ident();
+        let story_struct_ident = self.identities.story_struct_ident();
+        let delegate_struct_ident = self.identities.delegate_struct_ident();
+
+        let source_module_path = source_path_to_use_path(self.shape.source_path)
+            .unwrap_or_else(|| panic!("Failed to parse source_path: {}", self.shape.source_path));
+
+        let collected_imports = self.required_imports().to_token_stream();
+        let imports = quote! {
+            use #source_module_path::*;
+            #collected_imports
+        };
+
+        let delegate_creation = self.delegate_creation();
+        let table_state_creation = self.table_state_creation();
+        let field_initializers = self.field_initializers();
+        let struct_fields = self.struct_fields();
+        let render_children = self.render_children();
+        let title_expr = self.title_expr();
+
+        TableParts {
+            struct_name_ident,
+            story_struct_ident,
+            delegate_struct_ident,
+            source_module_path,
+            has_filters: self.identities.has_filters(),
+            load_more: self.shape.load_more,
+            imports,
+            delegate_creation,
+            table_state_creation,
+            field_initializers,
+            struct_fields,
+            render_children,
+            title_expr,
+        }
+    }
+
+    /// Generate a `syn::File` from a [`TableLayout`] implementation.
+    ///
+    /// ```rust,ignore
+    /// struct MyLayout;
+    /// impl TableLayout for MyLayout {
+    ///     fn generate_file(&self, parts: &TableParts) -> syn::File {
+    ///         let TableParts { imports, story_struct_ident, .. } = parts;
+    ///         syn::parse2(quote! {
+    ///             #imports
+    ///             pub struct #story_struct_ident { /* ... */ }
+    ///         }).unwrap()
+    ///     }
+    /// }
+    /// TableShapeAdapter::new(shape, true).generate_file(&MyLayout);
+    /// ```
+    pub fn generate_file(&self, layout: &impl TableLayout) -> syn::File {
+        layout.generate_file(&self.parts())
+    }
 }
+
+// ── TableParts ────────────────────────────────────────────────────────────────
+
+/// All pre-computed token-stream fragments and identifiers for one table scaffold.
+///
+/// Obtained via [`TableShapeAdapter::parts`] and consumed by [`TableLayout::generate_file`].
+/// Every field is `pub` so custom layouts can freely destructure and splice whichever
+/// pieces they need.
+pub struct TableParts {
+    // ── Identifiers ──────────────────────────────────────────────────────────
+    /// The original struct ident, e.g. `User`.
+    pub struct_name_ident: syn::Ident,
+    /// Generated story struct ident, e.g. `UserTableStory`.
+    pub story_struct_ident: syn::Ident,
+    /// Generated delegate struct ident, e.g. `UserTableDelegate`.
+    pub delegate_struct_ident: syn::Ident,
+    /// Glob import path for the source module, e.g. `some_lib::structs::user`.
+    pub source_module_path: syn::Path,
+
+    // ── Flags ─────────────────────────────────────────────────────────────────
+    /// True when the table has filter fields.
+    pub has_filters: bool,
+    /// True when the table has load_more enabled.
+    pub load_more: bool,
+
+    // ── Raw generated fragments ───────────────────────────────────────────────
+    /// Grouped `use` statements (source module glob + framework base + conditional items).
+    pub imports: TokenStream,
+    /// `let delegate = ...;` creation.
+    pub delegate_creation: TokenStream,
+    /// `let table = cx.new(...);` + filter + subscription setup.
+    pub table_state_creation: TokenStream,
+    /// Field name tokens for the `Self { ... }` struct literal.
+    pub field_initializers: TokenStream,
+    /// Struct field definitions for the story struct.
+    pub struct_fields: TokenStream,
+    /// `.child(...)` chains for the render body.
+    pub render_children: TokenStream,
+    /// Expression for the story title.
+    pub title_expr: TokenStream,
+}
+
+// ── TableLayout ───────────────────────────────────────────────────────────────
+
+/// Template strategy for [`TableShapeAdapter::generate_file`].
+///
+/// Implement this to fully control the shape of the generated file while
+/// reusing all the pre-computed [`TableParts`] fragments.
+pub trait TableLayout {
+    fn generate_file(&self, parts: &TableParts) -> syn::File;
+}
+
+// ── source_path_to_use_path ───────────────────────────────────────────────────
+
+/// Converts a `file!()` source path like
+/// `examples/some-lib/src/structs/user.rs` into a use-path like
+/// `some_lib::structs::user` for the glob import at the top of each generated file.
+pub fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
+    let path = Path::new(source_path);
+    let components: Vec<_> = path.components().collect();
+
+    let src_index = components
+        .iter()
+        .position(|c| matches!(c, std::path::Component::Normal(s) if s.to_str() == Some("src")))?;
+
+    if src_index == 0 {
+        return None;
+    }
+    let crate_name = match &components[src_index - 1] {
+        std::path::Component::Normal(s) => s.to_str()?.replace('-', "_"),
+        _ => return None,
+    };
+
+    let mut path_segments = vec![crate_name];
+    for component in &components[src_index + 1..] {
+        if let std::path::Component::Normal(s) = component {
+            let segment = s.to_str()?;
+            if segment == "mod.rs" {
+                continue;
+            }
+            path_segments.push(
+                segment
+                    .strip_suffix(".rs")
+                    .unwrap_or(segment)
+                    .replace('-', "_"),
+            );
+        }
+    }
+
+    syn::parse_str(&path_segments.join("::")).ok()
+}
+
+// ── TableShape impl ──────────────────────────────────────────────────────────
 
 impl TableShape for TableShapeAdapter<'_> {
     fn delegate_creation(&self) -> TokenStream {

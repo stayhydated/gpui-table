@@ -2,6 +2,12 @@
 
 GPUI filter UI components and a table status bar used by `gpui-table`.
 
+## Interactive examples
+
+```sh
+cargo run --features story
+```
+
 ## Components
 
 - `TextFilter`
