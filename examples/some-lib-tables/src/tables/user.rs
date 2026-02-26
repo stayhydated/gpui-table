@@ -3,11 +3,8 @@ use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
     Subscription, Window,
 };
-use gpui_component::{
-    h_flex,
-    table::{DataTable, TableDelegate as _, TableState},
-    v_flex,
-};
+use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+use gpui_component::{h_flex, v_flex};
 use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 use some_lib::structs::user::*;
 #[gpui_storybook::story_init]

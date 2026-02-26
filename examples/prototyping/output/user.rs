@@ -1,14 +1,12 @@
 use some_lib::structs::user::*;
+use es_fluent::ThisFtl as _;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
     Styled, Subscription, Window,
 };
+use gpui_component::{h_flex, v_flex};
+use gpui_component::table::{DataTable, TableDelegate as _, TableState};
 use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
-use gpui_component::{
-    h_flex, table::{DataTable, TableState, TableDelegate as _},
-    v_flex,
-};
-use es_fluent::ThisFtl as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
