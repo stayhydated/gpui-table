@@ -167,7 +167,7 @@ impl Product {
 /// Tracks the current API fetch state
 static API_SKIP: std::sync::atomic::AtomicU32 = std::sync::atomic::AtomicU32::new(0);
 
-/// Freestanding approach: define #[load_more] and #[threshold] directly in the impl block.
+/// Freestanding approach: define `#[load_more]` and `#[threshold]` directly in the impl block.
 /// This is an alternative to implementing the TableLoader trait.
 /// See `item.rs` for an example of the trait-based approach.
 #[gpui_table::gpui_table_impl]

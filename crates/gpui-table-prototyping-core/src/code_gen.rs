@@ -283,7 +283,7 @@ impl TableShape for TableShapeAdapter<'_> {
                 delegate.eof,
             ))
             .child(
-                Table::new(&self.table)
+                DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true)
             )

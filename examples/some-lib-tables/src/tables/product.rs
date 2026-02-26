@@ -8,7 +8,7 @@ use gpui::{
 };
 use gpui_component::{
     ActiveTheme, h_flex,
-    table::{Table, TableState},
+    table::{DataTable, TableState},
     v_flex,
 };
 use gpui_table::TableDataLoader as _;
@@ -135,7 +135,7 @@ impl Render for ProductTableStory {
             .child(TableStatusBar::new(row_count, loading, eof))
             // Table
             .child(
-                Table::new(&self.table)
+                DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true),
             )

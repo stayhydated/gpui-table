@@ -1,6 +1,5 @@
 use es_fluent::EsFluent;
 use es_fluent_lang::es_fluent_language;
-use gpui::Application;
 use gpui_storybook::{Assets, Gallery};
 use strum::EnumIter;
 
@@ -15,7 +14,7 @@ pub enum Languages {}
 fn main() {
     env_logger::init();
 
-    let app = Application::new().with_assets(Assets);
+    let app = gpui_platform::application().with_assets(Assets);
     let name_arg = std::env::args().nth(1);
 
     app.run(move |app_cx| {

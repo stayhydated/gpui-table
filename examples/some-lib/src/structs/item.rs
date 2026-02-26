@@ -34,7 +34,7 @@ pub struct Item {
 }
 
 /// Implement the TableLoader trait to define loading behavior.
-/// The #[gpui_table_impl] attribute on a trait impl block automatically
+/// The `#[gpui_table_impl]` attribute on a trait impl block automatically
 /// wires up the trait to the generated TableDelegate implementation.
 #[gpui_table::gpui_table_impl]
 impl TableLoader for ItemTableDelegate {

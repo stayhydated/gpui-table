@@ -10,7 +10,7 @@ use gpui::{
 };
 use gpui_component::{
     h_flex,
-    table::{Table, TableState},
+    table::{DataTable, TableState},
     v_flex,
 };
 use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
@@ -155,7 +155,7 @@ impl Render for UserTableStory {
                 delegate.eof,
             ))
             .child(
-                Table::new(&self.table)
+                DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true),
             )
