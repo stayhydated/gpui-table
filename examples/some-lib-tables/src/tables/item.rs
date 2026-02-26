@@ -4,14 +4,15 @@ use gpui::{
     Subscription, Window,
 };
 use gpui_component::{
-    table::{DataTable, TableState},
+    h_flex,
+    table::{DataTable, TableDelegate as _, TableState},
     v_flex,
 };
+use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 use some_lib::structs::item::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
-
-#[gpui_storybook::story("fake infinite")]
+#[gpui_storybook::story]
 pub struct ItemTableStory {
     table: Entity<TableState<ItemTableDelegate>>,
     _subscription: Subscription,
