@@ -3144,7 +3144,6 @@ dependencies = [
  "gpui-storybook",
  "gpui-table-core",
  "gpui_platform",
- "rust-embed",
  "rust_decimal",
  "strum 0.28.0",
 ]
@@ -3160,7 +3159,6 @@ dependencies = [
  "gpui",
  "gpui-component",
  "inventory",
- "rust-embed",
  "rust_decimal",
  "strum 0.28.0",
 ]
@@ -5454,7 +5452,7 @@ dependencies = [
 
 [[package]]
 name = "prototyping"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "gpui-table",
  "gpui-table-prototyping-core",
@@ -6784,7 +6782,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "es-fluent",
@@ -6798,7 +6796,6 @@ dependencies = [
  "heck 0.5.0",
  "log",
  "reqwest",
- "rust-embed",
  "rust_decimal",
  "serde",
  "strum 0.28.0",
@@ -6809,7 +6806,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib-tables"
-version = "0.1.0"
+version = "0.5.0"
 dependencies = [
  "chrono",
  "env_logger",
@@ -6825,7 +6822,6 @@ dependencies = [
  "gpui_platform",
  "gpui_tokio",
  "reqwest_client",
- "rust-embed",
  "rust_decimal",
  "some-lib",
  "strum 0.28.0",

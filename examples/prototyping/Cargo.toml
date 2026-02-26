@@ -1,6 +1,6 @@
 [package]
 name = "prototyping"
-version = "0.1.0"
+version.workspace = true
 edition.workspace = true
 license = "Unlicense"
 publish = false
@@ -14,6 +14,3 @@ prettyplease = { workspace = true }
 quote = { workspace = true }
 some-lib = { path = "../some-lib" }
 syn = { features = [ "full", "parsing" ], workspace = true }
-
-[lints]
-workspace = true
