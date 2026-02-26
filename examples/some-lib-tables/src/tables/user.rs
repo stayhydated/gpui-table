@@ -1,4 +1,5 @@
 use es_fluent::ThisFtl as _;
+use fake::{Fake, Faker};
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
     Subscription, Window,
@@ -33,7 +34,8 @@ impl UserTableStory {
         cx.new(|cx| Self::new(window, cx))
     }
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let delegate = UserTableDelegate::new(vec![]);
+        let users: Vec<User> = (0..200).map(|_| Faker.fake()).collect();
+        let delegate = UserTableDelegate::new(users);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
         let filters = UserFilterEntities::build(None, cx);
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
