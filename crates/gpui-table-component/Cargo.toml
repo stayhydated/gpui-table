@@ -7,20 +7,29 @@ license.workspace = true
 publish.workspace = true
 repository.workspace = true
 readme = "README.md"
+autobins = false
+
+[[bin]]
+name = "story"
+path = "src/bin/story.rs"
+required-features = [ "story" ]
+
+[features]
+story = [ "dep:es-fluent-lang", "dep:gpui-storybook", "dep:gpui_platform", "dep:strum" ]
 
 [dependencies]
 chrono = { features = [ "serde" ], workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
-es-fluent-lang = { workspace = true }
+es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-storybook = { workspace = true }
+gpui-storybook = { optional = true, workspace = true }
 gpui-table-core = { features = [ "fluent" ], workspace = true }
-gpui_platform = { workspace = true }
+gpui_platform = { optional = true, workspace = true }
 rust-embed = { workspace = true }
 rust_decimal = { workspace = true }
-strum = { features = [ "derive" ], workspace = true }
+strum = { features = [ "derive" ], optional = true, workspace = true }
 
 [build-dependencies]
 es-fluent = { features = [ "build" ], workspace = true }

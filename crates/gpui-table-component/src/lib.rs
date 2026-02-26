@@ -3,6 +3,7 @@ pub mod faceted_filter;
 pub mod i18n;
 pub mod number_range_filter;
 pub mod reset_filters;
+#[cfg(feature = "story")]
 mod stories;
 pub mod table_status_bar;
 pub mod text_filter;
