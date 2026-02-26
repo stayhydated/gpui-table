@@ -280,7 +280,7 @@ impl Render for DateRangeFilter {
     }
 }
 
-/// Extension trait for chainable configuration on Entity<DateRangeFilter>.
+/// Extension trait for chainable configuration on `Entity<DateRangeFilter>`.
 pub trait DateRangeFilterExt: Sized {
     /// Set style refinement for the trigger button.
     fn trigger_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {

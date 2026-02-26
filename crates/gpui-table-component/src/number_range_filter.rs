@@ -658,7 +658,7 @@ impl Render for NumberRangeFilter {
     }
 }
 
-/// Extension trait for chainable configuration on Entity<NumberRangeFilter>
+/// Extension trait for chainable configuration on `Entity<NumberRangeFilter>`.
 pub trait NumberRangeFilterExt: Sized {
     /// Set the range bounds for the slider (chainable).
     ///
