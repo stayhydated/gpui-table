@@ -173,6 +173,16 @@ impl TableCell for chrono::NaiveTime {
     }
 }
 
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb::Timestamp {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_chrono_date_time()
+            .map(|dt| dt.format("%H:%M:%S").to_string())
+            .unwrap_or_default()
+            .into_any_element()
+    }
+}
+
 /// Metadata for a table row type.
 pub trait TableRowMeta {
     /// Unique identifier for this row type.
