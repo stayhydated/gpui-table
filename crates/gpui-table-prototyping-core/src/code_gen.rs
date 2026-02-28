@@ -382,7 +382,7 @@ impl TableShape for TableShapeAdapter<'_> {
                 quote! {
                     let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-                    let filters = #filter_entities_ident::build(None, cx);
+                    let filters = #filter_entities_ident::build_for_table(table.clone(), cx);
 
                     let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
                 }

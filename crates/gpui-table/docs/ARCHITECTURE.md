@@ -27,6 +27,7 @@ metadata and macro generation.
 - `inventory`: enables registry metadata for prototyping/codegen.
 - `fluent`: integrates with `es-fluent` for localized titles/labels.
 - `rust_decimal`: adds `TableCell` + filter support for decimal types.
+- `spacetimedb`: adds `TableCell`/filter interop for SpaceTimeDB primitives.
 
 ## Extension points
 

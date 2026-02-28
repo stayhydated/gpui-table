@@ -3,7 +3,7 @@ use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
     Subscription, Window,
 };
-use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+use gpui_component::table::{DataTable, TableState};
 use gpui_component::v_flex;
 use some_lib::structs::item::*;
 #[gpui_storybook::story_init]

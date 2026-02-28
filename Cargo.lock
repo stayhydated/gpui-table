@@ -6924,6 +6924,8 @@ dependencies = [
  "reqwest",
  "rust_decimal",
  "serde",
+ "serde_json",
+ "spacetimedb",
  "strum 0.28.0",
  "tokio",
  "urlencoding",

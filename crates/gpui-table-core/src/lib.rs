@@ -183,6 +183,20 @@ impl TableCell for spacetimedb::Timestamp {
     }
 }
 
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb::Identity {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb::ConnectionId {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
 /// Metadata for a table row type.
 pub trait TableRowMeta {
     /// Unique identifier for this row type.

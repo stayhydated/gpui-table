@@ -45,3 +45,6 @@ runtime components.
 - `chrono`: `TableCell` and date conversion helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
 - `fluent`: localized title helpers used by generated code.
+- `spacetimedb`: `TableCell` support for `Timestamp`, `Identity`, and
+  `ConnectionId`, plus `Timestamp -> NaiveDate` conversion for date-range
+  filtering.

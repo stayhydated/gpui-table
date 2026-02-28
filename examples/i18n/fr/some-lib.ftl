@@ -10,6 +10,10 @@ product_this = Produit
 
 user_this = Utilisateur
 
+## Événement Spacetime
+
+spacetime_event_this = Événement Spacetime
+
 ## Variantes d'Article
 
 item_variants_this = Article
@@ -94,8 +98,34 @@ user_label_variants-id = ID
 user_label_variants-name = Nom
 user_label_variants-status = Statut
 
+## Variantes de Description de l'Événement Spacetime
+
+spacetime_event_description_variants_this = Description de l'événement Spacetime
+spacetime_event_description_variants-committed_at = Validé à
+spacetime_event_description_variants-connection_id = ID de connexion
+spacetime_event_description_variants-mutation = Mutation
+spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-sender = Émetteur
+spacetime_event_description_variants-table_name = Nom de table
+
+## Variantes d'Étiquette de l'Événement Spacetime
+
+spacetime_event_label_variants_this = Étiquette de l'événement Spacetime
+spacetime_event_label_variants-committed_at = Validé à
+spacetime_event_label_variants-connection_id = ID de connexion
+spacetime_event_label_variants-mutation = Mutation
+spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-sender = Émetteur
+spacetime_event_label_variants-table_name = Nom de table
+
 ## Statut de l'Utilisateur
 
 user_status-Active = Actif
 user_status-Offline = Hors ligne
 user_status-Suspended = Suspendu
+
+## Mutation Spacetime
+
+spacetime_mutation-Delete = Supprimer
+spacetime_mutation-Insert = Insérer
+spacetime_mutation-Update = Mettre à jour

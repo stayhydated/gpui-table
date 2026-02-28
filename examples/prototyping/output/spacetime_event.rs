@@ -1,4 +1,4 @@
-use some_lib::structs::user::*;
+use some_lib::structs::spacetime_event::*;
 use es_fluent::ThisFtl as _;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
@@ -10,32 +10,57 @@ use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
-pub struct UserTableStory {
-    table: Entity<TableState<UserTableDelegate>>,
-    filters: UserFilterEntities,
+pub struct SpacetimeEventTableStory {
+    table: Entity<TableState<SpacetimeEventTableDelegate>>,
+    filters: SpacetimeEventFilterEntities,
     _subscription: Subscription,
 }
-impl gpui_storybook::Story for UserTableStory {
+impl gpui_storybook::Story for SpacetimeEventTableStory {
     fn title() -> String {
-        User::this_ftl()
+        SpacetimeEvent::this_ftl()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)
     }
 }
-impl Focusable for UserTableStory {
+impl Focusable for SpacetimeEventTableStory {
     fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
-impl UserTableStory {
+impl SpacetimeEventTableStory {
     pub fn view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         cx.new(|cx| Self::new(window, cx))
     }
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let delegate = UserTableDelegate::new(vec![]);
+        let delegate = SpacetimeEventTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        let filters = UserFilterEntities::build_for_table(table.clone(), cx);
+        table
+            .update(
+                cx,
+                |table, cx| {
+                    use gpui_table::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
+                },
+            );
+        let table_for_reload = table.clone();
+        let filters = SpacetimeEventFilterEntities::build(
+            Some(
+                std::rc::Rc::new(move |window, cx| {
+                    table_for_reload
+                        .update(
+                            cx,
+                            |table, cx| {
+                                table.delegate_mut().rows.clear();
+                                table.delegate_mut().eof = false;
+                                use gpui_table::TableDataLoader as _;
+                                table.delegate_mut().load_data(window, cx);
+                            },
+                        );
+                }),
+            ),
+            cx,
+        );
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {
             table,
@@ -44,7 +69,7 @@ impl UserTableStory {
         }
     }
 }
-impl Render for UserTableStory {
+impl Render for SpacetimeEventTableStory {
     fn render(
         &mut self,
         _window: &mut Window,

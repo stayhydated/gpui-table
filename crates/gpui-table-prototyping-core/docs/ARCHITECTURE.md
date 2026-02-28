@@ -26,6 +26,9 @@
    - Converts `shape.source_path` to a glob `use` path via `source_path_to_use_path`.
    - Calls `required_imports()` to build the minimal deduplicated import set.
    - Assembles all code fragments into `TableParts`.
+   - For filter-enabled, non-load-more stories, emits
+     `XxxFilterEntities::build_for_table(table.clone(), cx)` so client-side
+     filtering stays interactive with `DataTable`.
    - Passes `TableParts` to the `TableLayout` implementation which produces the final `syn::File`.
 1. The consumer formats with `prettyplease::unparse` and writes to disk.
 

@@ -10,6 +10,10 @@ product_this = 商品
 
 user_this = 用户
 
+## Spacetime 事件
+
+spacetime_event_this = Spacetime 事件
+
 ## ItemVariants
 
 item_variants_this = 物品
@@ -94,8 +98,34 @@ user_label_variants-id = 编号
 user_label_variants-name = 姓名
 user_label_variants-status = 状态
 
+## Spacetime 事件描述变体
+
+spacetime_event_description_variants_this = Spacetime 事件描述
+spacetime_event_description_variants-committed_at = 提交时间
+spacetime_event_description_variants-connection_id = 连接 ID
+spacetime_event_description_variants-mutation = 变更类型
+spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-sender = 发送者
+spacetime_event_description_variants-table_name = 表名
+
+## Spacetime 事件标签变体
+
+spacetime_event_label_variants_this = Spacetime 事件标签
+spacetime_event_label_variants-committed_at = 提交时间
+spacetime_event_label_variants-connection_id = 连接 ID
+spacetime_event_label_variants-mutation = 变更类型
+spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-sender = 发送者
+spacetime_event_label_variants-table_name = 表名
+
 ## 用户状态
 
 user_status-Active = 活跃
 user_status-Offline = 离线
 user_status-Suspended = 已暂停
+
+## Spacetime 变更类型
+
+spacetime_mutation-Delete = 删除
+spacetime_mutation-Insert = 插入
+spacetime_mutation-Update = 更新

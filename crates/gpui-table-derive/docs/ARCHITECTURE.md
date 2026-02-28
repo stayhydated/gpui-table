@@ -40,6 +40,11 @@ columns, filters, and optional registry metadata.
    `Matchable` implementations, plus grouped filter render helpers
    (text/number/faceted/date/all), a localized reset-button binding, and
    single-action filter reset wiring.
+1. When filters are enabled, generated delegates maintain a filtered row-index
+   cache and expose `set_filter_values(...)` / `clear_filter_values(...)`.
+   Generated `FilterEntities::build_for_table(...)` wires filter changes
+   directly into `TableState` for client-side interactive filtering with
+   `DataTable`.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 
 ## Feature flags
