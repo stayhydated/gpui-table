@@ -46,5 +46,5 @@ mkdir -p "$BINDINGS_DIR"
     --build-options='--features db'
 
 echo "Setup complete."
-echo "Try: cargo run -p some-lib-tables --features client"
+echo "Try: cargo run -p some-lib-tables"
 echo "Seed rows: cargo run -p some-lib --features seed-bin --bin seed_spacetime_events -- 10000"

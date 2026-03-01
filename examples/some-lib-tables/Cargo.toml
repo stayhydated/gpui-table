@@ -6,10 +6,6 @@ edition.workspace = true
 license = "Unlicense"
 publish = false
 
-[features]
-default = ["client"]
-client = ["some-lib/client"]
-
 [dependencies]
 chrono = { workspace = true }
 env_logger = { workspace = true }
@@ -26,7 +22,7 @@ gpui_platform = { workspace = true }
 gpui_tokio = { workspace = true }
 reqwest_client = { workspace = true }
 rust_decimal = { workspace = true }
-some-lib = { path = "../some-lib" }
+some-lib = { path = "../some-lib", features = ["client"] }
 strum = { workspace = true }
 tokio = { features = ["rt-multi-thread", "macros"], workspace = true }
 
