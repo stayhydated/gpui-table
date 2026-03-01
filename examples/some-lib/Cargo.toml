@@ -5,33 +5,69 @@ edition.workspace = true
 license = "Unlicense"
 publish = false
 
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[features]
+default = []
+client = [
+  "dep:chrono",
+  "dep:es-fluent",
+  "dep:es-fluent-manager-embedded",
+  "dep:fake",
+  "dep:gpui",
+  "dep:gpui-component",
+  "dep:gpui-table",
+  "dep:gpui-table-component",
+  "dep:gpui_tokio",
+  "dep:heck",
+  "dep:log",
+  "dep:reqwest",
+  "dep:rust_decimal",
+  "dep:serde",
+  "dep:serde_json",
+  "dep:spacetimedb-sdk",
+  "dep:strum",
+  "dep:tokio",
+  "dep:urlencoding",
+  "dep:uuid",
+]
+db = []
+
 [dependencies]
-chrono = { workspace = true }
-es-fluent = { features = ["derive"], workspace = true }
-es-fluent-manager-embedded = { workspace = true }
-fake = { features = ["derive", "uuid", "random_color", "chrono", "rust_decimal"], workspace = true }
-gpui = { workspace = true }
-gpui-component = { workspace = true }
+chrono = { optional = true, workspace = true }
+es-fluent = { features = ["derive"], optional = true, workspace = true }
+es-fluent-manager-embedded = { optional = true, workspace = true }
+fake = { features = [
+  "derive",
+  "uuid",
+  "random_color",
+  "chrono",
+  "rust_decimal",
+], optional = true, workspace = true }
+gpui = { optional = true, workspace = true }
+gpui-component = { optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",
   "rust_decimal",
   "chrono",
   "spacetimedb",
-], workspace = true }
-gpui-table-component = { workspace = true }
-gpui_tokio = { workspace = true }
-heck = { workspace = true }
-log = { workspace = true }
-reqwest = { features = ["json"], workspace = true }
-rust_decimal = { workspace = true }
-serde = { features = ["derive"], workspace = true }
-serde_json = { workspace = true }
+], optional = true, workspace = true }
+gpui-table-component = { optional = true, workspace = true }
+gpui_tokio = { optional = true, workspace = true }
+heck = { optional = true, workspace = true }
+log = { optional = true, workspace = true }
+reqwest = { features = ["json"], optional = true, workspace = true }
+rust_decimal = { optional = true, workspace = true }
+serde = { features = ["derive"], optional = true, workspace = true }
+serde_json = { optional = true, workspace = true }
 spacetimedb = { workspace = true }
-strum = { features = ["derive"], workspace = true }
-tokio = { workspace = true }
-urlencoding = { workspace = true }
-uuid = { workspace = true }
+spacetimedb-sdk = { optional = true, workspace = true }
+strum = { features = ["derive"], optional = true, workspace = true }
+tokio = { optional = true, workspace = true }
+urlencoding = { optional = true, workspace = true }
+uuid = { optional = true, workspace = true }
 
 [build-dependencies]
 es-fluent = { features = ["build"], workspace = true }

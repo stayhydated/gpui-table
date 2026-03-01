@@ -19,19 +19,15 @@ crate to hold the gpui tables, also has a main.rs defining a storybook-like gpui
 Includes a `SpacetimeEvent` table story that demonstrates `spacetimedb` types
 (`Timestamp`, `Identity`, `ConnectionId`) in `gpui-table`.
 
-That story now queries SpaceTimeDB over `POST /v1/database/sql/{database}`.
-Set `GPUI_TABLE_SPACETIMEDB_DATABASE` before running.
+The `SpacetimeEvent` loader is feature-gated and can query via generated
+SpaceTimeDB client bindings:
 
-Optional environment variables:
-- `GPUI_TABLE_SPACETIMEDB_URI` (default: `http://localhost:3000`)
-- `GPUI_TABLE_SPACETIMEDB_SQL` (default: query against `spacetime_event`)
-- `GPUI_TABLE_SPACETIMEDB_TOKEN` (Bearer token)
-- `GPUI_TABLE_SPACETIMEDB_PAGE_SIZE` (default: `50`)
+- run `examples/some-lib/setup.sh` (builds and publishes with `--features db`, then generates bindings)
+- run the story app with `cargo run -p some-lib-tables --features client`
+- `some-lib-tables` auto-initializes `DbConnection` via `some_lib::client_connection::init_from_env()`
+  (`SPACETIMEDB_URI` defaults to `http://127.0.0.1:3000`, `SPACETIMEDB_DB_NAME` defaults to `gpui-table-some-lib`)
 
-`GPUI_TABLE_SPACETIMEDB_SQL` can include `{limit}` and `{offset}` placeholders.
-If omitted, the loader appends `LIMIT/OFFSET`.
-The query should project: `table_name`, `sender`, `connection_id`, `mutation`,
-`committed_at`, and `reducer`.
+`module_bindings` are generated into `examples/some-lib/src/module_bindings/`.
 
 ## prototyping
 

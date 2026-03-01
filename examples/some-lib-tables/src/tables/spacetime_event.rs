@@ -42,11 +42,40 @@ impl SpacetimeEventTableStory {
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = SpacetimeEventTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+        let filters_slot: std::rc::Rc<std::cell::RefCell<Option<SpacetimeEventFilterEntities>>> =
+            std::rc::Rc::new(std::cell::RefCell::new(None));
+        let filters_slot_for_change = filters_slot.clone();
+        let table_for_reload = table.clone();
+
+        let on_filter_change: std::rc::Rc<dyn Fn(&mut Window, &mut App) + 'static> =
+            std::rc::Rc::new(move |window, cx| {
+                let next_values = {
+                    let filters = filters_slot_for_change.borrow();
+                    filters.as_ref().map(|filters| filters.read_values(cx))
+                };
+
+                if let Some(values) = next_values {
+                    set_spacetime_event_table_filters(values);
+                    table_for_reload.update(cx, |table, cx| {
+                        table.delegate_mut().rows.clear();
+                        table.delegate_mut().eof = false;
+                        use gpui_table::TableDataLoader as _;
+                        table.delegate_mut().load_data(window, cx);
+                    });
+                }
+            });
+
+        let filters = SpacetimeEventFilterEntities::build(Some(on_filter_change), cx);
+        *filters_slot.borrow_mut() = Some(filters.clone());
+
+        let initial_values = filters.read_values(cx);
+        set_spacetime_event_table_filters(initial_values);
         table.update(cx, |table, cx| {
             use gpui_table::TableDataLoader as _;
             table.delegate_mut().load_data(window, cx);
         });
-        let filters = SpacetimeEventFilterEntities::build_for_table(table.clone(), cx);
+
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
 
         Self {

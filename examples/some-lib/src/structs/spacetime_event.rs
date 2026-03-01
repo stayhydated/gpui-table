@@ -1,426 +1,210 @@
+#[cfg(feature = "client")]
 use es_fluent::{EsFluentThis, EsFluentVariants};
+#[cfg(feature = "client")]
 use gpui::{Context, Window};
+#[cfg(feature = "client")]
 use gpui_component::IconName;
+#[cfg(feature = "client")]
 use gpui_component::table::TableState;
+#[cfg(feature = "client")]
+use gpui_table::filter::{FilterValuesExt as _, Matchable as _};
+#[cfg(feature = "client")]
 use gpui_table::{Filterable, GpuiTable, TableCell, TableLoader};
-use gpui_tokio::Tokio;
+#[cfg(feature = "client")]
 use log::{debug, info, warn};
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+#[cfg(feature = "client")]
+use std::sync::{OnceLock, RwLock};
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, es_fluent::EsFluent, Filterable, TableCell)]
-#[filter(fluent)]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, spacetimedb::SpacetimeType)]
+#[cfg_attr(feature = "client", derive(es_fluent::EsFluent, Filterable, TableCell))]
+#[cfg_attr(feature = "client", filter(fluent))]
 pub enum SpacetimeMutation {
-    #[filter(icon = IconName::ArrowUp)]
+    #[cfg_attr(feature = "client", filter(icon = IconName::ArrowUp))]
     Insert,
-    #[filter(icon = IconName::Settings)]
+    #[cfg_attr(feature = "client", filter(icon = IconName::Settings))]
     Update,
-    #[filter(icon = IconName::CircleX)]
+    #[cfg_attr(feature = "client", filter(icon = IconName::CircleX))]
     Delete,
 }
 
-#[derive(Clone, Debug, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, variants)]
-#[fluent_variants(keys = ["description", "label"])]
-#[gpui_table(fluent = "label", filters, load_more)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "client", derive(EsFluentThis, EsFluentVariants, GpuiTable))]
+#[cfg_attr(not(feature = "db"), derive(spacetimedb::SpacetimeType))]
+#[cfg_attr(feature = "db", spacetimedb::table(accessor = spacetime_event, public))]
+#[cfg_attr(feature = "client", fluent_this(origin, variants))]
+#[cfg_attr(feature = "client", fluent_variants(keys = ["description", "label"]))]
+#[cfg_attr(feature = "client", gpui_table(fluent = "label", filters, load_more))]
 pub struct SpacetimeEvent {
-    #[gpui_table(sortable, width = 120., filter(text()))]
+    #[cfg_attr(feature = "db", primary_key)]
+    #[cfg_attr(feature = "db", auto_inc)]
+    #[cfg_attr(feature = "client", gpui_table(skip))]
+    pub id: u64,
+
+    #[cfg_attr(feature = "client", gpui_table(sortable, width = 120., filter(text())))]
     pub table_name: String,
 
-    #[gpui_table(sortable, width = 260.)]
+    #[cfg_attr(feature = "client", gpui_table(sortable, width = 260.))]
     pub sender: spacetimedb::Identity,
 
-    #[gpui_table(width = 120.)]
+    #[cfg_attr(feature = "client", gpui_table(width = 120.))]
     pub connection_id: Option<spacetimedb::ConnectionId>,
 
-    #[gpui_table(width = 120., filter(faceted()))]
+    #[cfg_attr(feature = "client", gpui_table(width = 120., filter(faceted())))]
     pub mutation: SpacetimeMutation,
 
-    #[gpui_table(sortable, width = 220., filter(date_range()))]
+    #[cfg_attr(
+        feature = "client",
+        gpui_table(sortable, width = 220., filter(date_range()))
+    )]
     pub committed_at: spacetimedb::Timestamp,
 
-    #[gpui_table(width = 240., filter(text()))]
+    #[cfg_attr(feature = "client", gpui_table(width = 240., filter(text())))]
     pub reducer: String,
 }
 
-const DEFAULT_STDB_URI: &str = "http://localhost:3000";
-const DEFAULT_PAGE_SIZE: usize = 50;
-const DEFAULT_STDB_SQL: &str = "SELECT table_name, sender, connection_id, mutation, committed_at, reducer FROM spacetime_event ORDER BY committed_at DESC";
+#[cfg(feature = "client")]
+static SPACETIME_FILTER_STATE: OnceLock<RwLock<SpacetimeEventFilterValues>> = OnceLock::new();
 
-#[derive(Clone, Debug)]
-struct SpacetimeSqlConfig {
-    uri: String,
-    database: String,
-    auth_token: Option<String>,
-    sql_template: String,
-    page_size: usize,
+#[cfg(feature = "client")]
+fn filter_state() -> &'static RwLock<SpacetimeEventFilterValues> {
+    SPACETIME_FILTER_STATE.get_or_init(|| RwLock::new(SpacetimeEventFilterValues::default()))
 }
 
-impl SpacetimeSqlConfig {
-    fn from_env() -> Result<Self, String> {
-        let database = std::env::var("GPUI_TABLE_SPACETIMEDB_DATABASE").map_err(|_| {
-            "missing GPUI_TABLE_SPACETIMEDB_DATABASE env var (database name or identity)"
-                .to_string()
-        })?;
-        let uri = std::env::var("GPUI_TABLE_SPACETIMEDB_URI")
-            .unwrap_or_else(|_| DEFAULT_STDB_URI.to_string());
-        let auth_token = std::env::var("GPUI_TABLE_SPACETIMEDB_TOKEN")
-            .ok()
-            .filter(|token| !token.trim().is_empty());
-        let sql_template = std::env::var("GPUI_TABLE_SPACETIMEDB_SQL")
-            .unwrap_or_else(|_| DEFAULT_STDB_SQL.to_string());
-        let page_size = std::env::var("GPUI_TABLE_SPACETIMEDB_PAGE_SIZE")
-            .ok()
-            .and_then(|raw| raw.parse::<usize>().ok())
-            .filter(|value| *value > 0)
-            .unwrap_or(DEFAULT_PAGE_SIZE);
-
-        Ok(Self {
-            uri,
-            database,
-            auth_token,
-            sql_template,
-            page_size,
-        })
-    }
-
-    fn endpoint(&self) -> String {
-        format!(
-            "{}/v1/database/sql/{}",
-            self.uri.trim_end_matches('/'),
-            urlencoding::encode(&self.database),
-        )
-    }
-
-    fn paged_query(&self, offset: usize) -> String {
-        let base = self.sql_template.trim().trim_end_matches(';');
-        if base.contains("{limit}") || base.contains("{offset}") {
-            return base
-                .replace("{limit}", &self.page_size.to_string())
-                .replace("{offset}", &offset.to_string());
-        }
-
-        format!("{base} LIMIT {} OFFSET {}", self.page_size, offset)
+#[cfg(feature = "client")]
+pub fn set_spacetime_event_table_filters(filters: SpacetimeEventFilterValues) {
+    if let Ok(mut state) = filter_state().write() {
+        *state = filters;
     }
 }
 
-#[derive(Debug, Serialize)]
-struct SpacetimeSqlRequest<'a> {
-    query: &'a str,
-}
-
-#[derive(Debug, Deserialize)]
-struct SpacetimeSqlStatement<Row> {
-    rows: Vec<Row>,
-}
-
-#[derive(Debug, Deserialize)]
-struct SpacetimeSqlRow {
-    table_name: Value,
-    sender: Value,
-    #[serde(default)]
-    connection_id: Value,
-    mutation: Value,
-    committed_at: Value,
-    reducer: Value,
-}
-
-impl SpacetimeMutation {
-    fn from_label(label: &str) -> Option<Self> {
-        match label.trim().to_ascii_lowercase().as_str() {
-            "insert" => Some(Self::Insert),
-            "update" => Some(Self::Update),
-            "delete" => Some(Self::Delete),
-            _ => None,
-        }
-    }
-
-    fn from_sql_value(value: &Value) -> Option<Self> {
-        if let Some(label) = value.as_str() {
-            return Self::from_label(label);
-        }
-
-        if let Some(tag) = value.as_u64() {
-            return match tag {
-                0 => Some(Self::Insert),
-                1 => Some(Self::Update),
-                2 => Some(Self::Delete),
-                _ => None,
-            };
-        }
-
-        if let Some(items) = value.as_array() {
-            if items.len() == 1 {
-                return Self::from_sql_value(&items[0]);
-            }
-
-            if items.len() == 2 {
-                return Self::from_sql_value(&items[0]).or_else(|| Self::from_sql_value(&items[1]));
-            }
-        }
-
-        if let Some(object) = value.as_object() {
-            for name in object.keys() {
-                if let Some(parsed) = Self::from_label(name) {
-                    return Some(parsed);
-                }
-            }
-            if let Some(tag) = object.get("tag") {
-                return Self::from_sql_value(tag);
-            }
-        }
-
-        None
+#[cfg(feature = "client")]
+fn current_filters() -> SpacetimeEventFilterValues {
+    match filter_state().read() {
+        Ok(state) => state.clone(),
+        Err(_) => SpacetimeEventFilterValues::default(),
     }
 }
 
-impl SpacetimeEvent {
-    fn from_sql_row(row: SpacetimeSqlRow) -> Result<Self, String> {
-        Ok(Self {
-            table_name: parse_sql_string("table_name", &row.table_name)?,
-            sender: parse_sql_identity("sender", &row.sender)?,
-            connection_id: parse_sql_connection_id("connection_id", &row.connection_id)?,
-            mutation: SpacetimeMutation::from_sql_value(&row.mutation)
-                .ok_or_else(|| format!("unsupported mutation payload: {}", row.mutation))?,
-            committed_at: parse_sql_timestamp("committed_at", &row.committed_at)?,
-            reducer: parse_sql_string("reducer", &row.reducer)?,
-        })
+#[cfg(feature = "client")]
+impl From<crate::module_bindings::SpacetimeMutation> for SpacetimeMutation {
+    fn from(value: crate::module_bindings::SpacetimeMutation) -> Self {
+        use crate::module_bindings::SpacetimeMutation as ModuleMutation;
+
+        match value {
+            ModuleMutation::Insert => Self::Insert,
+            ModuleMutation::Update => Self::Update,
+            ModuleMutation::Delete => Self::Delete,
+        }
     }
 }
 
-async fn fetch_spacetime_rows(
-    config: SpacetimeSqlConfig,
+#[cfg(feature = "client")]
+impl From<crate::module_bindings::SpacetimeEvent> for SpacetimeEvent {
+    fn from(value: crate::module_bindings::SpacetimeEvent) -> Self {
+        Self {
+            id: value.id,
+            table_name: value.table_name,
+            sender: value.sender,
+            connection_id: value.connection_id,
+            mutation: value.mutation.into(),
+            committed_at: value.committed_at,
+            reducer: value.reducer,
+        }
+    }
+}
+
+#[cfg(feature = "client")]
+fn fetch_page_from_bindings(
+    filters: SpacetimeEventFilterValues,
     offset: usize,
-) -> Result<Vec<SpacetimeEvent>, String> {
-    let query = config.paged_query(offset);
-    let endpoint = config.endpoint();
-    debug!("POST {} with query {}", endpoint, query);
+    limit: usize,
+) -> Result<(Vec<SpacetimeEvent>, usize), String> {
+    use crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess as _;
+    use spacetimedb_sdk::Table as _;
 
-    let client = reqwest::Client::new();
-    let mut request = client
-        .post(endpoint)
-        .json(&SpacetimeSqlRequest { query: &query });
-    if let Some(token) = &config.auth_token {
-        request = request.bearer_auth(token);
+    let conn = crate::client_connection::get()?;
+
+    let mut rows: Vec<SpacetimeEvent> = conn
+        .db
+        .spacetime_event()
+        .iter()
+        .map(|row| row.clone())
+        .map(Into::into)
+        .collect();
+
+    rows.sort_by(|left, right| right.id.cmp(&left.id));
+
+    if filters.has_active_filters() {
+        rows.retain(|row| row.matches_filters(&filters));
     }
 
-    let response = request
-        .send()
-        .await
-        .map_err(|err| format!("failed to query SpaceTimeDB: {err}"))?;
-    let status = response.status();
-    if !status.is_success() {
-        let body = response.text().await.unwrap_or_else(|_| String::new());
-        return Err(format!("SpaceTimeDB query failed ({status}): {body}"));
-    }
+    let total_count = rows.len();
+    let page = rows.into_iter().skip(offset).take(limit).collect();
 
-    let statements: Vec<SpacetimeSqlStatement<SpacetimeSqlRow>> = response
-        .json()
-        .await
-        .map_err(|err| format!("failed to decode SQL response: {err}"))?;
-
-    let mut rows = Vec::new();
-    for (statement_ix, statement) in statements.into_iter().enumerate() {
-        for (row_ix, row) in statement.rows.into_iter().enumerate() {
-            match SpacetimeEvent::from_sql_row(row) {
-                Ok(event) => rows.push(event),
-                Err(err) => warn!(
-                    "Skipping SpaceTimeDB row (statement={}, row={}): {}",
-                    statement_ix, row_ix, err
-                ),
-            }
-        }
-    }
-
-    Ok(rows)
+    Ok((page, total_count))
 }
 
-fn parse_sql_string(field: &str, value: &Value) -> Result<String, String> {
-    if let Some(text) = value.as_str() {
-        return Ok(text.to_string());
-    }
-
-    if let Some(array) = value.as_array() {
-        if array.len() == 1 {
-            return parse_sql_string(field, &array[0]);
-        }
-    }
-
-    Err(format!("invalid {field} value: {value}"))
-}
-
-fn parse_sql_identity(field: &str, value: &Value) -> Result<spacetimedb::Identity, String> {
-    if let Some(hex) = value.as_str() {
-        return spacetimedb::Identity::from_hex(hex)
-            .map_err(|err| format!("invalid {field} identity '{hex}': {err}"));
-    }
-
-    if let Some(array) = value.as_array() {
-        if array.len() == 1 {
-            return parse_sql_identity(field, &array[0]);
-        }
-    }
-
-    if let Some(object) = value.as_object() {
-        if let Some(inner) = object.get("__identity__") {
-            return parse_sql_identity(field, inner);
-        }
-        if let Some(inner) = object.get("some") {
-            return parse_sql_identity(field, inner);
-        }
-    }
-
-    Err(format!("invalid {field} value: {value}"))
-}
-
-fn parse_sql_connection_id(
-    field: &str,
-    value: &Value,
-) -> Result<Option<spacetimedb::ConnectionId>, String> {
-    if value.is_null() {
-        return Ok(None);
-    }
-
-    if let Some(hex) = value.as_str() {
-        if hex.eq_ignore_ascii_case("null") {
-            return Ok(None);
-        }
-
-        return spacetimedb::ConnectionId::from_hex(hex)
-            .map(Some)
-            .or_else(|_| {
-                hex.parse::<u128>()
-                    .map(spacetimedb::ConnectionId::from_u128)
-                    .map(Some)
-            })
-            .map_err(|err| format!("invalid {field} connection id '{hex}': {err}"));
-    }
-
-    if let Some(raw) = value.as_u64() {
-        return Ok(Some(spacetimedb::ConnectionId::from_u128(raw as u128)));
-    }
-
-    if let Some(array) = value.as_array() {
-        if array.is_empty() {
-            return Ok(None);
-        }
-        if array.len() == 1 {
-            return parse_sql_connection_id(field, &array[0]);
-        }
-    }
-
-    if let Some(object) = value.as_object() {
-        if let Some(inner) = object.get("__connection_id__") {
-            return parse_sql_connection_id(field, inner);
-        }
-        if let Some(inner) = object.get("some") {
-            return parse_sql_connection_id(field, inner);
-        }
-    }
-
-    Err(format!("invalid {field} value: {value}"))
-}
-
-fn parse_sql_timestamp(field: &str, value: &Value) -> Result<spacetimedb::Timestamp, String> {
-    if let Some(raw) = value.as_i64() {
-        return Ok(spacetimedb::Timestamp::from_micros_since_unix_epoch(raw));
-    }
-
-    if let Some(text) = value.as_str() {
-        return spacetimedb::Timestamp::parse_from_rfc3339(text)
-            .map_err(|err| format!("invalid {field} timestamp '{text}': {err}"));
-    }
-
-    if let Some(array) = value.as_array() {
-        if array.len() == 1 {
-            return parse_sql_timestamp(field, &array[0]);
-        }
-    }
-
-    if let Some(object) = value.as_object() {
-        if let Some(inner) = object.get("__timestamp_micros_since_unix_epoch") {
-            return parse_sql_timestamp(field, inner);
-        }
-        if let Some(inner) = object.get("some") {
-            return parse_sql_timestamp(field, inner);
-        }
-    }
-
-    Err(format!("invalid {field} value: {value}"))
-}
-
+#[cfg(feature = "client")]
 #[gpui_table::gpui_table_impl]
 impl TableLoader for SpacetimeEventTableDelegate {
-    const THRESHOLD: usize = 20;
+    const THRESHOLD: usize = 50;
 
     fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
         if self.loading || self.eof {
             return;
         }
 
-        let config = match SpacetimeSqlConfig::from_env() {
-            Ok(config) => config,
-            Err(err) => {
-                warn!("SpaceTimeDB story is not configured: {}", err);
-                self.loading = false;
-                self.eof = true;
-                cx.notify();
-                return;
-            },
-        };
-
         self.loading = true;
         cx.notify();
 
         let offset = self.rows.len();
-        info!(
-            "Querying SpaceTimeDB database={} offset={} limit={}",
-            config.database, offset, config.page_size
+        let limit = Self::THRESHOLD;
+        let filters = current_filters();
+
+        debug!(
+            "Loading SpaceTimeDB rows via generated bindings: offset={}, limit={}",
+            offset, limit
         );
 
-        let tokio_task = Tokio::spawn(cx, async move {
-            let limit = config.page_size;
-            let rows = fetch_spacetime_rows(config, offset).await;
-            (rows, limit)
-        });
+        cx.spawn(async move |view, cx| {
+            let result = fetch_page_from_bindings(filters, offset, limit);
 
-        cx.spawn(async move |view, cx| match tokio_task.await {
-            Ok((result, limit)) => {
-                cx.update(|cx| {
-                    view.update(cx, |table, cx| {
-                        let delegate = table.delegate_mut();
-                        match result {
-                            Ok(rows) => {
-                                let fetched_count = rows.len();
-                                delegate.rows.extend(rows);
-                                if fetched_count < limit {
-                                    delegate.eof = true;
+            _ = cx.update(|cx| {
+                view.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+
+                    match result {
+                        Ok((rows, total_count)) => {
+                            let mut existing_ids = delegate
+                                .rows
+                                .iter()
+                                .map(|row| row.id)
+                                .collect::<std::collections::HashSet<_>>();
+
+                            for row in rows {
+                                if existing_ids.insert(row.id) {
+                                    delegate.rows.push(row);
                                 }
-                            },
-                            Err(err) => {
-                                warn!("SpaceTimeDB query error: {}", err);
-                                delegate.eof = true;
-                            },
-                        }
+                            }
 
-                        delegate.loading = false;
-                        cx.notify();
-                    })
-                    .unwrap();
-                });
-            },
-            Err(err) => {
-                warn!("SpaceTimeDB query task failed: {:?}", err);
-                cx.update(|cx| {
-                    view.update(cx, |table, cx| {
-                        let delegate = table.delegate_mut();
-                        delegate.loading = false;
-                        delegate.eof = true;
-                        cx.notify();
-                    })
-                    .unwrap();
-                });
-            },
+                            delegate.eof = delegate.rows.len() >= total_count;
+                            info!(
+                                "SpaceTimeDB page loaded: visible={}, total={}",
+                                delegate.rows.len(),
+                                total_count
+                            );
+                        },
+                        Err(err) => {
+                            warn!("SpaceTimeDB bindings query failed: {}", err);
+                            delegate.eof = true;
+                        },
+                    }
+
+                    delegate.loading = false;
+                    cx.notify();
+                })
+                .unwrap();
+            });
         })
         .detach();
     }
