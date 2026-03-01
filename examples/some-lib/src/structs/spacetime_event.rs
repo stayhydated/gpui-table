@@ -226,17 +226,7 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
 
                     match result {
                         Ok((rows, total_count)) => {
-                            let mut existing_ids = delegate
-                                .rows
-                                .iter()
-                                .map(|row| row.id)
-                                .collect::<std::collections::HashSet<_>>();
-
-                            for row in rows {
-                                if existing_ids.insert(row.id) {
-                                    delegate.rows.push(row);
-                                }
-                            }
+                            delegate.rows.extend(rows);
 
                             delegate.eof = delegate.rows.len() >= total_count;
                             log::info!(

@@ -9,7 +9,6 @@ publish = false
 [features]
 default = ["client"]
 client = ["some-lib/client"]
-db = ["some-lib/db"]
 
 [dependencies]
 chrono = { workspace = true }
