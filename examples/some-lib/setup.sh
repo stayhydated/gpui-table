@@ -47,3 +47,4 @@ mkdir -p "$BINDINGS_DIR"
 
 echo "Setup complete."
 echo "Try: cargo run -p some-lib-tables --features client"
+echo "Seed rows: cargo run -p some-lib --features seed-bin --bin seed_spacetime_events -- 10000"

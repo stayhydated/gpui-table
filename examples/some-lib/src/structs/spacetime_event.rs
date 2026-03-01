@@ -1,3 +1,6 @@
+#[cfg(feature = "db")]
+use spacetimedb::Table as _;
+
 #[derive(Clone, Debug, Eq, Hash, PartialEq, spacetimedb::SpacetimeType)]
 #[cfg_attr(
     feature = "client",
@@ -53,6 +56,58 @@ pub struct SpacetimeEvent {
 
     #[cfg_attr(feature = "client", gpui_table(width = 240., filter(text())))]
     pub reducer: String,
+}
+
+#[cfg(feature = "db")]
+fn seeded_timestamp(now_micros: i64, row: u32, count: u32) -> spacetimedb::Timestamp {
+    let spacing_micros: i64 = 30 * 1_000_000;
+    let remaining = i64::from(count.saturating_sub(row));
+    let delta = remaining.saturating_mul(spacing_micros);
+    spacetimedb::Timestamp::from_micros_since_unix_epoch(now_micros.saturating_sub(delta))
+}
+
+#[cfg(feature = "db")]
+#[spacetimedb::reducer]
+pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
+    let table = ctx.db.spacetime_event();
+    if count == 0 {
+        return;
+    }
+
+    let sender = ctx.sender();
+    let connection_id = ctx.connection_id();
+    let now_micros = ctx.timestamp.to_micros_since_unix_epoch();
+    let table_names = ["user", "product", "item", "spacetime_event"];
+    let reducers = [
+        "seed_users",
+        "seed_products",
+        "mark_featured",
+        "create_item",
+        "update_stock",
+        "delete_discontinued",
+        "seed_spacetime_events",
+        "normalize_reducer_names",
+    ];
+
+    for row in 0..count {
+        let mutation = match row % 3 {
+            0 => SpacetimeMutation::Insert,
+            1 => SpacetimeMutation::Update,
+            _ => SpacetimeMutation::Delete,
+        };
+        let table_name = table_names[row as usize % table_names.len()];
+        let reducer = reducers[row as usize % reducers.len()];
+
+        table.insert(SpacetimeEvent {
+            id: 0,
+            table_name: table_name.to_string(),
+            sender,
+            connection_id,
+            mutation,
+            committed_at: seeded_timestamp(now_micros, row, count),
+            reducer: reducer.to_string(),
+        });
+    }
 }
 
 #[cfg(feature = "client")]

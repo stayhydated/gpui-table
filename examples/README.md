@@ -23,6 +23,7 @@ The `SpacetimeEvent` loader is feature-gated and can query via generated
 SpaceTimeDB client bindings:
 
 - run `examples/some-lib/setup.sh` (builds and publishes with `--features db`, then generates bindings)
+- seed `spacetime_event` rows with `cargo run -p some-lib --features seed-bin --bin seed_spacetime_events -- 10000`
 - run the story app with `cargo run -p some-lib-tables --features client`
 - `some-lib-tables` auto-initializes `DbConnection` via `some_lib::client_connection::init_from_env()`
   (`SPACETIMEDB_URI` defaults to `http://127.0.0.1:3000`, `SPACETIMEDB_DB_NAME` defaults to `gpui-table-some-lib`)

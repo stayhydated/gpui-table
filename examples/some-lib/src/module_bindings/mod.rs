@@ -6,10 +6,12 @@
 #![allow(unused, clippy::all)]
 use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
+pub mod seed_spacetime_events_reducer;
 pub mod spacetime_event_table;
 pub mod spacetime_event_type;
 pub mod spacetime_mutation_type;
 
+pub use seed_spacetime_events_reducer::seed_spacetime_events;
 pub use spacetime_event_table::*;
 pub use spacetime_event_type::SpacetimeEvent;
 pub use spacetime_mutation_type::SpacetimeMutation;
@@ -21,7 +23,9 @@ pub use spacetime_mutation_type::SpacetimeMutation;
 /// Contained within a [`__sdk::ReducerEvent`] in [`EventContext`]s for reducer events
 /// to indicate which reducer caused the event.
 
-pub enum Reducer {}
+pub enum Reducer {
+    SeedSpacetimeEvents { count: u32 },
+}
 
 impl __sdk::InModule for Reducer {
     type Module = RemoteModule;
@@ -30,12 +34,18 @@ impl __sdk::InModule for Reducer {
 impl __sdk::Reducer for Reducer {
     fn reducer_name(&self) -> &'static str {
         match self {
+            Reducer::SeedSpacetimeEvents { .. } => "seed_spacetime_events",
             _ => unreachable!(),
         }
     }
     #[allow(clippy::clone_on_copy)]
     fn args_bsatn(&self) -> Result<Vec<u8>, __sats::bsatn::EncodeError> {
         match self {
+            Reducer::SeedSpacetimeEvents { count } => {
+                __sats::bsatn::to_vec(&seed_spacetime_events_reducer::SeedSpacetimeEventsArgs {
+                    count: count.clone(),
+                })
+            },
             _ => unreachable!(),
         }
     }

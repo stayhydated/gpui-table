@@ -10,6 +10,7 @@ crate-type = ["cdylib", "lib"]
 
 [features]
 default = []
+seed-bin = []
 client = [
   "dep:chrono",
   "dep:es-fluent",
@@ -33,6 +34,11 @@ client = [
   "dep:uuid",
 ]
 db = []
+
+[[bin]]
+name = "seed_spacetime_events"
+path = "src/bin/seed_spacetime_events.rs"
+required-features = ["seed-bin"]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
