@@ -50,6 +50,12 @@ pub struct SpacetimeEvent {
 
     #[cfg_attr(
         feature = "client",
+        gpui_table(sortable, width = 130., filter(number_range(min = 1., step = 1.)))
+    )]
+    pub rows_touched: u32,
+
+    #[cfg_attr(
+        feature = "client",
         gpui_table(sortable, width = 220., filter(date_range()))
     )]
     pub committed_at: spacetimedb::Timestamp,
@@ -77,16 +83,23 @@ pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
     let sender = ctx.sender();
     let connection_id = ctx.connection_id();
     let now_micros = ctx.timestamp.to_micros_since_unix_epoch();
-    let table_names = ["user", "product", "item", "spacetime_event"];
+    // Mirrors entities commonly used in SpaceTimeDB docs and quickstart examples.
+    let table_names = [
+        "player",
+        "message",
+        "inventory",
+        "match_state",
+        "leaderboard",
+    ];
     let reducers = [
-        "seed_users",
-        "seed_products",
-        "mark_featured",
-        "create_item",
-        "update_stock",
-        "delete_discontinued",
-        "seed_spacetime_events",
-        "normalize_reducer_names",
+        "set_name",
+        "send_message",
+        "spawn_player",
+        "submit_score",
+        "collect_loot",
+        "complete_quest",
+        "equip_item",
+        "respawn_player",
     ];
 
     for row in 0..count {
@@ -94,6 +107,11 @@ pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
             0 => SpacetimeMutation::Insert,
             1 => SpacetimeMutation::Update,
             _ => SpacetimeMutation::Delete,
+        };
+        let rows_touched = match row % 3 {
+            0 => 1 + (row % 4),
+            1 => 2 + ((row * 3) % 32),
+            _ => 1 + ((row * 5) % 10),
         };
         let table_name = table_names[row as usize % table_names.len()];
         let reducer = reducers[row as usize % reducers.len()];
@@ -104,6 +122,7 @@ pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
             sender,
             connection_id,
             mutation,
+            rows_touched,
             committed_at: seeded_timestamp(now_micros, row, count),
             reducer: reducer.to_string(),
         });
@@ -155,6 +174,7 @@ impl From<crate::module_bindings::SpacetimeEvent> for SpacetimeEvent {
             sender: value.sender,
             connection_id: value.connection_id,
             mutation: value.mutation.into(),
+            rows_touched: value.rows_touched,
             committed_at: value.committed_at,
             reducer: value.reducer,
         }

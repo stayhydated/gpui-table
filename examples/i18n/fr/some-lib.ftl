@@ -105,6 +105,7 @@ spacetime_event_description_variants-committed_at = Validé à
 spacetime_event_description_variants-connection_id = ID de connexion
 spacetime_event_description_variants-mutation = Mutation
 spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-rows_touched = Lignes touchées
 spacetime_event_description_variants-sender = Émetteur
 spacetime_event_description_variants-table_name = Nom de table
 
@@ -115,6 +116,7 @@ spacetime_event_label_variants-committed_at = Validé à
 spacetime_event_label_variants-connection_id = ID de connexion
 spacetime_event_label_variants-mutation = Mutation
 spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-rows_touched = Lignes touchées
 spacetime_event_label_variants-sender = Émetteur
 spacetime_event_label_variants-table_name = Nom de table
 

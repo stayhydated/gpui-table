@@ -105,6 +105,7 @@ spacetime_event_description_variants-committed_at = 提交时间
 spacetime_event_description_variants-connection_id = 连接 ID
 spacetime_event_description_variants-mutation = 变更类型
 spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-rows_touched = 影响行数
 spacetime_event_description_variants-sender = 发送者
 spacetime_event_description_variants-table_name = 表名
 
@@ -115,6 +116,7 @@ spacetime_event_label_variants-committed_at = 提交时间
 spacetime_event_label_variants-connection_id = 连接 ID
 spacetime_event_label_variants-mutation = 变更类型
 spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-rows_touched = 影响行数
 spacetime_event_label_variants-sender = 发送者
 spacetime_event_label_variants-table_name = 表名
 

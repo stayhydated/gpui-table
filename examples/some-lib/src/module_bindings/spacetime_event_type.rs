@@ -14,6 +14,7 @@ pub struct SpacetimeEvent {
     pub sender: __sdk::Identity,
     pub connection_id: Option<__sdk::ConnectionId>,
     pub mutation: SpacetimeMutation,
+    pub rows_touched: u32,
     pub committed_at: __sdk::Timestamp,
     pub reducer: String,
 }
@@ -31,6 +32,7 @@ pub struct SpacetimeEventCols {
     pub sender: __sdk::__query_builder::Col<SpacetimeEvent, __sdk::Identity>,
     pub connection_id: __sdk::__query_builder::Col<SpacetimeEvent, Option<__sdk::ConnectionId>>,
     pub mutation: __sdk::__query_builder::Col<SpacetimeEvent, SpacetimeMutation>,
+    pub rows_touched: __sdk::__query_builder::Col<SpacetimeEvent, u32>,
     pub committed_at: __sdk::__query_builder::Col<SpacetimeEvent, __sdk::Timestamp>,
     pub reducer: __sdk::__query_builder::Col<SpacetimeEvent, String>,
 }
@@ -44,6 +46,7 @@ impl __sdk::__query_builder::HasCols for SpacetimeEvent {
             sender: __sdk::__query_builder::Col::new(table_name, "sender"),
             connection_id: __sdk::__query_builder::Col::new(table_name, "connection_id"),
             mutation: __sdk::__query_builder::Col::new(table_name, "mutation"),
+            rows_touched: __sdk::__query_builder::Col::new(table_name, "rows_touched"),
             committed_at: __sdk::__query_builder::Col::new(table_name, "committed_at"),
             reducer: __sdk::__query_builder::Col::new(table_name, "reducer"),
         }

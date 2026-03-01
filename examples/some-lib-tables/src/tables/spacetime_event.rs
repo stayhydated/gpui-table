@@ -99,7 +99,7 @@ impl Render for SpacetimeEventTableStory {
                 h_flex()
                     .gap_2()
                     .flex_wrap()
-                    .child(self.filters.all_filters()),
+                    .child(self.filters.all_filters_with_reset()),
             )
             .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),

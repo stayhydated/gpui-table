@@ -18,6 +18,15 @@ crate to hold the gpui tables, also has a main.rs defining a storybook-like gpui
 
 Includes a `SpacetimeEvent` table story that demonstrates `spacetimedb` types
 (`Timestamp`, `Identity`, `ConnectionId`) in `gpui-table`.
+The seeded rows are shaped like a reducer activity feed inspired by
+SpaceTimeDB quickstart entities (for example `player` and `message`), and use
+all filter component types from `gpui-table-component`:
+
+- `text` (`table_name`, `reducer`)
+- `faceted` (`mutation`)
+- `number_range` (`rows_touched`)
+- `date_range` (`committed_at`)
+- reset control via `all_filters_with_reset()`
 
 The `SpacetimeEvent` loader is feature-gated and can query via generated
 SpaceTimeDB client bindings:
