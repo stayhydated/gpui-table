@@ -1,34 +1,27 @@
-#[cfg(feature = "client")]
-use es_fluent::{EsFluentThis, EsFluentVariants};
-#[cfg(feature = "client")]
-use gpui::{Context, Window};
-#[cfg(feature = "client")]
-use gpui_component::IconName;
-#[cfg(feature = "client")]
-use gpui_component::table::TableState;
-#[cfg(feature = "client")]
-use gpui_table::filter::{FilterValuesExt as _, Matchable as _};
-#[cfg(feature = "client")]
-use gpui_table::{Filterable, GpuiTable, TableCell, TableLoader};
-#[cfg(feature = "client")]
-use log::{debug, info, warn};
-#[cfg(feature = "client")]
-use std::sync::{OnceLock, RwLock};
-
 #[derive(Clone, Debug, Eq, Hash, PartialEq, spacetimedb::SpacetimeType)]
-#[cfg_attr(feature = "client", derive(es_fluent::EsFluent, Filterable, TableCell))]
+#[cfg_attr(
+    feature = "client",
+    derive(es_fluent::EsFluent, gpui_table::Filterable, gpui_table::TableCell)
+)]
 #[cfg_attr(feature = "client", filter(fluent))]
 pub enum SpacetimeMutation {
-    #[cfg_attr(feature = "client", filter(icon = IconName::ArrowUp))]
+    #[cfg_attr(feature = "client", filter(icon = gpui_component::IconName::ArrowUp))]
     Insert,
-    #[cfg_attr(feature = "client", filter(icon = IconName::Settings))]
+    #[cfg_attr(feature = "client", filter(icon = gpui_component::IconName::Settings))]
     Update,
-    #[cfg_attr(feature = "client", filter(icon = IconName::CircleX))]
+    #[cfg_attr(feature = "client", filter(icon = gpui_component::IconName::CircleX))]
     Delete,
 }
 
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "client", derive(EsFluentThis, EsFluentVariants, GpuiTable))]
+#[cfg_attr(
+    feature = "client",
+    derive(
+        es_fluent::EsFluentThis,
+        es_fluent::EsFluentVariants,
+        gpui_table::GpuiTable
+    )
+)]
 #[cfg_attr(not(feature = "db"), derive(spacetimedb::SpacetimeType))]
 #[cfg_attr(feature = "db", spacetimedb::table(accessor = spacetime_event, public))]
 #[cfg_attr(feature = "client", fluent_this(origin, variants))]
@@ -63,11 +56,13 @@ pub struct SpacetimeEvent {
 }
 
 #[cfg(feature = "client")]
-static SPACETIME_FILTER_STATE: OnceLock<RwLock<SpacetimeEventFilterValues>> = OnceLock::new();
+static SPACETIME_FILTER_STATE: std::sync::OnceLock<std::sync::RwLock<SpacetimeEventFilterValues>> =
+    std::sync::OnceLock::new();
 
 #[cfg(feature = "client")]
-fn filter_state() -> &'static RwLock<SpacetimeEventFilterValues> {
-    SPACETIME_FILTER_STATE.get_or_init(|| RwLock::new(SpacetimeEventFilterValues::default()))
+fn filter_state() -> &'static std::sync::RwLock<SpacetimeEventFilterValues> {
+    SPACETIME_FILTER_STATE
+        .get_or_init(|| std::sync::RwLock::new(SpacetimeEventFilterValues::default()))
 }
 
 #[cfg(feature = "client")]
@@ -88,12 +83,10 @@ fn current_filters() -> SpacetimeEventFilterValues {
 #[cfg(feature = "client")]
 impl From<crate::module_bindings::SpacetimeMutation> for SpacetimeMutation {
     fn from(value: crate::module_bindings::SpacetimeMutation) -> Self {
-        use crate::module_bindings::SpacetimeMutation as ModuleMutation;
-
         match value {
-            ModuleMutation::Insert => Self::Insert,
-            ModuleMutation::Update => Self::Update,
-            ModuleMutation::Delete => Self::Delete,
+            crate::module_bindings::SpacetimeMutation::Insert => Self::Insert,
+            crate::module_bindings::SpacetimeMutation::Update => Self::Update,
+            crate::module_bindings::SpacetimeMutation::Delete => Self::Delete,
         }
     }
 }
@@ -119,23 +112,21 @@ fn fetch_page_from_bindings(
     offset: usize,
     limit: usize,
 ) -> Result<(Vec<SpacetimeEvent>, usize), String> {
-    use crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess as _;
-    use spacetimedb_sdk::Table as _;
-
     let conn = crate::client_connection::get()?;
+    let table =
+        crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess::spacetime_event(
+            &conn.db,
+        );
 
-    let mut rows: Vec<SpacetimeEvent> = conn
-        .db
-        .spacetime_event()
-        .iter()
+    let mut rows: Vec<SpacetimeEvent> = spacetimedb_sdk::Table::iter(&table)
         .map(|row| row.clone())
         .map(Into::into)
         .collect();
 
     rows.sort_by(|left, right| right.id.cmp(&left.id));
 
-    if filters.has_active_filters() {
-        rows.retain(|row| row.matches_filters(&filters));
+    if gpui_table::filter::FilterValuesExt::has_active_filters(&filters) {
+        rows.retain(|row| gpui_table::filter::Matchable::matches_filters(row, &filters));
     }
 
     let total_count = rows.len();
@@ -146,10 +137,14 @@ fn fetch_page_from_bindings(
 
 #[cfg(feature = "client")]
 #[gpui_table::gpui_table_impl]
-impl TableLoader for SpacetimeEventTableDelegate {
+impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
     const THRESHOLD: usize = 50;
 
-    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+    fn load_more(
+        &mut self,
+        _window: &mut gpui::Window,
+        cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+    ) {
         if self.loading || self.eof {
             return;
         }
@@ -161,9 +156,10 @@ impl TableLoader for SpacetimeEventTableDelegate {
         let limit = Self::THRESHOLD;
         let filters = current_filters();
 
-        debug!(
+        log::debug!(
             "Loading SpaceTimeDB rows via generated bindings: offset={}, limit={}",
-            offset, limit
+            offset,
+            limit
         );
 
         cx.spawn(async move |view, cx| {
@@ -188,14 +184,14 @@ impl TableLoader for SpacetimeEventTableDelegate {
                             }
 
                             delegate.eof = delegate.rows.len() >= total_count;
-                            info!(
+                            log::info!(
                                 "SpaceTimeDB page loaded: visible={}, total={}",
                                 delegate.rows.len(),
                                 total_count
                             );
                         },
                         Err(err) => {
-                            warn!("SpaceTimeDB bindings query failed: {}", err);
+                            log::warn!("SpaceTimeDB bindings query failed: {}", err);
                             delegate.eof = true;
                         },
                     }
