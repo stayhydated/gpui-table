@@ -788,7 +788,9 @@ fn generate_delegate(
     filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
-    let _has_filters = !filter_fields.is_empty();
+    let has_filters = !filter_fields.is_empty();
+    let filter_values_name =
+        Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
 
     let (load_more_impl, has_more_impl, threshold_impl, data_loader_impl) = if load_more {
         let load_more_impl = quote! {
@@ -869,6 +871,114 @@ fn generate_delegate(
     };
 
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
+    let precompute_rows_len = if has_filters {
+        quote! { let rows_len = rows.len(); }
+    } else {
+        quote! {}
+    };
+    let filter_delegate_fields = if has_filters {
+        quote! {
+            filtered_row_indices: std::cell::RefCell<Vec<usize>>,
+            active_filters: std::cell::RefCell<Option<#filter_values_name>>,
+            filter_cache_rows_len: std::cell::Cell<usize>,
+            filter_cache_dirty: std::cell::Cell<bool>,
+        }
+    } else {
+        quote! {}
+    };
+    let filter_delegate_init = if has_filters {
+        quote! {
+            filtered_row_indices: std::cell::RefCell::new((0..rows_len).collect()),
+            active_filters: std::cell::RefCell::new(None),
+            filter_cache_rows_len: std::cell::Cell::new(rows_len),
+            filter_cache_dirty: std::cell::Cell::new(false),
+        }
+    } else {
+        quote! {}
+    };
+    let filter_delegate_methods = if has_filters {
+        quote! {
+            fn ensure_filter_cache(&self) {
+                use gpui_table::filter::{FilterValuesExt as _, Matchable as _};
+
+                if !self.filter_cache_dirty.get() && self.filter_cache_rows_len.get() == self.rows.len() {
+                    return;
+                }
+
+                let active_filters = self.active_filters.borrow().clone();
+                let mut indices = self.filtered_row_indices.borrow_mut();
+                indices.clear();
+
+                match active_filters {
+                    Some(filters) if filters.has_active_filters() => {
+                        indices.extend(self.rows.iter().enumerate().filter_map(|(row_ix, row)| {
+                            row.matches_filters(&filters).then_some(row_ix)
+                        }));
+                    }
+                    _ => {
+                        indices.extend(0..self.rows.len());
+                    }
+                }
+
+                self.filter_cache_rows_len.set(self.rows.len());
+                self.filter_cache_dirty.set(false);
+            }
+
+            fn map_row_index(&self, row_ix: usize) -> usize {
+                self.ensure_filter_cache();
+                self.filtered_row_indices
+                    .borrow()
+                    .get(row_ix)
+                    .copied()
+                    .expect("invalid filtered row index")
+            }
+
+            pub fn set_filter_values(&mut self, filters: #filter_values_name) {
+                *self.active_filters.get_mut() = Some(filters);
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn clear_filter_values(&mut self) {
+                *self.active_filters.get_mut() = None;
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn refresh_filtered_rows(&self) {
+                self.filter_cache_dirty.set(true);
+                self.ensure_filter_cache();
+            }
+        }
+    } else {
+        quote! {}
+    };
+    let rows_count_impl = if has_filters {
+        quote! {
+            fn rows_count(&self, _: &#App) -> usize {
+                self.ensure_filter_cache();
+                self.filtered_row_indices.borrow().len()
+            }
+        }
+    } else {
+        quote! {
+            fn rows_count(&self, _: &#App) -> usize {
+                self.rows.len()
+            }
+        }
+    };
+    let render_row_index_map = if has_filters {
+        quote! {
+            let row_ix = self.map_row_index(row_ix);
+        }
+    } else {
+        quote! {}
+    };
+    let sort_filter_refresh = if has_filters {
+        quote! {
+            self.filter_cache_dirty.set(true);
+        }
+    } else {
+        quote! {}
+    };
 
     quote! {
 
@@ -880,10 +990,12 @@ fn generate_delegate(
             pub eof: bool,
             pub loading: bool,
             pub full_loading: bool,
+            #filter_delegate_fields
         }
 
         impl #delegate_name {
             pub fn new(rows: Vec<#struct_name>) -> Self {
+                #precompute_rows_len
                 Self {
                     rows,
                     columns: #columns_init_expr,
@@ -892,8 +1004,11 @@ fn generate_delegate(
                     eof: false,
                     loading: false,
                     full_loading: false,
+                    #filter_delegate_init
                 }
             }
+
+            #filter_delegate_methods
         }
 
         impl #TableDelegate for #delegate_name {
@@ -901,9 +1016,7 @@ fn generate_delegate(
                 self.columns.len()
             }
 
-            fn rows_count(&self, _: &#App) -> usize {
-                self.rows.len()
-            }
+            #rows_count_impl
 
             fn column(&self, col_ix: usize, _: &#App) -> #Column {
                 <#struct_name as gpui_table::TableRowMeta>::table_columns()
@@ -920,6 +1033,7 @@ fn generate_delegate(
                 cx: &mut #Context<#TableState<Self>>,
             ) -> impl #IntoElement {
                 use gpui_table::TableRowStyle;
+                #render_row_index_map
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
             }
 
@@ -957,6 +1071,8 @@ fn generate_delegate(
                     #(#sort_arms)*
                     _ => {}
                 }
+
+                #sort_filter_refresh
             }
         }
 
@@ -979,6 +1095,7 @@ fn generate_filter_entities(
         &format!("{}FilterEntities", struct_name),
         struct_name.span(),
     );
+    let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
 
     // Generate Entity fields for each filter
     let entity_field_defs: Vec<proc_macro2::TokenStream> = filter_fields
@@ -1318,6 +1435,49 @@ fn generate_filter_entities(
                     #(#field_names,)*
                     __on_filter_change: on_filter_change,
                 }
+            }
+
+            /// Build filters and wire them directly into a generated table delegate.
+            ///
+            /// On each filter change this updates `table.delegate_mut().set_filter_values(...)`
+            /// and triggers a table refresh.
+            pub fn build_for_table(
+                table: #Entity<#TableState<#delegate_name>>,
+                cx: &mut #App,
+            ) -> Self {
+                let filters_slot: std::rc::Rc<std::cell::RefCell<Option<Self>>> =
+                    std::rc::Rc::new(std::cell::RefCell::new(None));
+                let filters_slot_for_change = filters_slot.clone();
+                let table_for_change = table.clone();
+
+                let on_filter_change: std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static> =
+                    std::rc::Rc::new(move |_window, cx| {
+                        let next_values = {
+                            let filters = filters_slot_for_change.borrow();
+                            filters.as_ref().map(|filters| {
+                                gpui_table::filter::FilterEntitiesExt::read_values(filters, cx)
+                            })
+                        };
+
+                        if let Some(values) = next_values {
+                            table_for_change.update(cx, |table, cx| {
+                                table.delegate_mut().set_filter_values(values);
+                                cx.notify();
+                            });
+                        }
+                    });
+
+                let filters = Self::build(Some(on_filter_change), cx);
+                *filters_slot.borrow_mut() = Some(filters.clone());
+
+                let initial_values =
+                    gpui_table::filter::FilterEntitiesExt::read_values(&filters, cx);
+                table.update(cx, |table, cx| {
+                    table.delegate_mut().set_filter_values(initial_values);
+                    cx.notify();
+                });
+
+                filters
             }
 
             /// Reset all filters and invoke the filter-change callback once.

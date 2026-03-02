@@ -55,3 +55,5 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
 - `reset_filters(&self, window, cx)` to clear all filters and trigger one reload callback.
 - `reset_button(&self)` to build a localized `ResetFilters` control.
 - `all_filters_with_reset(&self)` to render filters plus the reset control.
+- `build_for_table(table, cx)` to auto-wire filter changes into the generated
+  `TableDelegate` (client-side filtering for `DataTable`).

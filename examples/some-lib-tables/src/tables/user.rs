@@ -4,9 +4,9 @@ use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
     Subscription, Window,
 };
-use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
-use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
+use gpui_table::filter::FilterEntitiesExt as _;
 use some_lib::structs::user::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
@@ -37,7 +37,7 @@ impl UserTableStory {
         let users: Vec<User> = (0..200).map(|_| Faker.fake()).collect();
         let delegate = UserTableDelegate::new(users);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        let filters = UserFilterEntities::build(None, cx);
+        let filters = UserFilterEntities::build_for_table(table.clone(), cx);
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {
             table,
