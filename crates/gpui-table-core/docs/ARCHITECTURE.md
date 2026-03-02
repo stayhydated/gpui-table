@@ -40,9 +40,23 @@ runtime components.
 - Implement `FilterValue`/`Filterable` for faceted filter enums.
 - Override `TableRowStyle` to customize row or cell rendering.
 
+## Default cell formatting
+
+`TableCell` implementations in `lib.rs` use these default display formats:
+
+- Floats and `rust_decimal::Decimal`: fixed to 2 decimal places.
+- `chrono`/`spacetimedb` date-time values are rendered via ICU4X (`icu::datetime`)
+  using `en-US` locale defaults:
+  - `chrono::DateTime<Tz>` and `spacetimedb::Timestamp`: medium date+time with
+    localized offset (`LocalizedOffsetLong`).
+  - `chrono::NaiveDateTime`: medium date + explicit `HMS` time.
+  - `chrono::NaiveDate`: medium date.
+  - `chrono::NaiveTime`: medium time.
+
 ## Feature flags
 
-- `chrono`: `TableCell` and date conversion helpers.
+- `chrono`: `TableCell` date formatting (ICU4X-backed) and date conversion
+  helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
 - `fluent`: localized title helpers used by generated code.
 - `spacetimedb`: `TableCell` support for `Timestamp`, `Identity`, and

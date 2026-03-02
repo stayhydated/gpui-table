@@ -89,6 +89,92 @@ pub trait TableCell {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement;
 }
 
+#[cfg(feature = "chrono")]
+mod datetime_format {
+    use chrono::{Datelike as _, Offset as _, Timelike as _};
+    use icu::{
+        calendar::{Date, Iso},
+        datetime::{
+            DateTimeFormatter, NoCalendarFormatter,
+            fieldsets::{self, Combo},
+            input::{DateTime as IcuDateTime, Time, UtcOffset, ZonedDateTime},
+        },
+        locale::locale,
+    };
+
+    type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
+    type DateTimeFormatterNoZone = DateTimeFormatter<fieldsets::YMDT>;
+    type DateTimeFormatterWithZone =
+        DateTimeFormatter<Combo<fieldsets::YMDT, fieldsets::zone::LocalizedOffsetLong>>;
+    type TimeFormatter = NoCalendarFormatter<fieldsets::T>;
+
+    fn date_formatter() -> Option<DateFormatter> {
+        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+    }
+
+    fn datetime_formatter() -> Option<DateTimeFormatterNoZone> {
+        let fieldset = fieldsets::YMD::medium().with_time_hms();
+        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+    }
+
+    fn zoned_datetime_formatter() -> Option<DateTimeFormatterWithZone> {
+        let fieldset = fieldsets::YMD::medium()
+            .with_time_hms()
+            .with_zone(fieldsets::zone::LocalizedOffsetLong);
+        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+    }
+
+    fn time_formatter() -> Option<TimeFormatter> {
+        NoCalendarFormatter::try_new(locale!("en-US").into(), fieldsets::T::medium()).ok()
+    }
+
+    fn to_icu_date(value: &chrono::NaiveDate) -> Option<Date<Iso>> {
+        let month = u8::try_from(value.month()).ok()?;
+        let day = u8::try_from(value.day()).ok()?;
+        Date::try_new_iso(value.year(), month, day).ok()
+    }
+
+    fn to_icu_time(value: &chrono::NaiveTime) -> Option<Time> {
+        let hour = u8::try_from(value.hour()).ok()?;
+        let minute = u8::try_from(value.minute()).ok()?;
+        let second = u8::try_from(value.second()).ok()?;
+        Time::try_new(hour, minute, second, value.nanosecond()).ok()
+    }
+
+    pub(super) fn format_datetime<Tz: chrono::TimeZone>(
+        value: &chrono::DateTime<Tz>,
+    ) -> Option<String> {
+        let utc_offset =
+            UtcOffset::try_from_seconds(value.offset().fix().local_minus_utc()).ok()?;
+        let zoned = ZonedDateTime::from_epoch_milliseconds_and_utc_offset(
+            value.timestamp_millis(),
+            utc_offset,
+        );
+        let formatter = zoned_datetime_formatter()?;
+        Some(formatter.format(&zoned).to_string())
+    }
+
+    pub(super) fn format_naive_datetime(value: &chrono::NaiveDateTime) -> Option<String> {
+        let date = to_icu_date(&value.date())?;
+        let time = to_icu_time(&value.time())?;
+        let datetime = IcuDateTime { date, time };
+        let formatter = datetime_formatter()?;
+        Some(formatter.format(&datetime).to_string())
+    }
+
+    pub(super) fn format_naive_date(value: &chrono::NaiveDate) -> Option<String> {
+        let date = to_icu_date(value)?;
+        let formatter = date_formatter()?;
+        Some(formatter.format(&date).to_string())
+    }
+
+    pub(super) fn format_naive_time(value: &chrono::NaiveTime) -> Option<String> {
+        let time = to_icu_time(value)?;
+        let formatter = time_formatter()?;
+        Some(formatter.format(&time).to_string())
+    }
+}
+
 macro_rules! impl_table_cell_display {
     ($($t:ty),* $(,)?) => {
         $(
@@ -123,7 +209,7 @@ impl<T: TableCell> TableCell for Option<T> {
 }
 
 impl_table_cell_display!(
-    String, &str, usize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
+    String, &str, usize, isize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
 );
 impl_table_cell_float!(f32, f64);
 
@@ -146,15 +232,17 @@ where
     Tz::Offset: std::fmt::Display,
 {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_rfc3339().into_any_element()
+        datetime_format::format_datetime(self)
+            .unwrap_or_else(|| self.to_rfc3339())
+            .into_any_element()
     }
 }
 
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDateTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.format("%Y-%m-%d %H:%M:%S")
-            .to_string()
+        datetime_format::format_naive_datetime(self)
+            .unwrap_or_else(|| self.to_string())
             .into_any_element()
     }
 }
@@ -162,14 +250,18 @@ impl TableCell for chrono::NaiveDateTime {
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDate {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.format("%Y-%m-%d").to_string().into_any_element()
+        datetime_format::format_naive_date(self)
+            .unwrap_or_else(|| self.to_string())
+            .into_any_element()
     }
 }
 
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.format("%H:%M:%S").to_string().into_any_element()
+        datetime_format::format_naive_time(self)
+            .unwrap_or_else(|| self.to_string())
+            .into_any_element()
     }
 }
 
@@ -177,7 +269,8 @@ impl TableCell for chrono::NaiveTime {
 impl TableCell for spacetimedb::Timestamp {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
         self.to_chrono_date_time()
-            .map(|dt| dt.format("%H:%M:%S").to_string())
+            .ok()
+            .and_then(|dt| datetime_format::format_datetime(&dt))
             .unwrap_or_default()
             .into_any_element()
     }
