@@ -212,28 +212,41 @@ fn fetch_page_from_bindings(
 }
 
 #[cfg(feature = "client")]
-#[gpui_table::gpui_table_impl]
-impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
-    const THRESHOLD: usize = 50;
+const SPACETIME_EVENT_PAGE_SIZE: usize = 50;
 
-    fn load_more(
+#[cfg(feature = "client")]
+impl SpacetimeEventTableDelegate {
+    pub fn reload_visible_rows(
         &mut self,
-        _window: &mut gpui::Window,
         cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
     ) {
-        if self.loading || self.eof {
+        if self.loading {
+            return;
+        }
+
+        let limit = self.rows.len().max(SPACETIME_EVENT_PAGE_SIZE);
+        self.fetch_rows(0, limit, true, cx);
+    }
+
+    fn fetch_rows(
+        &mut self,
+        offset: usize,
+        limit: usize,
+        replace_rows: bool,
+        cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+    ) {
+        if self.loading {
             return;
         }
 
         self.loading = true;
         cx.notify();
 
-        let offset = self.rows.len();
-        let limit = Self::THRESHOLD;
         let filters = current_filters();
-
+        let mode = if replace_rows { "reload" } else { "load_more" };
         log::debug!(
-            "Loading SpacetimeDB rows via generated bindings: offset={}, limit={}",
+            "SpacetimeDB {} via generated bindings: offset={}, limit={}",
+            mode,
             offset,
             limit
         );
@@ -247,7 +260,11 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
 
                     match result {
                         Ok((rows, total_count)) => {
-                            delegate.rows.extend(rows);
+                            if replace_rows {
+                                delegate.rows = rows;
+                            } else {
+                                delegate.rows.extend(rows);
+                            }
 
                             delegate.eof = delegate.rows.len() >= total_count;
                             log::info!(
@@ -258,7 +275,9 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
                         },
                         Err(err) => {
                             log::warn!("SpacetimeDB bindings query failed: {}", err);
-                            delegate.eof = true;
+                            if !replace_rows {
+                                delegate.eof = true;
+                            }
                         },
                     }
 
@@ -269,5 +288,25 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
             });
         })
         .detach();
+    }
+}
+
+#[cfg(feature = "client")]
+#[gpui_table::gpui_table_impl]
+impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
+    const THRESHOLD: usize = SPACETIME_EVENT_PAGE_SIZE;
+
+    fn load_more(
+        &mut self,
+        _window: &mut gpui::Window,
+        cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+    ) {
+        if self.loading || self.eof {
+            return;
+        }
+
+        let offset = self.rows.len();
+        let limit = Self::THRESHOLD;
+        self.fetch_rows(offset, limit, false, cx);
     }
 }

@@ -1,9 +1,12 @@
 use crate::module_bindings::DbConnection;
 use log::{info, warn};
 use spacetimedb_sdk::DbContext as _;
+use spacetimedb_sdk::Table as _;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, OnceLock};
 
 static CONNECTION: OnceLock<Arc<DbConnection>> = OnceLock::new();
+static SPACETIME_EVENT_CHANGE_VERSION: AtomicU64 = AtomicU64::new(0);
 const DEFAULT_SPACETIMEDB_URI: &str = "http://127.0.0.1:3000";
 const DEFAULT_SPACETIMEDB_DB_NAME: &str = "gpui-table-some-lib";
 const SPACETIME_EVENT_SUBSCRIPTION: &str = "SELECT * FROM spacetime_event";
@@ -48,6 +51,15 @@ pub fn init_from_env() -> Result<Arc<DbConnection>, String> {
         .build()
         .map_err(|error| format!("Failed to create DbConnection: {}", error))?;
 
+    use crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess as _;
+    let table = conn.db.spacetime_event();
+    table.on_insert(|_, _| {
+        SPACETIME_EVENT_CHANGE_VERSION.fetch_add(1, Ordering::Relaxed);
+    });
+    table.on_delete(|_, _| {
+        SPACETIME_EVENT_CHANGE_VERSION.fetch_add(1, Ordering::Relaxed);
+    });
+
     let _ = conn
         .subscription_builder()
         .subscribe(SPACETIME_EVENT_SUBSCRIPTION);
@@ -61,4 +73,8 @@ pub fn get() -> Result<Arc<DbConnection>, String> {
         .get()
         .cloned()
         .ok_or_else(|| "DbConnection not initialized".to_string())
+}
+
+pub fn spacetime_event_change_version() -> u64 {
+    SPACETIME_EVENT_CHANGE_VERSION.load(Ordering::Relaxed)
 }
