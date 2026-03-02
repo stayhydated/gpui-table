@@ -378,6 +378,13 @@ impl TableCell for spacetimedb::Timestamp {
 }
 
 #[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb::TimeDuration {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
+#[cfg(feature = "spacetimedb")]
 impl TableCell for spacetimedb::Identity {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
         self.to_string().into_any_element()

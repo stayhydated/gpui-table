@@ -7,7 +7,6 @@ use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
 use gpui_table::filter::FilterEntitiesExt as _;
 use some_lib::structs::spacetime_event::*;
-use std::time::Duration;
 
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
@@ -57,8 +56,8 @@ impl SpacetimeEventTableStory {
                 };
 
                 if let Some(values) = next_values {
-                    set_spacetime_event_table_filters(values);
                     table_for_reload.update(cx, |table, cx| {
+                        table.delegate_mut().set_filter_values(values);
                         table.delegate_mut().rows.clear();
                         table.delegate_mut().eof = false;
                         use gpui_table::TableDataLoader as _;
@@ -71,26 +70,21 @@ impl SpacetimeEventTableStory {
         *filters_slot.borrow_mut() = Some(filters.clone());
 
         let initial_values = filters.read_values(cx);
-        set_spacetime_event_table_filters(initial_values);
         table.update(cx, |table, cx| {
+            table.delegate_mut().set_filter_values(initial_values);
             use gpui_table::TableDataLoader as _;
             table.delegate_mut().load_data(window, cx);
         });
 
         let table_for_live_reload = table.clone();
+        let mut live_change_rx = some_lib::client_connection::subscribe_spacetime_event_changes();
         cx.spawn(async move |view, cx| {
-            let mut observed_version =
-                some_lib::client_connection::spacetime_event_change_version();
             loop {
-                cx.background_executor()
-                    .timer(Duration::from_millis(300))
-                    .await;
-
-                let next_version = some_lib::client_connection::spacetime_event_change_version();
-                if next_version == observed_version {
-                    continue;
+                match live_change_rx.recv().await {
+                    Ok(()) => {},
+                    Err(tokio::sync::broadcast::error::RecvError::Lagged(_)) => {},
+                    Err(tokio::sync::broadcast::error::RecvError::Closed) => break,
                 }
-                observed_version = next_version;
 
                 let updated = cx.update(|cx| {
                     view.update(cx, |_, cx| {

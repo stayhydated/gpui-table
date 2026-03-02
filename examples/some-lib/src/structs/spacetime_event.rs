@@ -135,31 +135,6 @@ pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) -> R
 }
 
 #[cfg(feature = "client")]
-static SPACETIME_FILTER_STATE: std::sync::OnceLock<std::sync::RwLock<SpacetimeEventFilterValues>> =
-    std::sync::OnceLock::new();
-
-#[cfg(feature = "client")]
-fn filter_state() -> &'static std::sync::RwLock<SpacetimeEventFilterValues> {
-    SPACETIME_FILTER_STATE
-        .get_or_init(|| std::sync::RwLock::new(SpacetimeEventFilterValues::default()))
-}
-
-#[cfg(feature = "client")]
-pub fn set_spacetime_event_table_filters(filters: SpacetimeEventFilterValues) {
-    if let Ok(mut state) = filter_state().write() {
-        *state = filters;
-    }
-}
-
-#[cfg(feature = "client")]
-fn current_filters() -> SpacetimeEventFilterValues {
-    match filter_state().read() {
-        Ok(state) => state.clone(),
-        Err(_) => SpacetimeEventFilterValues::default(),
-    }
-}
-
-#[cfg(feature = "client")]
 impl From<crate::module_bindings::SpacetimeMutation> for SpacetimeMutation {
     fn from(value: crate::module_bindings::SpacetimeMutation) -> Self {
         match value {
@@ -242,7 +217,7 @@ impl SpacetimeEventTableDelegate {
         self.loading = true;
         cx.notify();
 
-        let filters = current_filters();
+        let filters = self.active_filters.borrow().clone().unwrap_or_default();
         let mode = if replace_rows { "reload" } else { "load_more" };
         log::debug!(
             "SpacetimeDB {} via generated bindings: offset={}, limit={}",
