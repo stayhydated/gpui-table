@@ -64,8 +64,7 @@ runtime components.
 ## Feature flags
 
 - `jiff`: ICU4X-backed `TableCell` rendering for `jiff` date/time types.
-- `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff ->
-  ICU4X`, plus date conversion helpers.
+- `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff -> ICU4X`, plus date conversion helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
 - `fluent`: localized title helpers used by generated code.
 - `spacetimedb`: `TableCell` support for `Timestamp`, `Identity`, and

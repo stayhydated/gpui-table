@@ -6,7 +6,7 @@ use spacetimedb_sdk::__codegen::{self as __sdk, __lib, __sats, __ws};
 
 use super::spacetime_mutation_type::SpacetimeMutation;
 
-#[derive(__lib::ser::Serialize, __lib::de::Deserialize, Clone, PartialEq, Debug)]
+#[derive(Clone, Debug, __lib::de::Deserialize, PartialEq, __lib::ser::Serialize)]
 #[sats(crate = __lib)]
 pub struct SpacetimeEvent {
     pub id: u64,

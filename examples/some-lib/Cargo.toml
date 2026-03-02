@@ -6,11 +6,9 @@ license = "Unlicense"
 publish = false
 
 [lib]
-crate-type = ["cdylib", "lib"]
+crate-type = [ "cdylib", "lib" ]
 
 [features]
-default = []
-seed-bin = []
 client = [
   "dep:chrono",
   "dep:es-fluent",
@@ -33,16 +31,18 @@ client = [
   "dep:urlencoding",
   "dep:uuid",
 ]
-db = []
+db = [  ]
+default = [  ]
+seed-bin = [  ]
 
 [[bin]]
 name = "seed_spacetime_events"
 path = "src/bin/seed_spacetime_events.rs"
-required-features = ["seed-bin"]
+required-features = [ "seed-bin" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-es-fluent = { features = ["derive"], optional = true, workspace = true }
+es-fluent = { features = [ "derive" ], optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 fake = { features = [
   "derive",
@@ -64,16 +64,16 @@ gpui-table-component = { optional = true, workspace = true }
 gpui_tokio = { optional = true, workspace = true }
 heck = { optional = true, workspace = true }
 log = { optional = true, workspace = true }
-reqwest = { features = ["json"], optional = true, workspace = true }
+reqwest = { features = [ "json" ], optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
-serde = { features = ["derive"], optional = true, workspace = true }
+serde = { features = [ "derive" ], optional = true, workspace = true }
 serde_json = { optional = true, workspace = true }
 spacetimedb = { workspace = true }
 spacetimedb-sdk = { optional = true, workspace = true }
-strum = { features = ["derive"], optional = true, workspace = true }
+strum = { features = [ "derive" ], optional = true, workspace = true }
 tokio = { optional = true, workspace = true }
 urlencoding = { optional = true, workspace = true }
 uuid = { optional = true, workspace = true }
 
 [build-dependencies]
-es-fluent = { features = ["build"], workspace = true }
+es-fluent = { features = [ "build" ], workspace = true }

@@ -12,16 +12,16 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = ["dep:chrono", "jiff"]
-default = ["chrono"]
-fluent = ["dep:es-fluent", "dep:es-fluent-manager-embedded", "es-fluent/derive"]
-jiff = ["dep:icu", "dep:jiff"]
-rust_decimal = ["dep:rust_decimal"]
-spacetimedb = ["dep:spacetimedb", "chrono"]
+chrono = [ "dep:chrono", "jiff" ]
+default = [ "chrono" ]
+fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded", "es-fluent/derive" ]
+jiff = [ "dep:icu", "dep:jiff" ]
+rust_decimal = [ "dep:rust_decimal" ]
+spacetimedb = [ "dep:spacetimedb", "chrono" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-derive_more = { features = ["full"], workspace = true }
+derive_more = { features = [ "full" ], workspace = true }
 es-fluent = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 gpui = { workspace = true }
@@ -31,10 +31,10 @@ inventory = { workspace = true }
 jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 spacetimedb = { optional = true, workspace = true }
-strum = { features = ["derive"], workspace = true }
+strum = { features = [ "derive" ], workspace = true }
 
 [build-dependencies]
-es-fluent = { features = ["build"], workspace = true }
+es-fluent = { features = [ "build" ], workspace = true }
 
 [lints]
 workspace = true
