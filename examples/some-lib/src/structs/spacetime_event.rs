@@ -1,5 +1,7 @@
 #[cfg(feature = "db")]
 use spacetimedb::Table as _;
+#[cfg(feature = "client")]
+use spacetimedb_sdk::Table as _;
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, spacetimedb::SpacetimeType)]
 #[cfg_attr(
@@ -25,7 +27,6 @@ pub enum SpacetimeMutation {
         gpui_table::GpuiTable
     )
 )]
-#[cfg_attr(not(feature = "db"), derive(spacetimedb::SpacetimeType))]
 #[cfg_attr(feature = "db", spacetimedb::table(accessor = spacetime_event, public))]
 #[cfg_attr(feature = "client", fluent_this(origin, variants))]
 #[cfg_attr(feature = "client", fluent_variants(keys = ["description", "label"]))]
@@ -74,10 +75,10 @@ fn seeded_timestamp(now_micros: i64, row: u32, count: u32) -> spacetimedb::Times
 
 #[cfg(feature = "db")]
 #[spacetimedb::reducer]
-pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
+pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) -> Result<(), String> {
     let table = ctx.db.spacetime_event();
     if count == 0 {
-        return;
+        return Ok(());
     }
 
     let sender = ctx.sender();
@@ -116,17 +117,21 @@ pub fn seed_spacetime_events(ctx: &spacetimedb::ReducerContext, count: u32) {
         let table_name = table_names[row as usize % table_names.len()];
         let reducer = reducers[row as usize % reducers.len()];
 
-        table.insert(SpacetimeEvent {
-            id: 0,
-            table_name: table_name.to_string(),
-            sender,
-            connection_id,
-            mutation,
-            rows_touched,
-            committed_at: seeded_timestamp(now_micros, row, count),
-            reducer: reducer.to_string(),
-        });
+        table
+            .try_insert(SpacetimeEvent {
+                id: 0,
+                table_name: table_name.to_string(),
+                sender,
+                connection_id,
+                mutation,
+                rows_touched,
+                committed_at: seeded_timestamp(now_micros, row, count),
+                reducer: reducer.to_string(),
+            })
+            .map_err(|error| format!("Failed to insert spacetime_event row {row}: {error}"))?;
     }
+
+    Ok(())
 }
 
 #[cfg(feature = "client")]
@@ -187,16 +192,12 @@ fn fetch_page_from_bindings(
     offset: usize,
     limit: usize,
 ) -> Result<(Vec<SpacetimeEvent>, usize), String> {
-    let conn = crate::client_connection::get()?;
-    let table =
-        crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess::spacetime_event(
-            &conn.db,
-        );
+    use crate::module_bindings::spacetime_event_table::SpacetimeEventTableAccess as _;
 
-    let mut rows: Vec<SpacetimeEvent> = spacetimedb_sdk::Table::iter(&table)
-        .map(|row| row.clone())
-        .map(Into::into)
-        .collect();
+    let conn = crate::client_connection::get()?;
+    let table = conn.db.spacetime_event();
+
+    let mut rows: Vec<SpacetimeEvent> = table.iter().map(Into::into).collect();
 
     rows.sort_by(|left, right| right.id.cmp(&left.id));
 
@@ -232,7 +233,7 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
         let filters = current_filters();
 
         log::debug!(
-            "Loading SpaceTimeDB rows via generated bindings: offset={}, limit={}",
+            "Loading SpacetimeDB rows via generated bindings: offset={}, limit={}",
             offset,
             limit
         );
@@ -250,13 +251,13 @@ impl gpui_table::TableLoader for SpacetimeEventTableDelegate {
 
                             delegate.eof = delegate.rows.len() >= total_count;
                             log::info!(
-                                "SpaceTimeDB page loaded: visible={}, total={}",
+                                "SpacetimeDB page loaded: visible={}, total={}",
                                 delegate.rows.len(),
                                 total_count
                             );
                         },
                         Err(err) => {
-                            log::warn!("SpaceTimeDB bindings query failed: {}", err);
+                            log::warn!("SpacetimeDB bindings query failed: {}", err);
                             delegate.eof = true;
                         },
                     }

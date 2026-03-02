@@ -2,8 +2,8 @@
 set -euo pipefail
 
 DB_NAME="${SPACETIMEDB_DB_NAME:-gpui-table-some-lib}"
+SERVER="${SPACETIMEDB_SERVER:-local}"
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(cd -- "$SCRIPT_DIR/../.." && pwd)"
 MODULE_PATH="$SCRIPT_DIR"
 BINDINGS_DIR="$MODULE_PATH/src/module_bindings"
 
@@ -18,23 +18,36 @@ if [ ! -x "$SPACETIME" ]; then
     fi
 fi
 
+supports_flag() {
+    local subcommand="$1"
+    local flag="$2"
+    "$SPACETIME" "$subcommand" --help 2>&1 | grep -q -- "$flag"
+}
+
 echo "SpacetimeDB CLI: $($SPACETIME --version)"
 
-echo "Building module (db)..."
-cd "$ROOT_DIR"
-cargo build --release -p some-lib --features db
+if [ "$SERVER" = "local" ]; then
+    echo "Checking local SpacetimeDB server status..."
+    if ! "$SPACETIME" server status 2>/dev/null | grep -qi "running"; then
+        echo "Starting local SpacetimeDB server..."
+        "$SPACETIME" start &
+        sleep 3
+    fi
+else
+    echo "Using SpacetimeDB server '$SERVER' (skipping local startup)."
+fi
 
-echo "Checking SpaceTimeDB server status..."
-if ! "$SPACETIME" server status 2>/dev/null | grep -qi "running"; then
-    echo "Starting SpaceTimeDB server..."
-    "$SPACETIME" start &
-    sleep 3
+echo "Building module with SpacetimeDB CLI..."
+if supports_flag build "--build-options"; then
+    "$SPACETIME" build --module-path "$MODULE_PATH" --build-options='--features db'
+else
+    "$SPACETIME" build --module-path "$MODULE_PATH"
 fi
 
 echo "Publishing module '$DB_NAME'..."
-"$SPACETIME" publish --server local --module-path "$MODULE_PATH" --build-options='--features db' --delete-data=always -y "$DB_NAME" || {
+"$SPACETIME" publish --server "$SERVER" --module-path "$MODULE_PATH" --build-options='--features db' --delete-data -y "$DB_NAME" || {
     echo "Retrying publish without --delete-data..."
-    "$SPACETIME" publish --server local --module-path "$MODULE_PATH" --build-options='--features db' -y "$DB_NAME"
+    "$SPACETIME" publish --server "$SERVER" --module-path "$MODULE_PATH" --build-options='--features db' -y "$DB_NAME"
 }
 
 echo "Generating Rust client bindings..."
