@@ -45,18 +45,27 @@ runtime components.
 `TableCell` implementations in `lib.rs` use these default display formats:
 
 - Floats and `rust_decimal::Decimal`: fixed to 2 decimal places.
-- `chrono`/`spacetimedb` date-time values are rendered via ICU4X (`icu::datetime`)
-  using `en-US` locale defaults:
-  - `chrono::DateTime<Tz>` and `spacetimedb::Timestamp`: medium date+time with
-    localized offset (`LocalizedOffsetLong`).
-  - `chrono::NaiveDateTime`: medium date + explicit `HMS` time.
-  - `chrono::NaiveDate`: medium date.
-  - `chrono::NaiveTime`: medium time.
+- `jiff` date/time values are rendered via ICU4X (`icu::datetime`) using
+  `en-US` locale defaults:
+  - `jiff::Zoned` and `jiff::Timestamp` use medium date+time with localized
+    offset (`LocalizedOffsetLong`). `Timestamp` is displayed in system time
+    zone.
+  - `jiff::civil::DateTime`: medium date + explicit `HMS` time.
+  - `jiff::civil::Date`: medium date.
+  - `jiff::civil::Time`: medium time.
+- `chrono` values are converted through `jiff` before ICU4X formatting:
+  - `chrono::DateTime<Tz>`: converted to `jiff::Timestamp` and displayed in
+    system time zone.
+  - `chrono::NaiveDateTime`/`NaiveDate`/`NaiveTime`: converted to
+    corresponding `jiff::civil::*` values.
+- `spacetimedb::Timestamp` is converted through `chrono` then `jiff` and
+  rendered in system time zone.
 
 ## Feature flags
 
-- `chrono`: `TableCell` date formatting (ICU4X-backed) and date conversion
-  helpers.
+- `jiff`: ICU4X-backed `TableCell` rendering for `jiff` date/time types.
+- `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff ->
+  ICU4X`, plus date conversion helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
 - `fluent`: localized title helpers used by generated code.
 - `spacetimedb`: `TableCell` support for `Timestamp`, `Identity`, and
