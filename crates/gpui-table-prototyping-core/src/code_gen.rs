@@ -356,25 +356,8 @@ impl TableShape for TableShapeAdapter<'_> {
                 quote! {
                     let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-                    // Trigger initial data load
-                    table.update(cx, |table, cx| {
-                        use gpui_table::TableDataLoader as _;
-                        table.delegate_mut().load_data(window, cx);
-                    });
-
-                    // Build filter entities with reload callback
-                    let table_for_reload = table.clone();
-                    let filters = #filter_entities_ident::build(
-                        Some(std::rc::Rc::new(move |window, cx| {
-                            table_for_reload.update(cx, |table, cx| {
-                                table.delegate_mut().rows.clear();
-                                table.delegate_mut().eof = false;
-                                use gpui_table::TableDataLoader as _;
-                                table.delegate_mut().load_data(window, cx);
-                            });
-                        })),
-                        cx,
-                    );
+                    let filters =
+                        #filter_entities_ident::build_for_table_loader(table.clone(), window, cx);
 
                     let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
                 }

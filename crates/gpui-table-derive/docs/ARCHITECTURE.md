@@ -42,9 +42,13 @@ columns, filters, and optional registry metadata.
    single-action filter reset wiring.
 1. When filters are enabled, generated delegates maintain a filtered row-index
    cache and expose `set_filter_values(...)` / `clear_filter_values(...)`.
-   Generated `FilterEntities::build_for_table(...)` wires filter changes
-   directly into `TableState` for client-side interactive filtering with
-   `DataTable`.
+   Generated helpers wire filter changes directly into `TableState`:
+   - `FilterEntities::build_for_table(...)` for client-side interactive
+     filtering with `DataTable`.
+   - `FilterEntities::build_for_table_loader(...)` for `TableDataLoader`-driven
+     server-side reloads.
+   - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
+     reset behavior needs customization.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 
 ## Feature flags

@@ -57,3 +57,7 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
 - `all_filters_with_reset(&self)` to render filters plus the reset control.
 - `build_for_table(table, cx)` to auto-wire filter changes into the generated
   `TableDelegate` (client-side filtering for `DataTable`).
+- `build_for_table_loader(table, window, cx)` to auto-wire filter changes into
+  delegate-owned filter state and call `TableDataLoader::load_data(...)`.
+- `build_for_table_loader_with(table, before_reload, window, cx)` to customize
+  delegate state reset behavior before each reload.

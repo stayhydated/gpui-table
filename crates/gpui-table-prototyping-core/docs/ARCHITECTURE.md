@@ -29,6 +29,9 @@
    - For filter-enabled, non-load-more stories, emits
      `XxxFilterEntities::build_for_table(table.clone(), cx)` so client-side
      filtering stays interactive with `DataTable`.
+   - For filter-enabled, load-more stories, emits
+     `XxxFilterEntities::build_for_table_loader(table.clone(), window, cx)` so
+     filter changes update delegate-owned filter state and trigger reloads.
    - Passes `TableParts` to the `TableLayout` implementation which produces the final `syn::File`.
 1. The consumer formats with `prettyplease::unparse` and writes to disk.
 

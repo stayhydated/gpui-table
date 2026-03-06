@@ -348,10 +348,11 @@ impl ProductTableDelegate {
         .detach();
     }
 
-    /// Load more products (without filters - for initial load)
+    /// Load more products using the currently active delegate filters.
     #[load_more]
     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
-        self.load_more_with_filters(ProductFilterValues::default(), window, cx);
+        let filters = self.active_filters.borrow().clone().unwrap_or_default();
+        self.load_more_with_filters(filters, window, cx);
     }
 
     /// Reset and reload data with new filter values

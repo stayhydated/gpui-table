@@ -1440,7 +1440,7 @@ fn generate_filter_entities(
             /// Build filters and wire them directly into a generated table delegate.
             ///
             /// On each filter change this updates `table.delegate_mut().set_filter_values(...)`
-            /// and triggers a table refresh.
+            /// and triggers a table refresh for client-side filtering.
             pub fn build_for_table(
                 table: #Entity<#TableState<#delegate_name>>,
                 cx: &mut #App,
@@ -1474,6 +1474,104 @@ fn generate_filter_entities(
                     gpui_table::filter::FilterEntitiesExt::read_values(&filters, cx);
                 table.update(cx, |table, cx| {
                     table.delegate_mut().set_filter_values(initial_values);
+                    cx.notify();
+                });
+
+                filters
+            }
+
+            /// Build filters and wire them into a generated table delegate that uses
+            /// `TableDataLoader` for server-side loading.
+            ///
+            /// On each filter change this method:
+            /// 1. reads current filter values,
+            /// 2. updates `table.delegate_mut().set_filter_values(...)`,
+            /// 3. resets paging state (`rows.clear(); eof = false;`),
+            /// 4. calls `table.delegate_mut().load_data(...)`.
+            ///
+            /// The same sequence is also run once during initialization.
+            pub fn build_for_table_loader(
+                table: #Entity<#TableState<#delegate_name>>,
+                window: &mut #Window,
+                cx: &mut #App,
+            ) -> Self {
+                let before_reload: std::rc::Rc<
+                    dyn Fn(
+                        &mut #delegate_name,
+                        &mut #Window,
+                        &mut #Context<#TableState<#delegate_name>>,
+                    ) + 'static,
+                > = std::rc::Rc::new(|delegate, _window, _cx| {
+                    delegate.rows.clear();
+                    delegate.eof = false;
+                });
+
+                Self::build_for_table_loader_with(table, Some(before_reload), window, cx)
+            }
+
+            /// Same as `build_for_table_loader(...)` but allows customizing pre-reload
+            /// delegate state handling.
+            ///
+            /// The optional `before_reload` hook runs before every `load_data(...)` call,
+            /// including the initial load.
+            pub fn build_for_table_loader_with(
+                table: #Entity<#TableState<#delegate_name>>,
+                before_reload: Option<std::rc::Rc<
+                    dyn Fn(
+                        &mut #delegate_name,
+                        &mut #Window,
+                        &mut #Context<#TableState<#delegate_name>>,
+                    ) + 'static,
+                >>,
+                window: &mut #Window,
+                cx: &mut #App,
+            ) -> Self {
+                let filters_slot: std::rc::Rc<std::cell::RefCell<Option<Self>>> =
+                    std::rc::Rc::new(std::cell::RefCell::new(None));
+                let filters_slot_for_change = filters_slot.clone();
+                let table_for_change = table.clone();
+                let before_reload_for_change = before_reload.clone();
+
+                let on_filter_change: std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static> =
+                    std::rc::Rc::new(move |window, cx| {
+                        let next_values = {
+                            let filters = filters_slot_for_change.borrow();
+                            filters.as_ref().map(|filters| {
+                                gpui_table::filter::FilterEntitiesExt::read_values(filters, cx)
+                            })
+                        };
+
+                        if let Some(values) = next_values {
+                            table_for_change.update(cx, |table, cx| {
+                                let delegate = table.delegate_mut();
+                                delegate.set_filter_values(values);
+
+                                if let Some(ref before_reload) = before_reload_for_change {
+                                    before_reload(delegate, window, cx);
+                                }
+
+                                use gpui_table::TableDataLoader as _;
+                                delegate.load_data(window, cx);
+                                cx.notify();
+                            });
+                        }
+                    });
+
+                let filters = Self::build(Some(on_filter_change), cx);
+                *filters_slot.borrow_mut() = Some(filters.clone());
+
+                let initial_values =
+                    gpui_table::filter::FilterEntitiesExt::read_values(&filters, cx);
+                table.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+                    delegate.set_filter_values(initial_values);
+
+                    if let Some(ref before_reload) = before_reload {
+                        before_reload(delegate, window, cx);
+                    }
+
+                    use gpui_table::TableDataLoader as _;
+                    delegate.load_data(window, cx);
                     cx.notify();
                 });
 

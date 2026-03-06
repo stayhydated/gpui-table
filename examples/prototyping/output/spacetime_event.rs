@@ -35,32 +35,8 @@ impl SpacetimeEventTableStory {
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = SpacetimeEventTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        table
-            .update(
-                cx,
-                |table, cx| {
-                    use gpui_table::TableDataLoader as _;
-                    table.delegate_mut().load_data(window, cx);
-                },
-            );
-        let table_for_reload = table.clone();
-        let filters = SpacetimeEventFilterEntities::build(
-            Some(
-                std::rc::Rc::new(move |window, cx| {
-                    table_for_reload
-                        .update(
-                            cx,
-                            |table, cx| {
-                                table.delegate_mut().rows.clear();
-                                table.delegate_mut().eof = false;
-                                use gpui_table::TableDataLoader as _;
-                                table.delegate_mut().load_data(window, cx);
-                            },
-                        );
-                }),
-            ),
-            cx,
-        );
+        let filters =
+            SpacetimeEventFilterEntities::build_for_table_loader(table.clone(), window, cx);
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {
             table,

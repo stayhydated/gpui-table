@@ -5,7 +5,6 @@ use gpui::{
 };
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
-use gpui_table::filter::FilterEntitiesExt as _;
 use some_lib::structs::spacetime_event::*;
 
 #[gpui_storybook::story_init]
@@ -43,38 +42,8 @@ impl SpacetimeEventTableStory {
         let delegate = SpacetimeEventTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
 
-        let filters_slot: std::rc::Rc<std::cell::RefCell<Option<SpacetimeEventFilterEntities>>> =
-            std::rc::Rc::new(std::cell::RefCell::new(None));
-        let filters_slot_for_change = filters_slot.clone();
-        let table_for_reload = table.clone();
-
-        let on_filter_change: std::rc::Rc<dyn Fn(&mut Window, &mut App) + 'static> =
-            std::rc::Rc::new(move |window, cx| {
-                let next_values = {
-                    let filters = filters_slot_for_change.borrow();
-                    filters.as_ref().map(|filters| filters.read_values(cx))
-                };
-
-                if let Some(values) = next_values {
-                    table_for_reload.update(cx, |table, cx| {
-                        table.delegate_mut().set_filter_values(values);
-                        table.delegate_mut().rows.clear();
-                        table.delegate_mut().eof = false;
-                        use gpui_table::TableDataLoader as _;
-                        table.delegate_mut().load_data(window, cx);
-                    });
-                }
-            });
-
-        let filters = SpacetimeEventFilterEntities::build(Some(on_filter_change), cx);
-        *filters_slot.borrow_mut() = Some(filters.clone());
-
-        let initial_values = filters.read_values(cx);
-        table.update(cx, |table, cx| {
-            table.delegate_mut().set_filter_values(initial_values);
-            use gpui_table::TableDataLoader as _;
-            table.delegate_mut().load_data(window, cx);
-        });
+        let filters =
+            SpacetimeEventFilterEntities::build_for_table_loader(table.clone(), window, cx);
 
         let table_for_live_reload = table.clone();
         let mut live_change_rx = some_lib::client_connection::subscribe_spacetime_event_changes();
