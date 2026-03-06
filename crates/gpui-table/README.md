@@ -8,8 +8,6 @@ macros so applications can use a single API for metadata and macro generation.
 ```toml
 [dependencies]
 gpui-table = { version = "0.5", features = ["inventory", "fluent", "rust_decimal", "chrono"] }
-# Needed when using #[gpui_table(filters)] generated filter entities:
-gpui-table-component = { version = "0.5" }
 ```
 
 ## Features
@@ -54,5 +52,6 @@ impl TableLoader for UserTableDelegate {
 - `gpui_table_core` traits and filter types (including `TableLoader`/`TableDataLoader`)
 - `gpui_table_derive` macros (with `derive`)
 
-Note: filter UI components and `TableStatusBar` live in `gpui-table-component`
-and are not re-exported by the facade crate.
+Generated filter code resolves component/decimal/date dependencies through
+`gpui-table`, so direct `gpui-table-component`/`rust_decimal`/`chrono`
+dependencies are not required solely for macro expansion.

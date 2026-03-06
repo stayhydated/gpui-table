@@ -1,0 +1,5 @@
+error: invalid `fixed` value `middle`; expected "left" or "right"
+ --> tests/ui/invalid_fixed_value.rs:6:5
+  |
+6 |     name: String,
+  |     ^^^^

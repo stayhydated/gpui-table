@@ -1,0 +1,5 @@
+error: `number_range(step = ...)` must be greater than 0
+ --> tests/ui/invalid_number_range_step.rs:7:5
+  |
+7 |     age: u8,
+  |     ^^^

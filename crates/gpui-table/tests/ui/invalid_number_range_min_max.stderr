@@ -1,0 +1,5 @@
+error: `number_range(min = ..., max = ...)` requires min <= max
+ --> tests/ui/invalid_number_range_min_max.rs:7:5
+  |
+7 |     age: u8,
+  |     ^^^
