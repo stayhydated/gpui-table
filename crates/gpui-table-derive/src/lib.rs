@@ -157,19 +157,21 @@ fn get_filter_type_tokens(
     field_ty: Option<&syn::Type>,
 ) -> proc_macro2::TokenStream {
     match filter {
-        FilterComponents::Text(_) => quote! { gpui_table_component::text_filter::TextFilter },
+        FilterComponents::Text(_) => {
+            quote! { gpui_table::__deps::gpui_table_component::text_filter::TextFilter }
+        },
         FilterComponents::NumberRange(_) => {
-            quote! { gpui_table_component::number_range_filter::NumberRangeFilter }
+            quote! { gpui_table::__deps::gpui_table_component::number_range_filter::NumberRangeFilter }
         },
         FilterComponents::DateRange(_) => {
-            quote! { gpui_table_component::date_range_filter::DateRangeFilter }
+            quote! { gpui_table::__deps::gpui_table_component::date_range_filter::DateRangeFilter }
         },
         FilterComponents::Faceted(_) => {
             if let Some(ty) = field_ty {
-                quote! { gpui_table_component::faceted_filter::FacetedFilter::<#ty> }
+                quote! { gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilter::<#ty> }
             } else {
                 // Fallback for cases where field_ty is not available (shouldn't happen in practice)
-                quote! { gpui_table_component::faceted_filter::FacetedFilter::<String> }
+                quote! { gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilter::<String> }
             }
         },
     }
@@ -221,19 +223,19 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
             if let Some(ref validation) = opts.validate {
                 let validation_chain = match validation {
                     TextValidation::Alphabetic => quote! {
-                        use gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
                         let filter = filter.alphabetic_only(cx);
                     },
                     TextValidation::Numeric => quote! {
-                        use gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
                         let filter = filter.numeric_only(cx);
                     },
                     TextValidation::Alphanumeric => quote! {
-                        use gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
                         let filter = filter.alphanumeric_only(cx);
                     },
                     TextValidation::Custom(path) => quote! {
-                        use gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
                         let filter = filter.validate(#path, cx);
                     },
                 };
@@ -254,10 +256,10 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                 let max_str = max_val.to_string();
                 chain = quote! {
                     #chain
-                    use gpui_table_component::number_range_filter::NumberRangeFilterExt as _;
+                    use gpui_table::__deps::gpui_table_component::number_range_filter::NumberRangeFilterExt as _;
                     let filter = filter.range(
-                        rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
-                        rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
+                        gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
+                        gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
                         cx,
                     );
                 };
@@ -268,7 +270,7 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
                 let step_str = step_val.to_string();
                 chain = quote! {
                     #chain
-                    let filter = filter.step(rust_decimal::Decimal::from_str_exact(#step_str).unwrap(), cx);
+                    let filter = filter.step(gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#step_str).unwrap(), cx);
                 };
             }
 
@@ -285,13 +287,97 @@ fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::Toke
             if opts.searchable {
                 chain = quote! {
                     #chain
-                    use gpui_table_component::faceted_filter::FacetedFilterExt as _;
+                    use gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilterExt as _;
                     let filter = filter.searchable(cx);
                 };
             }
 
             chain
         },
+    }
+}
+
+fn validate_filter_config(filter: &FilterComponents, field_ident: &Ident) -> syn::Result<()> {
+    if let FilterComponents::NumberRange(opts) = filter {
+        if let Some(min) = opts.min
+            && !min.is_finite()
+        {
+            return Err(syn::Error::new(
+                field_ident.span(),
+                "`number_range(min = ...)` must be a finite number",
+            ));
+        }
+        if let Some(max) = opts.max
+            && !max.is_finite()
+        {
+            return Err(syn::Error::new(
+                field_ident.span(),
+                "`number_range(max = ...)` must be a finite number",
+            ));
+        }
+        if let Some(step) = opts.step {
+            if !step.is_finite() {
+                return Err(syn::Error::new(
+                    field_ident.span(),
+                    "`number_range(step = ...)` must be a finite number",
+                ));
+            }
+            if step <= 0.0 {
+                return Err(syn::Error::new(
+                    field_ident.span(),
+                    "`number_range(step = ...)` must be greater than 0",
+                ));
+            }
+        }
+        if let (Some(min), Some(max)) = (opts.min, opts.max)
+            && min > max
+        {
+            return Err(syn::Error::new(
+                field_ident.span(),
+                "`number_range(min = ..., max = ...)` requires min <= max",
+            ));
+        }
+    }
+
+    Ok(())
+}
+
+fn generate_filter_feature_assertions(
+    struct_name: &Ident,
+    filter_fields: &[FilterFieldMeta],
+) -> proc_macro2::TokenStream {
+    let requires_rust_decimal = filter_fields
+        .iter()
+        .any(|f| matches!(&f.filter_config, FilterComponents::NumberRange(_)));
+    let requires_chrono = filter_fields
+        .iter()
+        .any(|f| matches!(&f.filter_config, FilterComponents::DateRange(_)));
+
+    let rust_decimal_assert = if requires_rust_decimal {
+        quote! {
+            impl #struct_name
+            where
+                (): gpui_table::__deps::RequiresRustDecimalFeatureOnGpuiTable,
+            {}
+        }
+    } else {
+        quote! {}
+    };
+
+    let chrono_assert = if requires_chrono {
+        quote! {
+            impl #struct_name
+            where
+                (): gpui_table::__deps::RequiresChronoFeatureOnGpuiTable,
+            {}
+        }
+    } else {
+        quote! {}
+    };
+
+    quote! {
+        #rust_decimal_assert
+        #chrono_assert
     }
 }
 
@@ -349,6 +435,20 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
                 "`ascending` and `descending` cannot both be set",
             ));
         }
+        if !filters_enabled && field.filter.is_some() {
+            return Err(syn::Error::new(
+                ident.span(),
+                "field-level `filter(...)` requires struct-level `#[gpui_table(filters)]`",
+            ));
+        }
+        if let Some(fixed) = field.fixed.as_deref()
+            && !matches!(fixed, "left" | "right")
+        {
+            return Err(syn::Error::new(
+                ident.span(),
+                format!("invalid `fixed` value `{fixed}`; expected \"left\" or \"right\""),
+            ));
+        }
 
         let title_expr = determine_title_expr(&field.title, ident, &fluent, &struct_name);
 
@@ -397,6 +497,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
 
         // Only process filter attributes when filters are enabled at struct level
         if filters_enabled && let Some(ref filter_config) = field.filter {
+            validate_filter_config(filter_config, ident)?;
             let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
 
             filters_init.push(quote! {
@@ -478,6 +579,9 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
             });
         }
     }
+
+    let filter_feature_assertions =
+        generate_filter_feature_assertions(&struct_name, &filter_fields);
 
     let table_title_impl = match &fluent {
         Some(Override::Explicit(key)) => {
@@ -593,6 +697,7 @@ fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
     let shape_impl = quote! {};
 
     Ok(quote! {
+        #filter_feature_assertions
         #column_enum
 
         impl gpui_table::TableRowMeta for #struct_name {
@@ -1221,7 +1326,7 @@ fn generate_filter_entities(
                 FilterComponents::NumberRange(_) => {
                     quote! {
                         /// Get the current value of the #field_ident number range filter.
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<rust_decimal::Decimal>, Option<rust_decimal::Decimal>) {
+                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) {
                             self.#field_ident.read(cx).value()
                         }
                     }
@@ -1238,7 +1343,7 @@ fn generate_filter_entities(
                 FilterComponents::DateRange(_) => {
                     quote! {
                         /// Get the current value of the #field_ident date range filter.
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
+                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) {
                             self.#field_ident.read(cx).value()
                         }
                     }
@@ -1351,14 +1456,14 @@ fn generate_filter_entities(
             let value_type = match &f.filter_config {
                 FilterComponents::Text(_) => quote! { gpui_table::filter::TextValue },
                 FilterComponents::NumberRange(_) => {
-                    quote! { gpui_table::filter::RangeValue<rust_decimal::Decimal> }
+                    quote! { gpui_table::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
                 },
                 FilterComponents::Faceted(_) => {
                     let ty = &f.field_type;
                     quote! { gpui_table::filter::FacetedValue<#ty> }
                 },
                 FilterComponents::DateRange(_) => {
-                    quote! { gpui_table::filter::RangeValue<chrono::NaiveDate> }
+                    quote! { gpui_table::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
                 },
             };
             quote! {
@@ -1427,7 +1532,7 @@ fn generate_filter_entities(
                 on_filter_change: Option<std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
             ) -> Self {
-                use gpui_table_component::TableFilterComponent as _;
+                use gpui_table::__deps::gpui_table_component::TableFilterComponent as _;
 
                 #(#filter_builders)*
 
@@ -1591,9 +1696,9 @@ fn generate_filter_entities(
             }
 
             /// Build a localized reset button bound to these filter entities.
-            pub fn reset_button(&self) -> gpui_table_component::reset_filters::ResetFilters {
+            pub fn reset_button(&self) -> gpui_table::__deps::gpui_table_component::reset_filters::ResetFilters {
                 let filters = self.clone();
-                gpui_table_component::reset_filters::ResetFilters::new(move |window, cx| {
+                gpui_table::__deps::gpui_table_component::reset_filters::ResetFilters::new(move |window, cx| {
                     filters.reset_filters(window, cx);
                 })
                 .button_id(format!("{}-reset-filters", stringify!(#struct_name)))

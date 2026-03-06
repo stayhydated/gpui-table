@@ -13,7 +13,7 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 | **git** | |
 | `master` | `main` |
 | **crates.io** | |
-| `0.6.x` | `0.6.x` |
+| `0.5.x` | `0.6.x` |
 
 ## Interactive examples
 

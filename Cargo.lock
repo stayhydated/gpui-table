@@ -3370,13 +3370,17 @@ dependencies = [
 name = "gpui-table"
 version = "0.5.0"
 dependencies = [
+ "chrono",
  "gpui",
  "gpui-component",
+ "gpui-table-component",
  "gpui-table-core",
  "gpui-table-derive",
  "insta",
+ "rust_decimal",
  "serde",
  "strum 0.28.0",
+ "trybuild",
 ]
 
 [[package]]
@@ -8389,6 +8393,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "61c41af27dd6d1e27b1b16b489db798443478cef1f06a660c96db617ba5de3b1"
 
 [[package]]
+name = "target-triple"
+version = "1.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "591ef38edfb78ca4771ee32cf494cb8771944bee237a9b91fc9c1424ac4b777b"
+
+[[package]]
 name = "tempfile"
 version = "3.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8953,6 +8963,21 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "trybuild"
+version = "1.0.116"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47c635f0191bd3a2941013e5062667100969f8c4e9cd787c14f977265d73616e"
+dependencies = [
+ "glob",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "target-triple",
+ "termcolor",
+ "toml 1.0.3+spec-1.1.0",
+]
 
 [[package]]
 name = "ttf-parser"

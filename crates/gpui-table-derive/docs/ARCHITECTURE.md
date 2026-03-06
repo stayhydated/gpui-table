@@ -24,6 +24,8 @@ columns, filters, and optional registry metadata.
 
 - `lib.rs`
   - Macro entry points and expansion logic
+  - Validates configuration errors early (e.g. invalid `fixed`, invalid
+    `number_range`, field `filter(...)` without struct `#[gpui_table(filters)]`)
 - `components.rs`
   - Parses filter configuration attributes (text/number/date/faceted)
 - `impl_attr.rs`
@@ -50,6 +52,9 @@ columns, filters, and optional registry metadata.
    - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
      reset behavior needs customization.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
+1. Generated filter code references runtime dependencies through
+   `gpui_table::__deps` and emits marker-trait assertions so missing
+   `gpui-table` features (`rust_decimal`, `chrono`) fail with direct diagnostics.
 
 ## Feature flags
 
