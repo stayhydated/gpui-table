@@ -21,6 +21,9 @@ pub(super) struct TableMeta {
     pub(super) custom_style: Option<Override<bool>>,
 
     #[darling(default)]
+    pub(super) custom_context_menu: Option<Override<bool>>,
+
+    #[darling(default)]
     pub(super) fluent: Option<Override<String>>,
 
     #[darling(default)]

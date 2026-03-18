@@ -10,6 +10,8 @@ columns, filters, and optional registry metadata.
 - `#[derive(GpuiTable)]`
   - Generates `TableRowMeta`, `TableRowStyle`, column enums, and a
     `TableDelegate` implementation.
+  - Generates `TableRowContextMenu` (default no-op) unless
+    `#[gpui_table(custom_context_menu)]` is set.
   - Implements `TableDataLoader` for the generated delegate (load-more or no-op).
   - Optionally generates filter entities/values when `#[gpui_table(filters)]`
     is enabled.
@@ -38,6 +40,8 @@ columns, filters, and optional registry metadata.
 1. Attributes on the row struct and its fields are parsed via `darling`.
 1. The macro expands into column enums, `TableRowMeta`/`TableRowStyle`, and
    `TableDelegate` implementations.
+1. Generated delegates route `TableDelegate::context_menu(...)` through the
+   selected typed row via `TableRowContextMenu`.
 1. Filter metadata expands into `FilterEntities`, `FilterValues`, and
    `Matchable` implementations, plus grouped filter render helpers
    (text/number/faceted/date/all), a localized reset-button binding, and

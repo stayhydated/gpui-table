@@ -5,7 +5,7 @@ shared by the derive macros, runtime components, and tooling.
 
 ## What it provides
 
-- `TableRowMeta`, `TableRowStyle`, and `TableCell` traits
+- `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableCell` traits
 - Load-more traits (`TableLoader`, `TableDataLoader`)
 - Filter types and helper wrappers (`TextValue`, `RangeValue`, `FacetedValue`)
 - Filter matching traits (`Matchable`, `FilterValuesExt`, `FilterEntitiesExt`)
@@ -49,6 +49,26 @@ impl TableRowStyle for MyRow {
     ) -> AnyElement {
         // custom rendering per column
         self.cell_value(col.into()).draw(window, cx)
+    }
+}
+```
+
+## Example: custom row context menu
+
+```rs
+use gpui::{App, Window};
+use gpui_component::menu::PopupMenu;
+use gpui_table_core::TableRowContextMenu;
+
+impl TableRowContextMenu for MyRow {
+    fn render_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        menu
     }
 }
 ```

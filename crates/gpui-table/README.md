@@ -49,7 +49,7 @@ impl TableLoader for UserTableDelegate {
 
 ## Exports
 
-- `gpui_table_core` traits and filter types (including `TableLoader`/`TableDataLoader`)
+- `gpui_table_core` traits and filter types (including `TableLoader`/`TableDataLoader` and `TableRowContextMenu`)
 - `gpui_table_derive` macros (with `derive`)
 
 Generated filter code resolves component/decimal/date dependencies through

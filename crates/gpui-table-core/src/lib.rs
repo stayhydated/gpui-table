@@ -1,6 +1,7 @@
 use gpui::{
     AnyElement, App, Context, Div, InteractiveElement as _, IntoElement, Stateful, Window, div,
 };
+use gpui_component::menu::PopupMenu;
 use gpui_component::table::{Column, TableDelegate, TableState};
 
 pub mod filter;
@@ -364,40 +365,6 @@ impl TableCell for jiff::civil::Time {
     }
 }
 
-#[cfg(feature = "spacetimedb")]
-impl TableCell for spacetimedb::Timestamp {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_chrono_date_time()
-            .ok()
-            .and_then(|dt| datetime_format::chrono_datetime_to_system_zoned(&dt))
-            .as_ref()
-            .and_then(datetime_format::format_zoned)
-            .unwrap_or_default()
-            .into_any_element()
-    }
-}
-
-#[cfg(feature = "spacetimedb")]
-impl TableCell for spacetimedb::TimeDuration {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
-#[cfg(feature = "spacetimedb")]
-impl TableCell for spacetimedb::Identity {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
-#[cfg(feature = "spacetimedb")]
-impl TableCell for spacetimedb::ConnectionId {
-    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
-    }
-}
-
 /// Metadata for a table row type.
 pub trait TableRowMeta {
     /// Unique identifier for this row type.
@@ -445,6 +412,24 @@ pub trait TableRowStyle: TableRowMeta {
     /// Renders the row container.
     fn render_table_row(&self, row_ix: usize, window: &mut Window, cx: &mut App) -> Stateful<Div> {
         default_render_row(row_ix, window, cx)
+    }
+}
+
+/// Context-menu hooks for a table row.
+///
+/// This trait allows customizing the context menu for a selected row.
+/// The `GpuiTable` derive macro generates a default implementation that
+/// returns the incoming menu unchanged.
+pub trait TableRowContextMenu: TableRowMeta {
+    /// Builds the context menu for this row.
+    fn render_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        menu
     }
 }
 

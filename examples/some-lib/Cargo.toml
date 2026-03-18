@@ -25,7 +25,6 @@ client = [
   "dep:rust_decimal",
   "dep:serde",
   "dep:serde_json",
-  "dep:spacetimedb-sdk",
   "dep:strum",
   "dep:tokio",
   "dep:urlencoding",
@@ -33,12 +32,6 @@ client = [
 ]
 db = [  ]
 default = [  ]
-seed-bin = [  ]
-
-[[bin]]
-name = "seed_spacetime_events"
-path = "src/bin/seed_spacetime_events.rs"
-required-features = [ "seed-bin" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
@@ -58,7 +51,6 @@ gpui-table = { features = [
   "inventory",
   "rust_decimal",
   "chrono",
-  "spacetimedb",
 ], optional = true, workspace = true }
 gpui-table-component = { optional = true, workspace = true }
 gpui_tokio = { optional = true, workspace = true }
@@ -68,8 +60,6 @@ reqwest = { features = [ "json" ], optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
 serde_json = { optional = true, workspace = true }
-spacetimedb = { workspace = true }
-spacetimedb-sdk = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
 tokio = { optional = true, workspace = true }
 urlencoding = { optional = true, workspace = true }

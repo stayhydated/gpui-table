@@ -41,6 +41,32 @@ impl TableLoader for UserTableDelegate {
 }
 ```
 
+## Row context menu wiring
+
+```rs
+use gpui::{App, Window};
+use gpui_component::menu::PopupMenu;
+use gpui_table::{GpuiTable, TableRowContextMenu};
+
+#[derive(GpuiTable)]
+#[gpui_table(custom_context_menu)]
+pub struct User {
+    pub name: String,
+}
+
+impl TableRowContextMenu for User {
+    fn render_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        menu
+    }
+}
+```
+
 ## Filter attributes
 
 - `filter(text())`

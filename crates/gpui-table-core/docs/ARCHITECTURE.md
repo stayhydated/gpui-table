@@ -10,7 +10,7 @@ runtime components.
 ## Module map
 
 - `lib.rs`
-  - Table traits: `TableRowMeta`, `TableRowStyle`, `TableCell`
+  - Table traits: `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, `TableCell`
   - Loading traits: `TableLoader`, `TableDataLoader`
   - Default rendering helpers: `default_render_cell`, `default_render_row`
   - Internal load-more bridge: `__private::LoadMoreDelegate`
@@ -39,6 +39,7 @@ runtime components.
 - Implement `TableCell` for custom value types.
 - Implement `FilterValue`/`Filterable` for faceted filter enums.
 - Override `TableRowStyle` to customize row or cell rendering.
+- Implement `TableRowContextMenu` to customize row context menus.
 
 ## Default cell formatting
 
@@ -58,8 +59,6 @@ runtime components.
     system time zone.
   - `chrono::NaiveDateTime`/`NaiveDate`/`NaiveTime`: converted to
     corresponding `jiff::civil::*` values.
-- `spacetimedb::Timestamp` is converted through `chrono` then `jiff` and
-  rendered in system time zone.
 
 ## Feature flags
 
@@ -67,6 +66,3 @@ runtime components.
 - `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff -> ICU4X`, plus date conversion helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
 - `fluent`: localized title helpers used by generated code.
-- `spacetimedb`: `TableCell` support for `Timestamp`, `Identity`, and
-  `ConnectionId`, plus `Timestamp -> NaiveDate` conversion for date-range
-  filtering.
