@@ -24,6 +24,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         title,
         delegate,
         custom_style,
+        custom_context_menu,
         fluent,
         loading,
         load_more,
@@ -34,6 +35,11 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
 
     let custom_style = match custom_style {
+        Some(Override::Explicit(val)) => val,
+        Some(Override::Inherit) => true,
+        None => false,
+    };
+    let custom_context_menu = match custom_context_menu {
         Some(Override::Explicit(val)) => val,
         Some(Override::Inherit) => true,
         None => false,
@@ -288,6 +294,14 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         quote! {}
     };
 
+    let context_menu_impl = if !custom_context_menu {
+        quote! {
+            impl gpui_table::TableRowContextMenu for #struct_name {}
+        }
+    } else {
+        quote! {}
+    };
+
     let delegate_impl = if delegate {
         generate_delegate(
             &struct_name,
@@ -363,6 +377,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
         #shape_impl
         #style_impl
+        #context_menu_impl
         #delegate_impl
         #filter_entities_impl
         #matches_filters_impl

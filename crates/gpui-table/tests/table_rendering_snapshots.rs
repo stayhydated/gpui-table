@@ -1,4 +1,5 @@
-use gpui::{Context, TextAlign, Window};
+use gpui::{App, Context, TextAlign, Window};
+use gpui_component::menu::PopupMenu;
 use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
 use gpui_table::{GpuiTable, TableRowMeta, gpui_table_impl};
 use serde::Serialize;
@@ -105,6 +106,29 @@ impl CallbackRowTableDelegate {
     #[load_more]
     fn on_load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
         LOAD_MORE_CALLED.store(true, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
+// =============================================================================
+// Row with custom context menu wiring
+// =============================================================================
+
+#[derive(GpuiTable)]
+#[gpui_table(custom_context_menu)]
+struct ContextMenuRow {
+    id: u32,
+}
+
+impl gpui_table::TableRowContextMenu for ContextMenuRow {
+    fn render_table_context_menu(
+        &self,
+        row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        let _ = (self.id, row_ix);
+        menu
     }
 }
 
@@ -233,4 +257,10 @@ fn test_delegate_fields_exist() {
     assert!(!delegate.eof);
     assert!(!delegate.loading);
     assert!(!delegate.full_loading);
+}
+
+#[test]
+fn test_custom_context_menu_delegate_compiles() {
+    let delegate = ContextMenuRowTableDelegate::new(vec![ContextMenuRow { id: 1 }]);
+    assert_eq!(delegate.rows.len(), 1);
 }

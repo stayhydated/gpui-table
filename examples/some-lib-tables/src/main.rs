@@ -24,13 +24,6 @@ fn main() {
 
         gpui_tokio::init(app_cx);
 
-        if let Err(error) = some_lib::client_connection::init_from_env() {
-            eprintln!(
-                "SpaceTimeDB init failed: {}. Run examples/some-lib/setup.sh and/or set SPACETIMEDB_URI + SPACETIMEDB_DB_NAME.",
-                error
-            );
-        }
-
         let http_client = std::sync::Arc::new(reqwest_client::ReqwestClient::new());
         app_cx.set_http_client(http_client);
 

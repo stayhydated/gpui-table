@@ -60,5 +60,5 @@ See `examples/prototyping` for a working generator.
 
 - `examples/i18n`: i18n resources
 - `examples/some-lib`: crate types shared by examples
-- `examples/some-lib-tables`: storybook-like GPUI app showcasing tables, including a query-backed SpaceTimeDB events table
+- `examples/some-lib-tables`: storybook-like GPUI app showcasing tables
 - `examples/prototyping`: generator for table stories and scaffolding

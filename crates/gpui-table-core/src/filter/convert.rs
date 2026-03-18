@@ -124,12 +124,3 @@ impl ToNaiveDate for chrono::NaiveDateTime {
         self.date()
     }
 }
-
-#[cfg(feature = "spacetimedb")]
-impl ToNaiveDate for spacetimedb::Timestamp {
-    fn to_naive_date(&self) -> chrono::NaiveDate {
-        self.to_chrono_date_time()
-            .map(|dt| dt.date_naive())
-            .unwrap_or(chrono::NaiveDate::MIN)
-    }
-}

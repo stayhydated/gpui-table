@@ -1,4 +1,5 @@
 use crate::__crate_paths::gpui::{App, Context, IntoElement, Window};
+use crate::__crate_paths::gpui_component::menu::PopupMenu;
 use crate::__crate_paths::gpui_component::table::{Column, ColumnSort, TableDelegate, TableState};
 use crate::gpui_table::meta::FilterFieldMeta;
 
@@ -198,6 +199,13 @@ pub(super) fn generate_delegate(
     } else {
         quote! {}
     };
+    let context_menu_row_index_map = if has_filters {
+        quote! {
+            let row_ix = self.map_row_index(row_ix);
+        }
+    } else {
+        quote! {}
+    };
     let sort_filter_refresh = if has_filters {
         quote! {
             self.filter_cache_dirty.set(true);
@@ -261,6 +269,18 @@ pub(super) fn generate_delegate(
                 use gpui_table::TableRowStyle;
                 #render_row_index_map
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
+            }
+
+            fn context_menu(
+                &mut self,
+                row_ix: usize,
+                menu: #PopupMenu,
+                window: &mut #Window,
+                cx: &mut #Context<#TableState<Self>>,
+            ) -> #PopupMenu {
+                use gpui_table::TableRowContextMenu;
+                #context_menu_row_index_map
+                self.rows[row_ix].render_table_context_menu(row_ix, menu, window, cx)
             }
 
             fn visible_rows_changed(
