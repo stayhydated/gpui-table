@@ -29,7 +29,7 @@ metadata and macro generation.
 - `inventory`: enables registry metadata for prototyping/codegen.
 - `fluent`: integrates with `es-fluent` for localized titles/labels.
 - `rust_decimal`: adds `TableCell` + filter support for decimal types.
-- `spacetimedb`: enables `gpui-table-core` conversions for SpacetimeDB `Timestamp` in range filters.
+- `spacetimedb`: enables `gpui-table-core` conversions for SpacetimeDB `Timestamp` and `TimeDuration` in range filters.
 
 `chrono` and `rust_decimal` also drive hidden feature markers used by generated
 code to emit clear compile errors when `date_range` / `number_range` filters

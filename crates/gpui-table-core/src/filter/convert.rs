@@ -105,6 +105,13 @@ impl ToDecimal for spacetimedb_lib::Timestamp {
     }
 }
 
+#[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
+impl ToDecimal for spacetimedb_lib::TimeDuration {
+    fn to_decimal(&self) -> rust_decimal::Decimal {
+        self.to_micros().into()
+    }
+}
+
 /// Trait for converting date/time types to NaiveDate for range filter matching.
 #[cfg(feature = "chrono")]
 pub trait ToNaiveDate {

@@ -65,5 +65,5 @@ runtime components.
 - `jiff`: ICU4X-backed `TableCell` rendering for `jiff` date/time types.
 - `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff -> ICU4X`, plus date conversion helpers.
 - `rust_decimal`: numeric conversion helpers for range filters.
-- `spacetimedb`: conversions for `spacetimedb_lib::Timestamp` so date/number range filters can match SpacetimeDB timestamps.
+- `spacetimedb`: conversions for `spacetimedb_lib::Timestamp` and `spacetimedb_lib::TimeDuration` so date/number range filters can match SpacetimeDB temporal values.
 - `fluent`: localized title helpers used by generated code.
