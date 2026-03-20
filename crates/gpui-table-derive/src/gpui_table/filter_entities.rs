@@ -7,7 +7,7 @@ use crate::gpui_table::meta::FilterFieldMeta;
 use darling::util::Override;
 use heck::{ToPascalCase as _, ToTitleCase as _};
 use quote::quote;
-use syn::Ident;
+use syn::{GenericArgument, Ident, PathArguments, Type};
 
 /// Generate the FilterEntities struct that holds all filter Entity<T> fields
 /// and provides builder methods for creating them.
@@ -595,21 +595,71 @@ pub(super) fn generate_matches_filters_method(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
+            let is_option = option_inner_type(&f.field_type).is_some();
 
             match &f.filter_config {
                 FilterComponents::Text(_) => {
-                    // TextValue::matches takes &str
-                    quote! { filters.#field_ident.matches(&self.#field_ident) }
+                    if is_option {
+                        // TextValue::matches takes &str; for Option<String>, None only matches when inactive.
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .as_deref()
+                                    .is_some_and(|value| filters.#field_ident.matches(value))
+                            } else {
+                                true
+                            }
+                        }
+                    } else {
+                        // TextValue::matches takes &str
+                        quote! { filters.#field_ident.matches(&self.#field_ident) }
+                    }
                 }
                 FilterComponents::NumberRange(_) => {
-                    // RangeValue<Decimal>::matches takes &Decimal
-                    // Convert numeric types to Decimal
-                    quote! { filters.#field_ident.matches(&gpui_table::filter::ToDecimal::to_decimal(&self.#field_ident)) }
+                    if is_option {
+                        // For Option<T>, None only matches when range filter is inactive.
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .as_ref()
+                                    .map(|value| {
+                                        filters.#field_ident.matches(
+                                            &gpui_table::filter::ToDecimal::to_decimal(value),
+                                        )
+                                    })
+                                    .unwrap_or(false)
+                            } else {
+                                true
+                            }
+                        }
+                    } else {
+                        // RangeValue<Decimal>::matches takes &Decimal
+                        // Convert numeric types to Decimal
+                        quote! { filters.#field_ident.matches(&gpui_table::filter::ToDecimal::to_decimal(&self.#field_ident)) }
+                    }
                 }
                 FilterComponents::DateRange(_) => {
-                    // RangeValue<NaiveDate>::matches takes &NaiveDate
-                    // Convert DateTime to NaiveDate if needed
-                    quote! { filters.#field_ident.matches(&gpui_table::filter::ToNaiveDate::to_naive_date(&self.#field_ident)) }
+                    if is_option {
+                        // For Option<T>, None only matches when date range filter is inactive.
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .as_ref()
+                                    .map(|value| {
+                                        filters.#field_ident.matches(
+                                            &gpui_table::filter::ToNaiveDate::to_naive_date(value),
+                                        )
+                                    })
+                                    .unwrap_or(false)
+                            } else {
+                                true
+                            }
+                        }
+                    } else {
+                        // RangeValue<NaiveDate>::matches takes &NaiveDate
+                        // Convert DateTime to NaiveDate if needed
+                        quote! { filters.#field_ident.matches(&gpui_table::filter::ToNaiveDate::to_naive_date(&self.#field_ident)) }
+                    }
                 }
                 FilterComponents::Faceted(_) => {
                     // FacetedValue<T>::matches takes &T
@@ -626,6 +676,27 @@ pub(super) fn generate_matches_filters_method(
             }
         }
     }
+}
+
+fn option_inner_type(ty: &Type) -> Option<&Type> {
+    let Type::Path(type_path) = ty else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Option" {
+        return None;
+    }
+
+    let PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
 }
 
 /// Categorize filters by their type for grouped rendering.

@@ -269,6 +269,13 @@ impl TableCell for bool {
     }
 }
 
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb_lib::Timestamp {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
 #[cfg(feature = "rust_decimal")]
 impl TableCell for rust_decimal::Decimal {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {

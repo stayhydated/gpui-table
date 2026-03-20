@@ -98,6 +98,13 @@ impl ToDecimal for isize {
     }
 }
 
+#[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
+impl ToDecimal for spacetimedb_lib::Timestamp {
+    fn to_decimal(&self) -> rust_decimal::Decimal {
+        self.to_micros_since_unix_epoch().into()
+    }
+}
+
 /// Trait for converting date/time types to NaiveDate for range filter matching.
 #[cfg(feature = "chrono")]
 pub trait ToNaiveDate {
@@ -122,5 +129,14 @@ impl<Tz: chrono::TimeZone> ToNaiveDate for chrono::DateTime<Tz> {
 impl ToNaiveDate for chrono::NaiveDateTime {
     fn to_naive_date(&self) -> chrono::NaiveDate {
         self.date()
+    }
+}
+
+#[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+impl ToNaiveDate for spacetimedb_lib::Timestamp {
+    fn to_naive_date(&self) -> chrono::NaiveDate {
+        chrono::DateTime::from_timestamp_micros(self.to_micros_since_unix_epoch())
+            .map(|value| value.date_naive())
+            .unwrap_or_else(|| chrono::NaiveDate::default())
     }
 }

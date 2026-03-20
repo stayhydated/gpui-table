@@ -62,6 +62,7 @@ reqwest_client = { git = "https://github.com/zed-industries/zed", rev = "e0881e3
 rust_decimal = "1.40"
 serde = "1.0"
 serde_json = "1.0"
+spacetimedb-lib = "2.0"
 strum = "0.28"
 syn = "2.0"
 thiserror = "2.0"
