@@ -1,5 +1,5 @@
 [workspace]
-default-members = [ "examples/some-lib-tables" ]
+default-members = ["examples/some-lib-tables"]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-component",
@@ -32,7 +32,7 @@ es-fluent = "0.14"
 es-fluent-lang = "0.14"
 es-fluent-manager-embedded = "0.14"
 fake = "4.4"
-gpui = { git = "https://github.com/zed-industries/zed", rev = "e0881e38f91b87623795208615ca466415d1970e" }
+gpui = { git = "https://github.com/zed-industries/zed", rev = "e30720a781ad5e4bee9ab6e5c9f228baffef466c" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
@@ -45,8 +45,8 @@ gpui_platform = { features = [
   "x11",
   "wayland",
   "runtime_shaders",
-], git = "https://github.com/zed-industries/zed", rev = "e0881e38f91b87623795208615ca466415d1970e" }
-gpui_tokio = { git = "https://github.com/zed-industries/zed", rev = "e0881e38f91b87623795208615ca466415d1970e" }
+], git = "https://github.com/zed-industries/zed", rev = "e30720a781ad5e4bee9ab6e5c9f228baffef466c" }
+gpui_tokio = { git = "https://github.com/zed-industries/zed", rev = "e30720a781ad5e4bee9ab6e5c9f228baffef466c" }
 heck = "0.5.0"
 icu = "2.1"
 insta = "1.46"
@@ -58,10 +58,11 @@ prettyplease = "0.2"
 proc-macro2 = "1.0"
 quote = "1.0"
 reqwest = "0.13"
-reqwest_client = { git = "https://github.com/zed-industries/zed", rev = "e0881e38f91b87623795208615ca466415d1970e" }
+reqwest_client = { git = "https://github.com/zed-industries/zed", rev = "e30720a781ad5e4bee9ab6e5c9f228baffef466c" }
 rust_decimal = "1.40"
 serde = "1.0"
 serde_json = "1.0"
+spacetimedb-lib = "2.0"
 strum = "0.28"
 syn = "2.0"
 thiserror = "2.0"
@@ -73,7 +74,7 @@ urlencoding = "2.1"
 uuid = "1.21"
 
 [replace]
-"https://github.com/zed-industries/zed#gpui@0.2.2" = { git = "https://github.com/zed-industries/zed", rev = "e0881e38f91b87623795208615ca466415d1970e" }
+"https://github.com/zed-industries/zed#gpui@0.2.2" = { git = "https://github.com/zed-industries/zed", rev = "e30720a781ad5e4bee9ab6e5c9f228baffef466c" }
 
 [workspace.lints.rust]
 unexpected_cfgs = { level = "deny" }

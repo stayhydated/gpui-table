@@ -20,6 +20,7 @@
 //!
 //! - `filter(number_range(...))` requires the `rust_decimal` feature.
 //! - `filter(date_range(...))` requires the `chrono` feature.
+//! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!
 //! These are validated during macro expansion with compile-time errors.

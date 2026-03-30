@@ -17,6 +17,7 @@ default = [ "chrono" ]
 fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded", "es-fluent/derive" ]
 jiff = [ "dep:icu", "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal" ]
+spacetimedb = [ "dep:spacetimedb-lib", "chrono" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
@@ -29,6 +30,7 @@ icu = { optional = true, workspace = true }
 inventory = { workspace = true }
 jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
+spacetimedb-lib = { optional = true, workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 
 [build-dependencies]
