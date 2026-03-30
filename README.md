@@ -11,9 +11,7 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 | `gpui-table` | `gpui-component` | `gpui` |
 | :--------------- | :--------------- | :--------------------------------------------- |
 | **git** | |
-| `master` | `main` | rev `e0881e38f91b87623795208615ca466415d1970e` |
-| **crates.io** | |
-| `0.6.x` | `0.6.x` | |
+| `master` | `main` | rev `e30720a781ad5e4bee9ab6e5c9f228baffef466c` |
 
 ## Interactive examples
 
