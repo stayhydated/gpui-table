@@ -79,6 +79,7 @@ pub struct NumberRangeFilter {
     max: Option<Decimal>,
     range_min: Decimal,
     range_max: Decimal,
+    range_is_explicit: bool,
     step_size: Option<Decimal>,
     trigger_style: StyleRefinement,
     popover_style: StyleRefinement,
@@ -129,12 +130,32 @@ impl NumberRangeFilter {
         on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
+        let mut range_min = Decimal::ZERO;
+        let mut range_max = Decimal::ONE_HUNDRED;
+        if let Some(min) = value.0 {
+            if min < range_min {
+                range_min = min;
+            }
+            if min > range_max {
+                range_max = min;
+            }
+        }
+        if let Some(max) = value.1 {
+            if max < range_min {
+                range_min = max;
+            }
+            if max > range_max {
+                range_max = max;
+            }
+        }
+
         cx.new(|_cx| Self {
             title,
             min: value.0,
             max: value.1,
-            range_min: Decimal::ZERO,
-            range_max: Decimal::ONE_HUNDRED,
+            range_min,
+            range_max,
+            range_is_explicit: false,
             step_size: None,
             trigger_style: StyleRefinement::default(),
             popover_style: StyleRefinement::default(),
@@ -213,11 +234,54 @@ impl NumberRangeFilter {
         row_width_px + POPOVER_HORIZONTAL_PADDING_PX
     }
 
+    fn recompute_dynamic_range_from_values(&mut self) {
+        if self.range_is_explicit {
+            return;
+        }
+
+        let mut range_min = Decimal::ZERO;
+        let mut range_max = Decimal::ONE_HUNDRED;
+        if let Some(min) = self.min {
+            if min < range_min {
+                range_min = min;
+            }
+            if min > range_max {
+                range_max = min;
+            }
+        }
+        if let Some(max) = self.max {
+            if max < range_min {
+                range_min = max;
+            }
+            if max > range_max {
+                range_max = max;
+            }
+        }
+
+        self.range_min = range_min;
+        self.range_max = range_max;
+    }
+
+    fn slider_values(&self) -> (f32, f32, f32, f32) {
+        let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
+        let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
+        let current_min = self
+            .min
+            .and_then(|d| d.to_f32())
+            .unwrap_or(range_min)
+            .clamp(range_min, range_max);
+        let current_max = self
+            .max
+            .and_then(|d| d.to_f32())
+            .unwrap_or(range_max)
+            .clamp(range_min, range_max);
+
+        (range_min, range_max, current_min, current_max)
+    }
+
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(format_decimal).unwrap_or_default();
-            let range_min = self.range_min;
-            let range_max = self.range_max;
             let min_placeholder = Self::min_placeholder_text();
             let initial_min_placeholder = min_placeholder.clone();
 
@@ -235,10 +299,15 @@ impl NumberRangeFilter {
                     if let InputEvent::Change = event {
                         let text = state.read(cx).value().to_string();
                         if let Ok(val) = Decimal::from_str(&text) {
-                            let clamped = val.clamp(range_min, range_max);
-                            this.min = Some(clamped);
+                            this.min = Some(val);
+                            if this.range_is_explicit {
+                                this.min = Some(val.clamp(this.range_min, this.range_max));
+                            } else {
+                                this.recompute_dynamic_range_from_values();
+                            }
                         } else if text.is_empty() {
                             this.min = None;
+                            this.recompute_dynamic_range_from_values();
                         }
                         this.last_changed = LastChanged::MinInput;
                         this.schedule_debounced_apply(cx);
@@ -255,11 +324,15 @@ impl NumberRangeFilter {
                     let step = this
                         .step_size
                         .unwrap_or((this.range_max - this.range_min) / Decimal::ONE_HUNDRED);
-                    let new_val = match action {
-                        StepAction::Increment => (current + step).min(this.range_max),
-                        StepAction::Decrement => (current - step).max(this.range_min),
+                    let mut new_val = match action {
+                        StepAction::Increment => current + step,
+                        StepAction::Decrement => current - step,
                     };
+                    if this.range_is_explicit {
+                        new_val = new_val.clamp(this.range_min, this.range_max);
+                    }
                     this.min = Some(new_val);
+                    this.recompute_dynamic_range_from_values();
                     this.last_changed = LastChanged::MinInput;
                     this.schedule_debounced_apply(cx);
                 },
@@ -273,8 +346,6 @@ impl NumberRangeFilter {
 
         if self.max_input.is_none() {
             let max_val = self.max.map(format_decimal).unwrap_or_default();
-            let range_min = self.range_min;
-            let range_max = self.range_max;
             let max_placeholder = Self::max_placeholder_text();
             let initial_max_placeholder = max_placeholder.clone();
 
@@ -292,10 +363,15 @@ impl NumberRangeFilter {
                     if let InputEvent::Change = event {
                         let text = state.read(cx).value().to_string();
                         if let Ok(val) = Decimal::from_str(&text) {
-                            let clamped = val.clamp(range_min, range_max);
-                            this.max = Some(clamped);
+                            this.max = Some(val);
+                            if this.range_is_explicit {
+                                this.max = Some(val.clamp(this.range_min, this.range_max));
+                            } else {
+                                this.recompute_dynamic_range_from_values();
+                            }
                         } else if text.is_empty() {
                             this.max = None;
+                            this.recompute_dynamic_range_from_values();
                         }
                         this.last_changed = LastChanged::MaxInput;
                         this.schedule_debounced_apply(cx);
@@ -312,11 +388,15 @@ impl NumberRangeFilter {
                     let step = this
                         .step_size
                         .unwrap_or((this.range_max - this.range_min) / Decimal::ONE_HUNDRED);
-                    let new_val = match action {
-                        StepAction::Increment => (current + step).min(this.range_max),
-                        StepAction::Decrement => (current - step).max(this.range_min),
+                    let mut new_val = match action {
+                        StepAction::Increment => current + step,
+                        StepAction::Decrement => current - step,
                     };
+                    if this.range_is_explicit {
+                        new_val = new_val.clamp(this.range_min, this.range_max);
+                    }
                     this.max = Some(new_val);
+                    this.recompute_dynamic_range_from_values();
                     this.last_changed = LastChanged::MaxInput;
                     this.schedule_debounced_apply(cx);
                 },
@@ -329,10 +409,7 @@ impl NumberRangeFilter {
         }
 
         if self.slider_state.is_none() {
-            let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
-            let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
-            let current_min = self.min.and_then(|d| d.to_f32()).unwrap_or(range_min);
-            let current_max = self.max.and_then(|d| d.to_f32()).unwrap_or(range_max);
+            let (range_min, range_max, current_min, current_max) = self.slider_values();
 
             let slider = cx.new(|_cx| {
                 SliderState::new()
@@ -401,16 +478,14 @@ impl NumberRangeFilter {
             LastChanged::MinInput | LastChanged::MaxInput => {
                 // Input changed - update slider
                 if let Some(slider) = &self.slider_state {
-                    let min = self
-                        .min
-                        .and_then(|d| d.to_f32())
-                        .unwrap_or(self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32));
-                    let max = self
-                        .max
-                        .and_then(|d| d.to_f32())
-                        .unwrap_or(self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32));
+                    let (range_min, range_max, current_min, current_max) = self.slider_values();
                     slider.update(cx, |state, cx| {
-                        state.set_value(min..max, window, cx);
+                        *state = SliderState::new()
+                            .min(range_min)
+                            .max(range_max)
+                            .step(DEFAULT_SLIDER_STEP_F32)
+                            .default_value(current_min..current_max);
+                        cx.notify();
                     });
                 }
             },
@@ -422,6 +497,7 @@ impl NumberRangeFilter {
     fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.min = None;
         self.max = None;
+        self.recompute_dynamic_range_from_values();
         self.pending_apply = false;
         self._debounce_task = None;
 
@@ -437,10 +513,14 @@ impl NumberRangeFilter {
         }
         // Reset slider to full range
         if let Some(slider) = &self.slider_state {
-            let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
-            let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
+            let (range_min, range_max, current_min, current_max) = self.slider_values();
             slider.update(cx, |state, cx| {
-                state.set_value(range_min..range_max, window, cx);
+                *state = SliderState::new()
+                    .min(range_min)
+                    .max(range_max)
+                    .step(DEFAULT_SLIDER_STEP_F32)
+                    .default_value(current_min..current_max);
+                cx.notify();
             });
         }
 

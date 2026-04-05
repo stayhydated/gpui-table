@@ -23,6 +23,8 @@ status bar. These components are used by the generated filter entities when
   - Debounced text input with optional validation helpers
 - `number_range_filter.rs`
   - Range slider + inputs for numeric filtering (decimal-backed)
+  - Default bounds auto-adjust to current entered values (starting from `0..100`);
+    explicit `.range(min, max)` keeps bounds fixed
 - `date_range_filter.rs`
   - Calendar-based date range picker
 - `reset_filters.rs`
