@@ -440,6 +440,24 @@ pub trait TableRowContextMenu: TableRowMeta {
     }
 }
 
+/// Generated/default context-menu composition hooks for a table row.
+///
+/// The `GpuiTable` derive macro implements this trait for each row type.
+/// Custom `TableRowContextMenu` impls can call this method and then append
+/// additional menu items.
+pub trait TableRowGeneratedContextMenu: TableRowMeta {
+    /// Builds the derive-generated/default portion of the row context menu.
+    fn render_generated_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        menu
+    }
+}
+
 /// Default implementation for rendering a cell.
 pub fn default_render_cell<R: TableRowMeta + ?Sized>(
     row: &R,

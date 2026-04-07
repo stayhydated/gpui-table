@@ -10,7 +10,7 @@ runtime components.
 ## Module map
 
 - `lib.rs`
-  - Table traits: `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, `TableCell`
+  - Table traits: `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableCell`
   - Loading traits: `TableLoader`, `TableDataLoader`
   - Default rendering helpers: `default_render_cell`, `default_render_row`
   - Internal load-more bridge: `__private::LoadMoreDelegate`
@@ -40,6 +40,8 @@ runtime components.
 - Implement `FilterValue`/`Filterable` for faceted filter enums.
 - Override `TableRowStyle` to customize row or cell rendering.
 - Implement `TableRowContextMenu` to customize row context menus.
+- Use `TableRowGeneratedContextMenu` in custom context-menu impls to compose
+  derive-generated/default menu items with extra actions.
 
 ## Default cell formatting
 

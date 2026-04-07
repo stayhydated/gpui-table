@@ -4,6 +4,10 @@ fn ui_compile_fail() {
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
     t.compile_fail("tests/ui/invalid_load_more_signature.rs");
+    t.compile_fail("tests/ui/invalid_context_menu_route_without_row_id.rs");
+    t.compile_fail("tests/ui/invalid_context_menu_row_id_field.rs");
+    t.compile_fail("tests/ui/invalid_context_menu_route_and_route_fn.rs");
+    t.compile_fail("tests/ui/invalid_context_menu_multiple_id_fields.rs");
     t.compile_fail("tests/ui/invalid_number_range_min_max.rs");
     t.compile_fail("tests/ui/invalid_number_range_step.rs");
 

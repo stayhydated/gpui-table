@@ -23,6 +23,30 @@ pub(super) struct TableMeta {
     #[darling(default)]
     pub(super) custom_context_menu: Option<Override<bool>>,
 
+    /// Generates a default context-menu link entry using this field as row id.
+    /// Must be used together with `context_menu_route`.
+    #[darling(default)]
+    pub(super) context_menu_row_id: Option<String>,
+
+    /// Route template used for generated row context-menu link.
+    /// Must contain `{id}` placeholder and be used with `context_menu_row_id`.
+    #[darling(default)]
+    pub(super) context_menu_route: Option<String>,
+
+    /// Optional menu label for generated context-menu route item.
+    #[darling(default)]
+    pub(super) context_menu_label: Option<String>,
+
+    /// Function path used to build a route string at runtime.
+    /// Signature should be compatible with `fn(&T) -> impl ToString`.
+    #[darling(default)]
+    pub(super) context_menu_route_fn: Option<syn::Path>,
+
+    /// Function path used to build a label string at runtime.
+    /// Signature should be compatible with `fn(&T) -> impl ToString`.
+    #[darling(default)]
+    pub(super) context_menu_label_fn: Option<syn::Path>,
+
     #[darling(default)]
     pub(super) fluent: Option<Override<String>>,
 
@@ -77,6 +101,10 @@ pub(super) struct TableColumn {
     /// Examples: `filter = text()`, `filter = number_range(min = 0, max = 100)`
     #[darling(default)]
     pub(super) filter: Option<FilterComponents>,
+
+    /// Marks this field as the value source for generated row context-menu route/label.
+    #[darling(default)]
+    pub(super) context_menu_id: bool,
 }
 
 /// Filter field metadata for delegate generation.

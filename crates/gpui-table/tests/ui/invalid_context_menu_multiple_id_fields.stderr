@@ -1,0 +1,5 @@
+error: only one field can be marked with `#[gpui_table(context_menu_id)]`
+ --> tests/ui/invalid_context_menu_multiple_id_fields.rs:5:8
+  |
+5 | struct InvalidContextMenuMultipleIdFields {
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

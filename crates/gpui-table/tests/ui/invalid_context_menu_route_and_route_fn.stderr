@@ -1,0 +1,5 @@
+error: `context_menu_route` and `context_menu_route_fn` cannot both be set
+  --> tests/ui/invalid_context_menu_route_and_route_fn.rs:13:8
+   |
+13 | struct InvalidContextMenuRouteAndRouteFn {
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

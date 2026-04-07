@@ -2,8 +2,10 @@ use es_fluent::{EsFluentThis, EsFluentVariants};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
+use gpui::{App, Window};
 use gpui_component::IconName;
-use gpui_table::{Filterable, GpuiTable, TableCell};
+use gpui_component::menu::PopupMenu;
+use gpui_table::{Filterable, GpuiTable, TableCell, TableRowContextMenu};
 use rust_decimal::Decimal;
 
 #[derive(
@@ -22,9 +24,15 @@ pub enum UserStatus {
 #[derive(Clone, fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
 #[fluent_this(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
-#[gpui_table(fluent = "label", filters)]
+#[gpui_table(
+    fluent = "label",
+    filters,
+    custom_context_menu,
+    context_menu_route_fn = crate::structs::context_menu_common::user_context_menu_route,
+    context_menu_label_fn = crate::structs::context_menu_common::user_context_menu_label
+)]
 pub struct User {
-    #[gpui_table(skip)]
+    #[gpui_table(skip, context_menu_id)]
     #[dummy(faker = "UUIDv4")]
     #[allow(dead_code)]
     pub id: uuid::Uuid,
@@ -54,4 +62,32 @@ pub struct User {
     #[gpui_table(sortable, width = 300., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[cfg(not(feature = "router"))]
+impl TableRowContextMenu for User {
+    fn render_table_context_menu(
+        &self,
+        row_ix: usize,
+        menu: PopupMenu,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> PopupMenu {
+        use gpui_table::TableRowGeneratedContextMenu as _;
+        let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
+        crate::structs::context_menu_common::with_user_common_actions(&self.id, menu)
+    }
+}
+
+#[cfg(feature = "router")]
+impl TableRowContextMenu for User {
+    fn render_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
+        crate::structs::context_menu_common::with_user_common_actions(&self.id, menu)
+    }
 }

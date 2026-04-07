@@ -1,0 +1,5 @@
+error: `context_menu_row_id` field `user_id` was not found on `InvalidContextMenuRowIdField`
+ --> tests/ui/invalid_context_menu_row_id_field.rs:5:8
+  |
+5 | struct InvalidContextMenuRowIdField {
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

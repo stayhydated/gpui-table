@@ -57,15 +57,72 @@ pub struct User {
 impl TableRowContextMenu for User {
     fn render_table_context_menu(
         &self,
-        _row_ix: usize,
+        row_ix: usize,
         menu: PopupMenu,
-        _window: &mut Window,
-        _cx: &mut App,
+        window: &mut Window,
+        cx: &mut App,
     ) -> PopupMenu {
-        menu
+        use gpui_table::TableRowGeneratedContextMenu as _;
+        self.render_generated_table_context_menu(row_ix, menu, window, cx)
+            .link("Share", "https://example.com")
     }
 }
 ```
+
+## Row context menu link from row id
+
+```rs
+use gpui_table::GpuiTable;
+
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_row_id = "id",
+    context_menu_route = "/users/{id}",
+    context_menu_label = "Open user"
+)]
+pub struct User {
+    pub id: u64,
+    pub name: String,
+}
+```
+
+This generates a `TableRowContextMenu` impl that adds a menu link by replacing
+`{id}` in `context_menu_route` with `self.id.to_string()`.
+
+You can also mark the field directly and provide runtime functions:
+
+```rs
+use gpui_table::GpuiTable;
+
+fn user_href(id: &u64) -> String {
+    format!("/users/{id}")
+}
+
+fn user_label(_id: &u64) -> &'static str {
+    "Open user"
+}
+
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_route_fn = user_href,
+    context_menu_label_fn = user_label
+)]
+pub struct User {
+    #[gpui_table(context_menu_id)]
+    pub id: u64,
+    pub name: String,
+}
+```
+
+Supported context-menu derive options:
+
+- `context_menu_row_id = "field_name"` or field-level `#[gpui_table(context_menu_id)]`
+- `context_menu_route = "/path/{id}"` or `context_menu_route_fn = path::to_fn`
+- `context_menu_label = "Open"` or `context_menu_label_fn = path::to_fn`
+
+When `#[gpui_table(custom_context_menu)]` is enabled, the derive still generates
+`TableRowGeneratedContextMenu` so custom implementations can compose generated
+items with additional actions.
 
 ## Filter attributes
 
