@@ -45,3 +45,12 @@ and `gpui-component`. It focuses on:
 - Ignore all folders matching `**/__crate_paths/**` (generated files).
 - When changing public APIs or behavior in a crate, update that crate's `docs/ARCHITECTURE.md`.
 - Prefer workspace dependencies and feature flags from the root `Cargo.toml`.
+
+## Skills
+
+| Item           | Link to llms.txt                                          | Link to llms-full.txt                                     | Purpose                     |
+| -------------- | --------------------------------------------------------- | --------------------------------------------------------- | --------------------------- |
+| **Crate**      |                                                           |                                                           |                             |
+| es-fluent      | https://stayhydated.github.io/es-fluent/llms.txt          | https://stayhydated.github.io/es-fluent/llms-full.txt     | i18n                        |
+| koruma         | https://stayhydated.github.io/koruma/llms.txt             | https://stayhydated.github.io/koruma/llms-full.txt        | validation, newtype         |
+| gpui-component | https://longbridge.github.io/gpui-component/llms.txt | https://longbridge.github.io/gpui-component/llms-full.txt | gpui shadcn-like components |
