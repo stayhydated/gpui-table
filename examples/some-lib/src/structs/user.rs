@@ -66,6 +66,7 @@ pub struct User {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[cfg(not(feature = "router"))]
 impl TableRowContextMenu for User {
     fn render_table_context_menu(
         &self,
@@ -74,18 +75,21 @@ impl TableRowContextMenu for User {
         window: &mut Window,
         cx: &mut App,
     ) -> PopupMenu {
-        #[cfg(feature = "router")]
-        let menu = menu;
-
-        #[cfg(not(feature = "router"))]
         use gpui_table::TableRowGeneratedContextMenu as _;
-
-        #[cfg(not(feature = "router"))]
         let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
+        context_menu_common::with_user_common_actions(menu, &self.id)
+    }
+}
 
-        let _ = row_ix;
-        let _ = window;
-        let _ = cx;
+#[cfg(feature = "router")]
+impl TableRowContextMenu for User {
+    fn render_table_context_menu(
+        &self,
+        _row_ix: usize,
+        menu: PopupMenu,
+        _window: &mut Window,
+        _cx: &mut App,
+    ) -> PopupMenu {
         context_menu_common::with_user_common_actions(menu, &self.id)
     }
 }
