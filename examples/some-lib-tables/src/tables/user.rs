@@ -1,11 +1,11 @@
 use es_fluent::ThisFtl as _;
 use fake::{Fake, Faker};
+#[cfg(feature = "router")]
+use gpui::InteractiveElement as _;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
     Subscription, Window,
 };
-#[cfg(feature = "router")]
-use gpui::InteractiveElement as _;
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
 use gpui_table::filter::FilterEntitiesExt as _;

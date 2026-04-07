@@ -115,6 +115,7 @@ pub struct User {
 ```
 
 Supported context-menu derive options:
+
 - `context_menu_row_id = "field_name"` or field-level `#[gpui_table(context_menu_id)]`
 - `context_menu_route = "/path/{id}"` or `context_menu_route_fn = path::to_fn`
 - `context_menu_label = "Open"` or `context_menu_label_fn = path::to_fn`

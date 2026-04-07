@@ -31,9 +31,9 @@ client = [
   "dep:urlencoding",
   "dep:uuid",
 ]
-router = [ "client", "dep:gpui-router" ]
 db = [  ]
 default = [  ]
+router = [ "client", "dep:gpui-router" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }

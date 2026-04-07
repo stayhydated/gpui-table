@@ -14,7 +14,7 @@ fn user_context_menu_router_path(id: &uuid::Uuid) -> gpui::SharedString {
 }
 
 #[cfg(feature = "router")]
-#[derive(gpui::Action, Clone, PartialEq, Eq, serde::Deserialize)]
+#[derive(gpui::Action, Clone, serde::Deserialize, Eq, PartialEq)]
 #[action(namespace = some_lib_user_context_menu, no_json)]
 pub struct OpenUserRoute(pub gpui::SharedString);
 

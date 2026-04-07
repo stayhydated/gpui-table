@@ -7,7 +7,7 @@ license = "Unlicense"
 publish = false
 
 [features]
-router = ["dep:gpui-router", "some-lib/router"]
+router = [ "dep:gpui-router", "some-lib/router" ]
 
 [dependencies]
 chrono = { workspace = true }
@@ -18,8 +18,8 @@ es-fluent-manager-embedded = { workspace = true }
 fake = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-router = { optional = true, workspace = true }
+gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
 gpui-table-component = { workspace = true }
 gpui_platform = { workspace = true }
