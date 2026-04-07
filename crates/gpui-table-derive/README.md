@@ -67,6 +67,56 @@ impl TableRowContextMenu for User {
 }
 ```
 
+## Row context menu link from row id
+
+```rs
+use gpui_table::GpuiTable;
+
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_row_id = "id",
+    context_menu_route = "/users/{id}",
+    context_menu_label = "Open user"
+)]
+pub struct User {
+    pub id: u64,
+    pub name: String,
+}
+```
+
+This generates a `TableRowContextMenu` impl that adds a menu link by replacing
+`{id}` in `context_menu_route` with `self.id.to_string()`.
+
+You can also mark the field directly and provide runtime functions:
+
+```rs
+use gpui_table::GpuiTable;
+
+fn user_href(id: &u64) -> String {
+    format!("/users/{id}")
+}
+
+fn user_label(_id: &u64) -> &'static str {
+    "Open user"
+}
+
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_route_fn = user_href,
+    context_menu_label_fn = user_label
+)]
+pub struct User {
+    #[gpui_table(context_menu_id)]
+    pub id: u64,
+    pub name: String,
+}
+```
+
+Supported context-menu derive options:
+- `context_menu_row_id = "field_name"` or field-level `#[gpui_table(context_menu_id)]`
+- `context_menu_route = "/path/{id}"` or `context_menu_route_fn = path::to_fn`
+- `context_menu_label = "Open"` or `context_menu_label_fn = path::to_fn`
+
 ## Filter attributes
 
 - `filter(text())`

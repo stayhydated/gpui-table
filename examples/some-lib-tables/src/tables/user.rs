@@ -1,8 +1,8 @@
 use es_fluent::ThisFtl as _;
 use fake::{Fake, Faker};
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, InteractiveElement as _, IntoElement,
+    ParentElement, Render, Styled, Subscription, Window,
 };
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
@@ -69,6 +69,16 @@ impl Render for UserTableStory {
                 DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true),
+            )
+            .child(
+                v_flex()
+                    .gap_1()
+                    .children(delegate.rows.iter().take(12).map(|user| {
+                        gpui::div()
+                            .id(format!("user-{}", user.id))
+                            .text_sm()
+                            .child(format!("Route target div for user id: {}", user.id))
+                    })),
             )
     }
 }

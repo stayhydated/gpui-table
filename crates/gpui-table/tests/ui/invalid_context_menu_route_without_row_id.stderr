@@ -1,0 +1,5 @@
+error: context-menu generation requires a row-id source via `context_menu_row_id` or field `#[gpui_table(context_menu_id)]`
+ --> tests/ui/invalid_context_menu_route_without_row_id.rs:5:8
+  |
+5 | struct InvalidContextMenuRouteWithoutRowId {
+  |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -1,4 +1,5 @@
 use crate::__crate_paths::gpui::{AnyElement, App, IntoElement, Window};
+use crate::__crate_paths::gpui_component::menu::PopupMenu;
 use crate::__crate_paths::gpui_component::table::{Column, ColumnFixed, ColumnSort};
 use crate::gpui_table::delegate::generate_delegate;
 #[cfg(feature = "inventory")]
@@ -25,6 +26,11 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         delegate,
         custom_style,
         custom_context_menu,
+        context_menu_row_id,
+        context_menu_route,
+        context_menu_label,
+        context_menu_route_fn,
+        context_menu_label_fn,
         fluent,
         loading,
         load_more,
@@ -46,6 +52,141 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     };
 
     let fields = data.take_struct().unwrap();
+    let all_field_idents: Vec<Ident> = fields
+        .iter()
+        .filter_map(|field| field.ident.clone())
+        .collect();
+    let marked_context_menu_id_fields: Vec<Ident> = fields
+        .iter()
+        .filter(|field| field.context_menu_id)
+        .filter_map(|field| field.ident.clone())
+        .collect();
+
+    if custom_context_menu
+        && (context_menu_row_id.is_some()
+            || context_menu_route.is_some()
+            || context_menu_label.is_some()
+            || context_menu_route_fn.is_some()
+            || context_menu_label_fn.is_some()
+            || !marked_context_menu_id_fields.is_empty())
+    {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`custom_context_menu` cannot be combined with context-menu derive attributes (`context_menu_row_id`, `context_menu_route`, `context_menu_label`, `context_menu_route_fn`, `context_menu_label_fn`, or field `context_menu_id`)",
+        ));
+    }
+
+    if context_menu_route.is_some() && context_menu_route_fn.is_some() {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`context_menu_route` and `context_menu_route_fn` cannot both be set",
+        ));
+    }
+
+    if context_menu_label.is_some() && context_menu_label_fn.is_some() {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`context_menu_label` and `context_menu_label_fn` cannot both be set",
+        ));
+    }
+
+    if marked_context_menu_id_fields.len() > 1 {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "only one field can be marked with `#[gpui_table(context_menu_id)]`",
+        ));
+    }
+
+    let marked_context_menu_id_field = marked_context_menu_id_fields.into_iter().next();
+
+    let context_menu_value_ident = match (context_menu_row_id, marked_context_menu_id_field) {
+        (Some(_), Some(_)) => {
+            return Err(syn::Error::new(
+                struct_name.span(),
+                "`context_menu_row_id` cannot be combined with field-level `#[gpui_table(context_menu_id)]`",
+            ));
+        },
+        (Some(row_id), None) => {
+            let row_id_ident = syn::parse_str::<Ident>(&row_id).map_err(|_| {
+                syn::Error::new(
+                    struct_name.span(),
+                    format!(
+                        "`context_menu_row_id` value `{row_id}` is not a valid field identifier"
+                    ),
+                )
+            })?;
+
+            if !all_field_idents
+                .iter()
+                .any(|field_ident| *field_ident == row_id_ident)
+            {
+                return Err(syn::Error::new(
+                    struct_name.span(),
+                    format!(
+                        "`context_menu_row_id` field `{row_id}` was not found on `{}`",
+                        struct_name
+                    ),
+                ));
+            }
+            Some(row_id_ident)
+        },
+        (None, Some(field_ident)) => Some(field_ident),
+        (None, None) => None,
+    };
+
+    let has_route_source = context_menu_route.is_some() || context_menu_route_fn.is_some();
+    if context_menu_value_ident.is_none()
+        && (has_route_source || context_menu_label.is_some() || context_menu_label_fn.is_some())
+    {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "context-menu generation requires a row-id source via `context_menu_row_id` or field `#[gpui_table(context_menu_id)]`",
+        ));
+    }
+
+    if context_menu_value_ident.is_some() && !has_route_source {
+        if context_menu_label.is_some() || context_menu_label_fn.is_some() {
+            return Err(syn::Error::new(
+                struct_name.span(),
+                "`context_menu_label`/`context_menu_label_fn` requires `context_menu_route` or `context_menu_route_fn`",
+            ));
+        }
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "context-menu row-id source requires `context_menu_route` or `context_menu_route_fn`",
+        ));
+    }
+
+    if let Some(route) = context_menu_route.as_ref()
+        && !route.contains("{id}")
+    {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`context_menu_route` must contain `{id}` placeholder",
+        ));
+    }
+
+    let context_menu_link = if let Some(context_menu_value_ident) = context_menu_value_ident {
+        let href_expr = if let Some(route) = context_menu_route {
+            quote! { #route.replace("{id}", &context_menu_value.to_string()) }
+        } else if let Some(route_fn) = context_menu_route_fn {
+            quote! { (#route_fn)(context_menu_value).to_string() }
+        } else {
+            return Err(syn::Error::new(
+                struct_name.span(),
+                "internal error: context-menu link expected a route source",
+            ));
+        };
+        let label_expr = if let Some(label_fn) = context_menu_label_fn {
+            quote! { (#label_fn)(context_menu_value).to_string() }
+        } else {
+            let label = context_menu_label.unwrap_or_else(|| "Open".to_string());
+            quote! { #label.to_string() }
+        };
+        Some((context_menu_value_ident, href_expr, label_expr))
+    } else {
+        None
+    };
 
     let mut columns_init = Vec::new();
     let mut cell_value_match_arms = Vec::new();
@@ -295,8 +436,29 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     };
 
     let context_menu_impl = if !custom_context_menu {
-        quote! {
-            impl gpui_table::TableRowContextMenu for #struct_name {}
+        if let Some((context_menu_row_ident, context_menu_href_expr, context_menu_label_expr)) =
+            context_menu_link
+        {
+            quote! {
+                impl gpui_table::TableRowContextMenu for #struct_name {
+                    fn render_table_context_menu(
+                        &self,
+                        _row_ix: usize,
+                        menu: #PopupMenu,
+                        _window: &mut #Window,
+                        _cx: &mut #App,
+                    ) -> #PopupMenu {
+                        let context_menu_value = &self.#context_menu_row_ident;
+                        let href = #context_menu_href_expr;
+                        let label = #context_menu_label_expr;
+                        menu.link(label, href)
+                    }
+                }
+            }
+        } else {
+            quote! {
+                impl gpui_table::TableRowContextMenu for #struct_name {}
+            }
         }
     } else {
         quote! {}

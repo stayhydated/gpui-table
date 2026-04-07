@@ -132,6 +132,37 @@ impl gpui_table::TableRowContextMenu for ContextMenuRow {
     }
 }
 
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_row_id = "id",
+    context_menu_route = "/users/{id}",
+    context_menu_label = "Open user"
+)]
+struct ContextMenuLinkRow {
+    id: u32,
+    name: String,
+}
+
+fn context_menu_href_for_user_id(id: &u32) -> String {
+    format!("/users/{id}")
+}
+
+fn context_menu_label_for_user_id(id: &u32) -> &'static str {
+    let _ = id;
+    "Open user details"
+}
+
+#[derive(GpuiTable)]
+#[gpui_table(
+    context_menu_route_fn = context_menu_href_for_user_id,
+    context_menu_label_fn = context_menu_label_for_user_id
+)]
+struct ContextMenuFnRow {
+    #[gpui_table(context_menu_id)]
+    id: u32,
+    name: String,
+}
+
 #[derive(Serialize)]
 struct ColumnSnapshot {
     key: String,
@@ -262,5 +293,23 @@ fn test_delegate_fields_exist() {
 #[test]
 fn test_custom_context_menu_delegate_compiles() {
     let delegate = ContextMenuRowTableDelegate::new(vec![ContextMenuRow { id: 1 }]);
+    assert_eq!(delegate.rows.len(), 1);
+}
+
+#[test]
+fn test_generated_context_menu_link_delegate_compiles() {
+    let delegate = ContextMenuLinkRowTableDelegate::new(vec![ContextMenuLinkRow {
+        id: 1,
+        name: "A".to_string(),
+    }]);
+    assert_eq!(delegate.rows.len(), 1);
+}
+
+#[test]
+fn test_generated_context_menu_link_fn_delegate_compiles() {
+    let delegate = ContextMenuFnRowTableDelegate::new(vec![ContextMenuFnRow {
+        id: 2,
+        name: "B".to_string(),
+    }]);
     assert_eq!(delegate.rows.len(), 1);
 }

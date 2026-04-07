@@ -22,9 +22,14 @@ pub enum UserStatus {
 #[derive(Clone, fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
 #[fluent_this(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
-#[gpui_table(fluent = "label", filters)]
+#[gpui_table(
+    fluent = "label",
+    filters,
+    context_menu_route_fn = user_context_menu_route,
+    context_menu_label_fn = user_context_menu_label
+)]
 pub struct User {
-    #[gpui_table(skip)]
+    #[gpui_table(skip, context_menu_id)]
     #[dummy(faker = "UUIDv4")]
     #[allow(dead_code)]
     pub id: uuid::Uuid,
@@ -54,4 +59,12 @@ pub struct User {
     #[gpui_table(sortable, width = 300., filter(date_range()))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+fn user_context_menu_route(id: &uuid::Uuid) -> String {
+    format!("#user-{id}")
+}
+
+fn user_context_menu_label(id: &uuid::Uuid) -> String {
+    format!("Open user ({id})")
 }
