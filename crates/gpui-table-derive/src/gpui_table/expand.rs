@@ -62,20 +62,6 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         .filter_map(|field| field.ident.clone())
         .collect();
 
-    if custom_context_menu
-        && (context_menu_row_id.is_some()
-            || context_menu_route.is_some()
-            || context_menu_label.is_some()
-            || context_menu_route_fn.is_some()
-            || context_menu_label_fn.is_some()
-            || !marked_context_menu_id_fields.is_empty())
-    {
-        return Err(syn::Error::new(
-            struct_name.span(),
-            "`custom_context_menu` cannot be combined with context-menu derive attributes (`context_menu_row_id`, `context_menu_route`, `context_menu_label`, `context_menu_route_fn`, `context_menu_label_fn`, or field `context_menu_id`)",
-        ));
-    }
-
     if context_menu_route.is_some() && context_menu_route_fn.is_some() {
         return Err(syn::Error::new(
             struct_name.span(),
@@ -435,13 +421,13 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         quote! {}
     };
 
-    let context_menu_impl = if !custom_context_menu {
+    let generated_context_menu_impl =
         if let Some((context_menu_row_ident, context_menu_href_expr, context_menu_label_expr)) =
             context_menu_link
         {
             quote! {
-                impl gpui_table::TableRowContextMenu for #struct_name {
-                    fn render_table_context_menu(
+                impl gpui_table::TableRowGeneratedContextMenu for #struct_name {
+                    fn render_generated_table_context_menu(
                         &self,
                         _row_ix: usize,
                         menu: #PopupMenu,
@@ -457,7 +443,23 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             }
         } else {
             quote! {
-                impl gpui_table::TableRowContextMenu for #struct_name {}
+                impl gpui_table::TableRowGeneratedContextMenu for #struct_name {}
+            }
+        };
+
+    let context_menu_impl = if !custom_context_menu {
+        quote! {
+            impl gpui_table::TableRowContextMenu for #struct_name {
+                fn render_table_context_menu(
+                    &self,
+                    row_ix: usize,
+                    menu: #PopupMenu,
+                    window: &mut #Window,
+                    cx: &mut #App,
+                ) -> #PopupMenu {
+                    use gpui_table::TableRowGeneratedContextMenu as _;
+                    self.render_generated_table_context_menu(row_ix, menu, window, cx)
+                }
             }
         }
     } else {
@@ -539,6 +541,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
         #shape_impl
         #style_impl
+        #generated_context_menu_impl
         #context_menu_impl
         #delegate_impl
         #filter_entities_impl

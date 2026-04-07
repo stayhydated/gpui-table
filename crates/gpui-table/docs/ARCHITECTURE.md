@@ -39,6 +39,8 @@ are used without enabling the corresponding `gpui-table` feature.
 
 - Implement `TableRowStyle` for custom rendering.
 - Implement `TableRowContextMenu` for row context-menu composition.
+- Use `TableRowGeneratedContextMenu` to compose derive-generated menu links
+  with custom menu actions.
 - Or derive a route link context-menu entry with
   `#[gpui_table(context_menu_row_id = \"...\", context_menu_route = \"...{id}...\")]`,
   or field `#[gpui_table(context_menu_id)]` plus runtime `context_menu_route_fn`.

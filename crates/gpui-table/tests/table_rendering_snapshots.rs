@@ -163,6 +163,31 @@ struct ContextMenuFnRow {
     name: String,
 }
 
+#[derive(GpuiTable)]
+#[gpui_table(
+    custom_context_menu,
+    context_menu_row_id = "id",
+    context_menu_route = "/users/{id}",
+    context_menu_label = "Open user"
+)]
+struct ContextMenuComposedRow {
+    id: u32,
+}
+
+impl gpui_table::TableRowContextMenu for ContextMenuComposedRow {
+    fn render_table_context_menu(
+        &self,
+        row_ix: usize,
+        menu: PopupMenu,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> PopupMenu {
+        use gpui_table::TableRowGeneratedContextMenu as _;
+        self.render_generated_table_context_menu(row_ix, menu, window, cx)
+            .link("Share", format!("/share/{}", self.id))
+    }
+}
+
 #[derive(Serialize)]
 struct ColumnSnapshot {
     key: String,
@@ -311,5 +336,11 @@ fn test_generated_context_menu_link_fn_delegate_compiles() {
         id: 2,
         name: "B".to_string(),
     }]);
+    assert_eq!(delegate.rows.len(), 1);
+}
+
+#[test]
+fn test_generated_context_menu_composition_delegate_compiles() {
+    let delegate = ContextMenuComposedRowTableDelegate::new(vec![ContextMenuComposedRow { id: 3 }]);
     assert_eq!(delegate.rows.len(), 1);
 }

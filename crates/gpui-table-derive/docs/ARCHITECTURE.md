@@ -10,8 +10,9 @@ columns, filters, and optional registry metadata.
 - `#[derive(GpuiTable)]`
   - Generates `TableRowMeta`, `TableRowStyle`, column enums, and a
     `TableDelegate` implementation.
-  - Generates `TableRowContextMenu` (default no-op) unless
-    `#[gpui_table(custom_context_menu)]` is set.
+  - Generates `TableRowGeneratedContextMenu` (default no-op or configured link).
+  - Generates `TableRowContextMenu` unless `#[gpui_table(custom_context_menu)]`
+    is set; generated impl forwards to `TableRowGeneratedContextMenu`.
   - Optionally generates a default row context-menu link item when
     context-menu attributes are configured:
     - row-id source: `context_menu_row_id = "..."` or field `#[gpui_table(context_menu_id)]`
@@ -48,8 +49,9 @@ columns, filters, and optional registry metadata.
 1. Generated delegates route `TableDelegate::context_menu(...)` through the
    selected typed row via `TableRowContextMenu`.
 1. When context-menu derive attributes are present, generated
-   `TableRowContextMenu` appends a link entry resolved from the selected row-id
-   field (template replacement or runtime function path).
+   `TableRowGeneratedContextMenu` appends a link entry resolved from the
+   selected row-id field (template replacement or runtime function path).
+   This remains composable when users implement `TableRowContextMenu` manually.
 1. Filter metadata expands into `FilterEntities`, `FilterValues`, and
    `Matchable` implementations, plus grouped filter render helpers
    (text/number/faceted/date/all), a localized reset-button binding, and

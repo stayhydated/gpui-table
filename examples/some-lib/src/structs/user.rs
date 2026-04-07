@@ -2,9 +2,13 @@ use es_fluent::{EsFluentThis, EsFluentVariants};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
+use gpui::{App, Window};
 use gpui_component::IconName;
-use gpui_table::{Filterable, GpuiTable, TableCell};
+use gpui_component::menu::PopupMenu;
+use gpui_table::{Filterable, GpuiTable, TableCell, TableRowContextMenu};
 use rust_decimal::Decimal;
+
+use crate::structs::context_menu_common;
 
 #[derive(
     Clone, Debug, Eq, Hash, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell,
@@ -25,8 +29,9 @@ pub enum UserStatus {
 #[gpui_table(
     fluent = "label",
     filters,
-    context_menu_route_fn = user_context_menu_route,
-    context_menu_label_fn = user_context_menu_label
+    custom_context_menu,
+    context_menu_route_fn = crate::structs::context_menu_common::user_context_menu_route,
+    context_menu_label_fn = crate::structs::context_menu_common::user_context_menu_label
 )]
 pub struct User {
     #[gpui_table(skip, context_menu_id)]
@@ -61,10 +66,16 @@ pub struct User {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
-fn user_context_menu_route(id: &uuid::Uuid) -> String {
-    format!("#user-{id}")
-}
-
-fn user_context_menu_label(id: &uuid::Uuid) -> String {
-    format!("Open user ({id})")
+impl TableRowContextMenu for User {
+    fn render_table_context_menu(
+        &self,
+        row_ix: usize,
+        menu: PopupMenu,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> PopupMenu {
+        use gpui_table::TableRowGeneratedContextMenu as _;
+        let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
+        context_menu_common::with_user_common_actions(menu, &self.id)
+    }
 }

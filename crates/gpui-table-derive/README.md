@@ -57,12 +57,14 @@ pub struct User {
 impl TableRowContextMenu for User {
     fn render_table_context_menu(
         &self,
-        _row_ix: usize,
+        row_ix: usize,
         menu: PopupMenu,
-        _window: &mut Window,
-        _cx: &mut App,
+        window: &mut Window,
+        cx: &mut App,
     ) -> PopupMenu {
-        menu
+        use gpui_table::TableRowGeneratedContextMenu as _;
+        self.render_generated_table_context_menu(row_ix, menu, window, cx)
+            .link("Share", "https://example.com")
     }
 }
 ```
@@ -116,6 +118,10 @@ Supported context-menu derive options:
 - `context_menu_row_id = "field_name"` or field-level `#[gpui_table(context_menu_id)]`
 - `context_menu_route = "/path/{id}"` or `context_menu_route_fn = path::to_fn`
 - `context_menu_label = "Open"` or `context_menu_label_fn = path::to_fn`
+
+When `#[gpui_table(custom_context_menu)]` is enabled, the derive still generates
+`TableRowGeneratedContextMenu` so custom implementations can compose generated
+items with additional actions.
 
 ## Filter attributes
 
