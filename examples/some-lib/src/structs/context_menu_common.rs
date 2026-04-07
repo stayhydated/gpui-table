@@ -19,7 +19,7 @@ fn user_context_menu_router_path(id: &uuid::Uuid) -> gpui::SharedString {
 pub struct OpenUserRoute(pub gpui::SharedString);
 
 #[cfg(feature = "router")]
-pub fn with_user_common_actions(menu: PopupMenu, id: &uuid::Uuid) -> PopupMenu {
+pub fn with_user_common_actions(id: &uuid::Uuid, menu: PopupMenu) -> PopupMenu {
     menu.menu(
         user_context_menu_label(id),
         Box::new(OpenUserRoute(user_context_menu_router_path(id))),
@@ -29,6 +29,6 @@ pub fn with_user_common_actions(menu: PopupMenu, id: &uuid::Uuid) -> PopupMenu {
 }
 
 #[cfg(not(feature = "router"))]
-pub fn with_user_common_actions(menu: PopupMenu, id: &uuid::Uuid) -> PopupMenu {
+pub fn with_user_common_actions(id: &uuid::Uuid, menu: PopupMenu) -> PopupMenu {
     menu.separator().link("Share user", format!("/share/{id}"))
 }

@@ -8,8 +8,6 @@ use gpui_component::menu::PopupMenu;
 use gpui_table::{Filterable, GpuiTable, TableCell, TableRowContextMenu};
 use rust_decimal::Decimal;
 
-use crate::structs::context_menu_common;
-
 #[derive(
     Clone, Debug, Eq, Hash, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell,
 )]
@@ -77,7 +75,7 @@ impl TableRowContextMenu for User {
     ) -> PopupMenu {
         use gpui_table::TableRowGeneratedContextMenu as _;
         let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
-        context_menu_common::with_user_common_actions(menu, &self.id)
+        crate::structs::context_menu_common::with_user_common_actions(&self.id, menu)
     }
 }
 
@@ -90,6 +88,6 @@ impl TableRowContextMenu for User {
         _window: &mut Window,
         _cx: &mut App,
     ) -> PopupMenu {
-        context_menu_common::with_user_common_actions(menu, &self.id)
+        crate::structs::context_menu_common::with_user_common_actions(&self.id, menu)
     }
 }
