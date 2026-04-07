@@ -1,5 +1,5 @@
 [workspace]
-default-members = [ "examples/some-lib-tables" ]
+default-members = ["examples/some-lib-tables"]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-component",
@@ -35,6 +35,7 @@ fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "15d8660748b508b3525d3403e5d172f1a557bfa5" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
+gpui-router = { path = "../gpui-router/crates/router" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }

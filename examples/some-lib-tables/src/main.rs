@@ -22,6 +22,9 @@ fn main() {
         gpui_storybook::init(Languages::default(), app_cx);
         gpui_storybook::change_locale(Languages::default());
 
+        #[cfg(feature = "router")]
+        gpui_router::init(app_cx);
+
         gpui_tokio::init(app_cx);
 
         let http_client = std::sync::Arc::new(reqwest_client::ReqwestClient::new());

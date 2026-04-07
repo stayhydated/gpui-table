@@ -74,8 +74,18 @@ impl TableRowContextMenu for User {
         window: &mut Window,
         cx: &mut App,
     ) -> PopupMenu {
+        #[cfg(feature = "router")]
+        let menu = menu;
+
+        #[cfg(not(feature = "router"))]
         use gpui_table::TableRowGeneratedContextMenu as _;
+
+        #[cfg(not(feature = "router"))]
         let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
+
+        let _ = row_ix;
+        let _ = window;
+        let _ = cx;
         context_menu_common::with_user_common_actions(menu, &self.id)
     }
 }

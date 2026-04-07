@@ -16,6 +16,7 @@ client = [
   "dep:fake",
   "dep:gpui",
   "dep:gpui-component",
+  "dep:gpui-router",
   "dep:gpui-table",
   "dep:gpui-table-component",
   "dep:gpui_tokio",
@@ -30,6 +31,7 @@ client = [
   "dep:urlencoding",
   "dep:uuid",
 ]
+router = [ "client", "dep:gpui-router" ]
 db = [  ]
 default = [  ]
 
@@ -46,6 +48,7 @@ fake = { features = [
 ], optional = true, workspace = true }
 gpui = { optional = true, workspace = true }
 gpui-component = { optional = true, workspace = true }
+gpui-router = { optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",

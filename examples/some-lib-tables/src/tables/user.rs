@@ -1,9 +1,11 @@
 use es_fluent::ThisFtl as _;
 use fake::{Fake, Faker};
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, InteractiveElement as _, IntoElement,
-    ParentElement, Render, Styled, Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window,
 };
+#[cfg(feature = "router")]
+use gpui::InteractiveElement as _;
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
 use gpui_table::filter::FilterEntitiesExt as _;
@@ -45,12 +47,27 @@ impl UserTableStory {
             _subscription,
         }
     }
+
+    #[cfg(feature = "router")]
+    fn on_open_user_route(
+        &mut self,
+        action: &some_lib::structs::context_menu_common::OpenUserRoute,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        if !cx.has_global::<gpui_router::RouterState>() {
+            gpui_router::init(cx);
+        }
+
+        gpui_router::RouterState::global_mut(cx).with_path(action.0.clone());
+        cx.notify();
+    }
 }
 impl Render for UserTableStory {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let table = self.table.read(cx);
         let delegate = table.delegate();
-        v_flex()
+        let root = v_flex()
             .size_full()
             .gap_4()
             .p_4()
@@ -69,16 +86,16 @@ impl Render for UserTableStory {
                 DataTable::new(&self.table)
                     .stripe(true)
                     .scrollbar_visible(true, true),
-            )
-            .child(
-                v_flex()
-                    .gap_1()
-                    .children(delegate.rows.iter().take(12).map(|user| {
-                        gpui::div()
-                            .id(format!("user-{}", user.id))
-                            .text_sm()
-                            .child(format!("Route target div for user id: {}", user.id))
-                    })),
-            )
+            );
+
+        #[cfg(feature = "router")]
+        let root = root.on_action(cx.listener(Self::on_open_user_route)).child(
+            gpui::div().text_sm().child(format!(
+                "Router location: {}",
+                gpui_router::use_location(cx).pathname
+            )),
+        );
+
+        root
     }
 }
