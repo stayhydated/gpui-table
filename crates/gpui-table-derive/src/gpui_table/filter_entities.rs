@@ -164,6 +164,15 @@ pub(super) fn generate_filter_entities(
                         }
                     }
                 }
+                FilterComponents::InfiniteFaceted(_) => {
+                    let field_type = &f.field_type;
+                    quote! {
+                        /// Get the current value of the #field_ident infinite faceted filter.
+                        pub fn #getter_name(&self, cx: &#App) -> Option<#field_type> {
+                            self.#field_ident.read(cx).value()
+                        }
+                    }
+                }
                 FilterComponents::DateRange(_) => {
                     quote! {
                         /// Get the current value of the #field_ident date range filter.
@@ -286,6 +295,10 @@ pub(super) fn generate_filter_entities(
                     let ty = &f.field_type;
                     quote! { gpui_table::filter::FacetedValue<#ty> }
                 },
+                FilterComponents::InfiniteFaceted(_) => {
+                    let ty = &f.field_type;
+                    quote! { gpui_table::filter::SingleValue<#ty> }
+                },
                 FilterComponents::DateRange(_) => {
                     quote! { gpui_table::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
                 },
@@ -311,6 +324,9 @@ pub(super) fn generate_filter_entities(
                 },
                 FilterComponents::Faceted(_) => quote! {
                     #field_ident: gpui_table::filter::FacetedValue::from(self.#getter_name(cx)),
+                },
+                FilterComponents::InfiniteFaceted(_) => quote! {
+                    #field_ident: gpui_table::filter::SingleValue::from(self.#getter_name(cx)),
                 },
                 FilterComponents::DateRange(_) => quote! {
                     #field_ident: gpui_table::filter::RangeValue::from(self.#getter_name(cx)),
@@ -665,6 +681,10 @@ pub(super) fn generate_matches_filters_method(
                     // FacetedValue<T>::matches takes &T
                     quote! { filters.#field_ident.matches(&self.#field_ident) }
                 }
+                FilterComponents::InfiniteFaceted(_) => {
+                    // SingleValue<T>::matches takes &T
+                    quote! { filters.#field_ident.matches(&self.#field_ident) }
+                }
             }
         })
         .collect();
@@ -672,7 +692,7 @@ pub(super) fn generate_matches_filters_method(
     quote! {
         impl gpui_table::filter::Matchable<#filter_values_name> for #struct_name {
             fn matches_filters(&self, filters: &#filter_values_name) -> bool {
-                #(#match_exprs)&&*
+                #((#match_exprs))&&*
             }
         }
     }
@@ -717,7 +737,7 @@ fn categorize_filters(
         match &f.filter_config {
             FilterComponents::Text(_) => text.push(f),
             FilterComponents::NumberRange(_) => number.push(f),
-            FilterComponents::Faceted(_) => faceted.push(f),
+            FilterComponents::Faceted(_) | FilterComponents::InfiniteFaceted(_) => faceted.push(f),
             FilterComponents::DateRange(_) => date.push(f),
         }
     }

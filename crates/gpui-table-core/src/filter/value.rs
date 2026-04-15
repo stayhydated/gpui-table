@@ -78,12 +78,14 @@ impl Filterable for bool {
     fn options() -> Vec<FacetedFilterOption> {
         vec![
             FacetedFilterOption {
+                group: None,
                 label: BoolFilterOption::True.label(),
                 value: BoolFilterOption::True.value(),
                 count: None,
                 icon: None,
             },
             FacetedFilterOption {
+                group: None,
                 label: BoolFilterOption::False.label(),
                 value: BoolFilterOption::False.value(),
                 count: None,

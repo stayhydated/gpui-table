@@ -64,6 +64,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
         options.push(quote! {
             gpui_table::filter::FacetedFilterOption {
+                group: None,
                 label: #label_expr,
                 value: #value.to_string(),
                 count: None,

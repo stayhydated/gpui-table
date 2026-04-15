@@ -54,6 +54,11 @@ pub struct FacetedFilterOptions {
     pub searchable: bool,
 }
 
+/// Options for infinite faceted filter
+#[derive(Clone, Debug, Default, FromMeta)]
+#[darling(default)]
+pub struct InfiniteFacetedFilterOptions {}
+
 /// Filter component enum parsed from attributes.
 /// Supports syntax like: `filter(text())` or `filter(number_range(min = 0, max = 100))`
 #[derive(Clone, Debug, FromMeta)]
@@ -67,11 +72,17 @@ pub enum FilterComponents {
     DateRange(DateRangeFilterOptions),
     /// Faceted filter with enumerated options
     Faceted(FacetedFilterOptions),
+    /// Hierarchical faceted filter backed by InfiniteSelect
+    #[darling(rename = "infinite_faceted_filter")]
+    InfiniteFaceted(InfiniteFacetedFilterOptions),
 }
 
 impl FilterComponents {
     /// Check if this is a faceted filter
     pub fn is_faceted(&self) -> bool {
-        matches!(self, FilterComponents::Faceted(_))
+        matches!(
+            self,
+            FilterComponents::Faceted(_) | FilterComponents::InfiniteFaceted(_)
+        )
     }
 }

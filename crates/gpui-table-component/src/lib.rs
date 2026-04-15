@@ -1,6 +1,7 @@
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
+pub mod infinite_faceted_filter;
 pub mod number_range_filter;
 pub mod reset_filters;
 #[cfg(feature = "story")]
@@ -11,6 +12,7 @@ pub mod text_filter;
 // Re-export extension traits for convenience
 pub use date_range_filter::DateRangeFilterExt;
 pub use faceted_filter::FacetedFilterExt;
+pub use infinite_faceted_filter::InfiniteFacetedFilter;
 pub use number_range_filter::NumberRangeFilterExt;
 pub use reset_filters::ResetFilters;
 pub use table_status_bar::TableStatusBar;
@@ -115,5 +117,19 @@ impl FilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
             (None, Some(end)) => Some(format!("<={}", end)),
             (Some(start), Some(end)) => Some(format!("{} to {}", start, end)),
         }
+    }
+}
+
+impl<T> FilterValue for Option<T>
+where
+    T: gpui_table_core::filter::FilterValue + Clone + Send + 'static,
+{
+    fn is_empty(&self) -> bool {
+        self.is_none()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        self.as_ref()
+            .map(gpui_table_core::filter::FilterValue::to_filter_string)
     }
 }

@@ -35,6 +35,48 @@ impl<T: FilterValue> FacetedValue<T> {
     }
 }
 
+/// A wrapper around `Option<T>` for exact-match select filter values with helper methods.
+#[derive(Clone, Debug, Default, From, Into, PartialEq)]
+pub struct SingleValue<T: Clone + PartialEq>(pub Option<T>);
+
+impl<T: Clone + PartialEq> SingleValue<T> {
+    /// Create a new empty single-value filter (no restrictions).
+    pub fn new() -> Self {
+        Self(None)
+    }
+
+    /// Check if this filter has an active selection.
+    pub fn is_active(&self) -> bool {
+        self.0.is_some()
+    }
+
+    /// Get the selected value, if any.
+    pub fn value(&self) -> Option<&T> {
+        self.0.as_ref()
+    }
+
+    /// Iterate over the selected value as zero or one items.
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.0.iter()
+    }
+
+    /// Return the number of selected values.
+    pub fn len(&self) -> usize {
+        usize::from(self.0.is_some())
+    }
+
+    /// Return whether no value is selected.
+    pub fn is_empty(&self) -> bool {
+        self.0.is_none()
+    }
+
+    /// Check if the given value matches this filter.
+    /// Returns true if no value is selected or if the value equals the selection.
+    pub fn matches(&self, value: &T) -> bool {
+        self.0.as_ref().is_none_or(|selected| selected == value)
+    }
+}
+
 /// A wrapper around `(Option<T>, Option<T>)` for range filter values with helper methods.
 ///
 /// This type provides convenient methods for checking if a range filter is active

@@ -32,6 +32,13 @@ pub(super) fn get_filter_type_tokens(
                 quote! { gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilter::<String> }
             }
         },
+        FilterComponents::InfiniteFaceted(_) => {
+            if let Some(ty) = field_ty {
+                quote! { gpui_table::__deps::gpui_table_component::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
+            } else {
+                quote! { gpui_table::__deps::gpui_table_component::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
+            }
+        },
     }
 }
 
@@ -51,6 +58,9 @@ pub(super) fn get_registry_filter_type(filter: &FilterComponents) -> proc_macro2
         FilterComponents::Faceted(_) => {
             quote! { gpui_table::registry::RegistryFilterType::Faceted }
         },
+        FilterComponents::InfiniteFaceted(_) => {
+            quote! { gpui_table::registry::RegistryFilterType::InfiniteFaceted }
+        },
     }
 }
 
@@ -65,6 +75,9 @@ pub(super) fn get_filter_type_expr(
         FilterComponents::DateRange(_) => quote! { gpui_table::filter::FilterType::DateRange },
         FilterComponents::Faceted(_) => {
             quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
+        },
+        FilterComponents::InfiniteFaceted(_) => {
+            quote! { gpui_table::filter::FilterType::InfiniteFaceted }
         },
     }
 }
@@ -149,6 +162,9 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
             }
 
             chain
+        },
+        FilterComponents::InfiniteFaceted(_opts) => {
+            quote! {}
         },
     }
 }

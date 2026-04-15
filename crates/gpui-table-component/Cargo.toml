@@ -24,6 +24,7 @@ es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
+gpui-form-component = { workspace = true }
 gpui-storybook = { optional = true, workspace = true }
 gpui-table-core = { features = [ "fluent" ], workspace = true }
 gpui_platform = { optional = true, workspace = true }

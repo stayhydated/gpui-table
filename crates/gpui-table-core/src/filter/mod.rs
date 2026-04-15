@@ -13,4 +13,4 @@ pub use convert::ToDecimal;
 pub use convert::ToNaiveDate;
 pub use traits::{FilterEntitiesExt, FilterValuesExt, Matchable};
 pub use value::{FilterValue, Filterable};
-pub use wrappers::{FacetedValue, RangeValue, TextValue};
+pub use wrappers::{FacetedValue, RangeValue, SingleValue, TextValue};

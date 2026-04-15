@@ -44,6 +44,12 @@ pub struct FacetedFilter<T: FilterValue> {
     _marker: PhantomData<T>,
 }
 
+#[derive(Clone)]
+struct FacetedOptionGroup {
+    title: Option<String>,
+    options: Vec<FacetedFilterOption>,
+}
+
 /// Extension trait for configuring FacetedFilter via method chaining.
 pub trait FacetedFilterExt: Sized {
     /// Enable search functionality for filtering options.
@@ -232,7 +238,7 @@ impl<T: FilterValue> FacetedFilter<T> {
         options
             .iter()
             .filter(|opt| selected_strings.contains(&opt.value))
-            .map(|opt| opt.label.clone())
+            .map(display_option_label)
             .collect()
     }
 
@@ -331,8 +337,11 @@ impl<T: Filterable> FacetedFilter<T> {
 
 impl<T: FilterValue> Render for FacetedFilter<T> {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        // Only create search state if searchable is enabled
-        if self.show_search {
+        let should_show_search =
+            self.show_search || (self.options)().iter().any(|opt| opt.group.is_some());
+
+        // Only create search state if searchable is enabled or grouping benefits from search.
+        if should_show_search {
             self.ensure_search_state(window, cx);
         }
 
@@ -436,103 +445,108 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                     .unwrap_or_default();
 
                 // Filter options based on search query
-                let filtered_options: Vec<_> = options
-                    .iter()
-                    .filter(|opt| {
-                        if search_query.is_empty() {
-                            true
-                        } else {
-                            opt.label.to_lowercase().contains(&search_query)
-                        }
-                    })
-                    .collect();
+                let grouped_options = group_options(&options, &search_query);
 
                 // Build options list with icons - each option is a full-width ghost button
                 let options_view = v_flex()
-                    .gap_1()
-                    .children(filtered_options.iter().map(|opt| {
-                        let is_selected = selected_strings.contains(&opt.value);
-                        let val_str = opt.value.clone();
-                        let view = view.clone();
-                        let label = opt.label.clone();
-                        let count = opt.count;
-                        let icon = opt.icon.clone();
-
-                        div()
-                            .w_full()
-                            .flex()
-                            .items_center()
-                            .justify_between()
-                            .child(
-                                Button::new(format!("opt-btn-{}", val_str))
-                                    .ghost()
-                                    .flex_1()
-                                    .justify_start()
-                                    .refine_style(&option_button_style)
-                                    .child(
-                                        h_flex()
-                                            .w_full()
-                                            .items_center()
-                                            .gap_2()
-                                            .child(
-                                                Checkbox::new(format!("opt-{}", val_str))
-                                                    .checked(is_selected),
-                                            )
-                                            .when_some(icon, |this, icon_name| {
-                                                this.child(
-                                                    Icon::new(icon_name)
-                                                        .xsmall()
-                                                        .text_color(cx.theme().muted_foreground),
-                                                )
-                                            })
-                                            .child(label),
-                                    )
-                                    .on_click({
-                                        let view = view.clone();
-                                        let val_str = val_str.clone();
-                                        move |_, window, cx| {
-                                            view.update(cx, |this, cx| {
-                                                // Toggle: if selected, deselect; if not, select
-                                                let is_currently_selected =
-                                                    this.is_selected(&val_str);
-                                                if is_currently_selected {
-                                                    // Remove: find and remove the matching value
-                                                    this.selected_values.retain(|v| {
-                                                        v.to_filter_string() != val_str
-                                                    });
-                                                    (this.on_change)(
-                                                        this.selected_values.clone(),
-                                                        window,
-                                                        cx,
-                                                    );
-                                                    cx.notify();
-                                                } else {
-                                                    // Add: parse the string back to T
-                                                    if let Some(typed_val) =
-                                                        T::from_filter_string(&val_str)
-                                                    {
-                                                        this.toggle_option(
-                                                            typed_val, true, window, cx,
-                                                        );
-                                                    }
-                                                }
-                                            });
-                                        }
-                                    }),
-                            )
-                            .when(count.is_some(), |d| {
-                                d.child(
+                    .gap_2()
+                    .children(grouped_options.iter().map(|group| {
+                        v_flex()
+                            .gap_1()
+                            .when_some(group.title.clone(), |this, title| {
+                                this.child(
                                     div()
+                                        .px_2()
+                                        .pt_1()
                                         .text_xs()
-                                        .font_family("monospace")
+                                        .font_semibold()
                                         .text_color(cx.theme().muted_foreground)
-                                        .child(count.unwrap().to_string()),
+                                        .child(title),
                                 )
                             })
+                            .children(group.options.iter().map(|opt| {
+                                let is_selected = selected_strings.contains(&opt.value);
+                                let val_str = opt.value.clone();
+                                let view = view.clone();
+                                let label = opt.label.clone();
+                                let count = opt.count;
+                                let icon = opt.icon.clone();
+
+                                div()
+                                    .w_full()
+                                    .flex()
+                                    .items_center()
+                                    .justify_between()
+                                    .child(
+                                        Button::new(format!("opt-btn-{}", val_str))
+                                            .ghost()
+                                            .flex_1()
+                                            .justify_start()
+                                            .refine_style(&option_button_style)
+                                            .child(
+                                                h_flex()
+                                                    .w_full()
+                                                    .items_center()
+                                                    .gap_2()
+                                                    .child(
+                                                        Checkbox::new(format!("opt-{}", val_str))
+                                                            .checked(is_selected),
+                                                    )
+                                                    .when_some(icon, |this, icon_name| {
+                                                        this.child(
+                                                            Icon::new(icon_name)
+                                                                .xsmall()
+                                                                .text_color(
+                                                                    cx.theme().muted_foreground,
+                                                                ),
+                                                        )
+                                                    })
+                                                    .child(label),
+                                            )
+                                            .on_click({
+                                                let view = view.clone();
+                                                let val_str = val_str.clone();
+                                                move |_, window, cx| {
+                                                    view.update(cx, |this, cx| {
+                                                        let is_currently_selected =
+                                                            this.is_selected(&val_str);
+                                                        if is_currently_selected {
+                                                            this.selected_values.retain(|v| {
+                                                                v.to_filter_string() != val_str
+                                                            });
+                                                            (this.on_change)(
+                                                                this.selected_values.clone(),
+                                                                window,
+                                                                cx,
+                                                            );
+                                                            cx.notify();
+                                                        } else if let Some(typed_val) =
+                                                            T::from_filter_string(&val_str)
+                                                        {
+                                                            this.toggle_option(
+                                                                typed_val, true, window, cx,
+                                                            );
+                                                        }
+                                                    });
+                                                }
+                                            }),
+                                    )
+                                    .when(count.is_some(), |d| {
+                                        d.child(
+                                            div()
+                                                .text_xs()
+                                                .font_family("monospace")
+                                                .text_color(cx.theme().muted_foreground)
+                                                .child(count.unwrap().to_string()),
+                                        )
+                                    })
+                            }))
                     }));
 
                 // Show "No results" message if search yields nothing
-                let has_results = !filtered_options.is_empty();
+                let has_results = grouped_options
+                    .iter()
+                    .any(|group| !group.options.is_empty());
 
                 v_flex()
                     .w_56()
@@ -588,4 +602,40 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                     })
             })
     }
+}
+
+fn display_option_label(option: &FacetedFilterOption) -> String {
+    option
+        .group
+        .as_ref()
+        .map(|group| format!("{group}: {}", option.label))
+        .unwrap_or_else(|| option.label.clone())
+}
+
+fn group_options(options: &[FacetedFilterOption], search_query: &str) -> Vec<FacetedOptionGroup> {
+    let mut groups: Vec<FacetedOptionGroup> = Vec::new();
+    let normalized_query = search_query.trim().to_lowercase();
+
+    for option in options.iter().filter(|option| {
+        normalized_query.is_empty()
+            || option.label.to_lowercase().contains(&normalized_query)
+            || option
+                .group
+                .as_ref()
+                .is_some_and(|group| group.to_lowercase().contains(&normalized_query))
+    }) {
+        if let Some(group) = groups
+            .iter_mut()
+            .find(|group| group.title.as_ref() == option.group.as_ref())
+        {
+            group.options.push(option.clone());
+        } else {
+            groups.push(FacetedOptionGroup {
+                title: option.group.clone(),
+                options: vec![option.clone()],
+            });
+        }
+    }
+
+    groups
 }

@@ -59,6 +59,7 @@ impl FilterVariant {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum RegistryFilterType {
     Faceted,
+    InfiniteFaceted,
     DateRange,
     NumberRange,
     Text,
