@@ -4,7 +4,22 @@
 [![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
-A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpui-component) tables. It autogenerates column definitions, renderers, and delegate glue (i18n, sorting, load-more, ...).
+`gpui-table` is a Rust workspace for building strongly typed
+[gpui-component](https://crates.io/crates/gpui-component) tables. It combines
+derive macros, pure filter semantics, a GPUI runtime layer, UI-neutral schema
+metadata, and prototyping utilities for code generation.
+
+## Workspace layout
+
+| Crate | Purpose |
+| :---- | :------ |
+| `gpui-table` | Facade crate that re-exports the core/runtime/schema layers and, with `derive`, the proc macros. |
+| `gpui-table-core` | Pure filter semantics, typed filter values, and range conversion traits. |
+| `gpui-table-runtime` | GPUI-facing table traits, default cell rendering, load-more wiring, and the generated-filter runtime facade. |
+| `gpui-table-schema` | Static filter metadata and inventory-backed `GpuiTableShape` registry types. |
+| `gpui-table-derive` | `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl` proc macros. |
+| `gpui-table-component` | Built-in filter components and `TableStatusBar`. |
+| `gpui-table-prototyping-core` | Code generation helpers that consume `GpuiTableShape` metadata. |
 
 ## Compatibility
 
@@ -19,7 +34,13 @@ A struct derive macro for deriving [gpui-component](https://crates.io/crates/gpu
 cargo run
 ```
 
+From the workspace root, this launches the `examples/some-lib-tables` app,
+which is the default workspace member.
+
 ## Quick Example
+
+This example uses `filter(number_range(...))`, so consumers need the
+`gpui-table/rust_decimal` feature enabled.
 
 ```rs
 use gpui::{Context, Window};
@@ -52,13 +73,13 @@ impl TableLoader for UserTableDelegate {
 ## Prototyping
 
 Enable the `inventory` feature on `gpui-table` and use `gpui-table-prototyping-core`
-to generate gpui form scaffolding from `gpui_table::schema::registry::GpuiTableShape`
-registrations.
+to generate GPUI table scaffolding from
+`gpui_table::schema::registry::GpuiTableShape` registrations.
 See `examples/prototyping` for a working generator.
 
 ## Examples
 
-- `examples/i18n`: i18n resources
-- `examples/some-lib`: crate types shared by examples
-- `examples/some-lib-tables`: storybook-like GPUI app showcasing tables
-- `examples/prototyping`: generator for table stories and scaffolding
+- `examples/i18n`: shared i18n resources used by the example crates
+- `examples/some-lib`: shared domain types, row structs, and derived filterable enums
+- `examples/some-lib-tables`: storybook-style GPUI app showcasing the generated tables
+- `examples/prototyping`: generator that writes table stories into `examples/prototyping/output`

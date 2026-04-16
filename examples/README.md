@@ -1,22 +1,26 @@
-tldr
+# Examples
 
 ```sh
 cargo run
 ```
 
-## i18n
+From the workspace root, `cargo run` launches `examples/some-lib-tables`,
+which is configured as the default workspace member.
 
-i18n resources
+## Layout
 
-## some-lib
+- `examples/i18n`: shared Fluent resources used by the example crates
+- `examples/some-lib`: shared domain types, derived tables, and filterable enums
+- `examples/some-lib-tables`: storybook-style GPUI app that renders the example tables
+- `examples/prototyping`: generator that iterates `GpuiTableShape` inventory
+  entries and writes stories to `examples/prototyping/output`
 
-our crate types
+## Useful commands
 
-## some-lib-tables
+```sh
+cargo run
+cargo run -p prototyping
+```
 
-crate to hold the gpui tables, also has a main.rs defining a storybook-like gpui app, showcasing the tables
-
-## prototyping
-
-our own prototyping tool for generating the tables, defining items that we would otherwise have to write ourselves.
-Then styling's pretty much what's left to do.
+Use the second command after changing inventory-registered table shapes or the
+prototyping layout.

@@ -16,13 +16,16 @@ it alone and get:
   - Re-exports the core crate as `gpui_table::core`
   - Re-exports the runtime crate as `gpui_table::runtime`
   - Re-exports the schema crate as `gpui_table::schema`
-  - Re-exports derive macros when the `derive` feature is enabled
+  - Re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
+    when the `derive` feature is enabled
   - Exposes hidden `__deps` for feature-gated external types (`chrono`, `rust_decimal`)
   - Exposes hidden `__private` load-more bridge for macro-generated code
 
 ## How it fits
 
 1. You derive `GpuiTable` on a row type.
+1. You can derive `Filterable` on faceted-filter enums and `TableCell` on
+   supporting cell types through the same facade.
 1. The derive macro generates row/delegate/filter code against traits exported by
    the facade's explicit `core` / `runtime` / `schema` namespaces.
 1. Generated filter code targets `gpui_table::runtime::generated_filters`
@@ -32,7 +35,8 @@ it alone and get:
 
 ## Feature flags
 
-- `derive` (default): enables `GpuiTable` and `TableCell` derives.
+- `derive` (default): enables `GpuiTable`, `Filterable`, and `TableCell`
+  derives plus the `gpui_table_impl` attribute macro.
 - `chrono` (default): forwards chrono/date support into `core`, `runtime`, and `derive`.
 - `inventory`: enables registry metadata for prototyping/codegen.
 - `fluent`: integrates with `es-fluent` for localized titles/labels.

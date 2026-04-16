@@ -3,7 +3,7 @@
 ## Purpose
 
 `gpui-table-derive` contains the proc-macros that generate table delegates,
-columns, filters, and optional registry metadata.
+columns, faceted-filter enums, filters, and optional registry metadata.
 
 ## Entry points
 
@@ -27,8 +27,19 @@ columns, filters, and optional registry metadata.
   - Convenience derive for newtypes/enums that delegate to an inner `TableCell`.
   - Unit enums render via `EsFluent*` when derived, then `Display`, then the
     variant name as a fallback.
+- `#[proc_macro_derive(Filterable)]`
+  - Derives `gpui_table::core::filter::FilterValue` and
+    `gpui_table::core::filter::Filterable` for enums used by
+    `filter(faceted(...))`.
+  - Supports enum-level `#[filter(fluent)]` and variant-level
+    `#[filter(label = "...", icon = path::to::Icon)]` metadata.
+  - `#[filter(fluent)]` expects the enum to also derive a compatible
+    `EsFluent*` helper so generated labels can call `to_fluent_string()`.
+  - Generates a `variant_name(&self) -> &'static str` helper for matching and tooling.
 - `#[gpui_table_impl]`
   - Attribute macro that wires load-more behavior into a generated delegate.
+  - Supports both `impl TableLoader for XxxTableDelegate` and freestanding impl
+    blocks with `#[load_more]` / `#[threshold]` items.
 
 ## Module map
 
@@ -42,6 +53,9 @@ columns, filters, and optional registry metadata.
   - Parses filter configuration attributes (text/number/date/faceted)
   - `number_range(...)` decimal options preserve source spans, accept numeric
     literals or quoted decimal strings, and feed compile-time validation/codegen
+- `filterable.rs`
+  - Expands `#[derive(Filterable)]` for enums into
+    `FilterValue` / `Filterable` impls plus `variant_name()`
 - `gpui_table/filter_codegen/`
   - Shared filter type-token generation, option-chain generation, and
     field/type validation helpers used during `GpuiTable` expansion
@@ -57,6 +71,9 @@ columns, filters, and optional registry metadata.
 ## Data flow
 
 1. Attributes on the row struct and its fields are parsed via `darling`.
+1. `#[derive(Filterable)]` parses enum-level and variant-level `#[filter(...)]`
+   metadata, then emits `FilterValue` / `Filterable` impls and faceted option
+   metadata.
 1. The macro expands into column enums, `TableRowMeta`/`TableRowStyle`, and
    `TableDelegate` implementations.
 1. Generated delegates route `TableDelegate::context_menu(...)` through the
@@ -104,7 +121,8 @@ columns, filters, and optional registry metadata.
 
 - `chrono`: forwarded from `gpui-table` so `date_range` support can be
   validated during macro expansion.
-- `fluent`: generates localized titles via `es-fluent` helpers.
+- `fluent`: generates localized titles and `Filterable` labels via
+  `es-fluent` helpers.
 - `inventory`: registers table shapes for prototyping/codegen.
 - `rust_decimal`: forwarded from `gpui-table` so `number_range` support can be
   validated during macro expansion.

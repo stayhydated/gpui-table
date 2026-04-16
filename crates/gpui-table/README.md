@@ -12,7 +12,7 @@ gpui-table = { version = "0.5", features = ["inventory", "fluent", "rust_decimal
 
 ## Features
 
-- `derive` (default): `#[derive(GpuiTable)]` and `#[derive(TableCell)]`
+- `derive` (default): `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, `#[derive(TableCell)]`, and `#[gpui_table_impl]`
 - `chrono` (default): date `TableCell` support + date-range filter helpers
 - `inventory`: registers table metadata for tooling
 - `fluent`: localized titles/labels via `es-fluent`
@@ -53,7 +53,7 @@ impl TableLoader for UserTableDelegate {
 - `gpui_table::core` for filter semantics (`Matchable`, typed filter values, conversions)
 - `gpui_table::runtime` for row traits, loaders, default rendering, and the generated-filter runtime facade
 - `gpui_table::schema` for registry and filter metadata
-- `gpui-table-derive` macros
+- derive macros re-exported from `gpui-table-derive` (`GpuiTable`, `Filterable`, `TableCell`, `gpui_table_impl`)
 
 Generated filter code now targets `gpui_table::runtime::generated_filters`.
 The hidden `__deps` module remains only for feature-gated third-party types

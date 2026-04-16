@@ -1,13 +1,44 @@
 # gpui-table-derive
 
-Proc-macros for generating table columns, delegates, filters, and optional
-registry metadata.
+Proc-macros for generating table columns, delegates, faceted-filter enums,
+filters, and optional registry metadata.
 
 ## Macros
 
 - `#[derive(GpuiTable)]`: derive table metadata + delegate
+- `#[derive(Filterable)]`: derive `FilterValue` + `Filterable` for faceted-filter enums
 - `#[derive(TableCell)]`: derive `TableCell` for newtypes and enums
-- `#[gpui_table_impl]`: wire load-more behavior into a generated delegate
+- `#[gpui_table_impl]`: wire load-more behavior into a generated delegate from
+  a `TableLoader` impl or freestanding `#[load_more]` / `#[threshold]` items
+
+## Filterable derive
+
+```rs
+use gpui_component::IconName;
+use gpui_table::Filterable;
+
+#[derive(Clone, Eq, Hash, PartialEq, Filterable)]
+pub enum Status {
+    #[filter(icon = IconName::Check)]
+    Active,
+    #[filter(label = "Needs Review")]
+    Pending,
+}
+```
+
+This derive generates:
+
+- `gpui_table::core::filter::FilterValue`
+- `gpui_table::core::filter::Filterable`
+- `variant_name(&self) -> &'static str`
+
+Enum-level `#[filter(fluent)]` switches labels to `es-fluent`. Variant-level
+`#[filter(label = "...")]` and `#[filter(icon = path::to::Icon)]` customize the
+faceted option metadata used by generated filters.
+
+When using `#[filter(fluent)]`, the enum must also derive a compatible
+`EsFluent*` helper so the generated code can call `to_fluent_string()` for each
+variant.
 
 For `#[derive(TableCell)]` on unit enums, the generated renderer now uses:
 
