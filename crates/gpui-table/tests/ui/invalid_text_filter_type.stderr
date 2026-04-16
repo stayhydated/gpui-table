@@ -1,0 +1,5 @@
+error: `filter(text())` on `bool` expects `String`, `&str`, or an `Option<...>` / local type that implements `AsRef<str>`
+ --> tests/ui/invalid_text_filter_type.rs:7:13
+  |
+7 |     active: bool,
+  |             ^^^^

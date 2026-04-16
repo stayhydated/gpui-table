@@ -1,13 +1,13 @@
 use crate::__crate_paths::gpui::{App, Context, Entity, Window};
 use crate::__crate_paths::gpui_component::table::TableState;
-use crate::components::FilterComponents;
+use crate::components::{FilterComponents, FilterRenderGroup};
 use crate::gpui_table::filter_codegen::{generate_filter_chain_methods, get_filter_type_tokens};
 use crate::gpui_table::meta::FilterFieldMeta;
 
 use darling::util::Override;
 use heck::{ToPascalCase as _, ToTitleCase as _};
-use quote::quote;
-use syn::{GenericArgument, Ident, PathArguments, Type};
+use quote::{ToTokens, quote};
+use syn::Ident;
 
 /// Generate the FilterEntities struct that holds all filter Entity<T> fields
 /// and provides builder methods for creating them.
@@ -32,7 +32,13 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
+            let field_doc = format!(
+                "Entity handle for the `{}` {} filter component.",
+                field_ident,
+                f.filter_config.kind_label()
+            );
             quote! {
+                #[doc = #field_doc]
                 pub #field_ident: #Entity<#filter_type_tokens>,
             }
         })
@@ -41,69 +47,7 @@ pub(super) fn generate_filter_entities(
     // Generate the build method that creates all filter entities
     let filter_builders: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
-
-            // Determine the title expression based on fluent config
-            let title_expr =
-                determine_filter_title_expr(&f.field_ident, fluent_config, struct_name);
-
-            // Check if this is a FacetedFilter using the enum method
-            if f.filter_config.is_faceted() {
-                // Generate chain methods for options
-                let chain_methods = generate_filter_chain_methods(&f.filter_config);
-
-                // For FacetedFilter<T>, use new_for (type is already in the generic parameter)
-                quote! {
-                    let #field_ident = {
-                        let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new_for(
-                            || #title_expr,
-                            Default::default(),
-                            move |_value, window, cx| {
-                                // Notify callback for server-side filtering
-                                if let Some(ref on_change) = on_filter_change {
-                                    let on_change = on_change.clone();
-                                    window.defer(cx, move |window, cx| {
-                                        on_change(window, cx);
-                                    });
-                                }
-                            },
-                            cx,
-                        );
-                        #chain_methods
-                        filter
-                    };
-                }
-            } else {
-                // Generate chain methods for options
-                let chain_methods = generate_filter_chain_methods(&f.filter_config);
-
-                // For other filters, use the reactive constructor for i18n updates.
-                quote! {
-                    let #field_ident = {
-                        let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new_for(
-                            || #title_expr,
-                            Default::default(),
-                            move |_value, window, cx| {
-                                // Notify callback for server-side filtering
-                                if let Some(ref on_change) = on_filter_change {
-                                    let on_change = on_change.clone();
-                                    window.defer(cx, move |window, cx| {
-                                        on_change(window, cx);
-                                    });
-                                }
-                            },
-                            cx,
-                        );
-                        #chain_methods
-                        filter
-                    };
-                }
-            }
-        })
+        .map(|f| generate_filter_builder_tokens(f, fluent_config, struct_name))
         .collect();
 
     // Field names for struct construction
@@ -137,137 +81,42 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
-
-            match &f.filter_config {
-                FilterComponents::Text(_) => {
-                    quote! {
-                        /// Get the current value of the #field_ident text filter.
-                        pub fn #getter_name(&self, cx: &#App) -> String {
-                            self.#field_ident.read(cx).value().to_string()
-                        }
-                    }
-                }
-                FilterComponents::NumberRange(_) => {
-                    quote! {
-                        /// Get the current value of the #field_ident number range filter.
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
-                }
+            let getter_doc = format!(
+                "Get the current raw value of the `{}` {} filter. Use `read_values()` when you need the generated wrapper type for matching or query serialization.",
+                field_ident,
+                f.filter_config.kind_label()
+            );
+            let raw_value_type = f.filter_config.raw_value_type_tokens(&f.field_type);
+            let raw_value_expr = match &f.filter_config {
+                FilterComponents::Text(_) => quote! { self.#field_ident.read(cx).value().to_string() },
+                FilterComponents::NumberRange(_) | FilterComponents::DateRange(_) => {
+                    quote! { self.#field_ident.read(cx).value() }
+                },
                 FilterComponents::Faceted(_) => {
-                    let field_type = &f.field_type;
-                    quote! {
-                        /// Get the current value of the #field_ident faceted filter.
-                        pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<#field_type> {
-                            self.#field_ident.read(cx).value().clone()
-                        }
-                    }
-                }
-                FilterComponents::InfiniteFaceted(_) => {
-                    let field_type = &f.field_type;
-                    quote! {
-                        /// Get the current value of the #field_ident infinite faceted filter.
-                        pub fn #getter_name(&self, cx: &#App) -> Option<#field_type> {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
-                }
-                FilterComponents::DateRange(_) => {
-                    quote! {
-                        /// Get the current value of the #field_ident date range filter.
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
+                    quote! { self.#field_ident.read(cx).value().clone() }
+                },
+            };
+
+            quote! {
+                #[doc = #getter_doc]
+                pub fn #getter_name(&self, cx: &#App) -> #raw_value_type {
+                    #raw_value_expr
                 }
             }
         })
         .collect();
 
-    // Generate render helpers that group filters by type
-    let (text_filters, number_filters, faceted_filters, date_filters) =
-        categorize_filters(filter_fields);
-
-    let text_filter_render = if !text_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = text_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all text filters as children (returns impl IntoElement).
-            pub fn text_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let number_filter_render = if !number_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = number_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all number range filters as children (returns impl IntoElement).
-            pub fn number_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let faceted_filter_render = if !faceted_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = faceted_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all faceted filters as children (returns impl IntoElement).
-            pub fn faceted_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let date_filter_render = if !date_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = date_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all date range filters as children (returns impl IntoElement).
-            pub fn date_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
+    // Generate render helpers that group filters by type.
+    let group_renders: Vec<proc_macro2::TokenStream> = FilterRenderGroup::ALL
+        .into_iter()
+        .map(|group| {
+            let fields: Vec<&FilterFieldMeta> = filter_fields
+                .iter()
+                .filter(|field| field.filter_config.render_group() == group)
+                .collect();
+            generate_group_render_method(group.method_name(), group.doc_label(), &fields)
+        })
+        .collect();
 
     // Generate all_filters render method
     let all_filter_fields: Vec<proc_macro2::TokenStream> = filter_fields
@@ -286,24 +135,12 @@ pub(super) fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let value_type = match &f.filter_config {
-                FilterComponents::Text(_) => quote! { gpui_table::filter::TextValue },
-                FilterComponents::NumberRange(_) => {
-                    quote! { gpui_table::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
-                },
-                FilterComponents::Faceted(_) => {
-                    let ty = &f.field_type;
-                    quote! { gpui_table::filter::FacetedValue<#ty> }
-                },
-                FilterComponents::InfiniteFaceted(_) => {
-                    let ty = &f.field_type;
-                    quote! { gpui_table::filter::SingleValue<#ty> }
-                },
-                FilterComponents::DateRange(_) => {
-                    quote! { gpui_table::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
-                },
-            };
+            let value_type = f.filter_config.generated_value_type_tokens(&f.field_type);
+            let field_doc = filter_value_field_doc(f);
+            let query_doc = filter_value_query_doc(f);
             quote! {
+                #[doc = #field_doc]
+                #[doc = #query_doc]
                 pub #field_ident: #value_type,
             }
         })
@@ -315,22 +152,10 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
-            match &f.filter_config {
-                FilterComponents::Text(_) => quote! {
-                    #field_ident: gpui_table::filter::TextValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::NumberRange(_) => quote! {
-                    #field_ident: gpui_table::filter::RangeValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::Faceted(_) => quote! {
-                    #field_ident: gpui_table::filter::FacetedValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::InfiniteFaceted(_) => quote! {
-                    #field_ident: gpui_table::filter::SingleValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::DateRange(_) => quote! {
-                    #field_ident: gpui_table::filter::RangeValue::from(self.#getter_name(cx)),
-                },
+            let raw_value_expr = quote! { self.#getter_name(cx) };
+            let wrapped_value_expr = f.filter_config.wrap_raw_value_expr(raw_value_expr);
+            quote! {
+                #field_ident: #wrapped_value_expr,
             }
         })
         .collect();
@@ -343,6 +168,28 @@ pub(super) fn generate_filter_entities(
             quote! { self.#field_ident.is_active() }
         })
         .collect();
+
+    let build_doc = format!(
+        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` can be used to snapshot the current state into `{filter_values_name}`."
+    );
+    let build_for_table_doc = format!(
+        "Build filters and wire them directly into a generated table delegate for client-side filtering.\n\nOn each filter change this reads `{filter_values_name}`, calls `table.delegate_mut().set_filter_values(...)`, and notifies the table so generated `Matchable` logic re-runs against the in-memory rows."
+    );
+    let build_for_table_loader_doc = format!(
+        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports it."
+    );
+    let build_for_table_loader_with_doc = format!(
+        "Same as `build_for_table_loader(...)`, but lets callers customize delegate state just before each `load_data(...)` call.\n\nThe optional `before_reload` hook runs before every reload, including the initial one. This is useful when `{filter_values_name}` changes should also clear cached rows, paging cursors, or other delegate-owned request state."
+    );
+    let read_values_doc = format!(
+        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
+    );
+    let filter_values_doc = format!(
+        "Typed filter state produced by `{filter_entities_name}`.\n\nEach field uses a wrapper from `gpui_table::core::filter` (`TextValue`, `RangeValue<_>`, `FacetedValue<_>`, or `SingleValue<_>`), which is the shape consumed by generated client-side matching and stored on generated delegates for loader-based tables."
+    );
+    let has_active_doc = format!(
+        "Returns `true` when any field in `{filter_values_name}` currently has an active filter value."
+    );
 
     quote! {
         /// Entity handles for all filter UI components.
@@ -362,17 +209,12 @@ pub(super) fn generate_filter_entities(
         }
 
         impl #filter_entities_name {
-            /// Build all filter entities for server-side filtering.
-            ///
-            /// # Arguments
-            /// * `on_filter_change` - Optional callback invoked after any filter changes.
-            ///   Use this for triggering data reload with new filter parameters.
-            /// * `cx` - The application context
+            #[doc = #build_doc]
             pub fn build(
                 on_filter_change: Option<std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
             ) -> Self {
-                use gpui_table::__deps::gpui_table_component::TableFilterComponent as _;
+                use gpui_table::runtime::generated_filters::TableFilterComponent as _;
 
                 #(#filter_builders)*
 
@@ -382,10 +224,7 @@ pub(super) fn generate_filter_entities(
                 }
             }
 
-            /// Build filters and wire them directly into a generated table delegate.
-            ///
-            /// On each filter change this updates `table.delegate_mut().set_filter_values(...)`
-            /// and triggers a table refresh for client-side filtering.
+            #[doc = #build_for_table_doc]
             pub fn build_for_table(
                 table: #Entity<#TableState<#delegate_name>>,
                 cx: &mut #App,
@@ -399,9 +238,7 @@ pub(super) fn generate_filter_entities(
                     std::rc::Rc::new(move |_window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
-                            filters.as_ref().map(|filters| {
-                                gpui_table::filter::FilterEntitiesExt::read_values(filters, cx)
-                            })
+                            filters.as_ref().map(|filters| filters.read_values(cx))
                         };
 
                         if let Some(values) = next_values {
@@ -415,8 +252,7 @@ pub(super) fn generate_filter_entities(
                 let filters = Self::build(Some(on_filter_change), cx);
                 *filters_slot.borrow_mut() = Some(filters.clone());
 
-                let initial_values =
-                    gpui_table::filter::FilterEntitiesExt::read_values(&filters, cx);
+                let initial_values = filters.read_values(cx);
                 table.update(cx, |table, cx| {
                     table.delegate_mut().set_filter_values(initial_values);
                     cx.notify();
@@ -425,16 +261,7 @@ pub(super) fn generate_filter_entities(
                 filters
             }
 
-            /// Build filters and wire them into a generated table delegate that uses
-            /// `TableDataLoader` for server-side loading.
-            ///
-            /// On each filter change this method:
-            /// 1. reads current filter values,
-            /// 2. updates `table.delegate_mut().set_filter_values(...)`,
-            /// 3. resets paging state (`rows.clear(); eof = false;`),
-            /// 4. calls `table.delegate_mut().load_data(...)`.
-            ///
-            /// The same sequence is also run once during initialization.
+            #[doc = #build_for_table_loader_doc]
             pub fn build_for_table_loader(
                 table: #Entity<#TableState<#delegate_name>>,
                 window: &mut #Window,
@@ -454,11 +281,7 @@ pub(super) fn generate_filter_entities(
                 Self::build_for_table_loader_with(table, Some(before_reload), window, cx)
             }
 
-            /// Same as `build_for_table_loader(...)` but allows customizing pre-reload
-            /// delegate state handling.
-            ///
-            /// The optional `before_reload` hook runs before every `load_data(...)` call,
-            /// including the initial load.
+            #[doc = #build_for_table_loader_with_doc]
             pub fn build_for_table_loader_with(
                 table: #Entity<#TableState<#delegate_name>>,
                 before_reload: Option<std::rc::Rc<
@@ -481,9 +304,7 @@ pub(super) fn generate_filter_entities(
                     std::rc::Rc::new(move |window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
-                            filters.as_ref().map(|filters| {
-                                gpui_table::filter::FilterEntitiesExt::read_values(filters, cx)
-                            })
+                            filters.as_ref().map(|filters| filters.read_values(cx))
                         };
 
                         if let Some(values) = next_values {
@@ -495,7 +316,7 @@ pub(super) fn generate_filter_entities(
                                     before_reload(delegate, window, cx);
                                 }
 
-                                use gpui_table::TableDataLoader as _;
+                                use gpui_table::runtime::TableDataLoader as _;
                                 delegate.load_data(window, cx);
                                 cx.notify();
                             });
@@ -505,8 +326,7 @@ pub(super) fn generate_filter_entities(
                 let filters = Self::build(Some(on_filter_change), cx);
                 *filters_slot.borrow_mut() = Some(filters.clone());
 
-                let initial_values =
-                    gpui_table::filter::FilterEntitiesExt::read_values(&filters, cx);
+                let initial_values = filters.read_values(cx);
                 table.update(cx, |table, cx| {
                     let delegate = table.delegate_mut();
                     delegate.set_filter_values(initial_values);
@@ -515,7 +335,7 @@ pub(super) fn generate_filter_entities(
                         before_reload(delegate, window, cx);
                     }
 
-                    use gpui_table::TableDataLoader as _;
+                    use gpui_table::runtime::TableDataLoader as _;
                     delegate.load_data(window, cx);
                     cx.notify();
                 });
@@ -536,9 +356,9 @@ pub(super) fn generate_filter_entities(
             }
 
             /// Build a localized reset button bound to these filter entities.
-            pub fn reset_button(&self) -> gpui_table::__deps::gpui_table_component::reset_filters::ResetFilters {
+            pub fn reset_button(&self) -> gpui_table::runtime::generated_filters::reset_filters::ResetFilters {
                 let filters = self.clone();
-                gpui_table::__deps::gpui_table_component::reset_filters::ResetFilters::new(move |window, cx| {
+                gpui_table::runtime::generated_filters::reset_filters::ResetFilters::new(move |window, cx| {
                     filters.reset_filters(window, cx);
                 })
                 .button_id(format!("{}-reset-filters", stringify!(#struct_name)))
@@ -552,39 +372,46 @@ pub(super) fn generate_filter_entities(
                     .child(self.reset_button())
             }
 
-            #text_filter_render
-            #number_filter_render
-            #faceted_filter_render
-            #date_filter_render
+            #(#group_renders)*
 
             // Value getters for server-side filtering
             #(#value_getters)*
-        }
 
-        impl gpui_table::filter::FilterEntitiesExt for #filter_entities_name {
-            type Values = #filter_values_name;
-
-            fn read_values(&self, cx: &#App) -> Self::Values {
+            #[doc = #read_values_doc]
+            pub fn read_values(&self, cx: &#App) -> #filter_values_name {
                 #filter_values_name {
                     #(#read_values_fields)*
                 }
             }
 
-            fn all_filters(&self) -> impl gpui::IntoElement {
+            /// Render all filters in a single row.
+            pub fn all_filters(&self) -> impl gpui::IntoElement {
                 use gpui::{ParentElement as _, Styled as _};
                 gpui::div().flex().flex_wrap().items_center().gap_2()
                     #(#all_filter_fields)*
             }
         }
 
-        /// Plain data struct holding all filter values.
-        /// Generated by the `#[derive(GpuiTable)]` macro for client-side filtering.
+        impl gpui_table::FilterEntitiesExt for #filter_entities_name {
+            type Values = #filter_values_name;
+
+            fn read_values(&self, cx: &#App) -> Self::Values {
+                <#filter_entities_name>::read_values(self, cx)
+            }
+
+            fn all_filters(&self) -> impl gpui::IntoElement {
+                <#filter_entities_name>::all_filters(self)
+            }
+        }
+
+        #[doc = #filter_values_doc]
         #[derive(Clone, Debug, Default)]
         pub struct #filter_values_name {
             #(#filter_values_fields)*
         }
 
-        impl gpui_table::filter::FilterValuesExt for #filter_values_name {
+        impl gpui_table::core::filter::FilterValuesExt for #filter_values_name {
+            #[doc = #has_active_doc]
             fn has_active_filters(&self) -> bool {
                 #(#has_active_checks)||*
             }
@@ -593,156 +420,106 @@ pub(super) fn generate_filter_entities(
     }
 }
 
-/// Generate the matches_filters() method on the struct.
-/// This method checks if all filter values match the struct's fields.
-pub(super) fn generate_matches_filters_method(
+fn generate_filter_builder_tokens(
+    field: &FilterFieldMeta,
+    fluent_config: &Option<Override<String>>,
     struct_name: &Ident,
-    filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
-    if filter_fields.is_empty() {
+    let field_ident = &field.field_ident;
+    let filter_type_tokens = get_filter_type_tokens(&field.filter_config, Some(&field.field_type));
+    let title_expr = determine_filter_title_expr(field_ident, fluent_config, struct_name);
+    let chain_methods = generate_filter_chain_methods(&field.filter_config);
+
+    quote! {
+        let #field_ident = {
+            let on_filter_change = on_filter_change.clone();
+            let filter = #filter_type_tokens::new_for(
+                || #title_expr,
+                Default::default(),
+                move |_value, window, cx| {
+                    if let Some(ref on_change) = on_filter_change {
+                        let on_change = on_change.clone();
+                        window.defer(cx, move |window, cx| {
+                            on_change(window, cx);
+                        });
+                    }
+                },
+                cx,
+            );
+            #chain_methods
+            filter
+        };
+    }
+}
+
+fn generate_group_render_method(
+    method_name: &str,
+    doc_label: &str,
+    fields: &[&FilterFieldMeta],
+) -> proc_macro2::TokenStream {
+    if fields.is_empty() {
         return quote! {};
     }
 
-    let filter_values_name =
-        Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
-
-    // Generate match expressions for each filter field
-    let match_exprs: Vec<proc_macro2::TokenStream> = filter_fields
+    let method_ident = Ident::new(method_name, proc_macro2::Span::call_site());
+    let children: Vec<proc_macro2::TokenStream> = fields
         .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            let is_option = option_inner_type(&f.field_type).is_some();
-
-            match &f.filter_config {
-                FilterComponents::Text(_) => {
-                    if is_option {
-                        // TextValue::matches takes &str; for Option<String>, None only matches when inactive.
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_deref()
-                                    .is_some_and(|value| filters.#field_ident.matches(value))
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        // TextValue::matches takes &str
-                        quote! { filters.#field_ident.matches(&self.#field_ident) }
-                    }
-                }
-                FilterComponents::NumberRange(_) => {
-                    if is_option {
-                        // For Option<T>, None only matches when range filter is inactive.
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .map(|value| {
-                                        filters.#field_ident.matches(
-                                            &gpui_table::filter::ToDecimal::to_decimal(value),
-                                        )
-                                    })
-                                    .unwrap_or(false)
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        // RangeValue<Decimal>::matches takes &Decimal
-                        // Convert numeric types to Decimal
-                        quote! { filters.#field_ident.matches(&gpui_table::filter::ToDecimal::to_decimal(&self.#field_ident)) }
-                    }
-                }
-                FilterComponents::DateRange(_) => {
-                    if is_option {
-                        // For Option<T>, None only matches when date range filter is inactive.
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .map(|value| {
-                                        filters.#field_ident.matches(
-                                            &gpui_table::filter::ToNaiveDate::to_naive_date(value),
-                                        )
-                                    })
-                                    .unwrap_or(false)
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        // RangeValue<NaiveDate>::matches takes &NaiveDate
-                        // Convert DateTime to NaiveDate if needed
-                        quote! { filters.#field_ident.matches(&gpui_table::filter::ToNaiveDate::to_naive_date(&self.#field_ident)) }
-                    }
-                }
-                FilterComponents::Faceted(_) => {
-                    // FacetedValue<T>::matches takes &T
-                    quote! { filters.#field_ident.matches(&self.#field_ident) }
-                }
-                FilterComponents::InfiniteFaceted(_) => {
-                    // SingleValue<T>::matches takes &T
-                    quote! { filters.#field_ident.matches(&self.#field_ident) }
-                }
-            }
+        .map(|field| {
+            let ident = &field.field_ident;
+            quote! { .child(self.#ident.clone()) }
         })
         .collect();
 
     quote! {
-        impl gpui_table::filter::Matchable<#filter_values_name> for #struct_name {
-            fn matches_filters(&self, filters: &#filter_values_name) -> bool {
-                #((#match_exprs))&&*
-            }
+        #[doc = concat!("Render all ", #doc_label, " as children (returns impl IntoElement).")]
+        pub fn #method_ident(&self) -> impl gpui::IntoElement {
+            use gpui::{ParentElement as _, Styled as _};
+            gpui::div().flex().items_center().gap_2()
+                #(#children)*
         }
     }
 }
 
-fn option_inner_type(ty: &Type) -> Option<&Type> {
-    let Type::Path(type_path) = ty else {
-        return None;
-    };
-
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Option" {
-        return None;
-    }
-
-    let PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
-
-    let GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
+fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
+    let field_ident = &field.field_ident;
+    let wrapper_ty = generated_filter_value_type_name(field);
+    format!(
+        "Current value for the `{field_ident}` {} filter, stored as `{wrapper_ty}`.",
+        field.filter_config.kind_label()
+    )
 }
 
-/// Categorize filters by their type for grouped rendering.
-fn categorize_filters(
-    filter_fields: &[FilterFieldMeta],
-) -> (
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-) {
-    let mut text = Vec::new();
-    let mut number = Vec::new();
-    let mut faceted = Vec::new();
-    let mut date = Vec::new();
+fn filter_value_query_doc(_field: &FilterFieldMeta) -> String {
+    "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string()
+}
 
-    for f in filter_fields {
-        match &f.filter_config {
-            FilterComponents::Text(_) => text.push(f),
-            FilterComponents::NumberRange(_) => number.push(f),
-            FilterComponents::Faceted(_) | FilterComponents::InfiniteFaceted(_) => faceted.push(f),
-            FilterComponents::DateRange(_) => date.push(f),
-        }
+fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
+    match &field.filter_config {
+        FilterComponents::Text(_) => "gpui_table::core::filter::TextValue".to_string(),
+        FilterComponents::NumberRange(_) => {
+            "gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal>"
+                .to_string()
+        },
+        FilterComponents::Faceted(_) => format!(
+            "gpui_table::core::filter::FacetedValue<{}>",
+            compact_type_name(&field.field_type)
+        ),
+        FilterComponents::DateRange(_) => {
+            "gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate>"
+                .to_string()
+        },
     }
+}
 
-    (text, number, faceted, date)
+fn compact_type_name(ty: &impl ToTokens) -> String {
+    ty.to_token_stream()
+        .to_string()
+        .replace(" :: ", "::")
+        .replace(" < ", "<")
+        .replace(" >", ">")
+        .replace(" , ", ", ")
+        .replace(" ( ", "(")
+        .replace(" )", ")")
 }
 
 /// Determine the title expression for a filter based on fluent config.

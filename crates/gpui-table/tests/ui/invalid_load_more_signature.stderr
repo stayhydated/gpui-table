@@ -19,13 +19,13 @@ warning: unused import: `gpui_component::table::TableState`
 2 | use gpui_component::table::TableState;
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-error[E0277]: the trait bound `BadLoadMoreRowTableDelegate: LoadMoreDelegate` is not satisfied
+error[E0277]: the trait bound `BadLoadMoreRowTableDelegate: gpui_table::__private::LoadMoreDelegate` is not satisfied
  --> tests/ui/invalid_load_more_signature.rs:5:10
   |
 5 | #[derive(GpuiTable)]
   |          ^^^^^^^^^ unsatisfied trait bound
   |
-help: the trait `LoadMoreDelegate` is not implemented for `BadLoadMoreRowTableDelegate`
+help: the trait `gpui_table::__private::LoadMoreDelegate` is not implemented for `BadLoadMoreRowTableDelegate`
  --> tests/ui/invalid_load_more_signature.rs:5:10
   |
 5 | #[derive(GpuiTable)]

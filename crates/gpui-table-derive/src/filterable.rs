@@ -33,9 +33,14 @@ struct FilterableVariant {
 }
 
 fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let meta = FilterableMeta::from_derive_input(&input)?;
-    let enum_name = meta.ident;
-    let variants = meta.data.take_enum().unwrap();
+    let FilterableMeta {
+        ident: enum_name,
+        data,
+        fluent,
+    } = FilterableMeta::from_derive_input(&input)?;
+    let variants = data.take_enum().ok_or_else(|| {
+        syn::Error::new(enum_name.span(), "Filterable can only be derived for enums")
+    })?;
 
     let mut options = Vec::new();
     let mut variant_name_arms = Vec::new();
@@ -45,7 +50,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         let variant_ident = &variant.ident;
         let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
 
-        let label_expr = if meta.fluent {
+        let label_expr = if fluent {
             quote! { { use es_fluent::ToFluentString as _; Self::#variant_ident.to_fluent_string() } }
         } else {
             let label = variant
@@ -57,13 +62,13 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
         let icon = match &variant.icon {
             Some(path) => {
-                quote! { Some(#path) }
+                quote! { Some(gpui_table::runtime::generated_filters::icon_from_name(#path)) }
             },
             None => quote! { None },
         };
 
         options.push(quote! {
-            gpui_table::filter::FacetedFilterOption {
+            gpui_table::core::filter::FacetedFilterOption {
                 group: None,
                 label: #label_expr,
                 value: #value.to_string(),
@@ -84,7 +89,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     }
 
     Ok(quote! {
-        impl gpui_table::filter::FilterValue for #enum_name {
+        impl gpui_table::core::filter::FilterValue for #enum_name {
             fn to_filter_string(&self) -> String {
                 match self {
                     #(#variant_name_arms)*
@@ -99,8 +104,8 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
             }
         }
 
-        impl gpui_table::filter::Filterable for #enum_name {
-            fn options() -> Vec<gpui_table::filter::FacetedFilterOption> {
+        impl gpui_table::core::filter::Filterable for #enum_name {
+            fn options() -> Vec<gpui_table::core::filter::FacetedFilterOption> {
                 vec![
                     #(#options),*
                 ]

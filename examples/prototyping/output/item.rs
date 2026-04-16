@@ -37,7 +37,7 @@ impl ItemTableStory {
             .update(
                 cx,
                 |table, cx| {
-                    use gpui_table::TableDataLoader as _;
+                    use gpui_table::runtime::TableDataLoader as _;
                     table.delegate_mut().load_data(window, cx);
                 },
             );
@@ -58,7 +58,7 @@ impl Render for ItemTableStory {
             .gap_4()
             .p_4()
             .child(
-                gpui_table_component::TableStatusBar::new(
+                gpui_table::runtime::generated_filters::TableStatusBar::new(
                     delegate.rows.len(),
                     delegate.loading,
                     delegate.eof,

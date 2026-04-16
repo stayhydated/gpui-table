@@ -2,46 +2,62 @@
 
 ## Purpose
 
-`gpui-table` is the facade crate for the workspace. It re-exports the core traits
-and proc-macro derives so applications can depend on a single crate for table
-metadata and macro generation.
+`gpui-table` is the facade crate for the workspace. Applications can depend on
+it alone and get:
+
+- pure filter semantics from `gpui-table-core`
+- GPUI runtime traits/helpers from `gpui-table-runtime`
+- schema/registry metadata from `gpui-table-schema`
+- proc macros from `gpui-table-derive` when the `derive` feature is enabled
+  (default)
 
 ## Structure
 
 - `lib.rs`
-  - Re-exports `gpui-table-core` as the public API surface.
-  - Re-exports `gpui-table-derive` when the `derive` feature is enabled.
-  - Exposes hidden `__deps` re-exports used by macro-generated code
-    (`gpui-table-component`, and feature-gated `chrono` / `rust_decimal`).
+  - Re-exports the core crate as `gpui_table::core`
+  - Re-exports `gpui_table::core::filter` directly as `gpui_table::filter`
+  - Re-exports the runtime crate as `gpui_table::runtime`
+  - Re-exports the schema crate as `gpui_table::schema`
+  - Re-exports `gpui_table::schema::registry` directly as `gpui_table::registry`
+  - Re-exports common runtime traits at the crate root:
+    `FilterEntitiesExt`, `TableCell`, `TableDataLoader`, `TableLoader`,
+    `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableRowMeta`,
+    `TableRowStyle`
+  - Re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
+    when the `derive` feature is enabled
+  - Exposes hidden `__deps` for feature-gated external types (`chrono`, `rust_decimal`)
+  - Exposes hidden `__private` load-more bridge for macro-generated code
 
 ## How it fits
 
 1. You derive `GpuiTable` on a row type.
-1. The derive macro (from `gpui-table-derive`) generates a delegate and metadata
-   based on traits from `gpui-table-core`.
-1. If `#[gpui_table(filters)]` is enabled, generated filter entities integrate
-   with components re-exported through `gpui_table::__deps`.
+1. You can derive `Filterable` on faceted-filter enums and `TableCell` on
+   supporting cell types through the same facade.
+1. The derive macro generates row/delegate/filter code against traits exported by
+   the facade's explicit `core` / `runtime` / `schema` namespaces, plus the
+   root-level `filter` and convenience trait re-exports.
+1. Generated filter code targets `gpui_table::runtime::generated_filters`
+   instead of directly hard-coding the component crate path.
+1. Tooling such as prototyping/codegen consumes schema metadata from
+   `gpui_table::registry`.
 
 ## Feature flags
 
-- `derive` (default): enables `GpuiTable` and `TableCell` derives.
-- `chrono` (default): adds `TableCell` + filter support for date types.
+- `derive` (default): enables `GpuiTable`, `Filterable`, and `TableCell`
+  derives plus the `gpui_table_impl` attribute macro.
+- `chrono` (default): forwards chrono/date support into `core`, `runtime`, and `derive`.
 - `inventory`: enables registry metadata for prototyping/codegen.
 - `fluent`: integrates with `es-fluent` for localized titles/labels.
-- `rust_decimal`: adds `TableCell` + filter support for decimal types.
-- `spacetimedb`: enables `gpui-table-core` conversions for SpacetimeDB `Timestamp` and `TimeDuration` in range filters.
-
-`chrono` and `rust_decimal` also drive hidden feature markers used by generated
-code to emit clear compile errors when `date_range` / `number_range` filters
-are used without enabling the corresponding `gpui-table` feature.
+- `rust_decimal`: forwards numeric-range support into `core`, `runtime`, and `derive`.
+- `spacetimedb`: forwards SpacetimeDB temporal support into `core`, `runtime`, and `derive`.
 
 ## Extension points
 
-- Implement `TableRowStyle` for custom rendering.
-- Implement `TableRowContextMenu` for row context-menu composition.
-- Use `TableRowGeneratedContextMenu` to compose derive-generated menu links
-  with custom menu actions.
-- Or derive a route link context-menu entry with
-  `#[gpui_table(context_menu_row_id = \"...\", context_menu_route = \"...{id}...\")]`,
-  or field `#[gpui_table(context_menu_id)]` plus runtime `context_menu_route_fn`.
-- Implement `TableLoader` or `TableDataLoader` for load-more behavior.
+- Implement `gpui_table::runtime::TableRowStyle` for custom rendering.
+- Implement `gpui_table::runtime::TableRowContextMenu` for row context-menu composition.
+- Use `gpui_table::runtime::TableRowGeneratedContextMenu` to compose derive-generated menu links with
+  custom menu actions.
+- Implement `gpui_table::runtime::TableLoader` or
+  `gpui_table::runtime::TableDataLoader` for load-more behavior.
+- Use `gpui_table::runtime::generated_filters` as the stable runtime target when
+  integrating custom generated-filter flows.

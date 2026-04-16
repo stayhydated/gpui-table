@@ -1,8 +1,10 @@
 //! Facade crate for the `gpui-table` ecosystem.
 //!
-//! This crate re-exports:
-//! - `gpui-table-core` traits/types (`TableRowMeta`, `TableCell`, filters, loaders)
-//! - `gpui-table-derive` macros (`GpuiTable`, `TableCell`, `Filterable`, `gpui_table_impl`)
+//! Public API is namespaced by responsibility:
+//! - `gpui_table::core` for pure filter semantics
+//! - `gpui_table::runtime` for GPUI-facing traits/helpers
+//! - `gpui_table::schema` for metadata and registry types
+//! - root-level proc macros from `gpui-table-derive`
 //!
 //! # Quick Start
 //!
@@ -23,35 +25,32 @@
 //! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!
-//! These are validated during macro expansion with compile-time errors.
+//! These are validated during macro expansion with direct compile-time errors.
 
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
 
-pub use gpui_table_core::*;
-
-pub use gpui_table_core::TableDataLoader;
-pub use gpui_table_core::TableLoader;
+pub use gpui_table_core as core;
+pub use gpui_table_core::filter;
+pub use gpui_table_runtime as runtime;
+pub use gpui_table_runtime::{
+    FilterEntitiesExt, TableCell, TableDataLoader, TableLoader, TableRowContextMenu,
+    TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
+};
+pub use gpui_table_schema as schema;
+pub use gpui_table_schema::registry;
 
 /// Hidden dependency surface used by macro-generated code.
 #[doc(hidden)]
 pub mod __deps {
-    pub use gpui_table_component;
-
     #[cfg(feature = "chrono")]
     pub use chrono;
     #[cfg(feature = "rust_decimal")]
     pub use rust_decimal;
+}
 
-    /// Marker trait used by generated code to fail clearly when
-    /// `filter(number_range(...))` is used without enabling `gpui-table/rust_decimal`.
-    pub trait RequiresRustDecimalFeatureOnGpuiTable {}
-    #[cfg(feature = "rust_decimal")]
-    impl RequiresRustDecimalFeatureOnGpuiTable for () {}
-
-    /// Marker trait used by generated code to fail clearly when
-    /// `filter(date_range(...))` is used without enabling `gpui-table/chrono`.
-    pub trait RequiresChronoFeatureOnGpuiTable {}
-    #[cfg(feature = "chrono")]
-    impl RequiresChronoFeatureOnGpuiTable for () {}
+/// Hidden runtime bridge used by macro-generated code.
+#[doc(hidden)]
+pub mod __private {
+    pub use gpui_table_runtime::__private::LoadMoreDelegate;
 }

@@ -3,14 +3,16 @@
 Utilities for generating gpui table scaffolding from `GpuiTableShape` inventory data.
 
 This crate is useful when you want to rapidly prototype tables from your struct
-definitions without hand-writing the gpui widget wiring.
+definitions without hand-writing the gpui widget wiring. It consumes schema
+metadata rather than depending on the GPUI runtime crates directly.
 
 ## Usage
 
 Enable the `inventory` feature on `gpui-table` and iterate the registered shapes:
 
 ```rs
-use gpui_table::registry::GpuiTableShape;
+# fn demo() -> Result<(), gpui_table_prototyping_core::TableCodegenError> {
+use gpui_table::registry::{GpuiTableShape, inventory};
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use quote::quote;
 
@@ -23,14 +25,20 @@ impl TableLayout for MyLayout {
             #imports
             pub struct #story_struct_ident { #struct_fields }
             // splice #render_children wherever you need it
-        }).unwrap()
+        })
+        .expect("static layout template should parse")
     }
 }
 
 for shape in inventory::iter::<GpuiTableShape>() {
-    let syn_file = TableShapeAdapter::new(shape, true).generate_file(&MyLayout);
+    let syn_file = TableShapeAdapter::new(shape, true).try_generate_file(&MyLayout)?;
     let _formatted = prettyplease::unparse(&syn_file);
 }
+# Ok(())
+# }
 ```
+
+Use the `inventory` re-export from `gpui_table::registry` unless you
+already depend on `inventory` directly.
 
 See `examples/prototyping` for a full generator that writes formatted files.

@@ -1,7 +1,8 @@
 use gpui::{App, Context, TextAlign, Window};
 use gpui_component::menu::PopupMenu;
 use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
-use gpui_table::{GpuiTable, TableRowMeta, gpui_table_impl};
+use gpui_table::TableRowMeta;
+use gpui_table::{GpuiTable, gpui_table_impl};
 use serde::Serialize;
 
 // =============================================================================
@@ -119,7 +120,7 @@ struct ContextMenuRow {
     id: u32,
 }
 
-impl gpui_table::TableRowContextMenu for ContextMenuRow {
+impl gpui_table::runtime::TableRowContextMenu for ContextMenuRow {
     fn render_table_context_menu(
         &self,
         row_ix: usize,
@@ -174,7 +175,7 @@ struct ContextMenuComposedRow {
     id: u32,
 }
 
-impl gpui_table::TableRowContextMenu for ContextMenuComposedRow {
+impl gpui_table::runtime::TableRowContextMenu for ContextMenuComposedRow {
     fn render_table_context_menu(
         &self,
         row_ix: usize,
@@ -182,7 +183,7 @@ impl gpui_table::TableRowContextMenu for ContextMenuComposedRow {
         window: &mut Window,
         cx: &mut App,
     ) -> PopupMenu {
-        use gpui_table::TableRowGeneratedContextMenu as _;
+        use gpui_table::runtime::TableRowGeneratedContextMenu as _;
         self.render_generated_table_context_menu(row_ix, menu, window, cx)
             .link("Share", format!("/share/{}", self.id))
     }

@@ -1,0 +1,5 @@
+error: `filter(faceted(...))` on `String` requires a non-optional field type that implements `gpui_table::core::filter::Filterable`; `bool` works out of the box and enums can `#[derive(Filterable)]`
+ --> tests/ui/invalid_faceted_filter_type.rs:7:11
+  |
+7 |     name: String,
+  |           ^^^^^^

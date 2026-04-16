@@ -5,7 +5,8 @@ use fake::uuid::UUIDv4;
 use gpui::{App, Window};
 use gpui_component::IconName;
 use gpui_component::menu::PopupMenu;
-use gpui_table::{Filterable, GpuiTable, TableCell, TableRowContextMenu};
+use gpui_table::runtime::TableRowContextMenu;
+use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
 
 #[derive(
@@ -73,7 +74,7 @@ impl TableRowContextMenu for User {
         window: &mut Window,
         cx: &mut App,
     ) -> PopupMenu {
-        use gpui_table::TableRowGeneratedContextMenu as _;
+        use gpui_table::runtime::TableRowGeneratedContextMenu as _;
         let menu = self.render_generated_table_context_menu(row_ix, menu, window, cx);
         crate::structs::context_menu_common::with_user_common_actions(&self.id, menu)
     }

@@ -1,0 +1,19 @@
+[package]
+name = "gpui-table-schema"
+description = """
+Schema and registry metadata for gpui-table.
+"""
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+readme = "README.md"
+
+[dependencies]
+inventory = { workspace = true }
+strum = { features = [ "derive" ], workspace = true }
+
+[lints]
+workspace = true

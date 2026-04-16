@@ -66,6 +66,12 @@ enum LastChanged {
     MaxInput,
 }
 
+#[derive(Clone, Copy)]
+enum BoundInput {
+    Min,
+    Max,
+}
+
 #[derive(Clone, Copy, EsFluent)]
 enum NumberRangeFilterFtl {
     MinPlaceholder,
@@ -109,8 +115,8 @@ pub struct NumberRangeFilter {
 impl TableFilterComponent for NumberRangeFilter {
     type Value = (Option<Decimal>, Option<Decimal>);
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::NumberRange;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::NumberRange;
 
     fn new(
         title: impl Into<String>,
@@ -124,6 +130,17 @@ impl TableFilterComponent for NumberRangeFilter {
 }
 
 impl NumberRangeFilter {
+    /// Create a number range filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        value: (Option<Decimal>, Option<Decimal>),
+        on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+
     fn new_with_title(
         title: Rc<dyn Fn() -> String>,
         value: (Option<Decimal>, Option<Decimal>),
@@ -279,6 +296,84 @@ impl NumberRangeFilter {
         (range_min, range_max, current_min, current_max)
     }
 
+    fn bound_value(&self, bound: BoundInput) -> Option<Decimal> {
+        match bound {
+            BoundInput::Min => self.min,
+            BoundInput::Max => self.max,
+        }
+    }
+
+    fn set_bound_value(&mut self, bound: BoundInput, value: Option<Decimal>) {
+        match bound {
+            BoundInput::Min => self.min = value,
+            BoundInput::Max => self.max = value,
+        }
+    }
+
+    fn last_changed_for(bound: BoundInput) -> LastChanged {
+        match bound {
+            BoundInput::Min => LastChanged::MinInput,
+            BoundInput::Max => LastChanged::MaxInput,
+        }
+    }
+
+    fn update_bound_from_text(&mut self, bound: BoundInput, text: &str, cx: &mut Context<Self>) {
+        if let Ok(val) = Decimal::from_str(text) {
+            let next = if self.range_is_explicit {
+                Some(val.clamp(self.range_min, self.range_max))
+            } else {
+                Some(val)
+            };
+            self.set_bound_value(bound, next);
+            if !self.range_is_explicit {
+                self.recompute_dynamic_range_from_values();
+            }
+        } else if text.is_empty() {
+            self.set_bound_value(bound, None);
+            self.recompute_dynamic_range_from_values();
+        }
+
+        self.last_changed = Self::last_changed_for(bound);
+        self.schedule_debounced_apply(cx);
+    }
+
+    fn step_amount(&self) -> Decimal {
+        self.step_size
+            .unwrap_or((self.range_max - self.range_min) / Decimal::ONE_HUNDRED)
+    }
+
+    fn step_bound(&mut self, bound: BoundInput, action: &StepAction, cx: &mut Context<Self>) {
+        let current = self.bound_value(bound).unwrap_or(match bound {
+            BoundInput::Min => self.range_min,
+            BoundInput::Max => self.range_max,
+        });
+        let step = self.step_amount();
+        let mut next = match action {
+            StepAction::Increment => current + step,
+            StepAction::Decrement => current - step,
+        };
+        if self.range_is_explicit {
+            next = next.clamp(self.range_min, self.range_max);
+        }
+
+        self.set_bound_value(bound, Some(next));
+        self.recompute_dynamic_range_from_values();
+        self.last_changed = Self::last_changed_for(bound);
+        self.schedule_debounced_apply(cx);
+    }
+
+    fn sync_slider_state(&self, slider: &Entity<SliderState>, cx: &mut Context<Self>) {
+        let (range_min, range_max, current_min, current_max) = self.slider_values();
+        slider.update(cx, |state, cx| {
+            *state = SliderState::new()
+                .min(range_min)
+                .max(range_max)
+                .step(DEFAULT_SLIDER_STEP_F32)
+                .default_value(current_min..current_max);
+            cx.notify();
+        });
+    }
+
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(format_decimal).unwrap_or_default();
@@ -298,19 +393,7 @@ impl NumberRangeFilter {
                 move |this: &mut Self, state, event: &InputEvent, cx| {
                     if let InputEvent::Change = event {
                         let text = state.read(cx).value().to_string();
-                        if let Ok(val) = Decimal::from_str(&text) {
-                            this.min = Some(val);
-                            if this.range_is_explicit {
-                                this.min = Some(val.clamp(this.range_min, this.range_max));
-                            } else {
-                                this.recompute_dynamic_range_from_values();
-                            }
-                        } else if text.is_empty() {
-                            this.min = None;
-                            this.recompute_dynamic_range_from_values();
-                        }
-                        this.last_changed = LastChanged::MinInput;
-                        this.schedule_debounced_apply(cx);
+                        this.update_bound_from_text(BoundInput::Min, &text, cx);
                     }
                 },
             );
@@ -320,21 +403,7 @@ impl NumberRangeFilter {
                 &input,
                 move |this: &mut Self, _state, event: &NumberInputEvent, cx| {
                     let NumberInputEvent::Step(action) = event;
-                    let current = this.min.unwrap_or(this.range_min);
-                    let step = this
-                        .step_size
-                        .unwrap_or((this.range_max - this.range_min) / Decimal::ONE_HUNDRED);
-                    let mut new_val = match action {
-                        StepAction::Increment => current + step,
-                        StepAction::Decrement => current - step,
-                    };
-                    if this.range_is_explicit {
-                        new_val = new_val.clamp(this.range_min, this.range_max);
-                    }
-                    this.min = Some(new_val);
-                    this.recompute_dynamic_range_from_values();
-                    this.last_changed = LastChanged::MinInput;
-                    this.schedule_debounced_apply(cx);
+                    this.step_bound(BoundInput::Min, action, cx);
                 },
             );
 
@@ -362,19 +431,7 @@ impl NumberRangeFilter {
                 move |this: &mut Self, state, event: &InputEvent, cx| {
                     if let InputEvent::Change = event {
                         let text = state.read(cx).value().to_string();
-                        if let Ok(val) = Decimal::from_str(&text) {
-                            this.max = Some(val);
-                            if this.range_is_explicit {
-                                this.max = Some(val.clamp(this.range_min, this.range_max));
-                            } else {
-                                this.recompute_dynamic_range_from_values();
-                            }
-                        } else if text.is_empty() {
-                            this.max = None;
-                            this.recompute_dynamic_range_from_values();
-                        }
-                        this.last_changed = LastChanged::MaxInput;
-                        this.schedule_debounced_apply(cx);
+                        this.update_bound_from_text(BoundInput::Max, &text, cx);
                     }
                 },
             );
@@ -384,21 +441,7 @@ impl NumberRangeFilter {
                 &input,
                 move |this: &mut Self, _state, event: &NumberInputEvent, cx| {
                     let NumberInputEvent::Step(action) = event;
-                    let current = this.max.unwrap_or(this.range_max);
-                    let step = this
-                        .step_size
-                        .unwrap_or((this.range_max - this.range_min) / Decimal::ONE_HUNDRED);
-                    let mut new_val = match action {
-                        StepAction::Increment => current + step,
-                        StepAction::Decrement => current - step,
-                    };
-                    if this.range_is_explicit {
-                        new_val = new_val.clamp(this.range_min, this.range_max);
-                    }
-                    this.max = Some(new_val);
-                    this.recompute_dynamic_range_from_values();
-                    this.last_changed = LastChanged::MaxInput;
-                    this.schedule_debounced_apply(cx);
+                    this.step_bound(BoundInput::Max, action, cx);
                 },
             );
 
@@ -478,15 +521,7 @@ impl NumberRangeFilter {
             LastChanged::MinInput | LastChanged::MaxInput => {
                 // Input changed - update slider
                 if let Some(slider) = &self.slider_state {
-                    let (range_min, range_max, current_min, current_max) = self.slider_values();
-                    slider.update(cx, |state, cx| {
-                        *state = SliderState::new()
-                            .min(range_min)
-                            .max(range_max)
-                            .step(DEFAULT_SLIDER_STEP_F32)
-                            .default_value(current_min..current_max);
-                        cx.notify();
-                    });
+                    self.sync_slider_state(slider, cx);
                 }
             },
             LastChanged::None => {},
@@ -513,15 +548,7 @@ impl NumberRangeFilter {
         }
         // Reset slider to full range
         if let Some(slider) = &self.slider_state {
-            let (range_min, range_max, current_min, current_max) = self.slider_values();
-            slider.update(cx, |state, cx| {
-                *state = SliderState::new()
-                    .min(range_min)
-                    .max(range_max)
-                    .step(DEFAULT_SLIDER_STEP_F32)
-                    .default_value(current_min..current_max);
-                cx.notify();
-            });
+            self.sync_slider_state(slider, cx);
         }
 
         if notify_change {

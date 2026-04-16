@@ -56,10 +56,9 @@ impl FilterVariant {
 }
 
 /// Type of filter for registry (metadata only).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum RegistryFilterType {
     Faceted,
-    InfiniteFaceted,
     DateRange,
     NumberRange,
     Text,

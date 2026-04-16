@@ -73,6 +73,12 @@ impl ImportSet {
     /// Items are grouped by parent path (everything before the last `::`),
     /// sorted, and emitted as a single `use` per group.
     pub fn to_token_stream(&self) -> TokenStream {
+        self.try_to_token_stream()
+            .expect("valid import parent path in ImportSet")
+    }
+
+    /// Fallible version of [`ImportSet::to_token_stream`] for user-facing tooling.
+    pub fn try_to_token_stream(&self) -> syn::Result<TokenStream> {
         // Group: parent_path → Vec<(name, alias)> — BTreeMap keeps groups sorted.
         let mut grouped: BTreeMap<String, Vec<(&'static str, Option<&Alias>)>> = BTreeMap::new();
 
@@ -91,7 +97,12 @@ impl ImportSet {
                 continue;
             }
 
-            let parent_path: syn::Path = syn::parse_str(parent).expect("valid import parent path");
+            let parent_path: syn::Path = syn::parse_str(parent).map_err(|err| {
+                syn::Error::new(
+                    proc_macro2::Span::call_site(),
+                    format!("invalid import parent path `{parent}`: {err}"),
+                )
+            })?;
 
             let item_tokens: Vec<TokenStream> = items
                 .iter()
@@ -116,6 +127,6 @@ impl ImportSet {
             }
         }
 
-        tokens
+        Ok(tokens)
     }
 }

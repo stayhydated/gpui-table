@@ -4,7 +4,8 @@ use fake::uuid::UUIDv4;
 use fake::{Fake, Faker};
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
-use gpui_table::{GpuiTable, TableLoader};
+use gpui_table::GpuiTable;
+use gpui_table::runtime::TableLoader;
 use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
@@ -77,7 +78,7 @@ impl TableLoader for ItemTableDelegate {
     }
 }
 
-impl gpui_table::TableRowStyle for Item {
+impl gpui_table::runtime::TableRowStyle for Item {
     type ColumnId = ItemTableColumn;
 
     fn render_table_cell(
@@ -143,6 +144,6 @@ impl gpui_table::TableRowStyle for Item {
             _ => {},
         }
 
-        gpui_table::default_render_cell(self, col.into(), window, cx).into_any_element()
+        gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
     }
 }

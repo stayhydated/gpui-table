@@ -144,6 +144,6 @@ impl ToNaiveDate for spacetimedb_lib::Timestamp {
     fn to_naive_date(&self) -> chrono::NaiveDate {
         chrono::DateTime::from_timestamp_micros(self.to_micros_since_unix_epoch())
             .map(|value| value.date_naive())
-            .unwrap_or_else(|| chrono::NaiveDate::default())
+            .unwrap_or_default()
     }
 }

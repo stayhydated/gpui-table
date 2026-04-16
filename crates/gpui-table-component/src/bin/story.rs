@@ -8,7 +8,7 @@ use strum::EnumIter;
 use gpui_table_component;
 
 #[es_fluent_language]
-#[derive(Clone, Copy, Debug, EnumIter, EsFluent, PartialEq)]
+#[derive(Clone, Copy, Debug, EnumIter, Eq, EsFluent, PartialEq)]
 pub enum Languages {}
 
 fn main() {

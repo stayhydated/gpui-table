@@ -1,5 +1,6 @@
-use darling::FromMeta;
-use syn::Path;
+use darling::{Error as DarlingError, FromMeta};
+use quote::{ToTokens as _, quote};
+use syn::{Expr, Lit, Path, UnOp, spanned::Spanned as _};
 
 /// Built-in text validation modes
 #[derive(Clone, Debug, FromMeta)]
@@ -25,19 +26,68 @@ pub struct TextFilterOptions {
     pub validate: Option<TextValidation>,
 }
 
+/// A decimal literal captured from `number_range(...)` metadata.
+///
+/// The raw string is preserved so macro validation can point at the original
+/// literal while codegen can lower the parsed value directly into a
+/// `rust_decimal::Decimal` constructor.
+#[derive(Clone, Debug)]
+pub struct DecimalLiteral {
+    raw: String,
+    span: proc_macro2::Span,
+}
+
+impl DecimalLiteral {
+    #[cfg(feature = "rust_decimal")]
+    pub fn span(&self) -> proc_macro2::Span {
+        self.span
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    pub fn parse_decimal(&self, key: &str) -> syn::Result<rust_decimal::Decimal> {
+        rust_decimal::Decimal::from_str_exact(&self.raw).map_err(|_| {
+            syn::Error::new(
+                self.span,
+                format!(
+                    "invalid decimal literal `{}` for `number_range({key} = ...)`; use a plain decimal like `0.25` or a quoted decimal string like \"0.25\"",
+                    self.raw
+                ),
+            )
+        })
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    pub fn decimal_tokens(&self, key: &str) -> proc_macro2::TokenStream {
+        let decimal = self
+            .parse_decimal(key)
+            .expect("number_range decimal literal should be validated before code generation");
+        let mantissa = decimal.mantissa();
+        let scale = decimal.scale();
+        quote! {
+            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(#mantissa, #scale)
+        }
+    }
+}
+
+impl FromMeta for DecimalLiteral {
+    fn from_expr(expr: &Expr) -> darling::Result<Self> {
+        parse_decimal_literal(expr).map_err(|message| DarlingError::custom(message).with_span(expr))
+    }
+}
+
 /// Options for number range filter
 #[derive(Clone, Debug, Default, FromMeta)]
 #[darling(default)]
 pub struct NumberRangeFilterOptions {
     /// Minimum value for the range
     #[darling(default)]
-    pub min: Option<f64>,
+    pub min: Option<DecimalLiteral>,
     /// Maximum value for the range
     #[darling(default)]
-    pub max: Option<f64>,
+    pub max: Option<DecimalLiteral>,
     /// Step size for increment/decrement
     #[darling(default)]
-    pub step: Option<f64>,
+    pub step: Option<DecimalLiteral>,
 }
 
 /// Options for date range filter
@@ -54,11 +104,6 @@ pub struct FacetedFilterOptions {
     pub searchable: bool,
 }
 
-/// Options for infinite faceted filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct InfiniteFacetedFilterOptions {}
-
 /// Filter component enum parsed from attributes.
 /// Supports syntax like: `filter(text())` or `filter(number_range(min = 0, max = 100))`
 #[derive(Clone, Debug, FromMeta)]
@@ -72,17 +117,293 @@ pub enum FilterComponents {
     DateRange(DateRangeFilterOptions),
     /// Faceted filter with enumerated options
     Faceted(FacetedFilterOptions),
-    /// Hierarchical faceted filter backed by InfiniteSelect
-    #[darling(rename = "infinite_faceted_filter")]
-    InfiniteFaceted(InfiniteFacetedFilterOptions),
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FilterKind {
+    Text,
+    NumberRange,
+    DateRange,
+    Faceted,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FilterRenderGroup {
+    Text,
+    NumberRange,
+    Faceted,
+    DateRange,
+}
+
+impl FilterKind {
+    #[cfg(any(
+        not(feature = "chrono"),
+        not(feature = "rust_decimal"),
+        not(feature = "spacetimedb")
+    ))]
+    pub(crate) fn attribute_syntax(self) -> &'static str {
+        match self {
+            Self::Text => "text()",
+            Self::NumberRange => "number_range(...)",
+            Self::DateRange => "date_range()",
+            Self::Faceted => "faceted(...)",
+        }
+    }
+
+    pub(crate) fn label(self) -> &'static str {
+        match self {
+            Self::Text => "text",
+            Self::NumberRange => "number range",
+            Self::DateRange => "date range",
+            Self::Faceted => "faceted",
+        }
+    }
+
+    pub(crate) fn render_group(self) -> FilterRenderGroup {
+        match self {
+            Self::Text => FilterRenderGroup::Text,
+            Self::NumberRange => FilterRenderGroup::NumberRange,
+            Self::DateRange => FilterRenderGroup::DateRange,
+            Self::Faceted => FilterRenderGroup::Faceted,
+        }
+    }
+}
+
+impl FilterRenderGroup {
+    pub(crate) const ALL: [Self; 4] = [
+        Self::Text,
+        Self::NumberRange,
+        Self::Faceted,
+        Self::DateRange,
+    ];
+
+    pub(crate) fn method_name(self) -> &'static str {
+        match self {
+            Self::Text => "text_filters",
+            Self::NumberRange => "number_filters",
+            Self::Faceted => "faceted_filters",
+            Self::DateRange => "date_filters",
+        }
+    }
+
+    pub(crate) fn doc_label(self) -> &'static str {
+        match self {
+            Self::Text => "text filters",
+            Self::NumberRange => "number range filters",
+            Self::Faceted => "faceted filters",
+            Self::DateRange => "date range filters",
+        }
+    }
 }
 
 impl FilterComponents {
-    /// Check if this is a faceted filter
-    pub fn is_faceted(&self) -> bool {
-        matches!(
-            self,
-            FilterComponents::Faceted(_) | FilterComponents::InfiniteFaceted(_)
-        )
+    pub(crate) fn kind(&self) -> FilterKind {
+        match self {
+            Self::Text(_) => FilterKind::Text,
+            Self::NumberRange(_) => FilterKind::NumberRange,
+            Self::DateRange(_) => FilterKind::DateRange,
+            Self::Faceted(_) => FilterKind::Faceted,
+        }
+    }
+
+    /// The attribute syntax users write for this built-in filter.
+    #[cfg(any(
+        not(feature = "chrono"),
+        not(feature = "rust_decimal"),
+        not(feature = "spacetimedb")
+    ))]
+    pub(crate) fn attribute_syntax(&self) -> &'static str {
+        self.kind().attribute_syntax()
+    }
+
+    /// A short human-readable label for generated docs and diagnostics.
+    pub(crate) fn kind_label(&self) -> &'static str {
+        self.kind().label()
+    }
+
+    pub(crate) fn render_group(&self) -> FilterRenderGroup {
+        self.kind().render_group()
+    }
+
+    pub(crate) fn component_type_tokens(
+        &self,
+        field_ty: Option<&syn::Type>,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => {
+                quote! { gpui_table::runtime::generated_filters::text_filter::TextFilter }
+            },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilter }
+            },
+            Self::DateRange(_) => {
+                quote! { gpui_table::runtime::generated_filters::date_range_filter::DateRangeFilter }
+            },
+            Self::Faceted(_) => {
+                if let Some(ty) = field_ty {
+                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#ty> }
+                } else {
+                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
+                }
+            },
+        }
+    }
+
+    #[cfg(feature = "inventory")]
+    pub(crate) fn registry_filter_type_tokens(&self) -> proc_macro2::TokenStream {
+        match self.kind() {
+            FilterKind::Text => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::Text }
+            },
+            FilterKind::NumberRange => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::NumberRange }
+            },
+            FilterKind::DateRange => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::DateRange }
+            },
+            FilterKind::Faceted => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
+            },
+        }
+    }
+
+    pub(crate) fn runtime_filter_type_expr(
+        &self,
+        field_ty: &syn::Type,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::FilterType::Text },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::core::filter::FilterType::NumberRange }
+            },
+            Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::FilterType::DateRange }
+            },
+            Self::Faceted(_) => {
+                quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
+            },
+        }
+    }
+
+    pub(crate) fn raw_value_type_tokens(&self, field_ty: &syn::Type) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { String },
+            Self::NumberRange(_) => {
+                quote! { (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) }
+            },
+            Self::Faceted(_) => quote! { std::collections::HashSet<#field_ty> },
+            Self::DateRange(_) => {
+                quote! { (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) }
+            },
+        }
+    }
+
+    pub(crate) fn generated_value_type_tokens(
+        &self,
+        field_ty: &syn::Type,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::TextValue },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
+            },
+            Self::Faceted(_) => quote! { gpui_table::core::filter::FacetedValue<#field_ty> },
+            Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
+            },
+        }
+    }
+
+    pub(crate) fn wrap_raw_value_expr(
+        &self,
+        raw_value_expr: proc_macro2::TokenStream,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::TextValue::from(#raw_value_expr) },
+            Self::NumberRange(_) | Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue::from(#raw_value_expr) }
+            },
+            Self::Faceted(_) => {
+                quote! { gpui_table::core::filter::FacetedValue::from(#raw_value_expr) }
+            },
+        }
+    }
+}
+
+fn parse_decimal_literal(expr: &Expr) -> Result<DecimalLiteral, String> {
+    match expr {
+        Expr::Lit(expr_lit) => parse_decimal_lit(&expr_lit.lit),
+        Expr::Group(group) => parse_decimal_literal(&group.expr),
+        Expr::Unary(unary) => parse_signed_decimal_literal(unary),
+        _ => {
+            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
+        },
+    }
+}
+
+fn parse_signed_decimal_literal(unary: &syn::ExprUnary) -> Result<DecimalLiteral, String> {
+    let prefix = match unary.op {
+        UnOp::Neg(_) => "-",
+        _ => {
+            return Err(
+                "expected an integer, float, or string literal in `number_range(...)`".to_string(),
+            );
+        },
+    };
+
+    match unary.expr.as_ref() {
+        Expr::Lit(expr_lit) => {
+            let mut literal = parse_decimal_lit(&expr_lit.lit)?;
+            literal.raw = format!("{prefix}{}", literal.raw);
+            literal.span = unary.span();
+            Ok(literal)
+        },
+        Expr::Group(group) => {
+            let mut literal = parse_decimal_literal(&group.expr)?;
+            literal.raw = format!("{prefix}{}", literal.raw);
+            literal.span = unary.span();
+            Ok(literal)
+        },
+        _ => {
+            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
+        },
+    }
+}
+
+fn parse_decimal_lit(lit: &Lit) -> Result<DecimalLiteral, String> {
+    match lit {
+        Lit::Int(lit_int) => {
+            if !lit_int.suffix().is_empty() {
+                return Err(
+                    "number_range values cannot use numeric suffixes; use `1.25` or \"1.25\""
+                        .to_string(),
+                );
+            }
+
+            Ok(DecimalLiteral {
+                raw: lit_int.base10_digits().to_string(),
+                span: lit_int.span(),
+            })
+        },
+        Lit::Float(lit_float) => {
+            if !lit_float.suffix().is_empty() {
+                return Err(
+                    "number_range values cannot use numeric suffixes; use `1.25` or \"1.25\""
+                        .to_string(),
+                );
+            }
+
+            Ok(DecimalLiteral {
+                raw: lit_float.to_token_stream().to_string().replace('_', ""),
+                span: lit_float.span(),
+            })
+        },
+        Lit::Str(lit_str) => Ok(DecimalLiteral {
+            raw: lit_str.value(),
+            span: lit_str.span(),
+        }),
+        _ => {
+            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
+        },
     }
 }

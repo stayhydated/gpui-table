@@ -2,6 +2,7 @@ mod delegate;
 mod expand;
 mod filter_codegen;
 mod filter_entities;
+mod filter_matching;
 mod meta;
 
 use darling::FromDeriveInput as _;

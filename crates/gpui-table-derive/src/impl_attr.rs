@@ -33,7 +33,7 @@
 //! automatically detect the trait and wire it up:
 //!
 //! ```ignore
-//! use gpui_table::TableLoader;
+//! use gpui_table::runtime::TableLoader;
 //!
 //! #[gpui_table_impl]
 //! impl TableLoader for MyTableDelegate {

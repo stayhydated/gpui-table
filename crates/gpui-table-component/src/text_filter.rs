@@ -18,6 +18,11 @@ pub type TextValidator = Rc<dyn Fn(&str) -> String>;
 
 /// Built-in validators for common text filtering patterns
 pub mod validators {
+    /// Only allow alphabetic characters.
+    pub fn alphabetic_only(s: &str) -> String {
+        s.chars().filter(|c| c.is_alphabetic()).collect()
+    }
+
     /// Only allow ASCII characters
     pub fn ascii_only(s: &str) -> String {
         s.chars().filter(|c| c.is_ascii()).collect()
@@ -80,21 +85,15 @@ pub trait TextFilterExt: Sized {
 
 impl TextFilterExt for Entity<TextFilter> {
     fn alphabetic_only(self, cx: &mut App) -> Self {
-        self.validate(
-            |text| text.chars().filter(|c| c.is_alphabetic()).collect(),
-            cx,
-        )
+        self.validate(validators::alphabetic_only, cx)
     }
 
     fn numeric_only(self, cx: &mut App) -> Self {
-        self.validate(|text| text.chars().filter(|c| c.is_numeric()).collect(), cx)
+        self.validate(validators::numeric_only, cx)
     }
 
     fn alphanumeric_only(self, cx: &mut App) -> Self {
-        self.validate(
-            |text| text.chars().filter(|c| c.is_alphanumeric()).collect(),
-            cx,
-        )
+        self.validate(validators::alphanumeric_only, cx)
     }
 
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
@@ -122,8 +121,8 @@ impl TextFilterExt for Entity<TextFilter> {
 impl TableFilterComponent for TextFilter {
     type Value = String;
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::Text;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::Text;
 
     fn new(
         title: impl Into<String>,
@@ -137,6 +136,17 @@ impl TableFilterComponent for TextFilter {
 }
 
 impl TextFilter {
+    /// Create a text filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        value: String,
+        on_change: impl Fn(String, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+
     fn new_with_title(
         title: Rc<dyn Fn() -> String>,
         value: String,
@@ -309,7 +319,13 @@ impl Render for TextFilter {
             (self.on_change)(self.value.clone(), window, cx);
         }
 
-        let input_state = self.input_state.clone().unwrap();
+        let Some(input_state) = self.input_state.clone() else {
+            return h_flex()
+                .gap_2()
+                .items_center()
+                .refine_style(&self.container_style)
+                .into_any_element();
+        };
 
         // Inline input without popover - similar to ts-ref data-table-filter-list.tsx
         h_flex()
@@ -323,5 +339,6 @@ impl Render for TextFilter {
                     .cleanable(true)
                     .refine_style(&self.input_style),
             )
+            .into_any_element()
     }
 }

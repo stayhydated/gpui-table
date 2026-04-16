@@ -40,10 +40,14 @@ impl Render for NumberRangeFilter {
         let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
-        let view = cx.entity().clone();
-        let min_input = self.min_input.clone().unwrap();
-        let max_input = self.max_input.clone().unwrap();
-        let slider_state = self.slider_state.clone().unwrap();
+        let view = cx.entity();
+        let (Some(min_input), Some(max_input), Some(slider_state)) = (
+            self.min_input.clone(),
+            self.max_input.clone(),
+            self.slider_state.clone(),
+        ) else {
+            return gpui::div().into_any_element();
+        };
         let between = Self::between_text();
         let trigger_style = self.trigger_style.clone();
         let popover_style = self.popover_style.clone();
@@ -86,7 +90,7 @@ impl Render for NumberRangeFilter {
                     })
                     .child(Icon::new(trigger_icon).xsmall()),
             )
-            .child(title.clone())
+            .child(title)
             .when(has_value, |b| {
                 b.child(Divider::vertical().h(px(16.)).mx_1())
                     .child(range_display)
@@ -156,5 +160,6 @@ impl Render for NumberRangeFilter {
                         )
                     })
             })
+            .into_any_element()
     }
 }

@@ -1,0 +1,5 @@
+error: `filter(date_range())` requires enabling the `gpui-table/chrono` feature
+ --> tests/ui/date_range_requires_chrono.rs:7:5
+  |
+7 |     created_at: chrono::NaiveDate,
+  |     ^^^^^^^^^^

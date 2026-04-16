@@ -107,7 +107,7 @@ impl Render for ResetFiltersStory {
             faceted_values.join(", ")
         };
 
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let text_filter = self.text_filter.clone();
         let faceted_filter = self.faceted_filter.clone();
         let number_filter = self.number_filter.clone();

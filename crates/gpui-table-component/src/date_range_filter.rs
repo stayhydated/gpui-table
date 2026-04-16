@@ -14,11 +14,48 @@ use gpui_component::{
 };
 use std::rc::Rc;
 
+mod date_display {
+    use chrono::{Datelike as _, NaiveDate};
+    use icu::{
+        calendar::{Date, Iso},
+        datetime::{DateTimeFormatter, fieldsets},
+        locale::locale,
+    };
+    use jiff::civil;
+
+    type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
+
+    fn date_formatter() -> Option<DateFormatter> {
+        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+    }
+
+    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
+        let month = i8::try_from(value.month()).ok()?;
+        let day = i8::try_from(value.day()).ok()?;
+        let year = i16::try_from(value.year()).ok()?;
+        civil::Date::new(year, month, day).ok()
+    }
+
+    fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {
+        let month = u8::try_from(value.month()).ok()?;
+        let day = u8::try_from(value.day()).ok()?;
+        Date::try_new_iso(i32::from(value.year()), month, day).ok()
+    }
+
+    pub(super) fn format_date(value: NaiveDate) -> String {
+        chrono_naive_date_to_jiff(&value)
+            .and_then(|value| {
+                let date = to_icu_date(value)?;
+                let formatter = date_formatter()?;
+                Some(formatter.format(&date).to_string())
+            })
+            .unwrap_or_else(|| value.to_string())
+    }
+}
+
 pub struct DateRangeFilter {
     title: Rc<dyn Fn() -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
-    /// Value when the popover was opened, used to detect changes
-    value_on_open: (Option<NaiveDate>, Option<NaiveDate>),
     trigger_style: StyleRefinement,
     popover_style: StyleRefinement,
     calendar_style: StyleRefinement,
@@ -31,8 +68,8 @@ pub struct DateRangeFilter {
 impl TableFilterComponent for DateRangeFilter {
     type Value = (Option<NaiveDate>, Option<NaiveDate>);
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::DateRange;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::DateRange;
 
     fn new(
         title: impl Into<String>,
@@ -46,6 +83,17 @@ impl TableFilterComponent for DateRangeFilter {
 }
 
 impl DateRangeFilter {
+    /// Create a date range filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        value: (Option<NaiveDate>, Option<NaiveDate>),
+        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+
     fn new_with_title(
         title: Rc<dyn Fn() -> String>,
         value: (Option<NaiveDate>, Option<NaiveDate>),
@@ -55,7 +103,6 @@ impl DateRangeFilter {
         cx.new(|_cx| Self {
             title,
             selected_range: value,
-            value_on_open: value,
             trigger_style: StyleRefinement::default(),
             popover_style: StyleRefinement::default(),
             calendar_style: StyleRefinement::default(),
@@ -108,7 +155,6 @@ impl DateRangeFilter {
 
     fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_range = (None, None);
-        self.value_on_open = (None, None);
 
         if let Some(calendar) = &self.calendar {
             calendar.update(cx, |cal, cx| {
@@ -129,19 +175,6 @@ impl DateRangeFilter {
 
     fn has_value(&self) -> bool {
         self.selected_range.0.is_some() || self.selected_range.1.is_some()
-    }
-
-    /// Record the current value when popover opens.
-    fn on_popover_open(&mut self) {
-        self.value_on_open = self.selected_range;
-    }
-
-    /// Apply the current filter value via callback, only if it changed.
-    /// Call this from parent when you want to trigger the on_change.
-    pub fn apply_if_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.selected_range != self.value_on_open {
-            (self.on_change)(self.selected_range, window, cx);
-        }
     }
 
     /// Apply the current filter value via callback.
@@ -183,7 +216,19 @@ impl DateRangeFilter {
 }
 
 fn format_date(date: NaiveDate) -> String {
-    date.format("%b %d, %Y").to_string()
+    date_display::format_date(date)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_date;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn formats_dates_with_icu4x() {
+        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
+        assert_eq!(format_date(date), "Jan 31, 2026");
+    }
 }
 
 impl Render for DateRangeFilter {
@@ -194,12 +239,14 @@ impl Render for DateRangeFilter {
         let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let trigger_style = self.trigger_style.clone();
         let popover_style = self.popover_style.clone();
         let calendar_style = self.calendar_style.clone();
         let clear_button_style = self.clear_button_style.clone();
-        let calendar = self.calendar.clone().unwrap();
+        let Some(calendar) = self.calendar.clone() else {
+            return div().into_any_element();
+        };
 
         // Icon: CircleX when has value (to clear), Calendar otherwise
         let trigger_icon = if has_value {
@@ -228,26 +275,14 @@ impl Render for DateRangeFilter {
                     })
                     .child(Icon::new(trigger_icon).xsmall()),
             )
-            .child(title.clone())
+            .child(title)
             .when(has_value, |b| {
                 b.child(Divider::vertical().h(px(16.)).mx_1())
                     .child(range_display)
             });
 
-        let apply_view = view.clone();
         Popover::new("date-range-popover")
             .trigger(trigger)
-            .on_open_change(move |open, window, cx| {
-                apply_view.update(cx, |this, cx| {
-                    if *open {
-                        // Record the value when popover opens
-                        this.on_popover_open();
-                    } else {
-                        // When popover closes, apply only if value changed
-                        this.apply_if_changed(window, cx);
-                    }
-                });
-            })
             .content(move |_, _window, _cx| {
                 let clear_view_inner = view.clone();
                 v_flex()
@@ -277,6 +312,7 @@ impl Render for DateRangeFilter {
                         )
                     })
             })
+            .into_any_element()
     }
 }
 

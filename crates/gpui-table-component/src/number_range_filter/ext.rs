@@ -62,26 +62,7 @@ impl NumberRangeFilterExt for Entity<NumberRangeFilter> {
                 this.max = Some(current_max.clamp(min, max));
             }
             if let Some(slider) = &this.slider_state {
-                let range_min = min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
-                let range_max = max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
-                let current_min = this
-                    .min
-                    .and_then(|d| d.to_f32())
-                    .unwrap_or(range_min)
-                    .clamp(range_min, range_max);
-                let current_max = this
-                    .max
-                    .and_then(|d| d.to_f32())
-                    .unwrap_or(range_max)
-                    .clamp(range_min, range_max);
-                slider.update(cx, |state, cx| {
-                    *state = SliderState::new()
-                        .min(range_min)
-                        .max(range_max)
-                        .step(DEFAULT_SLIDER_STEP_F32)
-                        .default_value(current_min..current_max);
-                    cx.notify();
-                });
+                this.sync_slider_state(slider, cx);
             }
         });
         self

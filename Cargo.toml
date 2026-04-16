@@ -1,11 +1,13 @@
 [workspace]
-default-members = ["examples/some-lib-tables"]
+default-members = [ "examples/some-lib-tables" ]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-component",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
   "crates/gpui-table-prototyping-core",
+  "crates/gpui-table-runtime",
+  "crates/gpui-table-schema",
   "examples/prototyping",
   "examples/some-lib",
   "examples/some-lib-tables",
@@ -34,14 +36,15 @@ es-fluent-manager-embedded = "0.14"
 fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "15d8660748b508b3525d3403e5d172f1a557bfa5" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
-gpui-form-component = { git = "https://github.com/stayhydated/gpui-form" }
 gpui-router = { branch = "git", git = "https://github.com/stayhydated/gpui-router" }
 gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
-gpui-table-component = { path = "crates/gpui-table-component", version = "0.5.0" }
-gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }
+gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
+gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
+gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.5.0" }
+gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.5.0" }
 gpui_platform = { features = [
   "font-kit",
   "x11",
@@ -83,10 +86,17 @@ unexpected_cfgs = { level = "deny" }
 
 [workspace.lints.clippy]
 dbg_macro = "deny"
+derive_partial_eq_without_eq = "warn"
+err_expect = "warn"
+incompatible_msrv = "deny"
+iter_on_single_items = "warn"
+needless_bool = "warn"
+redundant_clone = "warn"
 todo = "deny"
 type_complexity = "allow"
 uninlined_format_args = "allow"
 unused_trait_names = "warn"
+useless_conversion = "warn"
 
 [profile.dev]
 codegen-units = 16

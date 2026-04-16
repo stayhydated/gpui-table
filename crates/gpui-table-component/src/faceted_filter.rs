@@ -145,8 +145,8 @@ impl<T: FilterValue> FacetedFilterExt for Entity<FacetedFilter<T>> {
 impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
     type Value = HashSet<T>;
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::Faceted;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::Faceted;
 
     fn new(
         title: impl Into<String>,
@@ -155,11 +155,28 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
+        Self::new_inner(
+            Rc::new(move || title.clone()),
+            Rc::new(Vec::new),
+            value,
+            Rc::new(on_change),
+            cx,
+        )
+    }
+}
 
+impl<T: FilterValue> FacetedFilter<T> {
+    fn new_inner(
+        title: Rc<dyn Fn() -> String>,
+        options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
+        selected_values: HashSet<T>,
+        on_change: Rc<dyn Fn(HashSet<T>, &mut Window, &mut App) + 'static>,
+        cx: &mut App,
+    ) -> Entity<Self> {
         cx.new(|_cx| Self {
-            title: Rc::new(move || title.clone()),
-            options: Rc::new(Vec::new),
-            selected_values: value,
+            title,
+            options,
+            selected_values,
             trigger_style: StyleRefinement::default(),
             selected_tag_style: StyleRefinement::default(),
             popover_style: StyleRefinement::default(),
@@ -168,14 +185,29 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
             option_button_style: StyleRefinement::default(),
             clear_button_style: StyleRefinement::default(),
             search_state: None,
-            on_change: Rc::new(on_change),
+            on_change,
             show_search: false,
             _marker: PhantomData,
         })
     }
-}
 
-impl<T: FilterValue> FacetedFilter<T> {
+    /// Create a faceted filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        selected_values: HashSet<T>,
+        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_inner(
+            Rc::new(move || title.clone()),
+            Rc::new(Vec::new),
+            selected_values,
+            Rc::new(on_change),
+            cx,
+        )
+    }
+
     fn ensure_search_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.search_state.is_none() {
             let input = cx.new(|cx| {
@@ -287,22 +319,13 @@ impl<T: Filterable> FacetedFilter<T> {
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(T::options),
+        Self::new_inner(
+            Rc::new(title),
+            Rc::new(T::options),
             selected_values,
-            trigger_style: StyleRefinement::default(),
-            selected_tag_style: StyleRefinement::default(),
-            popover_style: StyleRefinement::default(),
-            search_input_style: StyleRefinement::default(),
-            options_list_style: StyleRefinement::default(),
-            option_button_style: StyleRefinement::default(),
-            clear_button_style: StyleRefinement::default(),
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-            _marker: PhantomData,
-        })
+            Rc::new(on_change),
+            cx,
+        )
     }
 
     /// Create a faceted filter with options.
@@ -316,22 +339,13 @@ impl<T: Filterable> FacetedFilter<T> {
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(options),
+        Self::new_inner(
+            Rc::new(title),
+            Rc::new(options),
             selected_values,
-            trigger_style: StyleRefinement::default(),
-            selected_tag_style: StyleRefinement::default(),
-            popover_style: StyleRefinement::default(),
-            search_input_style: StyleRefinement::default(),
-            options_list_style: StyleRefinement::default(),
-            option_button_style: StyleRefinement::default(),
-            clear_button_style: StyleRefinement::default(),
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-            _marker: PhantomData,
-        })
+            Rc::new(on_change),
+            cx,
+        )
     }
 }
 
@@ -350,7 +364,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
         let has_selection = selected_count > 0;
         let selected_labels = self.get_selected_labels();
 
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let options_fn = self.options.clone();
         let trigger_style = self.trigger_style.clone();
         let selected_tag_style = self.selected_tag_style.clone();
@@ -493,8 +507,11 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                                             .checked(is_selected),
                                                     )
                                                     .when_some(icon, |this, icon_name| {
+                                                        let icon_path =
+                                                            icon_name.path().to_string();
                                                         this.child(
-                                                            Icon::new(icon_name)
+                                                            Icon::default()
+                                                                .path(icon_path)
                                                                 .xsmall()
                                                                 .text_color(
                                                                     cx.theme().muted_foreground,
@@ -503,41 +520,37 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                                     })
                                                     .child(label),
                                             )
-                                            .on_click({
-                                                let view = view.clone();
-                                                let val_str = val_str.clone();
-                                                move |_, window, cx| {
-                                                    view.update(cx, |this, cx| {
-                                                        let is_currently_selected =
-                                                            this.is_selected(&val_str);
-                                                        if is_currently_selected {
-                                                            this.selected_values.retain(|v| {
-                                                                v.to_filter_string() != val_str
-                                                            });
-                                                            (this.on_change)(
-                                                                this.selected_values.clone(),
-                                                                window,
-                                                                cx,
-                                                            );
-                                                            cx.notify();
-                                                        } else if let Some(typed_val) =
-                                                            T::from_filter_string(&val_str)
-                                                        {
-                                                            this.toggle_option(
-                                                                typed_val, true, window, cx,
-                                                            );
-                                                        }
-                                                    });
-                                                }
+                                            .on_click(move |_, window, cx| {
+                                                view.update(cx, |this, cx| {
+                                                    let is_currently_selected =
+                                                        this.is_selected(&val_str);
+                                                    if is_currently_selected {
+                                                        this.selected_values.retain(|v| {
+                                                            v.to_filter_string() != val_str
+                                                        });
+                                                        (this.on_change)(
+                                                            this.selected_values.clone(),
+                                                            window,
+                                                            cx,
+                                                        );
+                                                        cx.notify();
+                                                    } else if let Some(typed_val) =
+                                                        T::from_filter_string(&val_str)
+                                                    {
+                                                        this.toggle_option(
+                                                            typed_val, true, window, cx,
+                                                        );
+                                                    }
+                                                });
                                             }),
                                     )
-                                    .when(count.is_some(), |d| {
+                                    .when_some(count, |d, count| {
                                         d.child(
                                             div()
                                                 .text_xs()
                                                 .font_family("monospace")
                                                 .text_color(cx.theme().muted_foreground)
-                                                .child(count.unwrap().to_string()),
+                                                .child(count.to_string()),
                                         )
                                     })
                             }))
