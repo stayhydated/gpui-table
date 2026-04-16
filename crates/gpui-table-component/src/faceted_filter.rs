@@ -155,38 +155,27 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-
-        cx.new(|_cx| Self {
-            title: Rc::new(move || title.clone()),
-            options: Rc::new(Vec::new),
-            selected_values: value,
-            trigger_style: StyleRefinement::default(),
-            selected_tag_style: StyleRefinement::default(),
-            popover_style: StyleRefinement::default(),
-            search_input_style: StyleRefinement::default(),
-            options_list_style: StyleRefinement::default(),
-            option_button_style: StyleRefinement::default(),
-            clear_button_style: StyleRefinement::default(),
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-            _marker: PhantomData,
-        })
+        Self::new_inner(
+            Rc::new(move || title.clone()),
+            Rc::new(Vec::new),
+            value,
+            Rc::new(on_change),
+            cx,
+        )
     }
 }
 
 impl<T: FilterValue> FacetedFilter<T> {
-    /// Create a faceted filter with a fixed title.
-    pub fn new(
-        title: impl Into<String>,
+    fn new_inner(
+        title: Rc<dyn Fn() -> String>,
+        options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
         selected_values: HashSet<T>,
-        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        on_change: Rc<dyn Fn(HashSet<T>, &mut Window, &mut App) + 'static>,
         cx: &mut App,
     ) -> Entity<Self> {
-        let title = title.into();
         cx.new(|_cx| Self {
-            title: Rc::new(move || title.clone()),
-            options: Rc::new(Vec::new),
+            title,
+            options,
             selected_values,
             trigger_style: StyleRefinement::default(),
             selected_tag_style: StyleRefinement::default(),
@@ -196,10 +185,27 @@ impl<T: FilterValue> FacetedFilter<T> {
             option_button_style: StyleRefinement::default(),
             clear_button_style: StyleRefinement::default(),
             search_state: None,
-            on_change: Rc::new(on_change),
+            on_change,
             show_search: false,
             _marker: PhantomData,
         })
+    }
+
+    /// Create a faceted filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        selected_values: HashSet<T>,
+        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_inner(
+            Rc::new(move || title.clone()),
+            Rc::new(Vec::new),
+            selected_values,
+            Rc::new(on_change),
+            cx,
+        )
     }
 
     fn ensure_search_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
@@ -313,22 +319,13 @@ impl<T: Filterable> FacetedFilter<T> {
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(T::options),
+        Self::new_inner(
+            Rc::new(title),
+            Rc::new(T::options),
             selected_values,
-            trigger_style: StyleRefinement::default(),
-            selected_tag_style: StyleRefinement::default(),
-            popover_style: StyleRefinement::default(),
-            search_input_style: StyleRefinement::default(),
-            options_list_style: StyleRefinement::default(),
-            option_button_style: StyleRefinement::default(),
-            clear_button_style: StyleRefinement::default(),
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-            _marker: PhantomData,
-        })
+            Rc::new(on_change),
+            cx,
+        )
     }
 
     /// Create a faceted filter with options.
@@ -342,22 +339,13 @@ impl<T: Filterable> FacetedFilter<T> {
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        cx.new(|_cx| Self {
-            title: Rc::new(title),
-            options: Rc::new(options),
+        Self::new_inner(
+            Rc::new(title),
+            Rc::new(options),
             selected_values,
-            trigger_style: StyleRefinement::default(),
-            selected_tag_style: StyleRefinement::default(),
-            popover_style: StyleRefinement::default(),
-            search_input_style: StyleRefinement::default(),
-            options_list_style: StyleRefinement::default(),
-            option_button_style: StyleRefinement::default(),
-            clear_button_style: StyleRefinement::default(),
-            search_state: None,
-            on_change: Rc::new(on_change),
-            show_search: false,
-            _marker: PhantomData,
-        })
+            Rc::new(on_change),
+            cx,
+        )
     }
 }
 

@@ -4,7 +4,7 @@ use quote::{format_ident, quote};
 use thiserror::Error;
 
 use crate::{
-    identities::{ShapeIdentities, TableIdentities, TableIdentitiesExt},
+    identities::{ShapeIdentities, TableIdentities, TableIdentitiesExt, parse_ident},
     imports::{Alias, ImportItem, ImportSet},
     source_path::source_path_to_use_path,
 };
@@ -118,8 +118,8 @@ impl<'a> TableShapeAdapter<'a> {
     /// Fallible version of [`TableShapeAdapter::parts`] for user-facing tooling.
     pub fn try_parts(&self) -> Result<TableParts, TableCodegenError> {
         let struct_name_ident = self.identities.try_struct_name_ident()?;
-        let story_struct_ident = self.identities.story_struct_ident();
-        let delegate_struct_ident = self.identities.delegate_struct_ident();
+        let story_struct_ident = Self::story_struct_ident(&struct_name_ident);
+        let delegate_struct_ident = Self::delegate_struct_ident(&struct_name_ident);
 
         let source_module_path =
             source_path_to_use_path(self.shape.source_path).ok_or_else(|| {
@@ -137,12 +137,12 @@ impl<'a> TableShapeAdapter<'a> {
             #collected_imports
         };
 
-        let delegate_creation = self.delegate_creation();
-        let table_state_creation = self.table_state_creation();
+        let delegate_creation = Self::delegate_creation_tokens(&delegate_struct_ident);
+        let table_state_creation = self.table_state_creation_tokens(&struct_name_ident);
         let field_initializers = self.field_initializers();
-        let struct_fields = self.struct_fields();
-        let render_children = self.render_children();
-        let title_expr = self.title_expr();
+        let struct_fields = self.struct_fields_tokens(&struct_name_ident, &delegate_struct_ident);
+        let render_children = self.try_render_children()?;
+        let title_expr = Self::title_expr_tokens(&struct_name_ident);
 
         Ok(TableParts {
             struct_name_ident,
@@ -189,6 +189,155 @@ impl<'a> TableShapeAdapter<'a> {
     ) -> Result<syn::File, TableCodegenError> {
         let parts = self.try_parts()?;
         Ok(layout.generate_file(&parts))
+    }
+
+    fn story_struct_ident(struct_name_ident: &syn::Ident) -> syn::Ident {
+        format_ident!("{}TableStory", struct_name_ident)
+    }
+
+    fn delegate_struct_ident(struct_name_ident: &syn::Ident) -> syn::Ident {
+        format_ident!("{}TableDelegate", struct_name_ident)
+    }
+
+    fn filter_entities_ident(struct_name_ident: &syn::Ident) -> syn::Ident {
+        format_ident!("{}FilterEntities", struct_name_ident)
+    }
+
+    fn delegate_creation_tokens(delegate_struct_ident: &syn::Ident) -> TokenStream {
+        quote! {
+            let delegate = #delegate_struct_ident::new(vec![]);
+        }
+    }
+
+    fn table_state_creation_tokens(&self, struct_name_ident: &syn::Ident) -> TokenStream {
+        let has_filters = self.identities.has_filters();
+        let load_more = self.shape.load_more;
+
+        if has_filters {
+            let filter_entities_ident = Self::filter_entities_ident(struct_name_ident);
+
+            if load_more {
+                quote! {
+                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                    let filters =
+                        #filter_entities_ident::build_for_table_loader(table.clone(), window, cx);
+
+                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+                }
+            } else {
+                quote! {
+                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                    let filters = #filter_entities_ident::build_for_table(table.clone(), cx);
+
+                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+                }
+            }
+        } else if load_more {
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                // Trigger initial data load
+                table.update(cx, |table, cx| {
+                    use gpui_table::runtime::TableDataLoader as _;
+                    table.delegate_mut().load_data(window, cx);
+                });
+
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+            }
+        } else {
+            quote! {
+                let table = cx.new(|cx| TableState::new(delegate, window, cx));
+
+                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
+            }
+        }
+    }
+
+    fn struct_fields_tokens(
+        &self,
+        struct_name_ident: &syn::Ident,
+        delegate_struct_ident: &syn::Ident,
+    ) -> TokenStream {
+        if self.identities.has_filters() {
+            let filter_entities_ident = Self::filter_entities_ident(struct_name_ident);
+
+            quote! {
+                table: Entity<TableState<#delegate_struct_ident>>,
+                filters: #filter_entities_ident,
+                _subscription: Subscription,
+            }
+        } else {
+            quote! {
+                table: Entity<TableState<#delegate_struct_ident>>,
+                _subscription: Subscription,
+            }
+        }
+    }
+
+    fn try_render_children(&self) -> Result<TokenStream, TableCodegenError> {
+        let has_filters = self.identities.has_filters();
+
+        let filter_views = if has_filters {
+            if self.use_filter_helpers {
+                quote! {
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .flex_wrap()
+                            .child(self.filters.all_filters())
+                    )
+                }
+            } else {
+                let filter_field_idents = self
+                    .shape
+                    .filters
+                    .iter()
+                    .map(|filter| {
+                        parse_ident(
+                            "filter field identifier",
+                            self.shape.struct_name,
+                            filter.field_name.to_string(),
+                        )
+                    })
+                    .collect::<Result<Vec<_>, _>>()?;
+                let views: Vec<_> = filter_field_idents
+                    .iter()
+                    .map(|field_ident| quote! { .child(self.filters.#field_ident.clone()) })
+                    .collect();
+                quote! {
+                    .child(
+                        h_flex()
+                            .gap_2()
+                            .flex_wrap()
+                            #(#views)*
+                    )
+                }
+            }
+        } else {
+            quote! {}
+        };
+
+        Ok(quote! {
+            #filter_views
+            .child(gpui_table::runtime::generated_filters::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
+            .child(
+                DataTable::new(&self.table)
+                    .stripe(true)
+                    .scrollbar_visible(true, true)
+            )
+        })
+    }
+
+    fn title_expr_tokens(struct_name_ident: &syn::Ident) -> TokenStream {
+        quote! {
+            #struct_name_ident::this_ftl()
+        }
     }
 }
 
@@ -247,58 +396,11 @@ pub trait TableLayout {
 
 impl TableShape for TableShapeAdapter<'_> {
     fn delegate_creation(&self) -> TokenStream {
-        let delegate_struct_ident = self.identities.delegate_struct_ident();
-
-        quote! {
-            let delegate = #delegate_struct_ident::new(vec![]);
-        }
+        Self::delegate_creation_tokens(&self.identities.delegate_struct_ident())
     }
 
     fn table_state_creation(&self) -> TokenStream {
-        let has_filters = self.identities.has_filters();
-        let load_more = self.shape.load_more;
-
-        if has_filters {
-            let struct_name_ident = self.identities.struct_name_ident();
-            let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
-
-            if load_more {
-                quote! {
-                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                    let filters =
-                        #filter_entities_ident::build_for_table_loader(table.clone(), window, cx);
-
-                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-                }
-            } else {
-                quote! {
-                    let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                    let filters = #filter_entities_ident::build_for_table(table.clone(), cx);
-
-                    let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-                }
-            }
-        } else if load_more {
-            quote! {
-                let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                // Trigger initial data load
-                table.update(cx, |table, cx| {
-                    use gpui_table::runtime::TableDataLoader as _;
-                    table.delegate_mut().load_data(window, cx);
-                });
-
-                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-            }
-        } else {
-            quote! {
-                let table = cx.new(|cx| TableState::new(delegate, window, cx));
-
-                let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-            }
-        }
+        Self::table_state_creation_tokens(self, &self.identities.struct_name_ident())
     }
 
     fn field_initializers(&self) -> TokenStream {
@@ -317,79 +419,52 @@ impl TableShape for TableShapeAdapter<'_> {
     }
 
     fn struct_fields(&self) -> TokenStream {
-        let delegate_struct_ident = self.identities.delegate_struct_ident();
-
-        if self.identities.has_filters() {
-            let struct_name_ident = self.identities.struct_name_ident();
-            let filter_entities_ident = format_ident!("{}FilterEntities", struct_name_ident);
-
-            quote! {
-                table: Entity<TableState<#delegate_struct_ident>>,
-                filters: #filter_entities_ident,
-                _subscription: Subscription,
-            }
-        } else {
-            quote! {
-                table: Entity<TableState<#delegate_struct_ident>>,
-                _subscription: Subscription,
-            }
-        }
+        Self::struct_fields_tokens(
+            self,
+            &self.identities.struct_name_ident(),
+            &self.identities.delegate_struct_ident(),
+        )
     }
 
     fn render_children(&self) -> TokenStream {
-        let has_filters = self.identities.has_filters();
-
-        let filter_views = if has_filters {
-            if self.use_filter_helpers {
-                // Use all_filters() helper method for cleaner code
-                quote! {
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .flex_wrap()
-                            .child(self.filters.all_filters())
-                    )
-                }
-            } else {
-                // Manually list each filter entity
-                let mut views = quote! {};
-                for filter in self.shape.filters {
-                    let field_ident = format_ident!("{}", filter.field_name);
-                    views.extend(quote! { .child(self.filters.#field_ident.clone()) });
-                }
-                quote! {
-                    .child(
-                        h_flex()
-                            .gap_2()
-                            .flex_wrap()
-                            #views
-                    )
-                }
-            }
-        } else {
-            quote! {}
-        };
-
-        quote! {
-            #filter_views
-            .child(gpui_table::runtime::generated_filters::TableStatusBar::new(
-                delegate.rows.len(),
-                delegate.loading,
-                delegate.eof,
-            ))
-            .child(
-                DataTable::new(&self.table)
-                    .stripe(true)
-                    .scrollbar_visible(true, true)
-            )
-        }
+        self.try_render_children()
+            .expect("valid filter field identifiers in gpui-table shape metadata")
     }
 
     fn title_expr(&self) -> TokenStream {
-        let struct_name_ident = self.identities.struct_name_ident();
+        Self::title_expr_tokens(&self.identities.struct_name_ident())
+    }
+}
 
-        quote! {
-            #struct_name_ident::this_ftl()
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui_table_schema::registry::{FilterVariant, RegistryFilterType};
+
+    #[test]
+    fn try_parts_rejects_invalid_manual_filter_field_identifiers() {
+        static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
+            "invalid field",
+            RegistryFilterType::Text,
+        )];
+
+        let shape = GpuiTableShape::new(
+            "User",
+            "users",
+            "Users",
+            &[],
+            &FILTERS,
+            false,
+            "demo-crate/src/user.rs",
+        );
+
+        match TableShapeAdapter::new(&shape, false).try_parts() {
+            Err(TableCodegenError::InvalidIdentifier {
+                kind: "filter field identifier",
+                ..
+            }) => {},
+            Err(other) => panic!("unexpected error: {other}"),
+            Ok(_) => panic!("invalid filter field name should be rejected"),
         }
     }
 }

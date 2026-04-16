@@ -31,6 +31,8 @@ status bar. These components are used by the generated filter entities when
   - Calendar-based date range picker
   - Formats displayed dates by converting `chrono::NaiveDate` values through
     `jiff` and ICU4X so trigger text matches runtime cell rendering
+  - Commits selection changes directly from the calendar instead of re-applying
+    the same value when the popover closes
 - `reset_filters.rs`
   - Localized reset button for clearing all generated filters
 - `table_status_bar.rs`
@@ -42,12 +44,16 @@ status bar. These components are used by the generated filter entities when
    components through `gpui_table::runtime::generated_filters`, which re-exports
    this crate as the stable runtime target.
 1. Each filter component calls the provided `on_change` callback with its value.
+   `DateRangeFilter` does this on calendar selection changes; it does not emit a
+   second callback on popover close.
 1. `ResetFilters` triggers generated reset bindings that clear all filters in one action.
 1. Consumers read all filter values via `FilterEntitiesExt::read_values` and
    apply them client-side or pass them into load-more requests.
 1. `QueryFilterValue` supports both raw component values and the generated
    wrapper types from `gpui-table-core::filter`, so server-side loaders can
    serialize either representation directly.
+   Faceted-value query strings are normalized into sorted comma-separated output
+   so equivalent selections serialize deterministically.
 
 ## Extension points
 

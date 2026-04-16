@@ -12,7 +12,7 @@ layer.
 - `code_gen.rs`: adapts `GpuiTableShape` into a `TableShape` and orchestrates code generation.
   Key public API:
   - `TableShapeAdapter::parts() -> TableParts` — all pre-computed fragments + identifiers.
-  - `TableShapeAdapter::try_parts() -> Result<TableParts, TableCodegenError>` — fallible version for user-facing tooling.
+  - `TableShapeAdapter::try_parts() -> Result<TableParts, TableCodegenError>` — fallible version for user-facing tooling that validates generated identifiers before assembling token streams.
   - `TableShapeAdapter::generate_file(layout: &impl TableLayout) -> syn::File` — generate using a caller-supplied layout.
   - `TableShapeAdapter::try_generate_file(layout: &impl TableLayout) -> Result<syn::File, TableCodegenError>` — fallible version for user-facing tooling.
   - `TableLayout` trait — implement to control the entire generated file shape.
@@ -27,7 +27,7 @@ layer.
 1. A consumer (see `examples/prototyping`) iterates over `inventory::iter::<GpuiTableShape>()`.
 1. `TableShapeAdapter::new(shape, true).try_generate_file(&layout)` is the recommended entry point for user-facing tooling — it returns a ready-to-format `syn::File` or a structured `TableCodegenError`.
    Internally it:
-   - Derives all identifiers from `GpuiTableShape` via `TableIdentities`.
+   - Derives and validates all identifiers from `GpuiTableShape` via `TableIdentities`.
    - Converts `shape.source_path` to a glob `use` path via `source_path_to_use_path`.
    - Calls `required_imports()` to build the minimal deduplicated import set.
    - Assembles all code fragments into `TableParts`.
@@ -45,6 +45,9 @@ layer.
 The older `parts()` / `generate_file()` helpers remain as convenience wrappers
 for trusted metadata, but they intentionally panic on malformed shapes; prefer
 the `try_*` variants in generators and CLIs.
+Those `try_*` variants now validate manual filter field references too, so
+invalid shape metadata surfaces as `TableCodegenError` instead of panicking
+during token assembly.
 
 ## Import design
 

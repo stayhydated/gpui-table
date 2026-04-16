@@ -56,8 +56,6 @@ mod date_display {
 pub struct DateRangeFilter {
     title: Rc<dyn Fn() -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
-    /// Value when the popover was opened, used to detect changes
-    value_on_open: (Option<NaiveDate>, Option<NaiveDate>),
     trigger_style: StyleRefinement,
     popover_style: StyleRefinement,
     calendar_style: StyleRefinement,
@@ -105,7 +103,6 @@ impl DateRangeFilter {
         cx.new(|_cx| Self {
             title,
             selected_range: value,
-            value_on_open: value,
             trigger_style: StyleRefinement::default(),
             popover_style: StyleRefinement::default(),
             calendar_style: StyleRefinement::default(),
@@ -158,7 +155,6 @@ impl DateRangeFilter {
 
     fn reset_inner(&mut self, notify_change: bool, window: &mut Window, cx: &mut Context<Self>) {
         self.selected_range = (None, None);
-        self.value_on_open = (None, None);
 
         if let Some(calendar) = &self.calendar {
             calendar.update(cx, |cal, cx| {
@@ -179,19 +175,6 @@ impl DateRangeFilter {
 
     fn has_value(&self) -> bool {
         self.selected_range.0.is_some() || self.selected_range.1.is_some()
-    }
-
-    /// Record the current value when popover opens.
-    fn on_popover_open(&mut self) {
-        self.value_on_open = self.selected_range;
-    }
-
-    /// Apply the current filter value via callback, only if it changed.
-    /// Call this from parent when you want to trigger the on_change.
-    pub fn apply_if_changed(&mut self, window: &mut Window, cx: &mut Context<Self>) {
-        if self.selected_range != self.value_on_open {
-            (self.on_change)(self.selected_range, window, cx);
-        }
     }
 
     /// Apply the current filter value via callback.
@@ -296,20 +279,8 @@ impl Render for DateRangeFilter {
                     .child(range_display)
             });
 
-        let apply_view = view.clone();
         Popover::new("date-range-popover")
             .trigger(trigger)
-            .on_open_change(move |open, window, cx| {
-                apply_view.update(cx, |this, cx| {
-                    if *open {
-                        // Record the value when popover opens
-                        this.on_popover_open();
-                    } else {
-                        // When popover closes, apply only if value changed
-                        this.apply_if_changed(window, cx);
-                    }
-                });
-            })
             .content(move |_, _window, _cx| {
                 let clear_view_inner = view.clone();
                 v_flex()

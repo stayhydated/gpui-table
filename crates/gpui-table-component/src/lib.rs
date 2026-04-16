@@ -83,6 +83,19 @@ where
     }
 }
 
+fn sorted_query_values<I>(values: I) -> Option<String>
+where
+    I: IntoIterator<Item = String>,
+{
+    let mut values = values.into_iter().collect::<Vec<_>>();
+    if values.is_empty() {
+        None
+    } else {
+        values.sort();
+        Some(values.join(","))
+    }
+}
+
 impl QueryFilterValue for String {
     fn is_empty(&self) -> bool {
         String::is_empty(self)
@@ -103,11 +116,7 @@ impl QueryFilterValue for HashSet<String> {
     }
 
     fn to_query_string(&self) -> Option<String> {
-        if self.is_empty() {
-            None
-        } else {
-            Some(self.iter().cloned().collect::<Vec<_>>().join(","))
-        }
+        sorted_query_values(self.iter().cloned())
     }
 }
 
@@ -188,17 +197,7 @@ where
     }
 
     fn to_query_string(&self) -> Option<String> {
-        if self.0.is_empty() {
-            None
-        } else {
-            let mut values = self
-                .0
-                .iter()
-                .map(FilterValue::to_filter_string)
-                .collect::<Vec<_>>();
-            values.sort();
-            Some(values.join(","))
-        }
+        sorted_query_values(self.0.iter().map(FilterValue::to_filter_string))
     }
 }
 
@@ -257,6 +256,12 @@ mod tests {
     #[test]
     fn faceted_values_serialize_with_filter_value_strings() {
         let values = FacetedValue::from(HashSet::from([Status::Pending, Status::Active]));
+        assert_eq!(values.to_query_string(), Some("active,pending".into()));
+    }
+
+    #[test]
+    fn raw_hash_sets_serialize_in_stable_order() {
+        let values = HashSet::from(["pending".to_string(), "active".to_string()]);
         assert_eq!(values.to_query_string(), Some("active,pending".into()));
     }
 

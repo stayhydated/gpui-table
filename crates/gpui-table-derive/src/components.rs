@@ -1,7 +1,5 @@
 use darling::{Error as DarlingError, FromMeta};
-use quote::ToTokens as _;
-#[cfg(feature = "rust_decimal")]
-use quote::quote;
+use quote::{ToTokens as _, quote};
 use syn::{Expr, Lit, Path, UnOp, spanned::Spanned as _};
 
 /// Built-in text validation modes
@@ -237,6 +235,128 @@ impl FilterComponents {
 
     pub(crate) fn render_group(&self) -> FilterRenderGroup {
         self.kind().render_group()
+    }
+
+    pub(crate) fn component_type_tokens(
+        &self,
+        field_ty: Option<&syn::Type>,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => {
+                quote! { gpui_table::runtime::generated_filters::text_filter::TextFilter }
+            },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilter }
+            },
+            Self::DateRange(_) => {
+                quote! { gpui_table::runtime::generated_filters::date_range_filter::DateRangeFilter }
+            },
+            Self::Faceted(_) => {
+                if let Some(ty) = field_ty {
+                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#ty> }
+                } else {
+                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
+                }
+            },
+            Self::InfiniteFaceted(_) => {
+                if let Some(ty) = field_ty {
+                    quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
+                } else {
+                    quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
+                }
+            },
+        }
+    }
+
+    #[cfg(feature = "inventory")]
+    pub(crate) fn registry_filter_type_tokens(&self) -> proc_macro2::TokenStream {
+        match self.kind() {
+            FilterKind::Text => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::Text }
+            },
+            FilterKind::NumberRange => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::NumberRange }
+            },
+            FilterKind::DateRange => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::DateRange }
+            },
+            FilterKind::Faceted => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
+            },
+            FilterKind::InfiniteFaceted => {
+                quote! { gpui_table::schema::registry::RegistryFilterType::InfiniteFaceted }
+            },
+        }
+    }
+
+    pub(crate) fn runtime_filter_type_expr(
+        &self,
+        field_ty: &syn::Type,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::FilterType::Text },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::core::filter::FilterType::NumberRange }
+            },
+            Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::FilterType::DateRange }
+            },
+            Self::Faceted(_) => {
+                quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
+            },
+            Self::InfiniteFaceted(_) => {
+                quote! { gpui_table::core::filter::FilterType::InfiniteFaceted }
+            },
+        }
+    }
+
+    pub(crate) fn raw_value_type_tokens(&self, field_ty: &syn::Type) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { String },
+            Self::NumberRange(_) => {
+                quote! { (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) }
+            },
+            Self::Faceted(_) => quote! { std::collections::HashSet<#field_ty> },
+            Self::InfiniteFaceted(_) => quote! { Option<#field_ty> },
+            Self::DateRange(_) => {
+                quote! { (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) }
+            },
+        }
+    }
+
+    pub(crate) fn generated_value_type_tokens(
+        &self,
+        field_ty: &syn::Type,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::TextValue },
+            Self::NumberRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
+            },
+            Self::Faceted(_) => quote! { gpui_table::core::filter::FacetedValue<#field_ty> },
+            Self::InfiniteFaceted(_) => quote! { gpui_table::core::filter::SingleValue<#field_ty> },
+            Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
+            },
+        }
+    }
+
+    pub(crate) fn wrap_raw_value_expr(
+        &self,
+        raw_value_expr: proc_macro2::TokenStream,
+    ) -> proc_macro2::TokenStream {
+        match self {
+            Self::Text(_) => quote! { gpui_table::core::filter::TextValue::from(#raw_value_expr) },
+            Self::NumberRange(_) | Self::DateRange(_) => {
+                quote! { gpui_table::core::filter::RangeValue::from(#raw_value_expr) }
+            },
+            Self::Faceted(_) => {
+                quote! { gpui_table::core::filter::FacetedValue::from(#raw_value_expr) }
+            },
+            Self::InfiniteFaceted(_) => {
+                quote! { gpui_table::core::filter::SingleValue::from(#raw_value_expr) }
+            },
+        }
     }
 }
 

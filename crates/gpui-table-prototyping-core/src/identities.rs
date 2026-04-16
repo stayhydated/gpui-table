@@ -118,7 +118,7 @@ impl TableIdentities for ShapeIdentities<'_> {
     }
 }
 
-fn parse_ident(
+pub(crate) fn parse_ident(
     kind: &'static str,
     struct_name: &'static str,
     value: String,

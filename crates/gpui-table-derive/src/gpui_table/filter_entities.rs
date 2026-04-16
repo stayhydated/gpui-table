@@ -86,49 +86,23 @@ pub(super) fn generate_filter_entities(
                 field_ident,
                 f.filter_config.kind_label()
             );
-
-            match &f.filter_config {
-                FilterComponents::Text(_) => {
-                    quote! {
-                        #[doc = #getter_doc]
-                        pub fn #getter_name(&self, cx: &#App) -> String {
-                            self.#field_ident.read(cx).value().to_string()
-                        }
-                    }
-                }
-                FilterComponents::NumberRange(_) => {
-                    quote! {
-                        #[doc = #getter_doc]
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
-                }
+            let raw_value_type = f.filter_config.raw_value_type_tokens(&f.field_type);
+            let raw_value_expr = match &f.filter_config {
+                FilterComponents::Text(_) => quote! { self.#field_ident.read(cx).value().to_string() },
+                FilterComponents::NumberRange(_)
+                | FilterComponents::InfiniteFaceted(_)
+                | FilterComponents::DateRange(_) => {
+                    quote! { self.#field_ident.read(cx).value() }
+                },
                 FilterComponents::Faceted(_) => {
-                    let field_type = &f.field_type;
-                    quote! {
-                        #[doc = #getter_doc]
-                        pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<#field_type> {
-                            self.#field_ident.read(cx).value().clone()
-                        }
-                    }
-                }
-                FilterComponents::InfiniteFaceted(_) => {
-                    let field_type = &f.field_type;
-                    quote! {
-                        #[doc = #getter_doc]
-                        pub fn #getter_name(&self, cx: &#App) -> Option<#field_type> {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
-                }
-                FilterComponents::DateRange(_) => {
-                    quote! {
-                        #[doc = #getter_doc]
-                        pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) {
-                            self.#field_ident.read(cx).value()
-                        }
-                    }
+                    quote! { self.#field_ident.read(cx).value().clone() }
+                },
+            };
+
+            quote! {
+                #[doc = #getter_doc]
+                pub fn #getter_name(&self, cx: &#App) -> #raw_value_type {
+                    #raw_value_expr
                 }
             }
         })
@@ -163,23 +137,7 @@ pub(super) fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let value_type = match &f.filter_config {
-                FilterComponents::Text(_) => quote! { gpui_table::core::filter::TextValue },
-                FilterComponents::NumberRange(_) => {
-                    quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
-                },
-                FilterComponents::Faceted(_) => {
-                    let ty = &f.field_type;
-                    quote! { gpui_table::core::filter::FacetedValue<#ty> }
-                },
-                FilterComponents::InfiniteFaceted(_) => {
-                    let ty = &f.field_type;
-                    quote! { gpui_table::core::filter::SingleValue<#ty> }
-                },
-                FilterComponents::DateRange(_) => {
-                    quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
-                },
-            };
+            let value_type = f.filter_config.generated_value_type_tokens(&f.field_type);
             let field_doc = filter_value_field_doc(f);
             let query_doc = filter_value_query_doc(f);
             quote! {
@@ -196,22 +154,10 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
-            match &f.filter_config {
-                FilterComponents::Text(_) => quote! {
-                    #field_ident: gpui_table::core::filter::TextValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::NumberRange(_) => quote! {
-                    #field_ident: gpui_table::core::filter::RangeValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::Faceted(_) => quote! {
-                    #field_ident: gpui_table::core::filter::FacetedValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::InfiniteFaceted(_) => quote! {
-                    #field_ident: gpui_table::core::filter::SingleValue::from(self.#getter_name(cx)),
-                },
-                FilterComponents::DateRange(_) => quote! {
-                    #field_ident: gpui_table::core::filter::RangeValue::from(self.#getter_name(cx)),
-                },
+            let raw_value_expr = quote! { self.#getter_name(cx) };
+            let wrapped_value_expr = f.filter_config.wrap_raw_value_expr(raw_value_expr);
+            quote! {
+                #field_ident: #wrapped_value_expr,
             }
         })
         .collect();

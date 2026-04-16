@@ -18,6 +18,11 @@ pub type TextValidator = Rc<dyn Fn(&str) -> String>;
 
 /// Built-in validators for common text filtering patterns
 pub mod validators {
+    /// Only allow alphabetic characters.
+    pub fn alphabetic_only(s: &str) -> String {
+        s.chars().filter(|c| c.is_alphabetic()).collect()
+    }
+
     /// Only allow ASCII characters
     pub fn ascii_only(s: &str) -> String {
         s.chars().filter(|c| c.is_ascii()).collect()
@@ -80,21 +85,15 @@ pub trait TextFilterExt: Sized {
 
 impl TextFilterExt for Entity<TextFilter> {
     fn alphabetic_only(self, cx: &mut App) -> Self {
-        self.validate(
-            |text| text.chars().filter(|c| c.is_alphabetic()).collect(),
-            cx,
-        )
+        self.validate(validators::alphabetic_only, cx)
     }
 
     fn numeric_only(self, cx: &mut App) -> Self {
-        self.validate(|text| text.chars().filter(|c| c.is_numeric()).collect(), cx)
+        self.validate(validators::numeric_only, cx)
     }
 
     fn alphanumeric_only(self, cx: &mut App) -> Self {
-        self.validate(
-            |text| text.chars().filter(|c| c.is_alphanumeric()).collect(),
-            cx,
-        )
+        self.validate(validators::alphanumeric_only, cx)
     }
 
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
