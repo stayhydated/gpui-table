@@ -176,6 +176,32 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
 }
 
 impl<T: FilterValue> FacetedFilter<T> {
+    /// Create a faceted filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        selected_values: HashSet<T>,
+        on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        cx.new(|_cx| Self {
+            title: Rc::new(move || title.clone()),
+            options: Rc::new(Vec::new),
+            selected_values,
+            trigger_style: StyleRefinement::default(),
+            selected_tag_style: StyleRefinement::default(),
+            popover_style: StyleRefinement::default(),
+            search_input_style: StyleRefinement::default(),
+            options_list_style: StyleRefinement::default(),
+            option_button_style: StyleRefinement::default(),
+            clear_button_style: StyleRefinement::default(),
+            search_state: None,
+            on_change: Rc::new(on_change),
+            show_search: false,
+            _marker: PhantomData,
+        })
+    }
+
     fn ensure_search_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.search_state.is_none() {
             let input = cx.new(|cx| {

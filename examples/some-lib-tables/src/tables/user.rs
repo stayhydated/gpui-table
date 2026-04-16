@@ -8,7 +8,6 @@ use gpui::{
 };
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
-use gpui_table::runtime::FilterEntitiesExt as _;
 use some_lib::structs::user::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}

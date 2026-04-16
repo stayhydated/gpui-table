@@ -12,7 +12,9 @@ status bar. These components are used by the generated filter entities when
   - `TableFilterComponent` trait used by the built-in generated filter entities
   - `QueryFilterValue` trait for query-string conversion (distinct from
     `gpui_table_core::filter::FilterValue`)
-  - Re-exports extension traits for filter configuration
+  - Re-exports the concrete component types and extension traits at the crate root
+  - Gates `date_range_filter` / `number_range_filter` behind `chrono` /
+    `rust_decimal`
 - `src/bin/story.rs`
   - Storybook gallery entrypoint for previewing filter components
 - `stories/`
@@ -41,6 +43,9 @@ status bar. These components are used by the generated filter entities when
 1. `ResetFilters` triggers generated reset bindings that clear all filters in one action.
 1. Consumers read all filter values via `FilterEntitiesExt::read_values` and
    apply them client-side or pass them into load-more requests.
+1. `QueryFilterValue` supports both raw component values and the generated
+   wrapper types from `gpui-table-core::filter`, so server-side loaders can
+   serialize either representation directly.
 
 ## Extension points
 
@@ -56,3 +61,9 @@ status bar. These components are used by the generated filter entities when
 
 - These components assume `gpui-component` primitives (inputs, popovers, sliders)
   and are intended for GPUI-based apps.
+
+## Feature flags
+
+- `chrono` (default): enables `DateRangeFilter` and date-based query serialization.
+- `rust_decimal` (default): enables `NumberRangeFilter` and decimal-based query serialization.
+- `story`: enables the storybook binary and pulls in both range-filter features.

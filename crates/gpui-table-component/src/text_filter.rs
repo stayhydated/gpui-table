@@ -137,6 +137,17 @@ impl TableFilterComponent for TextFilter {
 }
 
 impl TextFilter {
+    /// Create a text filter with a fixed title.
+    pub fn new(
+        title: impl Into<String>,
+        value: String,
+        on_change: impl Fn(String, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Self> {
+        let title = title.into();
+        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+    }
+
     fn new_with_title(
         title: Rc<dyn Fn() -> String>,
         value: String,

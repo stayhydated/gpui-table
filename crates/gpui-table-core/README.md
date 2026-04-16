@@ -8,7 +8,6 @@ Pure filter semantics and typed filter values for the `gpui-table` ecosystem.
 - Typed filter value wrappers: `TextValue`, `RangeValue`, `FacetedValue`, `SingleValue`
 - Faceted-filter traits: `FilterValue`, `Filterable`
 - Numeric/date conversion helpers: `ToDecimal`, `ToNaiveDate`
-- Re-export of schema registry metadata at `gpui_table_core::registry`
 
 ## Feature flags
 
@@ -22,3 +21,5 @@ Pure filter semantics and typed filter values for the `gpui-table` ecosystem.
 - GPUI-facing row traits, loaders, and default cell rendering now live in
   `gpui-table-runtime`.
 - Static metadata types live in `gpui-table-schema`.
+- `SingleValue<T>` and `RangeValue<T>` provide manual `Default` impls, so they do
+  not require the inner `T` to implement `Default`.

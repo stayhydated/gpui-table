@@ -38,9 +38,9 @@ spacetimedb = [
 chrono = { optional = true, workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table-core = { workspace = true }
+gpui-table-core = { default-features = false, workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
-gpui-table-runtime = { workspace = true }
+gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], workspace = true }

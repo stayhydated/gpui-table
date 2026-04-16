@@ -1,9 +1,12 @@
+#[cfg(feature = "chrono")]
+pub use gpui_table_component::{DateRangeFilter, DateRangeFilterExt, date_range_filter};
 pub use gpui_table_component::{
-    DateRangeFilterExt, FacetedFilterExt, InfiniteFacetedFilter, NumberRangeFilterExt,
-    QueryFilterValue, ResetFilters, TableFilterComponent, TableStatusBar, TextFilterExt,
-    date_range_filter, faceted_filter, infinite_faceted_filter, number_range_filter, reset_filters,
-    table_status_bar, text_filter,
+    FacetedFilter, FacetedFilterExt, InfiniteFacetedFilter, QueryFilterValue, ResetFilters,
+    TableFilterComponent, TableStatusBar, TextFilter, TextFilterExt, faceted_filter,
+    infinite_faceted_filter, reset_filters, table_status_bar, text_filter,
 };
+#[cfg(feature = "rust_decimal")]
+pub use gpui_table_component::{NumberRangeFilter, NumberRangeFilterExt, number_range_filter};
 use gpui_table_schema::filter::FacetedFilterIcon;
 
 /// Trait for generated filter entity collections that can read and render their current values.

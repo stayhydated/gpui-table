@@ -33,7 +33,9 @@ layer.
    - Assembles all code fragments into `TableParts`.
    - For filter-enabled, non-load-more stories, emits
      `XxxFilterEntities::build_for_table(table.clone(), cx)` so client-side
-     filtering stays interactive with `DataTable`.
+     filtering stays interactive with `DataTable`. Generated stories call the
+     inherent `filters.all_filters()` helper directly, so no filter-entity trait
+     import is needed in the output.
    - For filter-enabled, load-more stories, emits
      `XxxFilterEntities::build_for_table_loader(table.clone(), window, cx)` so
      filter changes update delegate-owned filter state and trigger reloads.

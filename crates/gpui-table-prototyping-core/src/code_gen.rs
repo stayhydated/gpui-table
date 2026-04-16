@@ -33,11 +33,7 @@ const FRAMEWORK_IMPORTS: &[ImportItem] = &[
 ];
 
 /// Extra imports needed when the table has filters.
-const FILTER_IMPORTS: &[ImportItem] = &[
-    ImportItem::path("gpui_component::h_flex"),
-    ImportItem::aliased("gpui_table::runtime::FilterEntitiesExt", Alias::Anonymous),
-    ImportItem::aliased("gpui_table::core::filter::Matchable", Alias::Anonymous),
-];
+const FILTER_IMPORTS: &[ImportItem] = &[ImportItem::path("gpui_component::h_flex")];
 
 #[derive(Debug, Error)]
 pub enum TableCodegenError {

@@ -254,9 +254,9 @@ pub(super) fn generate_delegate(
             #rows_count_impl
 
             fn column(&self, col_ix: usize, _: &#App) -> #Column {
-                <#struct_name as gpui_table::runtime::TableRowMeta>::table_columns()
-                    .into_iter()
-                    .nth(col_ix)
+                self.columns
+                    .get(col_ix)
+                    .cloned()
                     .expect("Invalid column index")
             }
 

@@ -22,6 +22,7 @@ stable runtime facade that generated filter code targets.
 - `generated_filters.rs`
   - Stable runtime target for derive-generated filter code
   - Re-exports built-in filter components from `gpui-table-component`
+  - Forwards `chrono` / `rust_decimal` gating to the date/number filter exports
   - `FilterEntitiesExt` trait for generated filter entity collections
 
 ## Data flow

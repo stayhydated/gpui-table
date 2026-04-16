@@ -18,7 +18,6 @@ use proc_macro::TokenStream;
 ///
 /// - `#[load_more]` - Marks a method as the load_more handler
 /// - `#[threshold]` - Marks a const as the load_more threshold value
-/// - `#[eof]` - Marks a const containing the eof field name (defaults to "eof")
 ///
 /// Note: the table struct must set `#[gpui_table(load_more)]` for the generated
 /// delegate to call these load_more hooks.

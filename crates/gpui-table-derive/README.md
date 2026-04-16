@@ -9,6 +9,12 @@ registry metadata.
 - `#[derive(TableCell)]`: derive `TableCell` for newtypes and enums
 - `#[gpui_table_impl]`: wire load-more behavior into a generated delegate
 
+For `#[derive(TableCell)]` on unit enums, the generated renderer now uses:
+
+- `es_fluent::ToFluentString` when the enum also derives an `EsFluent*` derive
+- `Display` when the enum derives a `Display` implementation
+- the variant name as a fallback
+
 ## Example
 
 ```rs
@@ -135,6 +141,11 @@ The derive currently supports these built-in filter syntaxes:
 - `filter(faceted(searchable))`
 - `filter(infinite_faceted_filter())`
 
+For `number_range(...)`, `min`, `max`, and `step` accept plain numeric
+literals like `0.25` and quoted decimal strings like `"0.25"`. When the
+`gpui-table/rust_decimal` feature is enabled, invalid decimals, `step <= 0`,
+and `min > max` are rejected during macro expansion with field-local errors.
+
 Custom `TableFilterComponent` implementations are not yet selectable through
 `#[gpui_table(filter(...))]`.
 
@@ -152,3 +163,5 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
   `gpui_table::runtime::TableDataLoader::load_data(...)`.
 - `build_for_table_loader_with(table, before_reload, window, cx)` to customize
   delegate state reset behavior before each reload.
+- inherent `read_values(&self, cx)` and `all_filters(&self)` methods, so callers
+  do not need to import `FilterEntitiesExt` just to read or render generated filters.

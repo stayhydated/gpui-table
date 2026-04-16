@@ -2,7 +2,7 @@ use crate::__crate_paths::gpui::{AnyElement, App, IntoElement, Window};
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::DeriveInput;
+use syn::{DeriveInput, Path, Token, punctuated::Punctuated};
 
 pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
@@ -14,6 +14,13 @@ pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
 }
 
 fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
+    let use_fluent_for_unit_variants = has_derive_with_prefix(&input, "EsFluent");
+    let use_display_for_unit_variants = has_derive_named(&input, "Display");
+    let fluent_import = if use_fluent_for_unit_variants {
+        quote! { use es_fluent::ToFluentString as _; }
+    } else {
+        quote! {}
+    };
     let name = input.ident;
 
     let draw_impl = match input.data {
@@ -47,7 +54,15 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                             Ok(quote! { Self::#v_ident { #f_ident: val } => val.draw(window, cx), })
                         }
                         syn::Fields::Unit => {
-                            Ok(quote! { Self::#v_ident => self.to_fluent_string().into_any_element(), })
+                            let render_unit_variant = if use_fluent_for_unit_variants {
+                                quote! { self.to_fluent_string().into_any_element() }
+                            } else if use_display_for_unit_variants {
+                                quote! { self.to_string().into_any_element() }
+                            } else {
+                                let variant_name = v_ident.to_string();
+                                quote! { #variant_name.into_any_element() }
+                            };
+                            Ok(quote! { Self::#v_ident => #render_unit_variant, })
                         }
                         _ => Err(syn::Error::new(
                             v_ident.span(),
@@ -59,7 +74,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
             quote! {
                 use #IntoElement;
-                use es_fluent::ToFluentString as _;
+                #fluent_import
                 match self {
                     #(#arms)*
                 }
@@ -83,5 +98,39 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 #draw_impl
             }
         }
+    })
+}
+
+fn has_derive_named(input: &DeriveInput, expected: &str) -> bool {
+    input.attrs.iter().any(|attr| {
+        if !attr.path().is_ident("derive") {
+            return false;
+        }
+
+        attr.parse_args_with(Punctuated::<Path, Token![,]>::parse_terminated)
+            .map(|paths| {
+                paths
+                    .iter()
+                    .filter_map(|path| path.segments.last())
+                    .any(|segment| segment.ident == expected)
+            })
+            .unwrap_or(false)
+    })
+}
+
+fn has_derive_with_prefix(input: &DeriveInput, prefix: &str) -> bool {
+    input.attrs.iter().any(|attr| {
+        if !attr.path().is_ident("derive") {
+            return false;
+        }
+
+        attr.parse_args_with(Punctuated::<Path, Token![,]>::parse_terminated)
+            .map(|paths| {
+                paths
+                    .iter()
+                    .filter_map(|path| path.segments.last())
+                    .any(|segment| segment.ident.to_string().starts_with(prefix))
+            })
+            .unwrap_or(false)
     })
 }

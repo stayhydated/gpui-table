@@ -2,6 +2,10 @@
 
 GPUI filter UI components and a table status bar used by `gpui-table`.
 
+`TextFilter`, `FacetedFilter`, `InfiniteFacetedFilter`, `ResetFilters`, and
+`TableStatusBar` are re-exported at the crate root. `DateRangeFilter` and
+`NumberRangeFilter` are also re-exported when their features are enabled.
+
 ## Interactive examples
 
 ```sh
@@ -26,7 +30,7 @@ cargo run -p gpui-table-component --bin story --features story
 ## Example
 
 ```rs
-use gpui_table_component::{TextFilter, TextFilterExt, TableStatusBar};
+use gpui_table_component::{TableStatusBar, TextFilter, TextFilterExt};
 use gpui::{App, StyleRefinement, Window, px};
 
 let filter = TextFilter::new(
@@ -54,10 +58,16 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
   implementing `TableFilterComponent` does not automatically add new
   `#[gpui_table(filter(...))]` options.
+- `QueryFilterValue` now supports the generated wrapper types
+  (`TextValue`, `RangeValue`, `FacetedValue`, `SingleValue`) in addition to the
+  raw component values, so `FilterEntities::read_values()` can feed query
+  serialization directly.
 - Filter components expose chainable style setters that accept
   `StyleRefinement` to customize trigger/input/popover subparts.
 - `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses
   `chrono`.
+- `chrono` and `rust_decimal` are default-enabled for direct crate users; opt
+  out with `default-features = false` if you only need text/faceted filters.
 - This crate ships a small storybook binary at `src/bin/story.rs` for previewing
   filters and `TableStatusBar`.
 - Story definitions live in `src/stories` and are auto-registered via

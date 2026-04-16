@@ -3417,6 +3417,7 @@ dependencies = [
  "heck 0.5.0",
  "proc-macro2",
  "quote",
+ "rust_decimal",
  "syn 2.0.117",
 ]
 

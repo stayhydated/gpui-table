@@ -16,6 +16,7 @@ It intentionally does not depend on `gpui` or `gpui-component`.
   - Schema re-exports: `FilterConfig`, `FilterType`, `FacetedFilterOption`, `FacetedFilterIcon`
   - `value.rs`: `FilterValue`, `Filterable`
   - `wrappers.rs`: `FacetedValue`, `RangeValue`, `SingleValue`, `TextValue`
+    with manual defaults that do not require inner value types to implement `Default`
   - `traits.rs`: `Matchable`, `FilterValuesExt`
   - `convert.rs`: `ToDecimal`, `ToNaiveDate` (feature gated)
 

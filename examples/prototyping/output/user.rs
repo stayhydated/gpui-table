@@ -6,8 +6,6 @@ use gpui::{
 };
 use gpui_component::{h_flex, v_flex};
 use gpui_component::table::{DataTable, TableDelegate as _, TableState};
-use gpui_table::core::filter::Matchable as _;
-use gpui_table::runtime::FilterEntitiesExt as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]

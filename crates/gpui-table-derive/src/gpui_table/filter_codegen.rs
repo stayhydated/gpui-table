@@ -122,28 +122,54 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
 
             // Generate .range() call if min or max is specified
             if opts.min.is_some() || opts.max.is_some() {
-                let min_val = opts.min.unwrap_or(0.0);
-                let max_val = opts.max.unwrap_or(100.0);
-                // Convert f64 to string for Decimal parsing at compile time
-                let min_str = min_val.to_string();
-                let max_str = max_val.to_string();
+                #[cfg(feature = "rust_decimal")]
+                let min_expr = opts
+                    .min
+                    .as_ref()
+                    .map(|value| value.decimal_tokens("min"))
+                    .unwrap_or_else(|| {
+                        quote! {
+                            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(0, 0)
+                        }
+                    });
+                #[cfg(feature = "rust_decimal")]
+                let max_expr = opts
+                    .max
+                    .as_ref()
+                    .map(|value| value.decimal_tokens("max"))
+                    .unwrap_or_else(|| {
+                        quote! {
+                            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(100, 0)
+                        }
+                    });
+
+                #[cfg(not(feature = "rust_decimal"))]
+                let (min_expr, max_expr) = (quote! {}, quote! {});
+
                 chain = quote! {
                     #chain
                     use gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilterExt as _;
                     let filter = filter.range(
-                        gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
-                        gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
+                        #min_expr,
+                        #max_expr,
                         cx,
                     );
                 };
             }
 
             // Generate .step() call if step is specified
-            if let Some(step_val) = opts.step {
-                let step_str = step_val.to_string();
+            if let Some(step_val) = opts.step.as_ref() {
+                #[cfg(feature = "rust_decimal")]
+                let step_expr = step_val.decimal_tokens("step");
+                #[cfg(not(feature = "rust_decimal"))]
+                let step_expr = {
+                    let _ = step_val;
+                    quote! {}
+                };
+
                 chain = quote! {
                     #chain
-                    let filter = filter.step(gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#step_str).unwrap(), cx);
+                    let filter = filter.step(#step_expr, cx);
                 };
             }
 
@@ -179,43 +205,57 @@ pub(super) fn validate_filter_config(
     field_ty: &syn::Type,
 ) -> syn::Result<()> {
     if let FilterComponents::NumberRange(opts) = filter {
-        if let Some(min) = opts.min
-            && !min.is_finite()
+        #[cfg(not(feature = "rust_decimal"))]
+        let _ = opts;
+
+        #[cfg(feature = "rust_decimal")]
         {
-            return Err(syn::Error::new(
-                field_ident.span(),
-                "`number_range(min = ...)` must be a finite number",
-            ));
-        }
-        if let Some(max) = opts.max
-            && !max.is_finite()
-        {
-            return Err(syn::Error::new(
-                field_ident.span(),
-                "`number_range(max = ...)` must be a finite number",
-            ));
-        }
-        if let Some(step) = opts.step {
-            if !step.is_finite() {
+            let parsed_min = opts
+                .min
+                .as_ref()
+                .map(|value| value.parse_decimal("min"))
+                .transpose()?;
+            let parsed_max = opts
+                .max
+                .as_ref()
+                .map(|value| value.parse_decimal("max"))
+                .transpose()?;
+            let parsed_step = opts
+                .step
+                .as_ref()
+                .map(|value| value.parse_decimal("step"))
+                .transpose()?;
+
+            if let Some(step) = parsed_step
+                && step <= rust_decimal::Decimal::ZERO
+            {
                 return Err(syn::Error::new(
-                    field_ident.span(),
-                    "`number_range(step = ...)` must be a finite number",
+                    opts.step
+                        .as_ref()
+                        .map(|value| value.span())
+                        .unwrap_or(field_ident.span()),
+                    format!(
+                        "`number_range(step = {})` must be greater than 0",
+                        step.normalize()
+                    ),
                 ));
             }
-            if step <= 0.0 {
+
+            if let (Some(min), Some(max)) = (parsed_min, parsed_max)
+                && min > max
+            {
                 return Err(syn::Error::new(
-                    field_ident.span(),
-                    "`number_range(step = ...)` must be greater than 0",
+                    opts.max
+                        .as_ref()
+                        .map(|value| value.span())
+                        .unwrap_or(field_ident.span()),
+                    format!(
+                        "`number_range(min = {}, max = {})` requires min <= max",
+                        min.normalize(),
+                        max.normalize()
+                    ),
                 ));
             }
-        }
-        if let (Some(min), Some(max)) = (opts.min, opts.max)
-            && min > max
-        {
-            return Err(syn::Error::new(
-                field_ident.span(),
-                "`number_range(min = ..., max = ...)` requires min <= max",
-            ));
         }
     }
 

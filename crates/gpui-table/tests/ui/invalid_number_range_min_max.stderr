@@ -1,5 +1,5 @@
-error: `number_range(min = ..., max = ...)` requires min <= max
- --> tests/ui/invalid_number_range_min_max.rs:7:5
+error: `number_range(min = 20, max = 10)` requires min <= max
+ --> tests/ui/invalid_number_range_min_max.rs:6:56
   |
-7 |     age: u8,
-  |     ^^^
+6 |     #[gpui_table(filter(number_range(min = 20.0, max = 10.0)))]
+  |                                                        ^^^^

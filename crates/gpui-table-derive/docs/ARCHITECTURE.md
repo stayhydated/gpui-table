@@ -25,6 +25,8 @@ columns, filters, and optional registry metadata.
     `inventory` feature is enabled.
 - `#[proc_macro_derive(TableCell)]`
   - Convenience derive for newtypes/enums that delegate to an inner `TableCell`.
+  - Unit enums render via `EsFluent*` when derived, then `Display`, then the
+    variant name as a fallback.
 - `#[gpui_table_impl]`
   - Attribute macro that wires load-more behavior into a generated delegate.
 
@@ -37,6 +39,8 @@ columns, filters, and optional registry metadata.
     requirements, field `filter(...)` without struct `#[gpui_table(filters)]`)
 - `components.rs`
   - Parses filter configuration attributes (text/number/date/faceted)
+  - `number_range(...)` decimal options preserve source spans, accept numeric
+    literals or quoted decimal strings, and feed compile-time validation/codegen
 - `filter_entities.rs`
   - Generates `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers
 - `filter_matching.rs`
@@ -61,6 +65,9 @@ columns, filters, and optional registry metadata.
    `Matchable` implementations, plus grouped filter render helpers
    (text/number/faceted/date/all), a localized reset-button binding, and
    single-action filter reset wiring.
+   Generated `FilterEntities` expose inherent `read_values(...)` /
+   `all_filters(...)` methods so consumers do not need a trait import for the
+   common render/read path.
 1. When filters are enabled, generated delegates maintain a filtered row-index
    cache and expose `set_filter_values(...)` / `clear_filter_values(...)`.
    Generated helpers wire filter changes directly into `TableState`:
@@ -77,6 +84,9 @@ columns, filters, and optional registry metadata.
    `rust_decimal::Decimal` still route through `gpui_table::__deps`, while
    missing `gpui-table` feature requirements are rejected earlier during macro
    expansion.
+1. With `rust_decimal` enabled, `number_range(min/max/step)` values are parsed
+   during macro expansion so invalid decimal literals, non-positive steps, and
+   inverted ranges fail before code generation.
 
 ## Feature flags
 

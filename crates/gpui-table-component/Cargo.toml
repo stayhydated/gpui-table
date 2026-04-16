@@ -15,10 +15,20 @@ path = "src/bin/story.rs"
 required-features = [ "story" ]
 
 [features]
-story = [ "dep:es-fluent-lang", "dep:gpui-storybook", "dep:gpui_platform", "dep:strum" ]
+chrono = [ "dep:chrono" ]
+default = [ "chrono", "rust_decimal" ]
+rust_decimal = [ "dep:rust_decimal" ]
+story = [
+  "chrono",
+  "rust_decimal",
+  "dep:es-fluent-lang",
+  "dep:gpui-storybook",
+  "dep:gpui_platform",
+  "dep:strum",
+]
 
 [dependencies]
-chrono = { features = [ "serde" ], workspace = true }
+chrono = { features = [ "serde" ], optional = true, workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }
@@ -26,10 +36,10 @@ gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-form-component = { workspace = true }
 gpui-storybook = { optional = true, workspace = true }
-gpui-table-core = { features = [ "fluent" ], workspace = true }
+gpui-table-core = { default-features = false, features = [ "fluent" ], workspace = true }
 gpui-table-schema = { workspace = true }
 gpui_platform = { optional = true, workspace = true }
-rust_decimal = { workspace = true }
+rust_decimal = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
 
 [build-dependencies]

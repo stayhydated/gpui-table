@@ -41,69 +41,7 @@ pub(super) fn generate_filter_entities(
     // Generate the build method that creates all filter entities
     let filter_builders: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
-
-            // Determine the title expression based on fluent config
-            let title_expr =
-                determine_filter_title_expr(&f.field_ident, fluent_config, struct_name);
-
-            // Check if this is a FacetedFilter using the enum method
-            if f.filter_config.is_faceted() {
-                // Generate chain methods for options
-                let chain_methods = generate_filter_chain_methods(&f.filter_config);
-
-                // For FacetedFilter<T>, use new_for (type is already in the generic parameter)
-                quote! {
-                    let #field_ident = {
-                        let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new_for(
-                            || #title_expr,
-                            Default::default(),
-                            move |_value, window, cx| {
-                                // Notify callback for server-side filtering
-                                if let Some(ref on_change) = on_filter_change {
-                                    let on_change = on_change.clone();
-                                    window.defer(cx, move |window, cx| {
-                                        on_change(window, cx);
-                                    });
-                                }
-                            },
-                            cx,
-                        );
-                        #chain_methods
-                        filter
-                    };
-                }
-            } else {
-                // Generate chain methods for options
-                let chain_methods = generate_filter_chain_methods(&f.filter_config);
-
-                // For other filters, use the reactive constructor for i18n updates.
-                quote! {
-                    let #field_ident = {
-                        let on_filter_change = on_filter_change.clone();
-                        let filter = #filter_type_tokens::new_for(
-                            || #title_expr,
-                            Default::default(),
-                            move |_value, window, cx| {
-                                // Notify callback for server-side filtering
-                                if let Some(ref on_change) = on_filter_change {
-                                    let on_change = on_change.clone();
-                                    window.defer(cx, move |window, cx| {
-                                        on_change(window, cx);
-                                    });
-                                }
-                            },
-                            cx,
-                        );
-                        #chain_methods
-                        filter
-                    };
-                }
-            }
-        })
+        .map(|f| generate_filter_builder_tokens(f, fluent_config, struct_name))
         .collect();
 
     // Field names for struct construction
@@ -189,85 +127,14 @@ pub(super) fn generate_filter_entities(
     let (text_filters, number_filters, faceted_filters, date_filters) =
         categorize_filters(filter_fields);
 
-    let text_filter_render = if !text_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = text_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all text filters as children (returns impl IntoElement).
-            pub fn text_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let number_filter_render = if !number_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = number_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all number range filters as children (returns impl IntoElement).
-            pub fn number_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let faceted_filter_render = if !faceted_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = faceted_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all faceted filters as children (returns impl IntoElement).
-            pub fn faceted_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
-
-    let date_filter_render = if !date_filters.is_empty() {
-        let fields: Vec<proc_macro2::TokenStream> = date_filters
-            .iter()
-            .map(|f| {
-                let ident = &f.field_ident;
-                quote! { .child(self.#ident.clone()) }
-            })
-            .collect();
-        quote! {
-            /// Render all date range filters as children (returns impl IntoElement).
-            pub fn date_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().items_center().gap_2()
-                    #(#fields)*
-            }
-        }
-    } else {
-        quote! {}
-    };
+    let text_filter_render =
+        generate_group_render_method("text_filters", "text filters", &text_filters);
+    let number_filter_render =
+        generate_group_render_method("number_filters", "number range filters", &number_filters);
+    let faceted_filter_render =
+        generate_group_render_method("faceted_filters", "faceted filters", &faceted_filters);
+    let date_filter_render =
+        generate_group_render_method("date_filters", "date range filters", &date_filters);
 
     // Generate all_filters render method
     let all_filter_fields: Vec<proc_macro2::TokenStream> = filter_fields
@@ -399,9 +266,7 @@ pub(super) fn generate_filter_entities(
                     std::rc::Rc::new(move |_window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
-                            filters.as_ref().map(|filters| {
-                                gpui_table::runtime::FilterEntitiesExt::read_values(filters, cx)
-                            })
+                            filters.as_ref().map(|filters| filters.read_values(cx))
                         };
 
                         if let Some(values) = next_values {
@@ -415,8 +280,7 @@ pub(super) fn generate_filter_entities(
                 let filters = Self::build(Some(on_filter_change), cx);
                 *filters_slot.borrow_mut() = Some(filters.clone());
 
-                let initial_values =
-                    gpui_table::runtime::FilterEntitiesExt::read_values(&filters, cx);
+                let initial_values = filters.read_values(cx);
                 table.update(cx, |table, cx| {
                     table.delegate_mut().set_filter_values(initial_values);
                     cx.notify();
@@ -481,9 +345,7 @@ pub(super) fn generate_filter_entities(
                     std::rc::Rc::new(move |window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
-                            filters.as_ref().map(|filters| {
-                                gpui_table::runtime::FilterEntitiesExt::read_values(filters, cx)
-                            })
+                            filters.as_ref().map(|filters| filters.read_values(cx))
                         };
 
                         if let Some(values) = next_values {
@@ -505,8 +367,7 @@ pub(super) fn generate_filter_entities(
                 let filters = Self::build(Some(on_filter_change), cx);
                 *filters_slot.borrow_mut() = Some(filters.clone());
 
-                let initial_values =
-                    gpui_table::runtime::FilterEntitiesExt::read_values(&filters, cx);
+                let initial_values = filters.read_values(cx);
                 table.update(cx, |table, cx| {
                     let delegate = table.delegate_mut();
                     delegate.set_filter_values(initial_values);
@@ -559,21 +420,31 @@ pub(super) fn generate_filter_entities(
 
             // Value getters for server-side filtering
             #(#value_getters)*
+
+            /// Read all current filter values into the generated filter-values struct.
+            pub fn read_values(&self, cx: &#App) -> #filter_values_name {
+                #filter_values_name {
+                    #(#read_values_fields)*
+                }
+            }
+
+            /// Render all filters in a single row.
+            pub fn all_filters(&self) -> impl gpui::IntoElement {
+                use gpui::{ParentElement as _, Styled as _};
+                gpui::div().flex().flex_wrap().items_center().gap_2()
+                    #(#all_filter_fields)*
+            }
         }
 
         impl gpui_table::runtime::FilterEntitiesExt for #filter_entities_name {
             type Values = #filter_values_name;
 
             fn read_values(&self, cx: &#App) -> Self::Values {
-                #filter_values_name {
-                    #(#read_values_fields)*
-                }
+                <#filter_entities_name>::read_values(self, cx)
             }
 
             fn all_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().flex_wrap().items_center().gap_2()
-                    #(#all_filter_fields)*
+                <#filter_entities_name>::all_filters(self)
             }
         }
 
@@ -617,6 +488,66 @@ fn categorize_filters(
     }
 
     (text, number, faceted, date)
+}
+
+fn generate_filter_builder_tokens(
+    field: &FilterFieldMeta,
+    fluent_config: &Option<Override<String>>,
+    struct_name: &Ident,
+) -> proc_macro2::TokenStream {
+    let field_ident = &field.field_ident;
+    let filter_type_tokens = get_filter_type_tokens(&field.filter_config, Some(&field.field_type));
+    let title_expr = determine_filter_title_expr(field_ident, fluent_config, struct_name);
+    let chain_methods = generate_filter_chain_methods(&field.filter_config);
+
+    quote! {
+        let #field_ident = {
+            let on_filter_change = on_filter_change.clone();
+            let filter = #filter_type_tokens::new_for(
+                || #title_expr,
+                Default::default(),
+                move |_value, window, cx| {
+                    if let Some(ref on_change) = on_filter_change {
+                        let on_change = on_change.clone();
+                        window.defer(cx, move |window, cx| {
+                            on_change(window, cx);
+                        });
+                    }
+                },
+                cx,
+            );
+            #chain_methods
+            filter
+        };
+    }
+}
+
+fn generate_group_render_method(
+    method_name: &str,
+    doc_label: &str,
+    fields: &[&FilterFieldMeta],
+) -> proc_macro2::TokenStream {
+    if fields.is_empty() {
+        return quote! {};
+    }
+
+    let method_ident = Ident::new(method_name, proc_macro2::Span::call_site());
+    let children: Vec<proc_macro2::TokenStream> = fields
+        .iter()
+        .map(|field| {
+            let ident = &field.field_ident;
+            quote! { .child(self.#ident.clone()) }
+        })
+        .collect();
+
+    quote! {
+        #[doc = concat!("Render all ", #doc_label, " as children (returns impl IntoElement).")]
+        pub fn #method_ident(&self) -> impl gpui::IntoElement {
+            use gpui::{ParentElement as _, Styled as _};
+            gpui::div().flex().items_center().gap_2()
+                #(#children)*
+        }
+    }
 }
 
 /// Determine the title expression for a filter based on fluent config.

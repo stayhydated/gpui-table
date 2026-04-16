@@ -36,8 +36,14 @@ impl<T: FilterValue> FacetedValue<T> {
 }
 
 /// A wrapper around `Option<T>` for exact-match select filter values with helper methods.
-#[derive(Clone, Debug, Default, From, Into, PartialEq)]
+#[derive(Clone, Debug, From, Into, PartialEq)]
 pub struct SingleValue<T: Clone + PartialEq>(pub Option<T>);
+
+impl<T: Clone + PartialEq> Default for SingleValue<T> {
+    fn default() -> Self {
+        Self(None)
+    }
+}
 
 impl<T: Clone + PartialEq> SingleValue<T> {
     /// Create a new empty single-value filter (no restrictions).
@@ -81,8 +87,14 @@ impl<T: Clone + PartialEq> SingleValue<T> {
 ///
 /// This type provides convenient methods for checking if a range filter is active
 /// and matching values against the range.
-#[derive(Clone, Debug, Default, From, Into, PartialEq)]
+#[derive(Clone, Debug, From, Into, PartialEq)]
 pub struct RangeValue<T: Clone + PartialOrd>(pub Option<T>, pub Option<T>);
+
+impl<T: Clone + PartialOrd> Default for RangeValue<T> {
+    fn default() -> Self {
+        Self(None, None)
+    }
+}
 
 impl<T: Clone + PartialOrd> RangeValue<T> {
     /// Create a new empty range (no restrictions).

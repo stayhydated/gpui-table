@@ -1,7 +1,9 @@
+#[cfg(feature = "chrono")]
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
 pub mod infinite_faceted_filter;
+#[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
 #[cfg(feature = "story")]
@@ -9,16 +11,19 @@ mod stories;
 pub mod table_status_bar;
 pub mod text_filter;
 
-// Re-export extension traits for convenience
-pub use date_range_filter::DateRangeFilterExt;
-pub use faceted_filter::FacetedFilterExt;
+// Re-export component types and extension traits for convenience.
+#[cfg(feature = "chrono")]
+pub use date_range_filter::{DateRangeFilter, DateRangeFilterExt};
+pub use faceted_filter::{FacetedFilter, FacetedFilterExt};
 pub use infinite_faceted_filter::InfiniteFacetedFilter;
-pub use number_range_filter::NumberRangeFilterExt;
+#[cfg(feature = "rust_decimal")]
+pub use number_range_filter::{NumberRangeFilter, NumberRangeFilterExt};
 pub use reset_filters::ResetFilters;
 pub use table_status_bar::TableStatusBar;
-pub use text_filter::TextFilterExt;
+pub use text_filter::{TextFilter, TextFilterExt};
 
 use gpui::{App, Entity, Window};
+use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
 use std::collections::HashSet;
 
 /// Constructor interface shared by the built-in table filter components.
@@ -58,6 +63,18 @@ pub trait QueryFilterValue: Default + Clone + Send + 'static {
     fn to_query_string(&self) -> Option<String>;
 }
 
+fn range_query_string<T>(min: Option<&T>, max: Option<&T>) -> Option<String>
+where
+    T: ToString,
+{
+    match (min, max) {
+        (None, None) => None,
+        (Some(min), None) => Some(format!(">={}", min.to_string())),
+        (None, Some(max)) => Some(format!("<={}", max.to_string())),
+        (Some(min), Some(max)) => Some(format!("{}-{}", min.to_string(), max.to_string())),
+    }
+}
+
 impl QueryFilterValue for String {
     fn is_empty(&self) -> bool {
         String::is_empty(self)
@@ -92,40 +109,164 @@ impl QueryFilterValue for (Option<f64>, Option<f64>) {
     }
 
     fn to_query_string(&self) -> Option<String> {
-        match (self.0, self.1) {
-            (None, None) => None,
-            (Some(min), None) => Some(format!(">={}", min)),
-            (None, Some(max)) => Some(format!("<={}", max)),
-            (Some(min), Some(max)) => Some(format!("{}-{}", min, max)),
-        }
+        range_query_string(self.0.as_ref(), self.1.as_ref())
     }
 }
 
+#[cfg(feature = "rust_decimal")]
+impl QueryFilterValue for (Option<rust_decimal::Decimal>, Option<rust_decimal::Decimal>) {
+    fn is_empty(&self) -> bool {
+        self.0.is_none() && self.1.is_none()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        range_query_string(self.0.as_ref(), self.1.as_ref())
+    }
+}
+
+#[cfg(feature = "chrono")]
 impl QueryFilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
     fn is_empty(&self) -> bool {
         self.0.is_none() && self.1.is_none()
     }
 
     fn to_query_string(&self) -> Option<String> {
-        match (&self.0, &self.1) {
-            (None, None) => None,
-            (Some(start), None) => Some(format!(">={}", start)),
-            (None, Some(end)) => Some(format!("<={}", end)),
-            (Some(start), Some(end)) => Some(format!("{} to {}", start, end)),
-        }
+        range_query_string(self.0.as_ref(), self.1.as_ref())
     }
 }
 
 impl<T> QueryFilterValue for Option<T>
 where
-    T: gpui_table_core::filter::FilterValue + Clone + Send + 'static,
+    T: FilterValue + Clone + Send + 'static,
 {
     fn is_empty(&self) -> bool {
         self.is_none()
     }
 
     fn to_query_string(&self) -> Option<String> {
-        self.as_ref()
-            .map(gpui_table_core::filter::FilterValue::to_filter_string)
+        self.as_ref().map(FilterValue::to_filter_string)
+    }
+}
+
+impl QueryFilterValue for TextValue {
+    fn is_empty(&self) -> bool {
+        !self.is_active()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        (!self.is_empty()).then(|| self.to_string())
+    }
+}
+
+impl<T> QueryFilterValue for RangeValue<T>
+where
+    T: Clone + PartialOrd + ToString + Send + 'static,
+{
+    fn is_empty(&self) -> bool {
+        !self.is_active()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        range_query_string(self.min(), self.max())
+    }
+}
+
+impl<T> QueryFilterValue for FacetedValue<T>
+where
+    T: FilterValue + Clone + Send + 'static,
+{
+    fn is_empty(&self) -> bool {
+        !self.is_active()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        if self.0.is_empty() {
+            None
+        } else {
+            let mut values = self
+                .0
+                .iter()
+                .map(FilterValue::to_filter_string)
+                .collect::<Vec<_>>();
+            values.sort();
+            Some(values.join(","))
+        }
+    }
+}
+
+impl<T> QueryFilterValue for SingleValue<T>
+where
+    T: FilterValue + Clone + PartialEq + Send + 'static,
+{
+    fn is_empty(&self) -> bool {
+        !self.is_active()
+    }
+
+    fn to_query_string(&self) -> Option<String> {
+        self.value().map(FilterValue::to_filter_string)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::QueryFilterValue;
+    use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
+    use std::collections::HashSet;
+
+    #[derive(Clone, Eq, Hash, PartialEq)]
+    enum Status {
+        Active,
+        Pending,
+    }
+
+    impl FilterValue for Status {
+        fn to_filter_string(&self) -> String {
+            match self {
+                Self::Active => "active",
+                Self::Pending => "pending",
+            }
+            .to_string()
+        }
+
+        fn from_filter_string(s: &str) -> Option<Self> {
+            match s {
+                "active" => Some(Self::Active),
+                "pending" => Some(Self::Pending),
+                _ => None,
+            }
+        }
+    }
+
+    #[test]
+    fn text_value_serializes_like_plain_text() {
+        assert_eq!(
+            TextValue::from("mark").to_query_string(),
+            Some("mark".into())
+        );
+        assert_eq!(TextValue::default().to_query_string(), None);
+    }
+
+    #[test]
+    fn faceted_values_serialize_with_filter_value_strings() {
+        let values = FacetedValue::from(HashSet::from([Status::Pending, Status::Active]));
+        assert_eq!(values.to_query_string(), Some("active,pending".into()));
+    }
+
+    #[test]
+    fn single_value_serializes_with_filter_value_string() {
+        let value = SingleValue::from(Some(Status::Active));
+        assert_eq!(value.to_query_string(), Some("active".into()));
+    }
+
+    #[test]
+    fn generic_range_values_serialize_bounds() {
+        assert_eq!(
+            RangeValue::from((Some(5_u8), Some(10_u8))).to_query_string(),
+            Some("5-10".into())
+        );
+        assert_eq!(
+            RangeValue::from((Some(5_u8), None)).to_query_string(),
+            Some(">=5".into())
+        );
     }
 }
