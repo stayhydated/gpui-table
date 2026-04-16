@@ -503,7 +503,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     Ok(quote! {
         #column_enum
 
-        impl gpui_table::runtime::TableRowMeta for #struct_name {
+        impl gpui_table::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;
             const TABLE_TITLE: &'static str = #table_title;
 

@@ -392,7 +392,7 @@ pub(super) fn generate_filter_entities(
             }
         }
 
-        impl gpui_table::runtime::FilterEntitiesExt for #filter_entities_name {
+        impl gpui_table::FilterEntitiesExt for #filter_entities_name {
             type Values = #filter_values_name;
 
             fn read_values(&self, cx: &#App) -> Self::Values {

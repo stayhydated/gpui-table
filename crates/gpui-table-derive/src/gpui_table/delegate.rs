@@ -97,8 +97,7 @@ pub(super) fn generate_delegate(
         }
     };
 
-    let columns_init_expr =
-        quote! { <#struct_name as gpui_table::runtime::TableRowMeta>::table_columns() };
+    let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
     let precompute_rows_len = if has_filters {
         quote! { let rows_len = rows.len(); }
     } else {

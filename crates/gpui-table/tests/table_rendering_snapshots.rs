@@ -1,7 +1,7 @@
 use gpui::{App, Context, TextAlign, Window};
 use gpui_component::menu::PopupMenu;
 use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
-use gpui_table::runtime::TableRowMeta;
+use gpui_table::TableRowMeta;
 use gpui_table::{GpuiTable, gpui_table_impl};
 use serde::Serialize;
 
