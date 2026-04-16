@@ -42,6 +42,9 @@ columns, filters, and optional registry metadata.
   - Parses filter configuration attributes (text/number/date/faceted)
   - `number_range(...)` decimal options preserve source spans, accept numeric
     literals or quoted decimal strings, and feed compile-time validation/codegen
+- `gpui_table/filter_codegen/`
+  - Shared filter type-token generation, option-chain generation, and
+    field/type validation helpers used during `GpuiTable` expansion
 - `filter_entities.rs`
   - Generates `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers
 - `filter_matching.rs`
@@ -78,9 +81,9 @@ columns, filters, and optional registry metadata.
      server-side reloads.
    - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
      reset behavior needs customization.
-   Generated `FilterValues` use typed wrappers from `gpui_table::core::filter`,
-   and those fields can usually be serialized for server-side queries via
-   `gpui_table::runtime::generated_filters::QueryFilterValue`.
+     Generated `FilterValues` use typed wrappers from `gpui_table::core::filter`,
+     and those fields can usually be serialized for server-side queries via
+     `gpui_table::runtime::generated_filters::QueryFilterValue`.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 1. Generated filter code now targets `gpui_table::runtime::generated_filters`
    for built-in components and filter runtime traits.

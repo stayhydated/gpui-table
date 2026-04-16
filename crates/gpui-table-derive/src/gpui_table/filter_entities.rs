@@ -1,6 +1,6 @@
 use crate::__crate_paths::gpui::{App, Context, Entity, Window};
 use crate::__crate_paths::gpui_component::table::TableState;
-use crate::components::FilterComponents;
+use crate::components::{FilterComponents, FilterRenderGroup};
 use crate::gpui_table::filter_codegen::{generate_filter_chain_methods, get_filter_type_tokens};
 use crate::gpui_table::meta::FilterFieldMeta;
 
@@ -35,7 +35,7 @@ pub(super) fn generate_filter_entities(
             let field_doc = format!(
                 "Entity handle for the `{}` {} filter component.",
                 field_ident,
-                filter_kind_label(&f.filter_config)
+                f.filter_config.kind_label()
             );
             quote! {
                 #[doc = #field_doc]
@@ -84,7 +84,7 @@ pub(super) fn generate_filter_entities(
             let getter_doc = format!(
                 "Get the current raw value of the `{}` {} filter. Use `read_values()` when you need the generated wrapper type for matching or query serialization.",
                 field_ident,
-                filter_kind_label(&f.filter_config)
+                f.filter_config.kind_label()
             );
 
             match &f.filter_config {
@@ -134,18 +134,17 @@ pub(super) fn generate_filter_entities(
         })
         .collect();
 
-    // Generate render helpers that group filters by type
-    let (text_filters, number_filters, faceted_filters, date_filters) =
-        categorize_filters(filter_fields);
-
-    let text_filter_render =
-        generate_group_render_method("text_filters", "text filters", &text_filters);
-    let number_filter_render =
-        generate_group_render_method("number_filters", "number range filters", &number_filters);
-    let faceted_filter_render =
-        generate_group_render_method("faceted_filters", "faceted filters", &faceted_filters);
-    let date_filter_render =
-        generate_group_render_method("date_filters", "date range filters", &date_filters);
+    // Generate render helpers that group filters by type.
+    let group_renders: Vec<proc_macro2::TokenStream> = FilterRenderGroup::ALL
+        .into_iter()
+        .map(|group| {
+            let fields: Vec<&FilterFieldMeta> = filter_fields
+                .iter()
+                .filter(|field| field.filter_config.render_group() == group)
+                .collect();
+            generate_group_render_method(group.method_name(), group.doc_label(), &fields)
+        })
+        .collect();
 
     // Generate all_filters render method
     let all_filter_fields: Vec<proc_macro2::TokenStream> = filter_fields
@@ -429,10 +428,7 @@ pub(super) fn generate_filter_entities(
                     .child(self.reset_button())
             }
 
-            #text_filter_render
-            #number_filter_render
-            #faceted_filter_render
-            #date_filter_render
+            #(#group_renders)*
 
             // Value getters for server-side filtering
             #(#value_getters)*
@@ -478,32 +474,6 @@ pub(super) fn generate_filter_entities(
         }
 
     }
-}
-
-/// Categorize filters by their type for grouped rendering.
-fn categorize_filters(
-    filter_fields: &[FilterFieldMeta],
-) -> (
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-    Vec<&FilterFieldMeta>,
-) {
-    let mut text = Vec::new();
-    let mut number = Vec::new();
-    let mut faceted = Vec::new();
-    let mut date = Vec::new();
-
-    for f in filter_fields {
-        match &f.filter_config {
-            FilterComponents::Text(_) => text.push(f),
-            FilterComponents::NumberRange(_) => number.push(f),
-            FilterComponents::Faceted(_) | FilterComponents::InfiniteFaceted(_) => faceted.push(f),
-            FilterComponents::DateRange(_) => date.push(f),
-        }
-    }
-
-    (text, number, faceted, date)
 }
 
 fn generate_filter_builder_tokens(
@@ -566,22 +536,12 @@ fn generate_group_render_method(
     }
 }
 
-fn filter_kind_label(filter: &FilterComponents) -> &'static str {
-    match filter {
-        FilterComponents::Text(_) => "text",
-        FilterComponents::NumberRange(_) => "number range",
-        FilterComponents::Faceted(_) => "faceted",
-        FilterComponents::InfiniteFaceted(_) => "infinite faceted",
-        FilterComponents::DateRange(_) => "date range",
-    }
-}
-
 fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
     let field_ident = &field.field_ident;
     let wrapper_ty = generated_filter_value_type_name(field);
     format!(
         "Current value for the `{field_ident}` {} filter, stored as `{wrapper_ty}`.",
-        filter_kind_label(&field.filter_config)
+        field.filter_config.kind_label()
     )
 }
 

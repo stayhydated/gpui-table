@@ -1,205 +1,9 @@
-use crate::components::{FilterComponents, TextValidation};
+use crate::components::FilterComponents;
 
 use quote::ToTokens as _;
-use quote::quote;
 use syn::{GenericArgument, Ident, PathArguments, Type};
 
-/// Get the filter component type tokens for code generation.
-/// For FacetedFilter, the field_ty is required to generate the generic parameter.
-///
-/// Returns a tuple of (type_tokens, type_with_turbofish) where:
-/// - type_tokens: For use in type position (e.g., `Entity<FacetedFilter<T>>`)
-/// - type_with_turbofish: For use in expression position (e.g., `FacetedFilter::<T>::new_for()`)
-pub(super) fn get_filter_type_tokens(
-    filter: &FilterComponents,
-    field_ty: Option<&syn::Type>,
-) -> proc_macro2::TokenStream {
-    match filter {
-        FilterComponents::Text(_) => {
-            quote! { gpui_table::runtime::generated_filters::text_filter::TextFilter }
-        },
-        FilterComponents::NumberRange(_) => {
-            quote! { gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilter }
-        },
-        FilterComponents::DateRange(_) => {
-            quote! { gpui_table::runtime::generated_filters::date_range_filter::DateRangeFilter }
-        },
-        FilterComponents::Faceted(_) => {
-            if let Some(ty) = field_ty {
-                quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#ty> }
-            } else {
-                // Fallback for cases where field_ty is not available (shouldn't happen in practice)
-                quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
-            }
-        },
-        FilterComponents::InfiniteFaceted(_) => {
-            if let Some(ty) = field_ty {
-                quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
-            } else {
-                quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
-            }
-        },
-    }
-}
-
-/// Get the registry filter type for a given filter component.
-#[cfg(feature = "inventory")]
-pub(super) fn get_registry_filter_type(filter: &FilterComponents) -> proc_macro2::TokenStream {
-    match filter {
-        FilterComponents::Text(_) => {
-            quote! { gpui_table::schema::registry::RegistryFilterType::Text }
-        },
-        FilterComponents::NumberRange(_) => {
-            quote! { gpui_table::schema::registry::RegistryFilterType::NumberRange }
-        },
-        FilterComponents::DateRange(_) => {
-            quote! { gpui_table::schema::registry::RegistryFilterType::DateRange }
-        },
-        FilterComponents::Faceted(_) => {
-            quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
-        },
-        FilterComponents::InfiniteFaceted(_) => {
-            quote! { gpui_table::schema::registry::RegistryFilterType::InfiniteFaceted }
-        },
-    }
-}
-
-/// Get the FilterType enum for runtime filter config.
-pub(super) fn get_filter_type_expr(
-    filter: &FilterComponents,
-    field_ty: &syn::Type,
-) -> proc_macro2::TokenStream {
-    match filter {
-        FilterComponents::Text(_) => quote! { gpui_table::core::filter::FilterType::Text },
-        FilterComponents::NumberRange(_) => {
-            quote! { gpui_table::core::filter::FilterType::NumberRange }
-        },
-        FilterComponents::DateRange(_) => {
-            quote! { gpui_table::core::filter::FilterType::DateRange }
-        },
-        FilterComponents::Faceted(_) => {
-            quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
-        },
-        FilterComponents::InfiniteFaceted(_) => {
-            quote! { gpui_table::core::filter::FilterType::InfiniteFaceted }
-        },
-    }
-}
-
-/// Generate chain method calls for filter options.
-pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_macro2::TokenStream {
-    match filter {
-        FilterComponents::Text(opts) => {
-            let mut chain = quote! {};
-
-            // Generate validation method if specified
-            if let Some(ref validation) = opts.validate {
-                let validation_chain = match validation {
-                    TextValidation::Alphabetic => quote! {
-                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
-                        let filter = filter.alphabetic_only(cx);
-                    },
-                    TextValidation::Numeric => quote! {
-                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
-                        let filter = filter.numeric_only(cx);
-                    },
-                    TextValidation::Alphanumeric => quote! {
-                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
-                        let filter = filter.alphanumeric_only(cx);
-                    },
-                    TextValidation::Custom(path) => quote! {
-                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
-                        let filter = filter.validate(#path, cx);
-                    },
-                };
-                chain = quote! { #chain #validation_chain };
-            }
-
-            chain
-        },
-        FilterComponents::NumberRange(opts) => {
-            let mut chain = quote! {};
-
-            // Generate .range() call if min or max is specified
-            if opts.min.is_some() || opts.max.is_some() {
-                #[cfg(feature = "rust_decimal")]
-                let min_expr = opts
-                    .min
-                    .as_ref()
-                    .map(|value| value.decimal_tokens("min"))
-                    .unwrap_or_else(|| {
-                        quote! {
-                            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(0, 0)
-                        }
-                    });
-                #[cfg(feature = "rust_decimal")]
-                let max_expr = opts
-                    .max
-                    .as_ref()
-                    .map(|value| value.decimal_tokens("max"))
-                    .unwrap_or_else(|| {
-                        quote! {
-                            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(100, 0)
-                        }
-                    });
-
-                #[cfg(not(feature = "rust_decimal"))]
-                let (min_expr, max_expr) = (quote! {}, quote! {});
-
-                chain = quote! {
-                    #chain
-                    use gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilterExt as _;
-                    let filter = filter.range(
-                        #min_expr,
-                        #max_expr,
-                        cx,
-                    );
-                };
-            }
-
-            // Generate .step() call if step is specified
-            if let Some(step_val) = opts.step.as_ref() {
-                #[cfg(feature = "rust_decimal")]
-                let step_expr = step_val.decimal_tokens("step");
-                #[cfg(not(feature = "rust_decimal"))]
-                let step_expr = {
-                    let _ = step_val;
-                    quote! {}
-                };
-
-                chain = quote! {
-                    #chain
-                    let filter = filter.step(#step_expr, cx);
-                };
-            }
-
-            chain
-        },
-        FilterComponents::DateRange(_opts) => {
-            // Date range filter has no configurable options yet
-            quote! {}
-        },
-        FilterComponents::Faceted(opts) => {
-            let mut chain = quote! {};
-
-            // Generate .searchable() call if enabled
-            if opts.searchable {
-                chain = quote! {
-                    #chain
-                    use gpui_table::runtime::generated_filters::faceted_filter::FacetedFilterExt as _;
-                    let filter = filter.searchable(cx);
-                };
-            }
-
-            chain
-        },
-        FilterComponents::InfiniteFaceted(_opts) => {
-            quote! {}
-        },
-    }
-}
-
-pub(super) fn validate_filter_config(
+pub(in crate::gpui_table) fn validate_filter_config(
     filter: &FilterComponents,
     field_ident: &Ident,
     field_ty: &syn::Type,
@@ -302,22 +106,12 @@ pub(super) fn validate_filter_config(
             field_ident.span(),
             format!(
                 "`filter({})` on `{type_name}` requires enabling the `gpui-table/spacetimedb` feature",
-                filter_name(filter)
+                filter.attribute_syntax()
             ),
         ));
     }
 
     Ok(())
-}
-
-fn filter_name(filter: &FilterComponents) -> &'static str {
-    match filter {
-        FilterComponents::Text(_) => "text()",
-        FilterComponents::NumberRange(_) => "number_range(...)",
-        FilterComponents::DateRange(_) => "date_range()",
-        FilterComponents::Faceted(_) => "faceted(...)",
-        FilterComponents::InfiniteFaceted(_) => "infinite_faceted_filter()",
-    }
 }
 
 fn validate_text_filter_field_type(field_ty: &Type) -> syn::Result<()> {
@@ -508,6 +302,7 @@ fn is_supported_number_range_type(ty: &Type) -> bool {
     is_numeric_scalar_type(ty) || is_decimal_type(ty) || contains_spacetimedb_temporal_type(ty)
 }
 
+#[cfg(feature = "chrono")]
 fn is_supported_date_range_type(ty: &Type) -> bool {
     is_chrono_date_type(ty) || contains_spacetimedb_temporal_type(ty)
 }
@@ -543,6 +338,7 @@ fn is_obviously_non_number_range_type(ty: &Type) -> bool {
     }
 }
 
+#[cfg(feature = "chrono")]
 fn is_obviously_non_date_range_type(ty: &Type) -> bool {
     match normalized_type(ty) {
         Type::Reference(_) => true,

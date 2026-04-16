@@ -129,6 +129,117 @@ pub enum FilterComponents {
     InfiniteFaceted(InfiniteFacetedFilterOptions),
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FilterKind {
+    Text,
+    NumberRange,
+    DateRange,
+    Faceted,
+    InfiniteFaceted,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub(crate) enum FilterRenderGroup {
+    Text,
+    NumberRange,
+    Faceted,
+    DateRange,
+}
+
+impl FilterKind {
+    #[cfg(any(
+        not(feature = "chrono"),
+        not(feature = "rust_decimal"),
+        not(feature = "spacetimedb")
+    ))]
+    pub(crate) fn attribute_syntax(self) -> &'static str {
+        match self {
+            Self::Text => "text()",
+            Self::NumberRange => "number_range(...)",
+            Self::DateRange => "date_range()",
+            Self::Faceted => "faceted(...)",
+            Self::InfiniteFaceted => "infinite_faceted_filter()",
+        }
+    }
+
+    pub(crate) fn label(self) -> &'static str {
+        match self {
+            Self::Text => "text",
+            Self::NumberRange => "number range",
+            Self::DateRange => "date range",
+            Self::Faceted => "faceted",
+            Self::InfiniteFaceted => "infinite faceted",
+        }
+    }
+
+    pub(crate) fn render_group(self) -> FilterRenderGroup {
+        match self {
+            Self::Text => FilterRenderGroup::Text,
+            Self::NumberRange => FilterRenderGroup::NumberRange,
+            Self::DateRange => FilterRenderGroup::DateRange,
+            Self::Faceted | Self::InfiniteFaceted => FilterRenderGroup::Faceted,
+        }
+    }
+}
+
+impl FilterRenderGroup {
+    pub(crate) const ALL: [Self; 4] = [
+        Self::Text,
+        Self::NumberRange,
+        Self::Faceted,
+        Self::DateRange,
+    ];
+
+    pub(crate) fn method_name(self) -> &'static str {
+        match self {
+            Self::Text => "text_filters",
+            Self::NumberRange => "number_filters",
+            Self::Faceted => "faceted_filters",
+            Self::DateRange => "date_filters",
+        }
+    }
+
+    pub(crate) fn doc_label(self) -> &'static str {
+        match self {
+            Self::Text => "text filters",
+            Self::NumberRange => "number range filters",
+            Self::Faceted => "faceted filters",
+            Self::DateRange => "date range filters",
+        }
+    }
+}
+
+impl FilterComponents {
+    pub(crate) fn kind(&self) -> FilterKind {
+        match self {
+            Self::Text(_) => FilterKind::Text,
+            Self::NumberRange(_) => FilterKind::NumberRange,
+            Self::DateRange(_) => FilterKind::DateRange,
+            Self::Faceted(_) => FilterKind::Faceted,
+            Self::InfiniteFaceted(_) => FilterKind::InfiniteFaceted,
+        }
+    }
+
+    /// The attribute syntax users write for this built-in filter.
+    #[cfg(any(
+        not(feature = "chrono"),
+        not(feature = "rust_decimal"),
+        not(feature = "spacetimedb")
+    ))]
+    pub(crate) fn attribute_syntax(&self) -> &'static str {
+        self.kind().attribute_syntax()
+    }
+
+    /// A short human-readable label for generated docs and diagnostics.
+    pub(crate) fn kind_label(&self) -> &'static str {
+        self.kind().label()
+    }
+
+    pub(crate) fn render_group(&self) -> FilterRenderGroup {
+        self.kind().render_group()
+    }
+}
+
 fn parse_decimal_literal(expr: &Expr) -> Result<DecimalLiteral, String> {
     match expr {
         Expr::Lit(expr_lit) => parse_decimal_lit(&expr_lit.lit),
