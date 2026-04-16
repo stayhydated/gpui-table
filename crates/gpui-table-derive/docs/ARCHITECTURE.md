@@ -36,7 +36,8 @@ columns, filters, and optional registry metadata.
   - Macro entry points and expansion logic
   - Validates configuration errors early (e.g. invalid `fixed`, invalid
     `number_range`, missing `chrono` / `rust_decimal` / `spacetimedb` feature
-    requirements, field `filter(...)` without struct `#[gpui_table(filters)]`)
+    requirements, unsupported built-in filter/type combinations, field
+    `filter(...)` without struct `#[gpui_table(filters)]`)
 - `components.rs`
   - Parses filter configuration attributes (text/number/date/faceted)
   - `number_range(...)` decimal options preserve source spans, accept numeric
@@ -87,6 +88,11 @@ columns, filters, and optional registry metadata.
 1. With `rust_decimal` enabled, `number_range(min/max/step)` values are parsed
    during macro expansion so invalid decimal literals, non-positive steps, and
    inverted ranges fail before code generation.
+1. Built-in filter/type mismatches are rejected before code generation where
+   the derive can prove the combination is impossible (for example `text()` on
+   `bool`, `faceted()` on `Option<T>`, or `date_range()` on `String`), while
+   still allowing local user types that may implement the required runtime
+   traits.
 
 ## Feature flags
 

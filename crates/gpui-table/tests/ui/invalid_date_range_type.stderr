@@ -1,0 +1,5 @@
+error: `filter(date_range())` on `String` requires a field type supported by `gpui_table::core::filter::ToNaiveDate`; built-in support covers `chrono::NaiveDate`, `chrono::NaiveDateTime`, `chrono::DateTime<_>`, and `Option<...>` of those
+ --> tests/ui/invalid_date_range_type.rs:7:11
+  |
+7 |     name: String,
+  |           ^^^^^^

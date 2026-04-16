@@ -53,6 +53,9 @@ status bar. These components are used by the generated filter entities when
 - `#[derive(GpuiTable)]` currently wires only the built-in filter syntaxes from
   `gpui-table-derive`; custom `TableFilterComponent` implementations are not yet
   selectable through `#[gpui_table(filter(...))]`.
+- Custom components therefore integrate at runtime today: instantiate them
+  directly or wrap them in a manual filter-entity collection that owns state,
+  query serialization, and reload callbacks.
 - Extend filter components with chainable configuration methods (extension traits).
 - Style existing filter components via chainable extension-trait setters that accept
   `gpui::StyleRefinement` (for example trigger/input/popover segment styles).

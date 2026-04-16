@@ -58,6 +58,9 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
   implementing `TableFilterComponent` does not automatically add new
   `#[gpui_table(filter(...))]` options.
+- Custom filter components are a manual integration point today: instantiate
+  them directly, or build your own filter-entity collection / reload wiring
+  around `TableFilterComponent` and `QueryFilterValue`.
 - `QueryFilterValue` now supports the generated wrapper types
   (`TextValue`, `RangeValue`, `FacetedValue`, `SingleValue`) in addition to the
   raw component values, so `FilterEntities::read_values()` can feed query

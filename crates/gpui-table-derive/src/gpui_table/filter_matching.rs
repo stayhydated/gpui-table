@@ -29,14 +29,14 @@ pub(super) fn generate_matches_filters_method(
                         quote! {
                             if filters.#field_ident.is_active() {
                                 self.#field_ident
-                                    .as_deref()
-                                    .is_some_and(|value| filters.#field_ident.matches(value))
+                                    .as_ref()
+                                    .is_some_and(|value| filters.#field_ident.matches(value.as_ref()))
                             } else {
                                 true
                             }
                         }
                     } else {
-                        quote! { filters.#field_ident.matches(&self.#field_ident) }
+                        quote! { filters.#field_ident.matches(self.#field_ident.as_ref()) }
                     }
                 }
                 FilterComponents::NumberRange(_) => {

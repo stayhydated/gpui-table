@@ -146,8 +146,19 @@ literals like `0.25` and quoted decimal strings like `"0.25"`. When the
 `gpui-table/rust_decimal` feature is enabled, invalid decimals, `step <= 0`,
 and `min > max` are rejected during macro expansion with field-local errors.
 
+Built-in filter/type expectations are also validated during macro expansion:
+
+- `text()` expects `String`, `&str`, or an `Option<...>` / local type that implements `AsRef<str>`.
+- `number_range(...)` expects a type supported by `gpui_table::core::filter::ToDecimal`.
+- `date_range()` expects a type supported by `gpui_table::core::filter::ToNaiveDate`.
+- `faceted(...)` expects a non-optional field type that implements `Filterable`;
+  `bool` works out of the box and enums can `#[derive(Filterable)]`.
+- `infinite_faceted_filter()` expects a non-optional type compatible with the
+  built-in `InfiniteFacetedFilter<T>`.
+
 Custom `TableFilterComponent` implementations are not yet selectable through
-`#[gpui_table(filter(...))]`.
+`#[gpui_table(filter(...))]`; use them by instantiating the component directly
+or by building a manual filter-entity collection around `TableFilterComponent`.
 
 ## Generated reset bindings
 

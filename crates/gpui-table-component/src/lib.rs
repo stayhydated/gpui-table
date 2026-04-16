@@ -32,9 +32,12 @@ use std::collections::HashSet;
 /// filter components supported by `#[derive(GpuiTable)]`.
 ///
 /// Implementing this trait can still be useful for standalone components in
-/// your own UI code, but the derive macro currently only wires the built-in
-/// `filter(text())`, `filter(number_range())`, `filter(date_range())`,
-/// `filter(faceted())`, and `filter(infinite_faceted_filter())` syntaxes.
+/// your own UI code or for custom filter collections you build manually.
+/// The derive macro currently only wires the built-in `filter(text())`,
+/// `filter(number_range())`, `filter(date_range())`, `filter(faceted())`, and
+/// `filter(infinite_faceted_filter())` syntaxes; implementing
+/// `TableFilterComponent` does not register a new `#[gpui_table(filter(...))]`
+/// option on its own.
 pub trait TableFilterComponent: Sized {
     /// The type used to store the filter's current value/state.
     type Value: Default + Clone + Send + 'static;

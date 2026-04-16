@@ -1,0 +1,5 @@
+error: `filter(faceted(...))` does not support `Option<bool>`; use a non-optional field type that implements `gpui_table::core::filter::Filterable`
+ --> tests/ui/invalid_faceted_option_type.rs:7:13
+  |
+7 |     active: Option<bool>,
+  |             ^^^^^^^^^^^^
