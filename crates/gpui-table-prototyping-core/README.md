@@ -12,7 +12,7 @@ Enable the `inventory` feature on `gpui-table` and iterate the registered shapes
 
 ```rs
 # fn demo() -> Result<(), gpui_table_prototyping_core::TableCodegenError> {
-use gpui_table::schema::registry::GpuiTableShape;
+use gpui_table::schema::registry::{GpuiTableShape, inventory};
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use quote::quote;
 
@@ -37,5 +37,8 @@ for shape in inventory::iter::<GpuiTableShape>() {
 # Ok(())
 # }
 ```
+
+Use the `inventory` re-export from `gpui_table::schema::registry` unless you
+already depend on `inventory` directly.
 
 See `examples/prototyping` for a full generator that writes formatted files.

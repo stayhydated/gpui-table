@@ -38,8 +38,9 @@ columns, faceted-filter enums, filters, and optional registry metadata.
   - Generates a `variant_name(&self) -> &'static str` helper for matching and tooling.
 - `#[gpui_table_impl]`
   - Attribute macro that wires load-more behavior into a generated delegate.
-  - Supports both `impl TableLoader for XxxTableDelegate` and freestanding impl
-    blocks with `#[load_more]` / `#[threshold]` items.
+  - Supports `impl TableLoader for XxxTableDelegate`, `#[gpui_table_impl(path::to::Trait)]`
+    on a plain impl block, and freestanding impl blocks with `#[load_more]` /
+    `#[threshold]` items.
 
 ## Module map
 
@@ -56,13 +57,21 @@ columns, faceted-filter enums, filters, and optional registry metadata.
 - `filterable.rs`
   - Expands `#[derive(Filterable)]` for enums into
     `FilterValue` / `Filterable` impls plus `variant_name()`
+- `gpui_table/expand.rs`
+  - Orchestrates `GpuiTable` expansion, including context-menu options and
+    optional inventory registration
+- `gpui_table/delegate.rs`
+  - Generates `XxxTableDelegate`, filter-cache helpers, and `TableDataLoader`
+    impls for derived tables
 - `gpui_table/filter_codegen/`
   - Shared filter type-token generation, option-chain generation, and
     field/type validation helpers used during `GpuiTable` expansion
-- `filter_entities.rs`
+- `gpui_table/filter_entities.rs`
   - Generates `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers
-- `filter_matching.rs`
+- `gpui_table/filter_matching.rs`
   - Generates `Matchable<XxxFilterValues>` implementations
+- `gpui_table/meta.rs`
+  - Shared parsed metadata for struct-level and field-level `#[gpui_table(...)]` options
 - `impl_attr.rs`
   - Parses `#[gpui_table_impl]` blocks and validates load-more signatures
 - `__crate_paths/` (generated)
@@ -76,6 +85,9 @@ columns, faceted-filter enums, filters, and optional registry metadata.
    metadata.
 1. The macro expands into column enums, `TableRowMeta`/`TableRowStyle`, and
    `TableDelegate` implementations.
+1. Generated delegates always implement `TableDataLoader`; when
+   `#[gpui_table(load_more)]` is enabled, `load_data()` forwards to the derived
+   load-more bridge, otherwise it is a no-op.
 1. Generated delegates route `TableDelegate::context_menu(...)` through the
    selected typed row via `TableRowContextMenu`.
 1. When context-menu derive attributes are present, generated
@@ -95,7 +107,8 @@ columns, faceted-filter enums, filters, and optional registry metadata.
    - `FilterEntities::build_for_table(...)` for client-side interactive
      filtering with `DataTable`.
    - `FilterEntities::build_for_table_loader(...)` for `TableDataLoader`-driven
-     server-side reloads.
+     server-side reloads. Its default pre-reload step clears `delegate.rows`
+     and resets `delegate.eof` before calling `load_data(...)`.
    - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
      reset behavior needs customization.
      Generated `FilterValues` use typed wrappers from `gpui_table::core::filter`,

@@ -16,8 +16,8 @@ cargo run -p gpui-table-component --bin story --features story
 
 - `TextFilter`
 - `FacetedFilter`
-- `NumberRangeFilter`
-- `DateRangeFilter`
+- `NumberRangeFilter` (`rust_decimal` feature, enabled by default)
+- `DateRangeFilter` (`chrono` feature, enabled by default)
 - `ResetFilters`
 - `TableStatusBar`
 
@@ -52,9 +52,8 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 
 ## Notes
 
-- Components are designed to be used via the generated `FilterEntities` in
-  `gpui-table`, where generated code now targets
-  `gpui_table::runtime::generated_filters`, but they can also be instantiated directly.
+- The derive macros build these components for generated table filters, but you
+  can also instantiate them directly in manual GPUI code.
 - `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
   implementing `TableFilterComponent` does not automatically add new
   `#[gpui_table(filter(...))]` options.
@@ -63,7 +62,7 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
   around `TableFilterComponent` and `QueryFilterValue`.
 - `QueryFilterValue` supports the generated wrapper types
   (`TextValue`, `RangeValue`, `FacetedValue`) and also manual `SingleValue`
-  integrations, so `FilterEntities::read_values()` can feed query
+  integrations, so generated `XxxFilterEntities::read_values()` can feed query
   serialization directly.
 - Filter components expose chainable style setters that accept
   `StyleRefinement` to customize trigger/input/popover subparts.

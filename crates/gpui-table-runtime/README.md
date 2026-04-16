@@ -6,8 +6,8 @@ GPUI-facing runtime traits and helpers for `gpui-table`.
 
 - `TableCell` and built-in default renderers for common scalar/date/time values
 - Row/runtime traits: `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`
-- Load-more traits: `TableLoader`, `TableDataLoader`
-- Generated-filter runtime facade via `generated_filters`
+- Loading traits: `TableLoader`, `TableDataLoader`
+- Built-in filter components, `FilterEntitiesExt`, and `QueryFilterValue` via `generated_filters`
 
 ## Notes
 

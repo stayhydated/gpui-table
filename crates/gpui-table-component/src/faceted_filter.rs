@@ -364,7 +364,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
         let has_selection = selected_count > 0;
         let selected_labels = self.get_selected_labels();
 
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let options_fn = self.options.clone();
         let trigger_style = self.trigger_style.clone();
         let selected_tag_style = self.selected_tag_style.clone();
@@ -520,32 +520,28 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                                     })
                                                     .child(label),
                                             )
-                                            .on_click({
-                                                let view = view.clone();
-                                                let val_str = val_str.clone();
-                                                move |_, window, cx| {
-                                                    view.update(cx, |this, cx| {
-                                                        let is_currently_selected =
-                                                            this.is_selected(&val_str);
-                                                        if is_currently_selected {
-                                                            this.selected_values.retain(|v| {
-                                                                v.to_filter_string() != val_str
-                                                            });
-                                                            (this.on_change)(
-                                                                this.selected_values.clone(),
-                                                                window,
-                                                                cx,
-                                                            );
-                                                            cx.notify();
-                                                        } else if let Some(typed_val) =
-                                                            T::from_filter_string(&val_str)
-                                                        {
-                                                            this.toggle_option(
-                                                                typed_val, true, window, cx,
-                                                            );
-                                                        }
-                                                    });
-                                                }
+                                            .on_click(move |_, window, cx| {
+                                                view.update(cx, |this, cx| {
+                                                    let is_currently_selected =
+                                                        this.is_selected(&val_str);
+                                                    if is_currently_selected {
+                                                        this.selected_values.retain(|v| {
+                                                            v.to_filter_string() != val_str
+                                                        });
+                                                        (this.on_change)(
+                                                            this.selected_values.clone(),
+                                                            window,
+                                                            cx,
+                                                        );
+                                                        cx.notify();
+                                                    } else if let Some(typed_val) =
+                                                        T::from_filter_string(&val_str)
+                                                    {
+                                                        this.toggle_option(
+                                                            typed_val, true, window, cx,
+                                                        );
+                                                    }
+                                                });
                                             }),
                                     )
                                     .when_some(count, |d, count| {

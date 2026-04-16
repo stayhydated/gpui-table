@@ -17,13 +17,13 @@ status bar. These components are used by the generated filter entities when
     `rust_decimal`
 - `src/bin/story.rs`
   - Storybook gallery entrypoint for previewing filter components
-- `stories/`
+- `src/stories/`
   - Storybook registrations showcasing filter and status-bar modes
 - `faceted_filter.rs`
-  - Multi-select filter with optional search and option providers
+  - Multi-select filter with optional search and grouped option metadata
 - `text_filter.rs`
   - Debounced text input with optional validation helpers
-- `number_range_filter.rs`
+- `number_range_filter/`
   - Range slider + inputs for numeric filtering (decimal-backed)
   - Default bounds auto-adjust to current entered values (starting from `0..100`);
     explicit `.range(min, max)` keeps bounds fixed
@@ -31,7 +31,7 @@ status bar. These components are used by the generated filter entities when
   - Calendar-based date range picker
   - Formats displayed dates by converting `chrono::NaiveDate` values through
     `jiff` and ICU4X so trigger text matches runtime cell rendering
-  - Commits selection changes directly from the calendar instead of re-applying
+  - Emits selection changes directly from the calendar instead of re-applying
     the same value when the popover closes
 - `reset_filters.rs`
   - Localized reset button for clearing all generated filters
@@ -43,12 +43,14 @@ status bar. These components are used by the generated filter entities when
 1. The derive macro generates `XxxFilterEntities` that instantiate these
    components through `gpui_table::runtime::generated_filters`, which re-exports
    this crate as the stable runtime target.
-1. Each filter component calls the provided `on_change` callback with its value.
-   `DateRangeFilter` does this on calendar selection changes; it does not emit a
-   second callback on popover close.
+1. Each filter component owns its current state and calls the provided
+   `on_change` callback when that state changes. `TextFilter` and
+   `NumberRangeFilter` debounce freeform edits, while `FacetedFilter` and
+   `DateRangeFilter` emit directly from user selections.
 1. `ResetFilters` triggers generated reset bindings that clear all filters in one action.
-1. Consumers read all filter values via `FilterEntitiesExt::read_values` and
-   apply them client-side or pass them into load-more requests.
+1. Consumers read all filter values via generated `read_values()` /
+   `all_filters()` helpers, or generically through `FilterEntitiesExt`.
+   Those values can then be applied client-side or passed into loader requests.
 1. `QueryFilterValue` supports both raw component values and the generated
    wrapper types from `gpui-table-core::filter`, so server-side loaders can
    serialize either representation directly.

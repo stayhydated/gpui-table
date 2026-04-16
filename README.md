@@ -14,19 +14,19 @@ metadata, and prototyping utilities for code generation.
 | Crate | Purpose |
 | :---- | :------ |
 | `gpui-table` | Facade crate that re-exports the core/runtime/schema layers and, with `derive`, the proc macros. |
-| `gpui-table-core` | Pure filter semantics, typed filter values, and range conversion traits. |
+| `gpui-table-core` | Pure filter semantics, typed filter values, and feature-gated conversion helpers. |
 | `gpui-table-runtime` | GPUI-facing table traits, default cell rendering, load-more wiring, and the generated-filter runtime facade. |
 | `gpui-table-schema` | Static filter metadata and inventory-backed `GpuiTableShape` registry types. |
 | `gpui-table-derive` | `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl` proc macros. |
 | `gpui-table-component` | Built-in filter components and `TableStatusBar`. |
 | `gpui-table-prototyping-core` | Code generation helpers that consume `GpuiTableShape` metadata. |
 
-## Compatibility
+## Resolved upstreams
 
-| `gpui-table` | `gpui-component` | `gpui` |
-| :--------------- | :--------------- | :--------------------------------------------- |
-| **git** | |
-| `master` | `main` | rev `15d8660748b508b3525d3403e5d172f1a557bfa5` |
+| Dependency | Workspace baseline |
+| :--------- | :----------------- |
+| `gpui` | pinned to rev `15d8660748b508b3525d3403e5d172f1a557bfa5` in the workspace manifest |
+| `gpui-component` | currently resolved to commit `0a7b1708ed92127b984c317ed78b183a110b62cf` in `Cargo.lock` |
 
 ## Interactive examples
 

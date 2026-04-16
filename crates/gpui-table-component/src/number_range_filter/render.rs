@@ -40,7 +40,7 @@ impl Render for NumberRangeFilter {
         let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let (Some(min_input), Some(max_input), Some(slider_state)) = (
             self.min_input.clone(),
             self.max_input.clone(),
@@ -90,7 +90,7 @@ impl Render for NumberRangeFilter {
                     })
                     .child(Icon::new(trigger_icon).xsmall()),
             )
-            .child(title.clone())
+            .child(title)
             .when(has_value, |b| {
                 b.child(Divider::vertical().h(px(16.)).mx_1())
                     .child(range_display)

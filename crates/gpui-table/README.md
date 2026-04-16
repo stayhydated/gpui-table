@@ -50,11 +50,13 @@ impl TableLoader for UserTableDelegate {
 
 ## Exports
 
-- `gpui_table::core` for filter semantics (`Matchable`, typed filter values, conversions)
-- `gpui_table::runtime` for row traits, loaders, default rendering, and the generated-filter runtime facade
+- `gpui_table::core` for filter semantics (`Matchable`, typed filter values, feature-gated conversions)
+- `gpui_table::filter` as a convenience alias for `gpui_table::core::filter`
+- `gpui_table::runtime` for row traits, loaders, default rendering, and built-in filter runtime helpers
 - `gpui_table::schema` for registry and filter metadata
+- root-level convenience re-exports: `TableCell`, `TableLoader`,
+  `TableDataLoader`, `TableRowMeta`, `TableRowStyle`,
+  `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `FilterEntitiesExt`
 - derive macros re-exported from `gpui-table-derive` (`GpuiTable`, `Filterable`, `TableCell`, `gpui_table_impl`)
-
-Generated filter code now targets `gpui_table::runtime::generated_filters`.
-The hidden `__deps` module remains only for feature-gated third-party types
-such as `chrono` and `rust_decimal`.
+- `gpui_table::runtime::generated_filters` for built-in filter components and
+  query-string helpers when you need manual/generated filter interop

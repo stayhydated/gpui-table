@@ -14,8 +14,13 @@ it alone and get:
 
 - `lib.rs`
   - Re-exports the core crate as `gpui_table::core`
+  - Re-exports `gpui_table::core::filter` directly as `gpui_table::filter`
   - Re-exports the runtime crate as `gpui_table::runtime`
   - Re-exports the schema crate as `gpui_table::schema`
+  - Re-exports common runtime traits at the crate root:
+    `FilterEntitiesExt`, `TableCell`, `TableDataLoader`, `TableLoader`,
+    `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableRowMeta`,
+    `TableRowStyle`
   - Re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
     when the `derive` feature is enabled
   - Exposes hidden `__deps` for feature-gated external types (`chrono`, `rust_decimal`)
@@ -27,7 +32,8 @@ it alone and get:
 1. You can derive `Filterable` on faceted-filter enums and `TableCell` on
    supporting cell types through the same facade.
 1. The derive macro generates row/delegate/filter code against traits exported by
-   the facade's explicit `core` / `runtime` / `schema` namespaces.
+   the facade's explicit `core` / `runtime` / `schema` namespaces, plus the
+   root-level `filter` and convenience trait re-exports.
 1. Generated filter code targets `gpui_table::runtime::generated_filters`
    instead of directly hard-coding the component crate path.
 1. Tooling such as prototyping/codegen consumes schema metadata from

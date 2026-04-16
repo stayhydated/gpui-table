@@ -239,7 +239,7 @@ impl Render for DateRangeFilter {
         let title = (self.title)();
         let has_value = self.has_value();
         let range_display = self.format_range();
-        let view = cx.entity().clone();
+        let view = cx.entity();
         let trigger_style = self.trigger_style.clone();
         let popover_style = self.popover_style.clone();
         let calendar_style = self.calendar_style.clone();
@@ -275,7 +275,7 @@ impl Render for DateRangeFilter {
                     })
                     .child(Icon::new(trigger_icon).xsmall()),
             )
-            .child(title.clone())
+            .child(title)
             .when(has_value, |b| {
                 b.child(Divider::vertical().h(px(16.)).mx_1())
                     .child(range_display)
