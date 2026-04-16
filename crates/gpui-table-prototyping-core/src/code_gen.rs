@@ -3,6 +3,7 @@ use heck::ToSnakeCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use std::path::Path;
+use thiserror::Error;
 
 use crate::imports::{Alias, ImportItem, ImportSet};
 
@@ -41,7 +42,9 @@ pub trait TableIdentities {
     /// The original struct name (e.g., "User")
     fn struct_name(&self) -> &'static str;
 
-    /// The struct name as an identifier
+    /// The struct name as an identifier.
+    ///
+    /// For user-facing tooling, prefer [`TableIdentitiesExt::try_struct_name_ident`].
     fn struct_name_ident(&self) -> syn::Ident {
         syn::parse_str(self.struct_name()).unwrap()
     }
@@ -67,7 +70,9 @@ pub trait TableIdentities {
         self.struct_name().to_snake_case()
     }
 
-    /// Snake case name as identifier (for import paths)
+    /// Snake case name as identifier (for import paths).
+    ///
+    /// For user-facing tooling, prefer [`TableIdentitiesExt::try_snake_case_ident`].
     fn snake_case_ident(&self) -> syn::Ident {
         syn::parse_str(&self.snake_case_name()).unwrap()
     }
@@ -89,6 +94,43 @@ pub trait TableIdentities {
 
     /// Whether this table has filters defined
     fn has_filters(&self) -> bool;
+}
+
+/// Fallible identifier helpers for user-facing tooling.
+pub trait TableIdentitiesExt: TableIdentities {
+    fn try_struct_name_ident(&self) -> Result<syn::Ident, TableCodegenError> {
+        parse_ident(
+            "struct identifier",
+            self.struct_name(),
+            self.struct_name().to_string(),
+        )
+    }
+
+    fn try_snake_case_ident(&self) -> Result<syn::Ident, TableCodegenError> {
+        let snake_case_name = self.snake_case_name();
+        parse_ident("snake_case identifier", self.struct_name(), snake_case_name)
+    }
+}
+
+impl<T: TableIdentities + ?Sized> TableIdentitiesExt for T {}
+
+#[derive(Debug, Error)]
+pub enum TableCodegenError {
+    #[error("invalid {kind} `{value}` derived from table shape `{struct_name}`")]
+    InvalidIdentifier {
+        kind: &'static str,
+        struct_name: &'static str,
+        value: String,
+        #[source]
+        source: syn::Error,
+    },
+    #[error("failed to derive a Rust module path from source path `{source_path}`")]
+    InvalidSourcePath { source_path: String },
+    #[error("failed to render generated imports")]
+    InvalidImports {
+        #[source]
+        source: syn::Error,
+    },
 }
 
 /// Trait for generating different parts of the table story code.
@@ -185,14 +227,27 @@ impl<'a> TableShapeAdapter<'a> {
     /// All conditional / derived fragments are pre-evaluated so you only need
     /// to splice them in.
     pub fn parts(&self) -> TableParts {
-        let struct_name_ident = self.identities.struct_name_ident();
+        self.try_parts()
+            .expect("valid gpui-table shape metadata for TableShapeAdapter::parts")
+    }
+
+    /// Fallible version of [`TableShapeAdapter::parts`] for user-facing tooling.
+    pub fn try_parts(&self) -> Result<TableParts, TableCodegenError> {
+        let struct_name_ident = self.identities.try_struct_name_ident()?;
         let story_struct_ident = self.identities.story_struct_ident();
         let delegate_struct_ident = self.identities.delegate_struct_ident();
 
-        let source_module_path = source_path_to_use_path(self.shape.source_path)
-            .unwrap_or_else(|| panic!("Failed to parse source_path: {}", self.shape.source_path));
+        let source_module_path =
+            source_path_to_use_path(self.shape.source_path).ok_or_else(|| {
+                TableCodegenError::InvalidSourcePath {
+                    source_path: self.shape.source_path.to_string(),
+                }
+            })?;
 
-        let collected_imports = self.required_imports().to_token_stream();
+        let collected_imports = self
+            .required_imports()
+            .try_to_token_stream()
+            .map_err(|source| TableCodegenError::InvalidImports { source })?;
         let imports = quote! {
             use #source_module_path::*;
             #collected_imports
@@ -205,7 +260,7 @@ impl<'a> TableShapeAdapter<'a> {
         let render_children = self.render_children();
         let title_expr = self.title_expr();
 
-        TableParts {
+        Ok(TableParts {
             struct_name_ident,
             story_struct_ident,
             delegate_struct_ident,
@@ -219,7 +274,7 @@ impl<'a> TableShapeAdapter<'a> {
             struct_fields,
             render_children,
             title_expr,
-        }
+        })
     }
 
     /// Generate a `syn::File` from a [`TableLayout`] implementation.
@@ -232,13 +287,24 @@ impl<'a> TableShapeAdapter<'a> {
     ///         syn::parse2(quote! {
     ///             #imports
     ///             pub struct #story_struct_ident { /* ... */ }
-    ///         }).unwrap()
+    ///         })
+    ///         .expect("static layout template should parse")
     ///     }
     /// }
-    /// TableShapeAdapter::new(shape, true).generate_file(&MyLayout);
+    /// let file = TableShapeAdapter::new(shape, true).try_generate_file(&MyLayout)?;
     /// ```
     pub fn generate_file(&self, layout: &impl TableLayout) -> syn::File {
-        layout.generate_file(&self.parts())
+        self.try_generate_file(layout)
+            .expect("valid gpui-table shape metadata for TableShapeAdapter::generate_file")
+    }
+
+    /// Fallible version of [`TableShapeAdapter::generate_file`] for user-facing tooling.
+    pub fn try_generate_file(
+        &self,
+        layout: &impl TableLayout,
+    ) -> Result<syn::File, TableCodegenError> {
+        let parts = self.try_parts()?;
+        Ok(layout.generate_file(&parts))
     }
 }
 
@@ -291,6 +357,19 @@ pub struct TableParts {
 /// reusing all the pre-computed [`TableParts`] fragments.
 pub trait TableLayout {
     fn generate_file(&self, parts: &TableParts) -> syn::File;
+}
+
+fn parse_ident(
+    kind: &'static str,
+    struct_name: &'static str,
+    value: String,
+) -> Result<syn::Ident, TableCodegenError> {
+    syn::parse_str(&value).map_err(|source| TableCodegenError::InvalidIdentifier {
+        kind,
+        struct_name,
+        value,
+        source,
+    })
 }
 
 // ── source_path_to_use_path ───────────────────────────────────────────────────

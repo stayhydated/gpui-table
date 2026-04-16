@@ -1,3 +1,4 @@
+use anyhow::Context as _;
 use gpui_table::registry::GpuiTableShape;
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use heck::ToSnakeCase as _;
@@ -12,7 +13,6 @@ struct StorybookLayout;
 impl TableLayout for StorybookLayout {
     fn generate_file(&self, parts: &TableParts) -> syn::File {
         let TableParts {
-            struct_name_ident,
             story_struct_ident,
             imports,
             delegate_creation,
@@ -83,9 +83,14 @@ impl TableLayout for StorybookLayout {
     }
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let output_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("output");
-    fs::create_dir_all(&output_dir).expect("Failed to create output directory");
+    fs::create_dir_all(&output_dir).with_context(|| {
+        format!(
+            "failed to create output directory `{}`",
+            output_dir.display()
+        )
+    })?;
     println!("Generating table stories in: {}", output_dir.display());
 
     let mut modules: BTreeSet<String> = BTreeSet::new();
@@ -93,12 +98,16 @@ fn main() {
     for shape in inventory::iter::<GpuiTableShape>() {
         println!("Table: {:?}", shape.struct_name);
 
-        let syn_file = TableShapeAdapter::new(shape, true).generate_file(&StorybookLayout);
+        let syn_file = TableShapeAdapter::new(shape, true)
+            .try_generate_file(&StorybookLayout)
+            .with_context(|| {
+                format!("failed to generate table story for `{}`", shape.struct_name)
+            })?;
         let file_stem = shape.struct_name.to_snake_case();
         let file_path = output_dir.join(format!("{file_stem}.rs"));
 
         fs::write(&file_path, prettyplease::unparse(&syn_file))
-            .unwrap_or_else(|_| panic!("Failed to write file: {}", file_path.display()));
+            .with_context(|| format!("failed to write `{}`", file_path.display()))?;
 
         modules.insert(file_stem);
         println!("Generated and formatted: {}", file_path.display());
@@ -111,8 +120,9 @@ fn main() {
         .collect::<String>();
 
     fs::write(&mod_rs_path, mod_rs)
-        .unwrap_or_else(|_| panic!("Failed to write file: {}", mod_rs_path.display()));
+        .with_context(|| format!("failed to write `{}`", mod_rs_path.display()))?;
 
     println!("Generated module index: {}", mod_rs_path.display());
     println!("Table story generation complete.");
+    Ok(())
 }

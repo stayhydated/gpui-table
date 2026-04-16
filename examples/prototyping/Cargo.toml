@@ -6,6 +6,7 @@ license = "Unlicense"
 publish = false
 
 [dependencies]
+anyhow = { workspace = true }
 gpui-table = { features = [ "inventory", "fluent", "rust_decimal", "chrono" ], workspace = true }
 gpui-table-prototyping-core = { workspace = true }
 heck = { workspace = true }

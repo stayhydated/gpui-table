@@ -33,7 +33,8 @@ columns, filters, and optional registry metadata.
 - `lib.rs`
   - Macro entry points and expansion logic
   - Validates configuration errors early (e.g. invalid `fixed`, invalid
-    `number_range`, field `filter(...)` without struct `#[gpui_table(filters)]`)
+    `number_range`, missing `chrono` / `rust_decimal` / `spacetimedb` feature
+    requirements, field `filter(...)` without struct `#[gpui_table(filters)]`)
 - `components.rs`
   - Parses filter configuration attributes (text/number/date/faceted)
 - `impl_attr.rs`
@@ -67,13 +68,19 @@ columns, filters, and optional registry metadata.
      reset behavior needs customization.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 1. Generated filter code references runtime dependencies through
-   `gpui_table::__deps` and emits marker-trait assertions so missing
-   `gpui-table` features (`rust_decimal`, `chrono`) fail with direct diagnostics.
+   `gpui_table::__deps`, but missing `gpui-table` feature requirements are
+   rejected earlier during macro expansion.
 
 ## Feature flags
 
+- `chrono`: forwarded from `gpui-table` so `date_range` support can be
+  validated during macro expansion.
 - `fluent`: generates localized titles via `es-fluent` helpers.
 - `inventory`: registers table shapes for prototyping/codegen.
+- `rust_decimal`: forwarded from `gpui-table` so `number_range` support can be
+  validated during macro expansion.
+- `spacetimedb`: forwarded from `gpui-table` so SpacetimeDB range-filter usage
+  can be validated during macro expansion.
 
 ## Notes
 

@@ -23,7 +23,7 @@
 //! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!
-//! These are validated during macro expansion with compile-time errors.
+//! These are validated during macro expansion with direct compile-time errors.
 
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
@@ -42,16 +42,4 @@ pub mod __deps {
     pub use chrono;
     #[cfg(feature = "rust_decimal")]
     pub use rust_decimal;
-
-    /// Marker trait used by generated code to fail clearly when
-    /// `filter(number_range(...))` is used without enabling `gpui-table/rust_decimal`.
-    pub trait RequiresRustDecimalFeatureOnGpuiTable {}
-    #[cfg(feature = "rust_decimal")]
-    impl RequiresRustDecimalFeatureOnGpuiTable for () {}
-
-    /// Marker trait used by generated code to fail clearly when
-    /// `filter(date_range(...))` is used without enabling `gpui-table/chrono`.
-    pub trait RequiresChronoFeatureOnGpuiTable {}
-    #[cfg(feature = "chrono")]
-    impl RequiresChronoFeatureOnGpuiTable for () {}
 }

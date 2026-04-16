@@ -31,9 +31,9 @@ metadata and macro generation.
 - `rust_decimal`: adds `TableCell` + filter support for decimal types.
 - `spacetimedb`: enables `gpui-table-core` conversions for SpacetimeDB `Timestamp` and `TimeDuration` in range filters.
 
-`chrono` and `rust_decimal` also drive hidden feature markers used by generated
-code to emit clear compile errors when `date_range` / `number_range` filters
-are used without enabling the corresponding `gpui-table` feature.
+`chrono`, `rust_decimal`, and `spacetimedb` are also forwarded into the derive
+crate so unsupported range-filter configurations fail during macro expansion
+with direct diagnostics instead of later missing-symbol errors.
 
 ## Extension points
 

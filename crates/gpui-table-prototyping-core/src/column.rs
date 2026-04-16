@@ -75,10 +75,20 @@ impl<'a> ColumnInfo<'a> {
 
     /// Parse field type as syn::Type
     pub fn field_type_syn(&self) -> syn::Type {
-        syn::parse_str(self.variant.field_type).unwrap_or_else(|_| {
-            // If parsing fails, wrap in angle brackets to handle generics
-            syn::parse_str(self.variant.field_type)
-                .unwrap_or_else(|_| panic!("Failed to parse type: {}", self.variant.field_type))
+        self.try_field_type_syn()
+            .expect("valid field type in gpui-table shape metadata")
+    }
+
+    /// Fallible version of [`ColumnInfo::field_type_syn`] for user-facing tooling.
+    pub fn try_field_type_syn(&self) -> syn::Result<syn::Type> {
+        syn::parse_str(self.variant.field_type).map_err(|err| {
+            syn::Error::new(
+                proc_macro2::Span::call_site(),
+                format!(
+                    "failed to parse field type `{}`: {err}",
+                    self.variant.field_type
+                ),
+            )
         })
     }
 

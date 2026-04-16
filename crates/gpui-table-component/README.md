@@ -5,7 +5,7 @@ GPUI filter UI components and a table status bar used by `gpui-table`.
 ## Interactive examples
 
 ```sh
-cargo run --features story
+cargo run -p gpui-table-component --bin story --features story
 ```
 
 ## Components
@@ -19,7 +19,7 @@ cargo run --features story
 
 ## Traits
 
-- `TableFilterComponent` for type-safe component construction in generated code
+- `TableFilterComponent` for built-in filter component construction in generated code
 - `FilterValue` for query-string conversion of filter values (separate from
   `gpui_table_core::filter::FilterValue`)
 
@@ -50,10 +50,14 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 
 - Components are designed to be used via the generated `FilterEntities` in
   `gpui-table`, but can be instantiated directly.
+- `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
+  implementing `TableFilterComponent` does not automatically add new
+  `#[gpui_table(filter(...))]` options.
 - Filter components expose chainable style setters that accept
   `StyleRefinement` to customize trigger/input/popover subparts.
 - `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses
   `chrono`.
-- This crate ships a small storybook binary (`main.rs`) for previewing filters.
+- This crate ships a small storybook binary at `src/bin/story.rs` for previewing
+  filters and `TableStatusBar`.
 - Story definitions live in `src/stories` and are auto-registered via
   `gpui-storybook` inventory macros.

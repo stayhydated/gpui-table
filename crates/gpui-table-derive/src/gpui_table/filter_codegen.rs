@@ -1,6 +1,6 @@
 use crate::components::{FilterComponents, TextValidation};
-use crate::gpui_table::meta::FilterFieldMeta;
 
+use quote::ToTokens as _;
 use quote::quote;
 use syn::Ident;
 
@@ -172,6 +172,7 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
 pub(super) fn validate_filter_config(
     filter: &FilterComponents,
     field_ident: &Ident,
+    field_ty: &syn::Type,
 ) -> syn::Result<()> {
     if let FilterComponents::NumberRange(opts) = filter {
         if let Some(min) = opts.min
@@ -214,44 +215,81 @@ pub(super) fn validate_filter_config(
         }
     }
 
+    #[cfg(not(feature = "rust_decimal"))]
+    if matches!(filter, FilterComponents::NumberRange(_)) {
+        return Err(syn::Error::new(
+            field_ident.span(),
+            "`filter(number_range(...))` requires enabling the `gpui-table/rust_decimal` feature",
+        ));
+    }
+
+    #[cfg(not(feature = "chrono"))]
+    if matches!(filter, FilterComponents::DateRange(_)) {
+        return Err(syn::Error::new(
+            field_ident.span(),
+            "`filter(date_range())` requires enabling the `gpui-table/chrono` feature",
+        ));
+    }
+
+    #[cfg(not(feature = "spacetimedb"))]
+    if matches!(
+        filter,
+        FilterComponents::NumberRange(_) | FilterComponents::DateRange(_)
+    ) && contains_spacetimedb_temporal_type(field_ty)
+    {
+        let type_name = field_ty.to_token_stream().to_string();
+        return Err(syn::Error::new(
+            field_ident.span(),
+            format!(
+                "`filter({})` on `{type_name}` requires enabling the `gpui-table/spacetimedb` feature",
+                filter_name(filter)
+            ),
+        ));
+    }
+
     Ok(())
 }
 
-pub(super) fn generate_filter_feature_assertions(
-    struct_name: &Ident,
-    filter_fields: &[FilterFieldMeta],
-) -> proc_macro2::TokenStream {
-    let requires_rust_decimal = filter_fields
-        .iter()
-        .any(|f| matches!(&f.filter_config, FilterComponents::NumberRange(_)));
-    let requires_chrono = filter_fields
-        .iter()
-        .any(|f| matches!(&f.filter_config, FilterComponents::DateRange(_)));
+fn filter_name(filter: &FilterComponents) -> &'static str {
+    match filter {
+        FilterComponents::Text(_) => "text()",
+        FilterComponents::NumberRange(_) => "number_range(...)",
+        FilterComponents::DateRange(_) => "date_range()",
+        FilterComponents::Faceted(_) => "faceted(...)",
+        FilterComponents::InfiniteFaceted(_) => "infinite_faceted_filter()",
+    }
+}
 
-    let rust_decimal_assert = if requires_rust_decimal {
-        quote! {
-            impl #struct_name
-            where
-                (): gpui_table::__deps::RequiresRustDecimalFeatureOnGpuiTable,
-            {}
-        }
-    } else {
-        quote! {}
-    };
+fn contains_spacetimedb_temporal_type(ty: &syn::Type) -> bool {
+    match ty {
+        syn::Type::Path(type_path) => {
+            let Some(last_segment) = type_path.path.segments.last() else {
+                return false;
+            };
 
-    let chrono_assert = if requires_chrono {
-        quote! {
-            impl #struct_name
-            where
-                (): gpui_table::__deps::RequiresChronoFeatureOnGpuiTable,
-            {}
-        }
-    } else {
-        quote! {}
-    };
+            if last_segment.ident == "Option"
+                && let syn::PathArguments::AngleBracketed(args) = &last_segment.arguments
+            {
+                return args.args.iter().any(|arg| match arg {
+                    syn::GenericArgument::Type(inner_ty) => {
+                        contains_spacetimedb_temporal_type(inner_ty)
+                    },
+                    _ => false,
+                });
+            }
 
-    quote! {
-        #rust_decimal_assert
-        #chrono_assert
+            let last_ident = last_segment.ident.to_string();
+            matches!(last_ident.as_str(), "Timestamp" | "TimeDuration")
+                && type_path.path.segments.iter().any(|segment| {
+                    matches!(
+                        segment.ident.to_string().as_str(),
+                        "spacetimedb_lib" | "spacetimedb"
+                    )
+                })
+        },
+        syn::Type::Group(group) => contains_spacetimedb_temporal_type(&group.elem),
+        syn::Type::Paren(paren) => contains_spacetimedb_temporal_type(&paren.elem),
+        syn::Type::Reference(reference) => contains_spacetimedb_temporal_type(&reference.elem),
+        _ => false,
     }
 }

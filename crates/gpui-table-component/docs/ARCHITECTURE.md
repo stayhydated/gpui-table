@@ -9,11 +9,11 @@ status bar. These components are used by the generated filter entities when
 ## Module map
 
 - `lib.rs`
-  - `TableFilterComponent` trait for type-safe filter component construction
+  - `TableFilterComponent` trait used by the built-in generated filter entities
   - `FilterValue` trait for query-string conversion (distinct from
     `gpui_table_core::filter::FilterValue`)
   - Re-exports extension traits for filter configuration
-- `main.rs`
+- `src/bin/story.rs`
   - Storybook gallery entrypoint for previewing filter components
 - `stories/`
   - Storybook registrations showcasing filter and status-bar modes
@@ -43,7 +43,10 @@ status bar. These components are used by the generated filter entities when
 
 ## Extension points
 
-- Add new filter component types by implementing `TableFilterComponent`.
+- Add standalone filter component types by implementing `TableFilterComponent`.
+- `#[derive(GpuiTable)]` currently wires only the built-in filter syntaxes from
+  `gpui-table-derive`; custom `TableFilterComponent` implementations are not yet
+  selectable through `#[gpui_table(filter(...))]`.
 - Extend filter components with chainable configuration methods (extension traits).
 - Style existing filter components via chainable extension-trait setters that accept
   `gpui::StyleRefinement` (for example trigger/input/popover segment styles).

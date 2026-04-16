@@ -10,6 +10,7 @@ definitions without hand-writing the gpui widget wiring.
 Enable the `inventory` feature on `gpui-table` and iterate the registered shapes:
 
 ```rs
+# fn demo() -> Result<(), gpui_table_prototyping_core::TableCodegenError> {
 use gpui_table::registry::GpuiTableShape;
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use quote::quote;
@@ -23,14 +24,17 @@ impl TableLayout for MyLayout {
             #imports
             pub struct #story_struct_ident { #struct_fields }
             // splice #render_children wherever you need it
-        }).unwrap()
+        })
+        .expect("static layout template should parse")
     }
 }
 
 for shape in inventory::iter::<GpuiTableShape>() {
-    let syn_file = TableShapeAdapter::new(shape, true).generate_file(&MyLayout);
+    let syn_file = TableShapeAdapter::new(shape, true).try_generate_file(&MyLayout)?;
     let _formatted = prettyplease::unparse(&syn_file);
 }
+# Ok(())
+# }
 ```
 
 See `examples/prototyping` for a full generator that writes formatted files.

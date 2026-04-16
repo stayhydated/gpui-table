@@ -1,38 +1,5 @@
-error[E0433]: failed to resolve: could not find `rust_decimal` in `__deps`
- --> tests/ui/number_range_requires_rust_decimal.rs:3:10
+error: `filter(number_range(...))` requires enabling the `gpui-table/rust_decimal` feature
+ --> tests/ui/number_range_requires_rust_decimal.rs:7:5
   |
-3 | #[derive(GpuiTable)]
-  |          ^^^^^^^^^ could not find `rust_decimal` in `__deps`
-  |
-note: found an item that was configured out
- --> src/lib.rs
-  |
-  |     #[cfg(feature = "rust_decimal")]
-  |           ------------------------ the item is gated behind the `rust_decimal` feature
-  |     pub use rust_decimal;
-  |             ^^^^^^^^^^^^
-  = note: this error originates in the derive macro `GpuiTable` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0433]: failed to resolve: could not find `ToDecimal` in `filter`
- --> tests/ui/number_range_requires_rust_decimal.rs:3:10
-  |
-3 | #[derive(GpuiTable)]
-  |          ^^^^^^^^^ could not find `ToDecimal` in `filter`
-  |
-note: found an item that was configured out
- --> $WORKSPACE/crates/gpui-table-core/src/filter/mod.rs
-  |
-  | #[cfg(feature = "rust_decimal")]
-  |       ------------------------ the item is gated behind the `rust_decimal` feature
-  | pub use convert::ToDecimal;
-  |                  ^^^^^^^^^
-  = note: this error originates in the derive macro `GpuiTable` (in Nightly builds, run with -Z macro-backtrace for more info)
-
-error[E0277]: the trait bound `(): RequiresRustDecimalFeatureOnGpuiTable` is not satisfied
- --> tests/ui/number_range_requires_rust_decimal.rs:3:10
-  |
-3 | #[derive(GpuiTable)]
-  |          ^^^^^^^^^ the trait `RequiresRustDecimalFeatureOnGpuiTable` is not implemented for `()`
-  |
-  = help: see issue #48214
-  = note: this error originates in the derive macro `GpuiTable` (in Nightly builds, run with -Z macro-backtrace for more info)
+7 |     age: u8,
+  |     ^^^

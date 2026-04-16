@@ -21,19 +21,15 @@ pub use text_filter::TextFilterExt;
 use gpui::{App, Entity, Window};
 use std::collections::HashSet;
 
-/// Trait implemented by filter components to enable type-safe filter references.
+/// Constructor interface shared by the built-in table filter components.
 ///
-/// This trait allows the `#[gpui_table]` macro to reference filters by their
-/// component type (e.g., `filter = TextFilter`) instead of string literals.
+/// Generated `XxxFilterEntities` use this trait to instantiate the built-in
+/// filter components supported by `#[derive(GpuiTable)]`.
 ///
-/// # Example
-/// ```ignore
-/// #[derive(GpuiTable)]
-/// pub struct MyRow {
-///     #[gpui_table(filter = TextFilter)]
-///     pub name: String,
-/// }
-/// ```
+/// Implementing this trait can still be useful for standalone components in
+/// your own UI code, but the derive macro currently only wires the built-in
+/// `filter(text())`, `filter(number_range())`, `filter(date_range())`,
+/// `filter(faceted())`, and `filter(infinite_faceted_filter())` syntaxes.
 pub trait TableFilterComponent: Sized {
     /// The type used to store the filter's current value/state.
     type Value: Default + Clone + Send + 'static;

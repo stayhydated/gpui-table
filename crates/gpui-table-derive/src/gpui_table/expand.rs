@@ -4,9 +4,7 @@ use crate::__crate_paths::gpui_component::table::{Column, ColumnFixed, ColumnSor
 use crate::gpui_table::delegate::generate_delegate;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
-use crate::gpui_table::filter_codegen::{
-    generate_filter_feature_assertions, get_filter_type_expr, validate_filter_config,
-};
+use crate::gpui_table::filter_codegen::{get_filter_type_expr, validate_filter_config};
 use crate::gpui_table::filter_entities::{
     generate_filter_entities, generate_matches_filters_method,
 };
@@ -265,7 +263,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
         // Only process filter attributes when filters are enabled at struct level
         if filters_enabled && let Some(ref filter_config) = field.filter {
-            validate_filter_config(filter_config, ident)?;
+            validate_filter_config(filter_config, ident, &field.ty)?;
             let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
 
             filters_init.push(quote! {
@@ -347,9 +345,6 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             });
         }
     }
-
-    let filter_feature_assertions =
-        generate_filter_feature_assertions(&struct_name, &filter_fields);
 
     let table_title_impl = match &fluent {
         Some(Override::Explicit(key)) => {
@@ -510,7 +505,6 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let shape_impl = quote! {};
 
     Ok(quote! {
-        #filter_feature_assertions
         #column_enum
 
         impl gpui_table::TableRowMeta for #struct_name {

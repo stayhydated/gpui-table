@@ -126,10 +126,16 @@ items with additional actions.
 
 ## Filter attributes
 
+The derive currently supports these built-in filter syntaxes:
+
 - `filter(text())`
 - `filter(number_range(min = 0, max = 100, step = 5))`
 - `filter(date_range())`
 - `filter(faceted(searchable))`
+- `filter(infinite_faceted_filter())`
+
+Custom `TableFilterComponent` implementations are not yet selectable through
+`#[gpui_table(filter(...))]`.
 
 ## Generated reset bindings
 

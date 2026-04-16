@@ -12,13 +12,13 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [ "dep:chrono", "gpui-table-core/chrono" ]
+chrono = [ "dep:chrono", "gpui-table-core/chrono", "gpui-table-derive/chrono" ]
 default = [ "derive", "chrono" ]
 derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 inventory = [ "gpui-table-derive/inventory" ]
-rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal" ]
-spacetimedb = [ "gpui-table-core/spacetimedb" ]
+rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal", "gpui-table-derive/rust_decimal" ]
+spacetimedb = [ "gpui-table-core/spacetimedb", "gpui-table-derive/spacetimedb" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
@@ -31,7 +31,9 @@ rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 
 [dev-dependencies]
+chrono = { workspace = true }
 insta = { features = [ "yaml" ], workspace = true }
+spacetimedb-lib = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 trybuild = { workspace = true }
 

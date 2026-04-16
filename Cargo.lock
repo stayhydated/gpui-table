@@ -3370,6 +3370,7 @@ dependencies = [
  "insta",
  "rust_decimal",
  "serde",
+ "spacetimedb-lib",
  "strum 0.28.0",
  "trybuild",
 ]
@@ -3431,6 +3432,7 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.117",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -6343,6 +6345,7 @@ dependencies = [
 name = "prototyping"
 version = "0.5.0"
 dependencies = [
+ "anyhow",
  "gpui-table",
  "gpui-table-prototyping-core",
  "heck 0.5.0",

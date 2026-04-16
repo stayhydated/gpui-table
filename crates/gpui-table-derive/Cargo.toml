@@ -15,8 +15,11 @@ readme = "README.md"
 proc-macro = true
 
 [features]
+chrono = [  ]
 fluent = [  ]
 inventory = [  ]
+rust_decimal = [  ]
+spacetimedb = [  ]
 
 [dependencies]
 crate-paths = { workspace = true }
