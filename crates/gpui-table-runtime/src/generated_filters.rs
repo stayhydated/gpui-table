@@ -1,9 +1,9 @@
 #[cfg(feature = "chrono")]
 pub use gpui_table_component::{DateRangeFilter, DateRangeFilterExt, date_range_filter};
 pub use gpui_table_component::{
-    FacetedFilter, FacetedFilterExt, InfiniteFacetedFilter, QueryFilterValue, ResetFilters,
-    TableFilterComponent, TableStatusBar, TextFilter, TextFilterExt, faceted_filter,
-    infinite_faceted_filter, reset_filters, table_status_bar, text_filter,
+    FacetedFilter, FacetedFilterExt, QueryFilterValue, ResetFilters, TableFilterComponent,
+    TableStatusBar, TextFilter, TextFilterExt, faceted_filter, reset_filters, table_status_bar,
+    text_filter,
 };
 #[cfg(feature = "rust_decimal")]
 pub use gpui_table_component::{NumberRangeFilter, NumberRangeFilterExt, number_range_filter};

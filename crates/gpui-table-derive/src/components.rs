@@ -104,11 +104,6 @@ pub struct FacetedFilterOptions {
     pub searchable: bool,
 }
 
-/// Options for infinite faceted filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct InfiniteFacetedFilterOptions {}
-
 /// Filter component enum parsed from attributes.
 /// Supports syntax like: `filter(text())` or `filter(number_range(min = 0, max = 100))`
 #[derive(Clone, Debug, FromMeta)]
@@ -122,9 +117,6 @@ pub enum FilterComponents {
     DateRange(DateRangeFilterOptions),
     /// Faceted filter with enumerated options
     Faceted(FacetedFilterOptions),
-    /// Hierarchical faceted filter backed by InfiniteSelect
-    #[darling(rename = "infinite_faceted_filter")]
-    InfiniteFaceted(InfiniteFacetedFilterOptions),
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -133,7 +125,6 @@ pub(crate) enum FilterKind {
     NumberRange,
     DateRange,
     Faceted,
-    InfiniteFaceted,
 }
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -156,7 +147,6 @@ impl FilterKind {
             Self::NumberRange => "number_range(...)",
             Self::DateRange => "date_range()",
             Self::Faceted => "faceted(...)",
-            Self::InfiniteFaceted => "infinite_faceted_filter()",
         }
     }
 
@@ -166,7 +156,6 @@ impl FilterKind {
             Self::NumberRange => "number range",
             Self::DateRange => "date range",
             Self::Faceted => "faceted",
-            Self::InfiniteFaceted => "infinite faceted",
         }
     }
 
@@ -175,7 +164,7 @@ impl FilterKind {
             Self::Text => FilterRenderGroup::Text,
             Self::NumberRange => FilterRenderGroup::NumberRange,
             Self::DateRange => FilterRenderGroup::DateRange,
-            Self::Faceted | Self::InfiniteFaceted => FilterRenderGroup::Faceted,
+            Self::Faceted => FilterRenderGroup::Faceted,
         }
     }
 }
@@ -214,7 +203,6 @@ impl FilterComponents {
             Self::NumberRange(_) => FilterKind::NumberRange,
             Self::DateRange(_) => FilterKind::DateRange,
             Self::Faceted(_) => FilterKind::Faceted,
-            Self::InfiniteFaceted(_) => FilterKind::InfiniteFaceted,
         }
     }
 
@@ -258,13 +246,6 @@ impl FilterComponents {
                     quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
                 }
             },
-            Self::InfiniteFaceted(_) => {
-                if let Some(ty) = field_ty {
-                    quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
-                } else {
-                    quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
-                }
-            },
         }
     }
 
@@ -282,9 +263,6 @@ impl FilterComponents {
             },
             FilterKind::Faceted => {
                 quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
-            },
-            FilterKind::InfiniteFaceted => {
-                quote! { gpui_table::schema::registry::RegistryFilterType::InfiniteFaceted }
             },
         }
     }
@@ -304,9 +282,6 @@ impl FilterComponents {
             Self::Faceted(_) => {
                 quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
             },
-            Self::InfiniteFaceted(_) => {
-                quote! { gpui_table::core::filter::FilterType::InfiniteFaceted }
-            },
         }
     }
 
@@ -317,7 +292,6 @@ impl FilterComponents {
                 quote! { (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) }
             },
             Self::Faceted(_) => quote! { std::collections::HashSet<#field_ty> },
-            Self::InfiniteFaceted(_) => quote! { Option<#field_ty> },
             Self::DateRange(_) => {
                 quote! { (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) }
             },
@@ -334,7 +308,6 @@ impl FilterComponents {
                 quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
             },
             Self::Faceted(_) => quote! { gpui_table::core::filter::FacetedValue<#field_ty> },
-            Self::InfiniteFaceted(_) => quote! { gpui_table::core::filter::SingleValue<#field_ty> },
             Self::DateRange(_) => {
                 quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
             },
@@ -352,9 +325,6 @@ impl FilterComponents {
             },
             Self::Faceted(_) => {
                 quote! { gpui_table::core::filter::FacetedValue::from(#raw_value_expr) }
-            },
-            Self::InfiniteFaceted(_) => {
-                quote! { gpui_table::core::filter::SingleValue::from(#raw_value_expr) }
             },
         }
     }

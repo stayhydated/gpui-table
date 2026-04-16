@@ -11,7 +11,6 @@ fn ui_compile_fail() {
     t.compile_fail("tests/ui/invalid_text_filter_type.rs");
     t.compile_fail("tests/ui/invalid_faceted_filter_type.rs");
     t.compile_fail("tests/ui/invalid_faceted_option_type.rs");
-    t.compile_fail("tests/ui/invalid_infinite_faceted_filter_type.rs");
     t.compile_fail("tests/ui/invalid_number_range_suffix.rs");
     #[cfg(not(feature = "chrono"))]
     t.compile_fail("tests/ui/date_range_requires_chrono.rs");

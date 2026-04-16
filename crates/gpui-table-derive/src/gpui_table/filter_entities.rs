@@ -89,9 +89,7 @@ pub(super) fn generate_filter_entities(
             let raw_value_type = f.filter_config.raw_value_type_tokens(&f.field_type);
             let raw_value_expr = match &f.filter_config {
                 FilterComponents::Text(_) => quote! { self.#field_ident.read(cx).value().to_string() },
-                FilterComponents::NumberRange(_)
-                | FilterComponents::InfiniteFaceted(_)
-                | FilterComponents::DateRange(_) => {
+                FilterComponents::NumberRange(_) | FilterComponents::DateRange(_) => {
                     quote! { self.#field_ident.read(cx).value() }
                 },
                 FilterComponents::Faceted(_) => {
@@ -491,16 +489,8 @@ fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
     )
 }
 
-fn filter_value_query_doc(field: &FilterFieldMeta) -> String {
-    match &field.filter_config {
-        FilterComponents::InfiniteFaceted(_) => {
-            let ty = compact_type_name(&field.field_type);
-            format!(
-                "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` when `{ty}` implements `gpui_table::core::filter::FilterValue`."
-            )
-        },
-        _ => "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string(),
-    }
+fn filter_value_query_doc(_field: &FilterFieldMeta) -> String {
+    "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string()
 }
 
 fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
@@ -512,10 +502,6 @@ fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
         },
         FilterComponents::Faceted(_) => format!(
             "gpui_table::core::filter::FacetedValue<{}>",
-            compact_type_name(&field.field_type)
-        ),
-        FilterComponents::InfiniteFaceted(_) => format!(
-            "gpui_table::core::filter::SingleValue<{}>",
             compact_type_name(&field.field_type)
         ),
         FilterComponents::DateRange(_) => {

@@ -31,7 +31,12 @@
 pub use gpui_table_derive::*;
 
 pub use gpui_table_core as core;
+pub use gpui_table_core::filter;
 pub use gpui_table_runtime as runtime;
+pub use gpui_table_runtime::{
+    FilterEntitiesExt, TableCell, TableDataLoader, TableLoader, TableRowContextMenu,
+    TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
+};
 pub use gpui_table_schema as schema;
 
 /// Hidden dependency surface used by macro-generated code.

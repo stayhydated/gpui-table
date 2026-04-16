@@ -39,7 +39,6 @@ pub struct FilterConfig {
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum FilterType {
     Faceted(Vec<FacetedFilterOption>),
-    InfiniteFaceted,
     DateRange,
     NumberRange,
     Text,

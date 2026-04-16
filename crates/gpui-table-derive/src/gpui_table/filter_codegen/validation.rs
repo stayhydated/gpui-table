@@ -11,9 +11,6 @@ pub(in crate::gpui_table) fn validate_filter_config(
     match filter {
         FilterComponents::Text(_) => validate_text_filter_field_type(field_ty)?,
         FilterComponents::Faceted(_) => validate_faceted_filter_field_type(field_ty)?,
-        FilterComponents::InfiniteFaceted(_) => {
-            validate_infinite_faceted_filter_field_type(field_ty)?
-        },
         _ => {},
     }
 
@@ -185,30 +182,6 @@ fn validate_faceted_filter_field_type(field_ty: &Type) -> syn::Result<()> {
     ))
 }
 
-fn validate_infinite_faceted_filter_field_type(field_ty: &Type) -> syn::Result<()> {
-    if let Some(inner_ty) = option_inner_type(field_ty) {
-        return Err(syn::Error::new_spanned(
-            field_ty,
-            format!(
-                "`filter(infinite_faceted_filter())` does not support `Option<{}>`; use the selected item type directly",
-                type_name(inner_ty)
-            ),
-        ));
-    }
-
-    if !is_obviously_non_infinite_faceted_filter_type(field_ty) {
-        return Ok(());
-    }
-
-    let type_name = type_name(field_ty);
-    Err(syn::Error::new_spanned(
-        field_ty,
-        format!(
-            "`filter(infinite_faceted_filter())` on `{type_name}` requires a non-optional field type that implements `gpui_form_component::infinite_select::InfiniteSelect`, `PartialEq`, and `Send`"
-        ),
-    ))
-}
-
 fn type_name(ty: &Type) -> String {
     ty.to_token_stream().to_string()
 }
@@ -359,23 +332,6 @@ fn is_obviously_non_faceted_filter_type(ty: &Type) -> bool {
         Type::Reference(_) => true,
         _ => {
             is_string_like_type(ty)
-                || is_char_type(ty)
-                || is_numeric_scalar_type(ty)
-                || is_decimal_type(ty)
-                || is_chrono_date_type(ty)
-                || contains_spacetimedb_temporal_type(ty)
-                || is_collection_type(ty)
-                || is_structural_non_scalar_type(ty)
-        },
-    }
-}
-
-fn is_obviously_non_infinite_faceted_filter_type(ty: &Type) -> bool {
-    match normalized_type(ty) {
-        Type::Reference(_) => true,
-        _ => {
-            is_string_like_type(ty)
-                || is_bool_type(ty)
                 || is_char_type(ty)
                 || is_numeric_scalar_type(ty)
                 || is_decimal_type(ty)

@@ -82,9 +82,6 @@ pub(super) fn generate_matches_filters_method(
                 FilterComponents::Faceted(_) => {
                     quote! { filters.#field_ident.matches(&self.#field_ident) }
                 }
-                FilterComponents::InfiniteFaceted(_) => {
-                    quote! { filters.#field_ident.matches(&self.#field_ident) }
-                }
             }
         })
         .collect();

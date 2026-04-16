@@ -111,8 +111,5 @@ pub(in crate::gpui_table) fn generate_filter_chain_methods(
 
             chain
         },
-        FilterComponents::InfiniteFaceted(_opts) => {
-            quote! {}
-        },
     }
 }

@@ -139,7 +139,6 @@ The derive currently supports these built-in filter syntaxes:
 - `filter(number_range(min = 0, max = 100, step = 5))`
 - `filter(date_range())`
 - `filter(faceted(searchable))`
-- `filter(infinite_faceted_filter())`
 
 For `number_range(...)`, `min`, `max`, and `step` accept plain numeric
 literals like `0.25` and quoted decimal strings like `"0.25"`. When the
@@ -153,8 +152,6 @@ Built-in filter/type expectations are also validated during macro expansion:
 - `date_range()` expects a type supported by `gpui_table::core::filter::ToNaiveDate`.
 - `faceted(...)` expects a non-optional field type that implements `Filterable`;
   `bool` works out of the box and enums can `#[derive(Filterable)]`.
-- `infinite_faceted_filter()` expects a non-optional type compatible with the
-  built-in `InfiniteFacetedFilter<T>`.
 
 Custom `TableFilterComponent` implementations are not yet selectable through
 `#[gpui_table(filter(...))]`; use them by instantiating the component directly
@@ -177,6 +174,6 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
 - inherent `read_values(&self, cx)` and `all_filters(&self)` methods, so callers
   do not need to import `FilterEntitiesExt` just to read or render generated filters.
 - generated `XxxFilterValues` wrapper fields (`TextValue`, `RangeValue<_>`,
-  `FacetedValue<_>`, `SingleValue<_>`) that can usually be serialized for
+  `FacetedValue<_>`) that can usually be serialized for
   server-side loaders via
   `gpui_table::runtime::generated_filters::QueryFilterValue`.

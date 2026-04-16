@@ -2,7 +2,6 @@
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
-pub mod infinite_faceted_filter;
 #[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
@@ -15,7 +14,6 @@ pub mod text_filter;
 #[cfg(feature = "chrono")]
 pub use date_range_filter::{DateRangeFilter, DateRangeFilterExt};
 pub use faceted_filter::{FacetedFilter, FacetedFilterExt};
-pub use infinite_faceted_filter::InfiniteFacetedFilter;
 #[cfg(feature = "rust_decimal")]
 pub use number_range_filter::{NumberRangeFilter, NumberRangeFilterExt};
 pub use reset_filters::ResetFilters;
@@ -34,8 +32,8 @@ use std::collections::HashSet;
 /// Implementing this trait can still be useful for standalone components in
 /// your own UI code or for custom filter collections you build manually.
 /// The derive macro currently only wires the built-in `filter(text())`,
-/// `filter(number_range())`, `filter(date_range())`, `filter(faceted())`, and
-/// `filter(infinite_faceted_filter())` syntaxes; implementing
+/// `filter(number_range())`, `filter(date_range())`, and `filter(faceted())`
+/// syntaxes; implementing
 /// `TableFilterComponent` does not register a new `#[gpui_table(filter(...))]`
 /// option on its own.
 pub trait TableFilterComponent: Sized {
@@ -60,9 +58,10 @@ pub trait TableFilterComponent: Sized {
 /// functions like `load_more`.
 ///
 /// Generated `XxxFilterValues` from `#[derive(GpuiTable)]` are composed from
-/// wrapper types such as `TextValue`, `RangeValue<T>`, `FacetedValue<T>`, and
-/// `SingleValue<T>`. Server-side loaders can typically call
-/// `to_query_string()` directly on those generated fields.
+/// wrapper types such as `TextValue`, `RangeValue<T>`, and `FacetedValue<T>`.
+/// `SingleValue<T>` is also supported for manual integrations. Server-side
+/// loaders can typically call `to_query_string()` directly on those wrapper
+/// values.
 pub trait QueryFilterValue: Default + Clone + Send + 'static {
     /// Returns true if the filter has no active value.
     fn is_empty(&self) -> bool;

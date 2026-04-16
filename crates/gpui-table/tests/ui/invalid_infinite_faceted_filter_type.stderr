@@ -1,5 +1,0 @@
-error: `filter(infinite_faceted_filter())` on `String` requires a non-optional field type that implements `gpui_form_component::infinite_select::InfiniteSelect`, `PartialEq`, and `Send`
- --> tests/ui/invalid_infinite_faceted_filter_type.rs:7:11
-  |
-7 |     name: String,
-  |           ^^^^^^
