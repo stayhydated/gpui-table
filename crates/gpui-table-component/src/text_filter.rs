@@ -319,7 +319,13 @@ impl Render for TextFilter {
             (self.on_change)(self.value.clone(), window, cx);
         }
 
-        let input_state = self.input_state.clone().unwrap();
+        let Some(input_state) = self.input_state.clone() else {
+            return h_flex()
+                .gap_2()
+                .items_center()
+                .refine_style(&self.container_style)
+                .into_any_element();
+        };
 
         // Inline input without popover - similar to ts-ref data-table-filter-list.tsx
         h_flex()
@@ -333,5 +339,6 @@ impl Render for TextFilter {
                     .cleanable(true)
                     .refine_style(&self.input_style),
             )
+            .into_any_element()
     }
 }

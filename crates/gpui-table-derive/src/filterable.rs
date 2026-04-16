@@ -33,9 +33,14 @@ struct FilterableVariant {
 }
 
 fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let meta = FilterableMeta::from_derive_input(&input)?;
-    let enum_name = meta.ident;
-    let variants = meta.data.take_enum().unwrap();
+    let FilterableMeta {
+        ident: enum_name,
+        data,
+        fluent,
+    } = FilterableMeta::from_derive_input(&input)?;
+    let variants = data.take_enum().ok_or_else(|| {
+        syn::Error::new(enum_name.span(), "Filterable can only be derived for enums")
+    })?;
 
     let mut options = Vec::new();
     let mut variant_name_arms = Vec::new();
@@ -45,7 +50,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         let variant_ident = &variant.ident;
         let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
 
-        let label_expr = if meta.fluent {
+        let label_expr = if fluent {
             quote! { { use es_fluent::ToFluentString as _; Self::#variant_ident.to_fluent_string() } }
         } else {
             let label = variant

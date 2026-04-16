@@ -99,10 +99,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 )
             })?;
 
-            if !all_field_idents
-                .iter()
-                .any(|field_ident| *field_ident == row_id_ident)
-            {
+            if !all_field_idents.contains(&row_id_ident) {
                 return Err(syn::Error::new(
                     struct_name.span(),
                     format!(

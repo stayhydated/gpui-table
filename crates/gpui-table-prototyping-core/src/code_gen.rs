@@ -4,7 +4,7 @@ use quote::{format_ident, quote};
 use thiserror::Error;
 
 use crate::{
-    identities::{ShapeIdentities, TableIdentities, TableIdentitiesExt, parse_ident},
+    identities::{ShapeIdentities, TableIdentities as _, TableIdentitiesExt as _, parse_ident},
     imports::{Alias, ImportItem, ImportSet},
     source_path::source_path_to_use_path,
 };

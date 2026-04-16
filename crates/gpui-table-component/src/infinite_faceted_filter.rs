@@ -293,10 +293,9 @@ where
         let popover_style = self.popover_style.clone();
         let view = cx.entity().clone();
         let clear_view = view.clone();
-        let master_select = self
-            .master_select
-            .clone()
-            .expect("master select must be initialized before render");
+        let Some(master_select) = self.master_select.clone() else {
+            return div().into_any_element();
+        };
         let child_selects = self.child_selects.clone();
         let child_placeholders = build_child_placeholders::<T>(&self.selection_path);
         let trigger_title = title.clone();
@@ -373,6 +372,7 @@ where
                     })
                     .into_any_element()
             })
+            .into_any_element()
     }
 }
 

@@ -1,4 +1,4 @@
-use gpui::{AnyElement, App, IntoElement, Window};
+use gpui::{AnyElement, App, IntoElement as _, Window};
 
 /// A value that can be displayed in a table cell.
 pub trait TableCell {

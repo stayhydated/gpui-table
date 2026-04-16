@@ -244,7 +244,9 @@ impl Render for DateRangeFilter {
         let popover_style = self.popover_style.clone();
         let calendar_style = self.calendar_style.clone();
         let clear_button_style = self.clear_button_style.clone();
-        let calendar = self.calendar.clone().unwrap();
+        let Some(calendar) = self.calendar.clone() else {
+            return div().into_any_element();
+        };
 
         // Icon: CircleX when has value (to clear), Calendar otherwise
         let trigger_icon = if has_value {
@@ -310,6 +312,7 @@ impl Render for DateRangeFilter {
                         )
                     })
             })
+            .into_any_element()
     }
 }
 

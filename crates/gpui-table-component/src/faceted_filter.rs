@@ -548,13 +548,13 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                                 }
                                             }),
                                     )
-                                    .when(count.is_some(), |d| {
+                                    .when_some(count, |d, count| {
                                         d.child(
                                             div()
                                                 .text_xs()
                                                 .font_family("monospace")
                                                 .text_color(cx.theme().muted_foreground)
-                                                .child(count.unwrap().to_string()),
+                                                .child(count.to_string()),
                                         )
                                     })
                             }))

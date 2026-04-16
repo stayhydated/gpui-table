@@ -29,7 +29,16 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 quote! { self.0.draw(window, cx) }
             },
             syn::Fields::Named(fields) if fields.named.len() == 1 => {
-                let field_name = &fields.named.first().unwrap().ident;
+                let field_name = fields
+                    .named
+                    .first()
+                    .and_then(|field| field.ident.clone())
+                    .ok_or_else(|| {
+                        syn::Error::new(
+                            name.span(),
+                            "TableCell derive could not resolve the single named field",
+                        )
+                    })?;
                 quote! { self.#field_name.draw(window, cx) }
             },
             _ => {
@@ -50,7 +59,16 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                             Ok(quote! { Self::#v_ident(val) => val.draw(window, cx), })
                         }
                         syn::Fields::Named(fields) if fields.named.len() == 1 => {
-                            let f_ident = &fields.named.first().unwrap().ident;
+                            let f_ident = fields
+                                .named
+                                .first()
+                                .and_then(|field| field.ident.clone())
+                                .ok_or_else(|| {
+                                    syn::Error::new(
+                                        v_ident.span(),
+                                        "TableCell derive could not resolve the single named enum field",
+                                    )
+                                })?;
                             Ok(quote! { Self::#v_ident { #f_ident: val } => val.draw(window, cx), })
                         }
                         syn::Fields::Unit => {
