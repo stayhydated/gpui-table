@@ -1,11 +1,13 @@
-use gpui_table_core::registry::GpuiTableShape;
-use heck::ToSnakeCase as _;
+use gpui_table_schema::registry::GpuiTableShape;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
-use std::path::Path;
 use thiserror::Error;
 
-use crate::imports::{Alias, ImportItem, ImportSet};
+use crate::{
+    identities::{ShapeIdentities, TableIdentities, TableIdentitiesExt},
+    imports::{Alias, ImportItem, ImportSet},
+    source_path::source_path_to_use_path,
+};
 
 /// Imports every generated table story needs regardless of configuration.
 const FRAMEWORK_IMPORTS: &[ImportItem] = &[
@@ -33,86 +35,9 @@ const FRAMEWORK_IMPORTS: &[ImportItem] = &[
 /// Extra imports needed when the table has filters.
 const FILTER_IMPORTS: &[ImportItem] = &[
     ImportItem::path("gpui_component::h_flex"),
-    ImportItem::aliased("gpui_table::filter::FilterEntitiesExt", Alias::Anonymous),
-    ImportItem::aliased("gpui_table::filter::Matchable", Alias::Anonymous),
+    ImportItem::aliased("gpui_table::runtime::FilterEntitiesExt", Alias::Anonymous),
+    ImportItem::aliased("gpui_table::core::filter::Matchable", Alias::Anonymous),
 ];
-
-/// Trait for deriving various identifier names from a table shape.
-pub trait TableIdentities {
-    /// The original struct name (e.g., "User")
-    fn struct_name(&self) -> &'static str;
-
-    /// The struct name as an identifier.
-    ///
-    /// For user-facing tooling, prefer [`TableIdentitiesExt::try_struct_name_ident`].
-    fn struct_name_ident(&self) -> syn::Ident {
-        syn::parse_str(self.struct_name()).unwrap()
-    }
-
-    /// The table story struct name (e.g., "UserTableStory")
-    fn story_struct_ident(&self) -> syn::Ident {
-        format_ident!("{}TableStory", self.struct_name())
-    }
-
-    /// The table delegate struct name (e.g., "UserTableDelegate")
-    fn delegate_struct_ident(&self) -> syn::Ident {
-        format_ident!("{}TableDelegate", self.struct_name())
-    }
-
-    /// The table ID
-    fn table_id(&self) -> &'static str;
-
-    /// The table title
-    fn table_title(&self) -> &'static str;
-
-    /// The snake_case version of struct name for file paths
-    fn snake_case_name(&self) -> String {
-        self.struct_name().to_snake_case()
-    }
-
-    /// Snake case name as identifier (for import paths).
-    ///
-    /// For user-facing tooling, prefer [`TableIdentitiesExt::try_snake_case_ident`].
-    fn snake_case_ident(&self) -> syn::Ident {
-        syn::parse_str(&self.snake_case_name()).unwrap()
-    }
-
-    /// Fluent label enum identifier (e.g., "UserLabelVariants")
-    fn ftl_label_ident(&self) -> syn::Ident {
-        format_ident!("{}LabelVariants", self.struct_name())
-    }
-
-    /// Fluent description enum identifier (e.g., "UserDescriptionVariants")
-    fn ftl_description_ident(&self) -> syn::Ident {
-        format_ident!("{}DescriptionVariants", self.struct_name())
-    }
-
-    /// The story ID literal (e.g., "user-table-story")
-    fn story_id_literal(&self) -> String {
-        format!("{}-table-story", self.snake_case_name().replace('_', "-"))
-    }
-
-    /// Whether this table has filters defined
-    fn has_filters(&self) -> bool;
-}
-
-/// Fallible identifier helpers for user-facing tooling.
-pub trait TableIdentitiesExt: TableIdentities {
-    fn try_struct_name_ident(&self) -> Result<syn::Ident, TableCodegenError> {
-        parse_ident(
-            "struct identifier",
-            self.struct_name(),
-            self.struct_name().to_string(),
-        )
-    }
-
-    fn try_snake_case_ident(&self) -> Result<syn::Ident, TableCodegenError> {
-        let snake_case_name = self.snake_case_name();
-        parse_ident("snake_case identifier", self.struct_name(), snake_case_name)
-    }
-}
-
-impl<T: TableIdentities + ?Sized> TableIdentitiesExt for T {}
 
 #[derive(Debug, Error)]
 pub enum TableCodegenError {
@@ -152,43 +77,6 @@ pub trait TableShape {
 
     /// Generate story title expression
     fn title_expr(&self) -> TokenStream;
-}
-
-/// Identities wrapper for GpuiTableShape
-pub struct ShapeIdentities<'a>(&'a GpuiTableShape);
-
-impl<'a> ShapeIdentities<'a> {
-    pub fn new(shape: &'a GpuiTableShape) -> Self {
-        Self(shape)
-    }
-
-    /// Get the underlying shape
-    pub fn shape(&self) -> &'a GpuiTableShape {
-        self.0
-    }
-
-    /// Get columns
-    pub fn columns(&self) -> &'static [gpui_table_core::registry::ColumnVariant] {
-        self.0.columns
-    }
-}
-
-impl TableIdentities for ShapeIdentities<'_> {
-    fn struct_name(&self) -> &'static str {
-        self.0.struct_name
-    }
-
-    fn table_id(&self) -> &'static str {
-        self.0.table_id
-    }
-
-    fn table_title(&self) -> &'static str {
-        self.0.table_title
-    }
-
-    fn has_filters(&self) -> bool {
-        !self.0.filters.is_empty()
-    }
 }
 
 /// Adapter for generating code from a table shape.
@@ -359,59 +247,6 @@ pub trait TableLayout {
     fn generate_file(&self, parts: &TableParts) -> syn::File;
 }
 
-fn parse_ident(
-    kind: &'static str,
-    struct_name: &'static str,
-    value: String,
-) -> Result<syn::Ident, TableCodegenError> {
-    syn::parse_str(&value).map_err(|source| TableCodegenError::InvalidIdentifier {
-        kind,
-        struct_name,
-        value,
-        source,
-    })
-}
-
-// ── source_path_to_use_path ───────────────────────────────────────────────────
-
-/// Converts a `file!()` source path like
-/// `examples/some-lib/src/structs/user.rs` into a use-path like
-/// `some_lib::structs::user` for the glob import at the top of each generated file.
-pub fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
-    let path = Path::new(source_path);
-    let components: Vec<_> = path.components().collect();
-
-    let src_index = components
-        .iter()
-        .position(|c| matches!(c, std::path::Component::Normal(s) if s.to_str() == Some("src")))?;
-
-    if src_index == 0 {
-        return None;
-    }
-    let crate_name = match &components[src_index - 1] {
-        std::path::Component::Normal(s) => s.to_str()?.replace('-', "_"),
-        _ => return None,
-    };
-
-    let mut path_segments = vec![crate_name];
-    for component in &components[src_index + 1..] {
-        if let std::path::Component::Normal(s) = component {
-            let segment = s.to_str()?;
-            if segment == "mod.rs" {
-                continue;
-            }
-            path_segments.push(
-                segment
-                    .strip_suffix(".rs")
-                    .unwrap_or(segment)
-                    .replace('-', "_"),
-            );
-        }
-    }
-
-    syn::parse_str(&path_segments.join("::")).ok()
-}
-
 // ── TableShape impl ──────────────────────────────────────────────────────────
 
 impl TableShape for TableShapeAdapter<'_> {
@@ -455,7 +290,7 @@ impl TableShape for TableShapeAdapter<'_> {
 
                 // Trigger initial data load
                 table.update(cx, |table, cx| {
-                    use gpui_table::TableDataLoader as _;
+                    use gpui_table::runtime::TableDataLoader as _;
                     table.delegate_mut().load_data(window, cx);
                 });
 
@@ -541,7 +376,7 @@ impl TableShape for TableShapeAdapter<'_> {
 
         quote! {
             #filter_views
-            .child(gpui_table_component::TableStatusBar::new(
+            .child(gpui_table::runtime::generated_filters::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,

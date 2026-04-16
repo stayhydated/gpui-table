@@ -30,7 +30,7 @@ pub struct User {
 ```rs
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
-use gpui_table::TableLoader;
+use gpui_table::runtime::TableLoader;
 
 #[gpui_table::gpui_table_impl]
 impl TableLoader for UserTableDelegate {
@@ -46,7 +46,8 @@ impl TableLoader for UserTableDelegate {
 ```rs
 use gpui::{App, Window};
 use gpui_component::menu::PopupMenu;
-use gpui_table::{GpuiTable, TableRowContextMenu};
+use gpui_table::runtime::TableRowContextMenu;
+use gpui_table::GpuiTable;
 
 #[derive(GpuiTable)]
 #[gpui_table(custom_context_menu)]
@@ -62,7 +63,7 @@ impl TableRowContextMenu for User {
         window: &mut Window,
         cx: &mut App,
     ) -> PopupMenu {
-        use gpui_table::TableRowGeneratedContextMenu as _;
+        use gpui_table::runtime::TableRowGeneratedContextMenu as _;
         self.render_generated_table_context_menu(row_ix, menu, window, cx)
             .link("Share", "https://example.com")
     }
@@ -86,8 +87,8 @@ pub struct User {
 }
 ```
 
-This generates a `TableRowContextMenu` impl that adds a menu link by replacing
-`{id}` in `context_menu_route` with `self.id.to_string()`.
+This generates a `gpui_table::runtime::TableRowContextMenu` impl that adds a
+menu link by replacing `{id}` in `context_menu_route` with `self.id.to_string()`.
 
 You can also mark the field directly and provide runtime functions:
 
@@ -121,8 +122,8 @@ Supported context-menu derive options:
 - `context_menu_label = "Open"` or `context_menu_label_fn = path::to_fn`
 
 When `#[gpui_table(custom_context_menu)]` is enabled, the derive still generates
-`TableRowGeneratedContextMenu` so custom implementations can compose generated
-items with additional actions.
+`gpui_table::runtime::TableRowGeneratedContextMenu` so custom implementations
+can compose generated items with additional actions.
 
 ## Filter attributes
 
@@ -147,6 +148,7 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
 - `build_for_table(table, cx)` to auto-wire filter changes into the generated
   `TableDelegate` (client-side filtering for `DataTable`).
 - `build_for_table_loader(table, window, cx)` to auto-wire filter changes into
-  delegate-owned filter state and call `TableDataLoader::load_data(...)`.
+  delegate-owned filter state and call
+  `gpui_table::runtime::TableDataLoader::load_data(...)`.
 - `build_for_table_loader_with(table, before_reload, window, cx)` to customize
   delegate state reset behavior before each reload.

@@ -109,8 +109,8 @@ pub struct NumberRangeFilter {
 impl TableFilterComponent for NumberRangeFilter {
     type Value = (Option<Decimal>, Option<Decimal>);
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::NumberRange;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::NumberRange;
 
     fn new(
         title: impl Into<String>,

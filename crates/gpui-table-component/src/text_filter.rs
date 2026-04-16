@@ -122,8 +122,8 @@ impl TextFilterExt for Entity<TextFilter> {
 impl TableFilterComponent for TextFilter {
     type Value = String;
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::Text;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::Text;
 
     fn new(
         title: impl Into<String>,

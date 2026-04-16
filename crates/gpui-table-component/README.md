@@ -20,7 +20,7 @@ cargo run -p gpui-table-component --bin story --features story
 ## Traits
 
 - `TableFilterComponent` for built-in filter component construction in generated code
-- `FilterValue` for query-string conversion of filter values (separate from
+- `QueryFilterValue` for query-string conversion of filter values (distinct from
   `gpui_table_core::filter::FilterValue`)
 
 ## Example
@@ -49,7 +49,8 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 ## Notes
 
 - Components are designed to be used via the generated `FilterEntities` in
-  `gpui-table`, but can be instantiated directly.
+  `gpui-table`, where generated code now targets
+  `gpui_table::runtime::generated_filters`, but they can also be instantiated directly.
 - `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
   implementing `TableFilterComponent` does not automatically add new
   `#[gpui_table(filter(...))]` options.

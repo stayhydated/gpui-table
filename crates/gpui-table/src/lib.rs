@@ -1,8 +1,10 @@
 //! Facade crate for the `gpui-table` ecosystem.
 //!
-//! This crate re-exports:
-//! - `gpui-table-core` traits/types (`TableRowMeta`, `TableCell`, filters, loaders)
-//! - `gpui-table-derive` macros (`GpuiTable`, `TableCell`, `Filterable`, `gpui_table_impl`)
+//! Public API is namespaced by responsibility:
+//! - `gpui_table::core` for pure filter semantics
+//! - `gpui_table::runtime` for GPUI-facing traits/helpers
+//! - `gpui_table::schema` for metadata and registry types
+//! - root-level proc macros from `gpui-table-derive`
 //!
 //! # Quick Start
 //!
@@ -28,18 +30,21 @@
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
 
-pub use gpui_table_core::*;
-
-pub use gpui_table_core::TableDataLoader;
-pub use gpui_table_core::TableLoader;
+pub use gpui_table_core as core;
+pub use gpui_table_runtime as runtime;
+pub use gpui_table_schema as schema;
 
 /// Hidden dependency surface used by macro-generated code.
 #[doc(hidden)]
 pub mod __deps {
-    pub use gpui_table_component;
-
     #[cfg(feature = "chrono")]
     pub use chrono;
     #[cfg(feature = "rust_decimal")]
     pub use rust_decimal;
+}
+
+/// Hidden runtime bridge used by macro-generated code.
+#[doc(hidden)]
+pub mod __private {
+    pub use gpui_table_runtime::__private::LoadMoreDelegate;
 }

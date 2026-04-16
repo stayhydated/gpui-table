@@ -1,0 +1,24 @@
+pub use gpui_table_component::{
+    DateRangeFilterExt, FacetedFilterExt, InfiniteFacetedFilter, NumberRangeFilterExt,
+    QueryFilterValue, ResetFilters, TableFilterComponent, TableStatusBar, TextFilterExt,
+    date_range_filter, faceted_filter, infinite_faceted_filter, number_range_filter, reset_filters,
+    table_status_bar, text_filter,
+};
+use gpui_table_schema::filter::FacetedFilterIcon;
+
+/// Trait for generated filter entity collections that can read and render their current values.
+pub trait FilterEntitiesExt {
+    /// The filter values type that this entity collection produces.
+    type Values: gpui_table_core::filter::FilterValuesExt;
+
+    /// Read all current filter values into a filter-values struct.
+    fn read_values(&self, cx: &gpui::App) -> Self::Values;
+
+    /// Render all filters in a single row.
+    fn all_filters(&self) -> impl gpui::IntoElement;
+}
+
+/// Convert a `gpui-component` icon token into UI-neutral filter metadata.
+pub fn icon_from_name(name: impl gpui_component::IconNamed) -> FacetedFilterIcon {
+    FacetedFilterIcon::from_path(name.path().to_string())
+}

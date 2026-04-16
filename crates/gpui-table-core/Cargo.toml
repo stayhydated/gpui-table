@@ -12,10 +12,9 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [ "dep:chrono", "jiff" ]
+chrono = [ "dep:chrono" ]
 default = [ "chrono" ]
 fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded", "es-fluent/derive" ]
-jiff = [ "dep:icu", "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono" ]
 
@@ -24,14 +23,9 @@ chrono = { optional = true, workspace = true }
 derive_more = { features = [ "full" ], workspace = true }
 es-fluent = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
-gpui = { workspace = true }
-gpui-component = { workspace = true }
-icu = { optional = true, workspace = true }
-inventory = { workspace = true }
-jiff = { optional = true, workspace = true }
+gpui-table-schema = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
 spacetimedb-lib = { optional = true, workspace = true }
-strum = { features = [ "derive" ], workspace = true }
 
 [build-dependencies]
 es-fluent = { features = [ "build" ], workspace = true }

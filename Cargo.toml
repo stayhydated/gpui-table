@@ -1,11 +1,13 @@
 [workspace]
-default-members = ["examples/some-lib-tables"]
+default-members = [ "examples/some-lib-tables" ]
 members = [
   "crates/gpui-table",
   "crates/gpui-table-component",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
   "crates/gpui-table-prototyping-core",
+  "crates/gpui-table-runtime",
+  "crates/gpui-table-schema",
   "examples/prototyping",
   "examples/some-lib",
   "examples/some-lib-tables",
@@ -42,6 +44,8 @@ gpui-table-component = { path = "crates/gpui-table-component", version = "0.5.0"
 gpui-table-core = { path = "crates/gpui-table-core", version = "0.5.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
+gpui-table-runtime = { path = "crates/gpui-table-runtime", version = "0.5.0" }
+gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.5.0" }
 gpui_platform = { features = [
   "font-kit",
   "x11",

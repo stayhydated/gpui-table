@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use gpui_table::registry::GpuiTableShape;
+use gpui_table::schema::registry::GpuiTableShape;
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use heck::ToSnakeCase as _;
 use quote::quote;
@@ -91,6 +91,23 @@ fn main() -> anyhow::Result<()> {
             output_dir.display()
         )
     })?;
+    for entry in fs::read_dir(&output_dir)
+        .with_context(|| format!("failed to read output directory `{}`", output_dir.display()))?
+    {
+        let entry = entry.with_context(|| {
+            format!(
+                "failed to inspect output entry in `{}`",
+                output_dir.display()
+            )
+        })?;
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext == "rs")
+            && path.file_name().is_none_or(|name| name != "mod.rs")
+        {
+            fs::remove_file(&path)
+                .with_context(|| format!("failed to remove stale output `{}`", path.display()))?;
+        }
+    }
     println!("Generating table stories in: {}", output_dir.display());
 
     let mut modules: BTreeSet<String> = BTreeSet::new();

@@ -1,4 +1,4 @@
-use gpui_table_core::registry::ColumnVariant;
+use gpui_table_schema::registry::{ColumnFixed, ColumnVariant};
 use heck::ToPascalCase as _;
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
@@ -103,7 +103,7 @@ impl<'a> ColumnInfo<'a> {
     }
 
     /// Get the fixed position
-    pub fn fixed(&self) -> &gpui_table_core::registry::ColumnFixed {
+    pub fn fixed(&self) -> &ColumnFixed {
         &self.variant.fixed
     }
 

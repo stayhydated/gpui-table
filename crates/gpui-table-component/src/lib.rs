@@ -35,7 +35,7 @@ pub trait TableFilterComponent: Sized {
     type Value: Default + Clone + Send + 'static;
 
     /// The filter type identifier for registry purposes.
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType;
 
     /// Create the filter component with the given configuration.
     fn new(
@@ -50,7 +50,7 @@ pub trait TableFilterComponent: Sized {
 ///
 /// This trait enables filter values to be accessed and used in data fetching
 /// functions like `load_more`.
-pub trait FilterValue: Default + Clone + Send + 'static {
+pub trait QueryFilterValue: Default + Clone + Send + 'static {
     /// Returns true if the filter has no active value.
     fn is_empty(&self) -> bool;
 
@@ -58,7 +58,7 @@ pub trait FilterValue: Default + Clone + Send + 'static {
     fn to_query_string(&self) -> Option<String>;
 }
 
-impl FilterValue for String {
+impl QueryFilterValue for String {
     fn is_empty(&self) -> bool {
         String::is_empty(self)
     }
@@ -72,7 +72,7 @@ impl FilterValue for String {
     }
 }
 
-impl FilterValue for HashSet<String> {
+impl QueryFilterValue for HashSet<String> {
     fn is_empty(&self) -> bool {
         HashSet::is_empty(self)
     }
@@ -86,7 +86,7 @@ impl FilterValue for HashSet<String> {
     }
 }
 
-impl FilterValue for (Option<f64>, Option<f64>) {
+impl QueryFilterValue for (Option<f64>, Option<f64>) {
     fn is_empty(&self) -> bool {
         self.0.is_none() && self.1.is_none()
     }
@@ -101,7 +101,7 @@ impl FilterValue for (Option<f64>, Option<f64>) {
     }
 }
 
-impl FilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
+impl QueryFilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
     fn is_empty(&self) -> bool {
         self.0.is_none() && self.1.is_none()
     }
@@ -116,7 +116,7 @@ impl FilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
     }
 }
 
-impl<T> FilterValue for Option<T>
+impl<T> QueryFilterValue for Option<T>
 where
     T: gpui_table_core::filter::FilterValue + Clone + Send + 'static,
 {

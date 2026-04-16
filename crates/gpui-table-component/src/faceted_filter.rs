@@ -145,8 +145,8 @@ impl<T: FilterValue> FacetedFilterExt for Entity<FacetedFilter<T>> {
 impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
     type Value = HashSet<T>;
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::Faceted;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::Faceted;
 
     fn new(
         title: impl Into<String>,
@@ -493,8 +493,11 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                                             .checked(is_selected),
                                                     )
                                                     .when_some(icon, |this, icon_name| {
+                                                        let icon_path =
+                                                            icon_name.path().to_string();
                                                         this.child(
-                                                            Icon::new(icon_name)
+                                                            Icon::default()
+                                                                .path(icon_path)
                                                                 .xsmall()
                                                                 .text_color(
                                                                     cx.theme().muted_foreground,

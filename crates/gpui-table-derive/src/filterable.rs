@@ -57,13 +57,13 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
         let icon = match &variant.icon {
             Some(path) => {
-                quote! { Some(#path) }
+                quote! { Some(gpui_table::runtime::generated_filters::icon_from_name(#path)) }
             },
             None => quote! { None },
         };
 
         options.push(quote! {
-            gpui_table::filter::FacetedFilterOption {
+            gpui_table::core::filter::FacetedFilterOption {
                 group: None,
                 label: #label_expr,
                 value: #value.to_string(),
@@ -84,7 +84,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     }
 
     Ok(quote! {
-        impl gpui_table::filter::FilterValue for #enum_name {
+        impl gpui_table::core::filter::FilterValue for #enum_name {
             fn to_filter_string(&self) -> String {
                 match self {
                     #(#variant_name_arms)*
@@ -99,8 +99,8 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
             }
         }
 
-        impl gpui_table::filter::Filterable for #enum_name {
-            fn options() -> Vec<gpui_table::filter::FacetedFilterOption> {
+        impl gpui_table::core::filter::Filterable for #enum_name {
+            fn options() -> Vec<gpui_table::core::filter::FacetedFilterOption> {
                 vec![
                     #(#options),*
                 ]

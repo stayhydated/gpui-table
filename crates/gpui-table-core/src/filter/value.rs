@@ -1,8 +1,8 @@
 //! Filter value traits and implementations.
 
-use super::config::FacetedFilterOption;
 #[cfg(feature = "fluent")]
 use es_fluent::{EsFluent, ToFluentString as _};
+use gpui_table_schema::filter::FacetedFilterOption;
 
 #[cfg_attr(feature = "fluent", derive(EsFluent))]
 #[derive(Clone, Copy)]

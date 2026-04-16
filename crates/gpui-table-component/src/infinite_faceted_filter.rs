@@ -37,8 +37,8 @@ where
 {
     type Value = Option<T>;
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::InfiniteFaceted;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::InfiniteFaceted;
 
     fn new(
         title: impl Into<String>,

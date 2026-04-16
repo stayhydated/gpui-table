@@ -37,6 +37,10 @@ columns, filters, and optional registry metadata.
     requirements, field `filter(...)` without struct `#[gpui_table(filters)]`)
 - `components.rs`
   - Parses filter configuration attributes (text/number/date/faceted)
+- `filter_entities.rs`
+  - Generates `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers
+- `filter_matching.rs`
+  - Generates `Matchable<XxxFilterValues>` implementations
 - `impl_attr.rs`
   - Parses `#[gpui_table_impl]` blocks and validates load-more signatures
 - `__crate_paths/` (generated)
@@ -67,9 +71,12 @@ columns, filters, and optional registry metadata.
    - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
      reset behavior needs customization.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
-1. Generated filter code references runtime dependencies through
-   `gpui_table::__deps`, but missing `gpui-table` feature requirements are
-   rejected earlier during macro expansion.
+1. Generated filter code now targets `gpui_table::runtime::generated_filters`
+   for built-in components and filter runtime traits.
+1. Feature-gated external types such as `chrono::NaiveDate` and
+   `rust_decimal::Decimal` still route through `gpui_table::__deps`, while
+   missing `gpui-table` feature requirements are rejected earlier during macro
+   expansion.
 
 ## Feature flags
 

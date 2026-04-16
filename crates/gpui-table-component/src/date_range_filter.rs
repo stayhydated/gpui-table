@@ -31,8 +31,8 @@ pub struct DateRangeFilter {
 impl TableFilterComponent for DateRangeFilter {
     type Value = (Option<NaiveDate>, Option<NaiveDate>);
 
-    const FILTER_TYPE: gpui_table_core::registry::RegistryFilterType =
-        gpui_table_core::registry::RegistryFilterType::DateRange;
+    const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
+        gpui_table_schema::registry::RegistryFilterType::DateRange;
 
     fn new(
         title: impl Into<String>,

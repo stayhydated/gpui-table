@@ -39,7 +39,7 @@ pub(super) fn generate_delegate(
         };
 
         let data_loader_impl = quote! {
-            impl gpui_table::TableDataLoader for #delegate_name {
+            impl gpui_table::runtime::TableDataLoader for #delegate_name {
                 fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
                     gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
                 }
@@ -70,7 +70,7 @@ pub(super) fn generate_delegate(
         };
 
         let data_loader_impl = quote! {
-            impl gpui_table::TableDataLoader for #delegate_name {
+            impl gpui_table::runtime::TableDataLoader for #delegate_name {
                 fn load_data(&mut self, _window: &mut #Window, _cx: &mut #Context<#TableState<Self>>) {}
             }
         };
@@ -97,7 +97,8 @@ pub(super) fn generate_delegate(
         }
     };
 
-    let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
+    let columns_init_expr =
+        quote! { <#struct_name as gpui_table::runtime::TableRowMeta>::table_columns() };
     let precompute_rows_len = if has_filters {
         quote! { let rows_len = rows.len(); }
     } else {
@@ -126,7 +127,7 @@ pub(super) fn generate_delegate(
     let filter_delegate_methods = if has_filters {
         quote! {
             fn ensure_filter_cache(&self) {
-                use gpui_table::filter::{FilterValuesExt as _, Matchable as _};
+                use gpui_table::core::filter::{FilterValuesExt as _, Matchable as _};
 
                 if !self.filter_cache_dirty.get() && self.filter_cache_rows_len.get() == self.rows.len() {
                     return;
@@ -253,7 +254,7 @@ pub(super) fn generate_delegate(
             #rows_count_impl
 
             fn column(&self, col_ix: usize, _: &#App) -> #Column {
-                <#struct_name as gpui_table::TableRowMeta>::table_columns()
+                <#struct_name as gpui_table::runtime::TableRowMeta>::table_columns()
                     .into_iter()
                     .nth(col_ix)
                     .expect("Invalid column index")
@@ -266,7 +267,7 @@ pub(super) fn generate_delegate(
                 window: &mut #Window,
                 cx: &mut #Context<#TableState<Self>>,
             ) -> impl #IntoElement {
-                use gpui_table::TableRowStyle;
+                use gpui_table::runtime::TableRowStyle;
                 #render_row_index_map
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
             }
@@ -278,7 +279,7 @@ pub(super) fn generate_delegate(
                 window: &mut #Window,
                 cx: &mut #Context<#TableState<Self>>,
             ) -> #PopupMenu {
-                use gpui_table::TableRowContextMenu;
+                use gpui_table::runtime::TableRowContextMenu;
                 #context_menu_row_index_map
                 self.rows[row_ix].render_table_context_menu(row_ix, menu, window, cx)
             }

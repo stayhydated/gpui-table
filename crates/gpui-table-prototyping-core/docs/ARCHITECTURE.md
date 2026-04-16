@@ -2,7 +2,10 @@
 
 ## Purpose
 
-`gpui-table-prototyping-core` generates gpui table scaffolding from the `GpuiTableShape` inventory. It is intended for rapid prototyping and example generation.
+`gpui-table-prototyping-core` generates gpui table scaffolding from the
+`GpuiTableShape` inventory. It is intended for rapid prototyping and example
+generation, and it depends only on schema metadata rather than the GPUI runtime
+layer.
 
 ## Key modules
 
@@ -14,8 +17,8 @@
   - `TableShapeAdapter::try_generate_file(layout: &impl TableLayout) -> Result<syn::File, TableCodegenError>` — fallible version for user-facing tooling.
   - `TableLayout` trait — implement to control the entire generated file shape.
   - `TableParts` — all token-stream fragments exposed as named `pub` fields for use in custom layouts.
-  - `TableIdentities` / `TableIdentitiesExt` — identifier derivation helpers, including fallible variants.
-  - `source_path_to_use_path` — converts `file!()` paths to `use` import paths.
+- `identities.rs`: `TableIdentities`, `TableIdentitiesExt`, `ShapeIdentities`
+- `source_path.rs`: `source_path_to_use_path` — converts `file!()` paths to `use` import paths.
 - `imports.rs`: `ImportItem`, `ImportSet` — per-item import tracking and grouped `use` statement rendering.
 - `column.rs`: `ColumnCodeGenerator` trait, `ColumnInfo`, `ColumnIterator` — column-level utilities.
 

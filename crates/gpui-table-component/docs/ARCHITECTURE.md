@@ -10,7 +10,7 @@ status bar. These components are used by the generated filter entities when
 
 - `lib.rs`
   - `TableFilterComponent` trait used by the built-in generated filter entities
-  - `FilterValue` trait for query-string conversion (distinct from
+  - `QueryFilterValue` trait for query-string conversion (distinct from
     `gpui_table_core::filter::FilterValue`)
   - Re-exports extension traits for filter configuration
 - `src/bin/story.rs`
@@ -35,7 +35,8 @@ status bar. These components are used by the generated filter entities when
 ## Data flow
 
 1. The derive macro generates `XxxFilterEntities` that instantiate these
-   components using the `TableFilterComponent` trait.
+   components through `gpui_table::runtime::generated_filters`, which re-exports
+   this crate as the stable runtime target.
 1. Each filter component calls the provided `on_change` callback with its value.
 1. `ResetFilters` triggers generated reset bindings that clear all filters in one action.
 1. Consumers read all filter values via `FilterEntitiesExt::read_values` and

@@ -74,7 +74,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     };
 
     Ok(quote! {
-        impl gpui_table::TableCell for #name {
+        impl gpui_table::runtime::TableCell for #name {
             fn draw(
                 &self,
                 window: &mut #Window,

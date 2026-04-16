@@ -16,27 +16,27 @@ pub(super) fn get_filter_type_tokens(
 ) -> proc_macro2::TokenStream {
     match filter {
         FilterComponents::Text(_) => {
-            quote! { gpui_table::__deps::gpui_table_component::text_filter::TextFilter }
+            quote! { gpui_table::runtime::generated_filters::text_filter::TextFilter }
         },
         FilterComponents::NumberRange(_) => {
-            quote! { gpui_table::__deps::gpui_table_component::number_range_filter::NumberRangeFilter }
+            quote! { gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilter }
         },
         FilterComponents::DateRange(_) => {
-            quote! { gpui_table::__deps::gpui_table_component::date_range_filter::DateRangeFilter }
+            quote! { gpui_table::runtime::generated_filters::date_range_filter::DateRangeFilter }
         },
         FilterComponents::Faceted(_) => {
             if let Some(ty) = field_ty {
-                quote! { gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilter::<#ty> }
+                quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#ty> }
             } else {
                 // Fallback for cases where field_ty is not available (shouldn't happen in practice)
-                quote! { gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilter::<String> }
+                quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
             }
         },
         FilterComponents::InfiniteFaceted(_) => {
             if let Some(ty) = field_ty {
-                quote! { gpui_table::__deps::gpui_table_component::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
+                quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<#ty> }
             } else {
-                quote! { gpui_table::__deps::gpui_table_component::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
+                quote! { gpui_table::runtime::generated_filters::infinite_faceted_filter::InfiniteFacetedFilter::<String> }
             }
         },
     }
@@ -47,19 +47,19 @@ pub(super) fn get_filter_type_tokens(
 pub(super) fn get_registry_filter_type(filter: &FilterComponents) -> proc_macro2::TokenStream {
     match filter {
         FilterComponents::Text(_) => {
-            quote! { gpui_table::registry::RegistryFilterType::Text }
+            quote! { gpui_table::schema::registry::RegistryFilterType::Text }
         },
         FilterComponents::NumberRange(_) => {
-            quote! { gpui_table::registry::RegistryFilterType::NumberRange }
+            quote! { gpui_table::schema::registry::RegistryFilterType::NumberRange }
         },
         FilterComponents::DateRange(_) => {
-            quote! { gpui_table::registry::RegistryFilterType::DateRange }
+            quote! { gpui_table::schema::registry::RegistryFilterType::DateRange }
         },
         FilterComponents::Faceted(_) => {
-            quote! { gpui_table::registry::RegistryFilterType::Faceted }
+            quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
         },
         FilterComponents::InfiniteFaceted(_) => {
-            quote! { gpui_table::registry::RegistryFilterType::InfiniteFaceted }
+            quote! { gpui_table::schema::registry::RegistryFilterType::InfiniteFaceted }
         },
     }
 }
@@ -70,14 +70,18 @@ pub(super) fn get_filter_type_expr(
     field_ty: &syn::Type,
 ) -> proc_macro2::TokenStream {
     match filter {
-        FilterComponents::Text(_) => quote! { gpui_table::filter::FilterType::Text },
-        FilterComponents::NumberRange(_) => quote! { gpui_table::filter::FilterType::NumberRange },
-        FilterComponents::DateRange(_) => quote! { gpui_table::filter::FilterType::DateRange },
+        FilterComponents::Text(_) => quote! { gpui_table::core::filter::FilterType::Text },
+        FilterComponents::NumberRange(_) => {
+            quote! { gpui_table::core::filter::FilterType::NumberRange }
+        },
+        FilterComponents::DateRange(_) => {
+            quote! { gpui_table::core::filter::FilterType::DateRange }
+        },
         FilterComponents::Faceted(_) => {
-            quote! { gpui_table::filter::FilterType::Faceted(<#field_ty as gpui_table::filter::Filterable>::options()) }
+            quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
         },
         FilterComponents::InfiniteFaceted(_) => {
-            quote! { gpui_table::filter::FilterType::InfiniteFaceted }
+            quote! { gpui_table::core::filter::FilterType::InfiniteFaceted }
         },
     }
 }
@@ -92,19 +96,19 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
             if let Some(ref validation) = opts.validate {
                 let validation_chain = match validation {
                     TextValidation::Alphabetic => quote! {
-                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
                         let filter = filter.alphabetic_only(cx);
                     },
                     TextValidation::Numeric => quote! {
-                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
                         let filter = filter.numeric_only(cx);
                     },
                     TextValidation::Alphanumeric => quote! {
-                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
                         let filter = filter.alphanumeric_only(cx);
                     },
                     TextValidation::Custom(path) => quote! {
-                        use gpui_table::__deps::gpui_table_component::text_filter::TextFilterExt as _;
+                        use gpui_table::runtime::generated_filters::text_filter::TextFilterExt as _;
                         let filter = filter.validate(#path, cx);
                     },
                 };
@@ -125,7 +129,7 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
                 let max_str = max_val.to_string();
                 chain = quote! {
                     #chain
-                    use gpui_table::__deps::gpui_table_component::number_range_filter::NumberRangeFilterExt as _;
+                    use gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilterExt as _;
                     let filter = filter.range(
                         gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#min_str).unwrap(),
                         gpui_table::__deps::rust_decimal::Decimal::from_str_exact(#max_str).unwrap(),
@@ -156,7 +160,7 @@ pub(super) fn generate_filter_chain_methods(filter: &FilterComponents) -> proc_m
             if opts.searchable {
                 chain = quote! {
                     #chain
-                    use gpui_table::__deps::gpui_table_component::faceted_filter::FacetedFilterExt as _;
+                    use gpui_table::runtime::generated_filters::faceted_filter::FacetedFilterExt as _;
                     let filter = filter.searchable(cx);
                 };
             }

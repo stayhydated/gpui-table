@@ -6,7 +6,8 @@ use gpui::{
 };
 use gpui_component::{h_flex, v_flex};
 use gpui_component::table::{DataTable, TableDelegate as _, TableState};
-use gpui_table::filter::{FilterEntitiesExt as _, Matchable as _};
+use gpui_table::core::filter::Matchable as _;
+use gpui_table::runtime::FilterEntitiesExt as _;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
@@ -58,7 +59,7 @@ impl Render for UserTableStory {
             .p_4()
             .child(h_flex().gap_2().flex_wrap().child(self.filters.all_filters()))
             .child(
-                gpui_table_component::TableStatusBar::new(
+                gpui_table::runtime::generated_filters::TableStatusBar::new(
                     delegate.rows.len(),
                     delegate.loading,
                     delegate.eof,

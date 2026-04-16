@@ -3,7 +3,8 @@
 Utilities for generating gpui table scaffolding from `GpuiTableShape` inventory data.
 
 This crate is useful when you want to rapidly prototype tables from your struct
-definitions without hand-writing the gpui widget wiring.
+definitions without hand-writing the gpui widget wiring. It consumes schema
+metadata rather than depending on the GPUI runtime crates directly.
 
 ## Usage
 
@@ -11,7 +12,7 @@ Enable the `inventory` feature on `gpui-table` and iterate the registered shapes
 
 ```rs
 # fn demo() -> Result<(), gpui_table_prototyping_core::TableCodegenError> {
-use gpui_table::registry::GpuiTableShape;
+use gpui_table::schema::registry::GpuiTableShape;
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use quote::quote;
 

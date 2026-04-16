@@ -24,7 +24,8 @@ cargo run
 ```rs
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
-use gpui_table::{GpuiTable, TableLoader};
+use gpui_table::runtime::TableLoader;
+use gpui_table::GpuiTable;
 
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
@@ -51,7 +52,8 @@ impl TableLoader for UserTableDelegate {
 ## Prototyping
 
 Enable the `inventory` feature on `gpui-table` and use `gpui-table-prototyping-core`
-to generate gpui form scaffolding from `GpuiTableShape` registrations.
+to generate gpui form scaffolding from `gpui_table::schema::registry::GpuiTableShape`
+registrations.
 See `examples/prototyping` for a working generator.
 
 ## Examples

@@ -2,70 +2,42 @@
 
 ## Purpose
 
-`gpui-table-core` holds the core traits and data structures that power table
-metadata, filtering, and rendering. It has no proc-macro code and no UI
-components; it is the foundation used by both the derive macros and the
-runtime components.
+`gpui-table-core` is the pure filter-semantics layer for the workspace. It owns
+typed filter values, filter matching traits, and conversion helpers used by
+derive-generated filtering logic.
+
+It intentionally does not depend on `gpui` or `gpui-component`.
 
 ## Module map
 
 - `lib.rs`
-  - Table traits: `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableCell`
-  - Loading traits: `TableLoader`, `TableDataLoader`
-  - Default rendering helpers: `default_render_cell`, `default_render_row`
-  - Internal load-more bridge: `__private::LoadMoreDelegate`
+  - Exposes the pure filter surface
 - `filter/`
-  - `config.rs`: `FilterConfig`, `FilterType`, `FacetedFilterOption`
+  - Schema re-exports: `FilterConfig`, `FilterType`, `FacetedFilterOption`, `FacetedFilterIcon`
   - `value.rs`: `FilterValue`, `Filterable`
-  - `wrappers.rs`: `FacetedValue`, `RangeValue`, `TextValue`
-  - `traits.rs`: `Matchable`, `FilterValuesExt`, `FilterEntitiesExt`
+  - `wrappers.rs`: `FacetedValue`, `RangeValue`, `SingleValue`, `TextValue`
+  - `traits.rs`: `Matchable`, `FilterValuesExt`
   - `convert.rs`: `ToDecimal`, `ToNaiveDate` (feature gated)
-- `registry.rs`
-  - `GpuiTableShape`, `ColumnVariant`, `FilterVariant`
-  - `RegistryFilterType`, `ColumnFixed`
-  - Inventory registration helpers
 
 ## Data flow
 
-1. The derive macro generates `TableRowMeta`/`TableRowStyle` impls and optional
-   filter metadata based on user attributes.
-1. Filter wrappers and traits enable generated `FilterValues` to express
-   "active" state and match rows (client-side filtering).
-1. The registry module exposes static metadata for tools that want to inspect
-   table shapes (e.g., prototyping or codegen).
+1. `gpui-table-derive` generates `XxxFilterValues` structs using wrappers from this crate.
+1. Generated `Matchable` impls call into `TextValue` / `RangeValue` / `FacetedValue`
+   helpers plus `ToDecimal` / `ToNaiveDate` conversion traits from this crate.
+1. Faceted filters use `Filterable::options()` to obtain schema-level
+   `FacetedFilterOption` metadata.
 
 ## Extension points
 
-- Implement `TableCell` for custom value types.
-- Implement `FilterValue`/`Filterable` for faceted filter enums.
-- Override `TableRowStyle` to customize row or cell rendering.
-- Implement `TableRowContextMenu` to customize row context menus.
-- Use `TableRowGeneratedContextMenu` in custom context-menu impls to compose
-  derive-generated/default menu items with extra actions.
-
-## Default cell formatting
-
-`TableCell` implementations in `lib.rs` use these default display formats:
-
-- Floats and `rust_decimal::Decimal`: fixed to 2 decimal places.
-- `jiff` date/time values are rendered via ICU4X (`icu::datetime`) using
-  `en-US` locale defaults:
-  - `jiff::Zoned` and `jiff::Timestamp` use medium date+time with localized
-    offset (`LocalizedOffsetLong`). `Timestamp` is displayed in system time
-    zone.
-  - `jiff::civil::DateTime`: medium date + explicit `HMS` time.
-  - `jiff::civil::Date`: medium date.
-  - `jiff::civil::Time`: medium time.
-- `chrono` values are converted through `jiff` before ICU4X formatting:
-  - `chrono::DateTime<Tz>`: converted to `jiff::Timestamp` and displayed in
-    system time zone.
-  - `chrono::NaiveDateTime`/`NaiveDate`/`NaiveTime`: converted to
-    corresponding `jiff::civil::*` values.
+- Implement `FilterValue` / `Filterable` for typed faceted-filter enums.
+- Use `TextValue`, `RangeValue`, `FacetedValue`, and `SingleValue` in your own
+  filtering code.
+- Implement `Matchable<F>` for non-derived filtering flows.
 
 ## Feature flags
 
-- `jiff`: ICU4X-backed `TableCell` rendering for `jiff` date/time types.
-- `chrono`: `TableCell` rendering for `chrono` types via `chrono -> jiff -> ICU4X`, plus date conversion helpers.
-- `rust_decimal`: numeric conversion helpers for range filters.
-- `spacetimedb`: conversions for `spacetimedb_lib::Timestamp` and `spacetimedb_lib::TimeDuration` so date/number range filters can match SpacetimeDB temporal values.
-- `fluent`: localized title helpers used by generated code.
+- `chrono`: enables `ToNaiveDate` conversions for date-range filtering.
+- `rust_decimal`: enables `ToDecimal` conversions for numeric-range filtering.
+- `spacetimedb`: adds SpacetimeDB temporal conversions on top of `chrono` /
+  `rust_decimal`.
+- `fluent`: localized bool filter labels used by generated `Filterable<bool>`.

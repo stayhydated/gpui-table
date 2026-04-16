@@ -5,9 +5,8 @@ use crate::gpui_table::delegate::generate_delegate;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
 use crate::gpui_table::filter_codegen::{get_filter_type_expr, validate_filter_config};
-use crate::gpui_table::filter_entities::{
-    generate_filter_entities, generate_matches_filters_method,
-};
+use crate::gpui_table::filter_entities::generate_filter_entities;
+use crate::gpui_table::filter_matching::generate_matches_filters_method;
 use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
 
 use darling::util::Override;
@@ -267,7 +266,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
 
             filters_init.push(quote! {
-                gpui_table::filter::FilterConfig {
+                gpui_table::core::filter::FilterConfig {
                     column_index: #i,
                     filter_type: #filter_type_ts,
                 }
@@ -286,7 +285,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 let registry_filter_type = get_registry_filter_type(filter_config);
 
                 filter_variant_constructions.push(quote! {
-                    gpui_table::registry::FilterVariant::new(
+                    gpui_table::schema::registry::FilterVariant::new(
                         #field_name_str,
                         #registry_filter_type,
                     )
@@ -328,13 +327,13 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 .clone()
                 .unwrap_or_else(|| ident.to_string().to_title_case());
             let fixed_variant = match field.fixed.as_deref() {
-                Some("left") => quote! { gpui_table::registry::ColumnFixed::Left },
-                Some("right") => quote! { gpui_table::registry::ColumnFixed::Right },
-                _ => quote! { gpui_table::registry::ColumnFixed::None },
+                Some("left") => quote! { gpui_table::schema::registry::ColumnFixed::Left },
+                Some("right") => quote! { gpui_table::schema::registry::ColumnFixed::Right },
+                _ => quote! { gpui_table::schema::registry::ColumnFixed::None },
             };
             let sortable = field.sortable;
             column_variant_constructions.push(quote! {
-                gpui_table::registry::ColumnVariant::new(
+                gpui_table::schema::registry::ColumnVariant::new(
                     #field_name_str,
                     #field_type_str,
                     #title_str,
@@ -398,7 +397,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
     let style_impl = if !custom_style {
         quote! {
-            impl gpui_table::TableRowStyle for #struct_name {
+            impl gpui_table::runtime::TableRowStyle for #struct_name {
                 type ColumnId = #column_enum_name;
 
                 fn render_table_cell(
@@ -408,7 +407,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                     cx: &mut #App,
                 ) -> #AnyElement {
                     use #IntoElement;
-                    gpui_table::default_render_cell(self, col.into(), window, cx).into_any_element()
+                    gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }
         }
@@ -421,7 +420,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             context_menu_link
         {
             quote! {
-                impl gpui_table::TableRowGeneratedContextMenu for #struct_name {
+                impl gpui_table::runtime::TableRowGeneratedContextMenu for #struct_name {
                     fn render_generated_table_context_menu(
                         &self,
                         _row_ix: usize,
@@ -438,13 +437,13 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             }
         } else {
             quote! {
-                impl gpui_table::TableRowGeneratedContextMenu for #struct_name {}
+                impl gpui_table::runtime::TableRowGeneratedContextMenu for #struct_name {}
             }
         };
 
     let context_menu_impl = if !custom_context_menu {
         quote! {
-            impl gpui_table::TableRowContextMenu for #struct_name {
+            impl gpui_table::runtime::TableRowContextMenu for #struct_name {
                 fn render_table_context_menu(
                     &self,
                     row_ix: usize,
@@ -452,7 +451,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                     window: &mut #Window,
                     cx: &mut #App,
                 ) -> #PopupMenu {
-                    use gpui_table::TableRowGeneratedContextMenu as _;
+                    use gpui_table::runtime::TableRowGeneratedContextMenu as _;
                     self.render_generated_table_context_menu(row_ix, menu, window, cx)
                 }
             }
@@ -483,8 +482,8 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     #[cfg(feature = "inventory")]
     let shape_impl = {
         quote! {
-            gpui_table::registry::inventory::submit! {
-                gpui_table::registry::GpuiTableShape::new(
+            gpui_table::schema::registry::inventory::submit! {
+                gpui_table::schema::registry::GpuiTableShape::new(
                     stringify!(#struct_name),
                     #table_id,
                     #table_title,
@@ -507,7 +506,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     Ok(quote! {
         #column_enum
 
-        impl gpui_table::TableRowMeta for #struct_name {
+        impl gpui_table::runtime::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;
             const TABLE_TITLE: &'static str = #table_title;
 
@@ -519,14 +518,14 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 ]
             }
 
-            fn cell_value(&self, col_ix: usize) -> Box<dyn gpui_table::TableCell + '_> {
+            fn cell_value(&self, col_ix: usize) -> Box<dyn gpui_table::runtime::TableCell + '_> {
                 match col_ix {
                     #(#cell_value_match_arms)*
                     _ => Box::new(String::new()),
                 }
             }
 
-            fn table_filters() -> Vec<gpui_table::filter::FilterConfig> {
+            fn table_filters() -> Vec<gpui_table::core::filter::FilterConfig> {
                 vec![
                     #(#filters_init),*
                 ]

@@ -13,5 +13,5 @@ heck = { workspace = true }
 inventory = { workspace = true }
 prettyplease = { workspace = true }
 quote = { workspace = true }
-some-lib = { path = "../some-lib" }
+some-lib = { features = [ "client" ], path = "../some-lib" }
 syn = { features = [ "full", "parsing" ], workspace = true }
