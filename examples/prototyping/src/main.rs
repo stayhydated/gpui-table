@@ -1,5 +1,5 @@
 use anyhow::Context as _;
-use gpui_table::schema::registry::GpuiTableShape;
+use gpui_table::registry::GpuiTableShape;
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use heck::ToSnakeCase as _;
 use quote::quote;

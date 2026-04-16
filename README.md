@@ -74,7 +74,7 @@ impl TableLoader for UserTableDelegate {
 
 Enable the `inventory` feature on `gpui-table` and use `gpui-table-prototyping-core`
 to generate GPUI table scaffolding from
-`gpui_table::schema::registry::GpuiTableShape` registrations.
+`gpui_table::registry::GpuiTableShape` registrations.
 See `examples/prototyping` for a working generator.
 
 ## Examples

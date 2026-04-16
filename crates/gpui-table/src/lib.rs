@@ -38,6 +38,7 @@ pub use gpui_table_runtime::{
     TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
 };
 pub use gpui_table_schema as schema;
+pub use gpui_table_schema::registry;
 
 /// Hidden dependency surface used by macro-generated code.
 #[doc(hidden)]

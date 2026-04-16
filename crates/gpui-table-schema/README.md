@@ -8,6 +8,8 @@ Schema and registry metadata for the `gpui-table` ecosystem.
 - UI-neutral faceted icon metadata via `FacetedFilterIcon`
 - Inventory-backed table shape metadata: `GpuiTableShape`, `ColumnVariant`,
   `FilterVariant`, `RegistryFilterType`, `ColumnFixed`
+- The `inventory` re-export used to collect and iterate registered
+  `GpuiTableShape` values
 
 ## Notes
 

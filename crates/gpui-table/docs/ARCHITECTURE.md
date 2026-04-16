@@ -8,7 +8,8 @@ it alone and get:
 - pure filter semantics from `gpui-table-core`
 - GPUI runtime traits/helpers from `gpui-table-runtime`
 - schema/registry metadata from `gpui-table-schema`
-- proc macros from `gpui-table-derive`
+- proc macros from `gpui-table-derive` when the `derive` feature is enabled
+  (default)
 
 ## Structure
 
@@ -17,6 +18,7 @@ it alone and get:
   - Re-exports `gpui_table::core::filter` directly as `gpui_table::filter`
   - Re-exports the runtime crate as `gpui_table::runtime`
   - Re-exports the schema crate as `gpui_table::schema`
+  - Re-exports `gpui_table::schema::registry` directly as `gpui_table::registry`
   - Re-exports common runtime traits at the crate root:
     `FilterEntitiesExt`, `TableCell`, `TableDataLoader`, `TableLoader`,
     `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableRowMeta`,
@@ -37,7 +39,7 @@ it alone and get:
 1. Generated filter code targets `gpui_table::runtime::generated_filters`
    instead of directly hard-coding the component crate path.
 1. Tooling such as prototyping/codegen consumes schema metadata from
-   `gpui_table::schema::registry`.
+   `gpui_table::registry`.
 
 ## Feature flags
 

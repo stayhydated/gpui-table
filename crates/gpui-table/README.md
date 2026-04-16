@@ -1,7 +1,8 @@
 # gpui-table
 
 Facade crate for the `gpui-table` ecosystem. Re-exports filter semantics,
-runtime traits/helpers, schema metadata, and derive macros through one crate.
+runtime traits/helpers, schema metadata, and, with the default `derive`
+feature, the derive macros through one crate.
 
 ## Install
 
@@ -54,9 +55,10 @@ impl TableLoader for UserTableDelegate {
 - `gpui_table::filter` as a convenience alias for `gpui_table::core::filter`
 - `gpui_table::runtime` for row traits, loaders, default rendering, and built-in filter runtime helpers
 - `gpui_table::schema` for registry and filter metadata
+- `gpui_table::registry` as a convenience re-export of `gpui_table::schema::registry`
 - root-level convenience re-exports: `TableCell`, `TableLoader`,
   `TableDataLoader`, `TableRowMeta`, `TableRowStyle`,
   `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `FilterEntitiesExt`
-- derive macros re-exported from `gpui-table-derive` (`GpuiTable`, `Filterable`, `TableCell`, `gpui_table_impl`)
+- derive macros re-exported from `gpui-table-derive` (`GpuiTable`, `Filterable`, `TableCell`, `gpui_table_impl`) when `derive` is enabled (default)
 - `gpui_table::runtime::generated_filters` for built-in filter components and
   query-string helpers when you need manual/generated filter interop

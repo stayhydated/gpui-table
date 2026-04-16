@@ -4,7 +4,9 @@ GPUI filter UI components and a table status bar used by `gpui-table`.
 
 `TextFilter`, `FacetedFilter`, `ResetFilters`, and `TableStatusBar` are
 re-exported at the crate root. `DateRangeFilter` and `NumberRangeFilter` are
-also re-exported when their features are enabled.
+also re-exported when their features are enabled, along with the corresponding
+extension traits (`TextFilterExt`, `FacetedFilterExt`, `DateRangeFilterExt`,
+`NumberRangeFilterExt`).
 
 ## Interactive examples
 
@@ -24,8 +26,8 @@ cargo run -p gpui-table-component --bin story --features story
 ## Traits
 
 - `TableFilterComponent` for built-in filter component construction in generated code
-- `QueryFilterValue` for query-string conversion of filter values (distinct from
-  `gpui_table_core::filter::FilterValue`)
+- `QueryFilterValue` for query-string conversion of raw component values and
+  generated wrapper values (distinct from `gpui_table_core::filter::FilterValue`)
 
 ## Example
 
@@ -60,10 +62,10 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - Custom filter components are a manual integration point today: instantiate
   them directly, or build your own filter-entity collection / reload wiring
   around `TableFilterComponent` and `QueryFilterValue`.
-- `QueryFilterValue` supports the generated wrapper types
-  (`TextValue`, `RangeValue`, `FacetedValue`) and also manual `SingleValue`
-  integrations, so generated `XxxFilterEntities::read_values()` can feed query
-  serialization directly.
+- `QueryFilterValue` supports the raw values used by the built-in components,
+  the generated wrapper types (`TextValue`, `RangeValue`, `FacetedValue`), and
+  manual `SingleValue` integrations, so generated
+  `XxxFilterEntities::read_values()` can feed query serialization directly.
 - Filter components expose chainable style setters that accept
   `StyleRefinement` to customize trigger/input/popover subparts.
 - `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses

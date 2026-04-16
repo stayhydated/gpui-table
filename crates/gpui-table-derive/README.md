@@ -1,15 +1,17 @@
 # gpui-table-derive
 
-Proc-macros for generating table columns, delegates, faceted-filter enums,
-filters, and optional registry metadata.
+Proc-macros for generating table columns, delegates, single-field cell
+renderers, faceted-filter enums, filters, and optional registry metadata.
 
 ## Macros
 
 - `#[derive(GpuiTable)]`: derive table metadata + delegate
 - `#[derive(Filterable)]`: derive `FilterValue` + `Filterable` for faceted-filter enums
-- `#[derive(TableCell)]`: derive `TableCell` for newtypes and enums
+- `#[derive(TableCell)]`: derive `TableCell` for single-field structs and enums
 - `#[gpui_table_impl]`: wire load-more behavior into a generated delegate from
-  a `TableLoader` impl or freestanding `#[load_more]` / `#[threshold]` items
+  a `TableLoader` impl, an explicitly named loader trait via
+  `#[gpui_table_impl(path::to::Trait)]`, or freestanding `#[load_more]` /
+  `#[threshold]` items
 
 ## Filterable derive
 

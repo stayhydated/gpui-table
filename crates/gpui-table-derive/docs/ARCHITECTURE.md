@@ -24,7 +24,8 @@ columns, faceted-filter enums, filters, and optional registry metadata.
   - Optionally registers a `GpuiTableShape` in the inventory when the
     `inventory` feature is enabled.
 - `#[proc_macro_derive(TableCell)]`
-  - Convenience derive for newtypes/enums that delegate to an inner `TableCell`.
+  - Convenience derive for single-field structs/enums that delegate to an
+    inner `TableCell`.
   - Unit enums render via `EsFluent*` when derived, then `Display`, then the
     variant name as a fallback.
 - `#[proc_macro_derive(Filterable)]`
