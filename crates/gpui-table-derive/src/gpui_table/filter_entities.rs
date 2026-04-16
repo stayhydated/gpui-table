@@ -6,7 +6,7 @@ use crate::gpui_table::meta::FilterFieldMeta;
 
 use darling::util::Override;
 use heck::{ToPascalCase as _, ToTitleCase as _};
-use quote::quote;
+use quote::{ToTokens, quote};
 use syn::Ident;
 
 /// Generate the FilterEntities struct that holds all filter Entity<T> fields
@@ -32,7 +32,13 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
+            let field_doc = format!(
+                "Entity handle for the `{}` {} filter component.",
+                field_ident,
+                filter_kind_label(&f.filter_config)
+            );
             quote! {
+                #[doc = #field_doc]
                 pub #field_ident: #Entity<#filter_type_tokens>,
             }
         })
@@ -75,11 +81,16 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             let getter_name = Ident::new(&format!("{}_value", field_ident), field_ident.span());
+            let getter_doc = format!(
+                "Get the current raw value of the `{}` {} filter. Use `read_values()` when you need the generated wrapper type for matching or query serialization.",
+                field_ident,
+                filter_kind_label(&f.filter_config)
+            );
 
             match &f.filter_config {
                 FilterComponents::Text(_) => {
                     quote! {
-                        /// Get the current value of the #field_ident text filter.
+                        #[doc = #getter_doc]
                         pub fn #getter_name(&self, cx: &#App) -> String {
                             self.#field_ident.read(cx).value().to_string()
                         }
@@ -87,7 +98,7 @@ pub(super) fn generate_filter_entities(
                 }
                 FilterComponents::NumberRange(_) => {
                     quote! {
-                        /// Get the current value of the #field_ident number range filter.
+                        #[doc = #getter_doc]
                         pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) {
                             self.#field_ident.read(cx).value()
                         }
@@ -96,7 +107,7 @@ pub(super) fn generate_filter_entities(
                 FilterComponents::Faceted(_) => {
                     let field_type = &f.field_type;
                     quote! {
-                        /// Get the current value of the #field_ident faceted filter.
+                        #[doc = #getter_doc]
                         pub fn #getter_name(&self, cx: &#App) -> std::collections::HashSet<#field_type> {
                             self.#field_ident.read(cx).value().clone()
                         }
@@ -105,7 +116,7 @@ pub(super) fn generate_filter_entities(
                 FilterComponents::InfiniteFaceted(_) => {
                     let field_type = &f.field_type;
                     quote! {
-                        /// Get the current value of the #field_ident infinite faceted filter.
+                        #[doc = #getter_doc]
                         pub fn #getter_name(&self, cx: &#App) -> Option<#field_type> {
                             self.#field_ident.read(cx).value()
                         }
@@ -113,7 +124,7 @@ pub(super) fn generate_filter_entities(
                 }
                 FilterComponents::DateRange(_) => {
                     quote! {
-                        /// Get the current value of the #field_ident date range filter.
+                        #[doc = #getter_doc]
                         pub fn #getter_name(&self, cx: &#App) -> (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) {
                             self.#field_ident.read(cx).value()
                         }
@@ -170,7 +181,11 @@ pub(super) fn generate_filter_entities(
                     quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
                 },
             };
+            let field_doc = filter_value_field_doc(f);
+            let query_doc = filter_value_query_doc(f);
             quote! {
+                #[doc = #field_doc]
+                #[doc = #query_doc]
                 pub #field_ident: #value_type,
             }
         })
@@ -211,6 +226,28 @@ pub(super) fn generate_filter_entities(
         })
         .collect();
 
+    let build_doc = format!(
+        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` can be used to snapshot the current state into `{filter_values_name}`."
+    );
+    let build_for_table_doc = format!(
+        "Build filters and wire them directly into a generated table delegate for client-side filtering.\n\nOn each filter change this reads `{filter_values_name}`, calls `table.delegate_mut().set_filter_values(...)`, and notifies the table so generated `Matchable` logic re-runs against the in-memory rows."
+    );
+    let build_for_table_loader_doc = format!(
+        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports it."
+    );
+    let build_for_table_loader_with_doc = format!(
+        "Same as `build_for_table_loader(...)`, but lets callers customize delegate state just before each `load_data(...)` call.\n\nThe optional `before_reload` hook runs before every reload, including the initial one. This is useful when `{filter_values_name}` changes should also clear cached rows, paging cursors, or other delegate-owned request state."
+    );
+    let read_values_doc = format!(
+        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
+    );
+    let filter_values_doc = format!(
+        "Typed filter state produced by `{filter_entities_name}`.\n\nEach field uses a wrapper from `gpui_table::core::filter` (`TextValue`, `RangeValue<_>`, `FacetedValue<_>`, or `SingleValue<_>`), which is the shape consumed by generated client-side matching and stored on generated delegates for loader-based tables."
+    );
+    let has_active_doc = format!(
+        "Returns `true` when any field in `{filter_values_name}` currently has an active filter value."
+    );
+
     quote! {
         /// Entity handles for all filter UI components.
         /// Generated by the `#[derive(GpuiTable)]` macro.
@@ -229,12 +266,7 @@ pub(super) fn generate_filter_entities(
         }
 
         impl #filter_entities_name {
-            /// Build all filter entities for server-side filtering.
-            ///
-            /// # Arguments
-            /// * `on_filter_change` - Optional callback invoked after any filter changes.
-            ///   Use this for triggering data reload with new filter parameters.
-            /// * `cx` - The application context
+            #[doc = #build_doc]
             pub fn build(
                 on_filter_change: Option<std::rc::Rc<dyn Fn(&mut #Window, &mut #App) + 'static>>,
                 cx: &mut #App,
@@ -249,10 +281,7 @@ pub(super) fn generate_filter_entities(
                 }
             }
 
-            /// Build filters and wire them directly into a generated table delegate.
-            ///
-            /// On each filter change this updates `table.delegate_mut().set_filter_values(...)`
-            /// and triggers a table refresh for client-side filtering.
+            #[doc = #build_for_table_doc]
             pub fn build_for_table(
                 table: #Entity<#TableState<#delegate_name>>,
                 cx: &mut #App,
@@ -289,16 +318,7 @@ pub(super) fn generate_filter_entities(
                 filters
             }
 
-            /// Build filters and wire them into a generated table delegate that uses
-            /// `TableDataLoader` for server-side loading.
-            ///
-            /// On each filter change this method:
-            /// 1. reads current filter values,
-            /// 2. updates `table.delegate_mut().set_filter_values(...)`,
-            /// 3. resets paging state (`rows.clear(); eof = false;`),
-            /// 4. calls `table.delegate_mut().load_data(...)`.
-            ///
-            /// The same sequence is also run once during initialization.
+            #[doc = #build_for_table_loader_doc]
             pub fn build_for_table_loader(
                 table: #Entity<#TableState<#delegate_name>>,
                 window: &mut #Window,
@@ -318,11 +338,7 @@ pub(super) fn generate_filter_entities(
                 Self::build_for_table_loader_with(table, Some(before_reload), window, cx)
             }
 
-            /// Same as `build_for_table_loader(...)` but allows customizing pre-reload
-            /// delegate state handling.
-            ///
-            /// The optional `before_reload` hook runs before every `load_data(...)` call,
-            /// including the initial load.
+            #[doc = #build_for_table_loader_with_doc]
             pub fn build_for_table_loader_with(
                 table: #Entity<#TableState<#delegate_name>>,
                 before_reload: Option<std::rc::Rc<
@@ -421,7 +437,7 @@ pub(super) fn generate_filter_entities(
             // Value getters for server-side filtering
             #(#value_getters)*
 
-            /// Read all current filter values into the generated filter-values struct.
+            #[doc = #read_values_doc]
             pub fn read_values(&self, cx: &#App) -> #filter_values_name {
                 #filter_values_name {
                     #(#read_values_fields)*
@@ -448,14 +464,14 @@ pub(super) fn generate_filter_entities(
             }
         }
 
-        /// Plain data struct holding all filter values.
-        /// Generated by the `#[derive(GpuiTable)]` macro for client-side filtering.
+        #[doc = #filter_values_doc]
         #[derive(Clone, Debug, Default)]
         pub struct #filter_values_name {
             #(#filter_values_fields)*
         }
 
         impl gpui_table::core::filter::FilterValuesExt for #filter_values_name {
+            #[doc = #has_active_doc]
             fn has_active_filters(&self) -> bool {
                 #(#has_active_checks)||*
             }
@@ -548,6 +564,70 @@ fn generate_group_render_method(
                 #(#children)*
         }
     }
+}
+
+fn filter_kind_label(filter: &FilterComponents) -> &'static str {
+    match filter {
+        FilterComponents::Text(_) => "text",
+        FilterComponents::NumberRange(_) => "number range",
+        FilterComponents::Faceted(_) => "faceted",
+        FilterComponents::InfiniteFaceted(_) => "infinite faceted",
+        FilterComponents::DateRange(_) => "date range",
+    }
+}
+
+fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
+    let field_ident = &field.field_ident;
+    let wrapper_ty = generated_filter_value_type_name(field);
+    format!(
+        "Current value for the `{field_ident}` {} filter, stored as `{wrapper_ty}`.",
+        filter_kind_label(&field.filter_config)
+    )
+}
+
+fn filter_value_query_doc(field: &FilterFieldMeta) -> String {
+    match &field.filter_config {
+        FilterComponents::InfiniteFaceted(_) => {
+            let ty = compact_type_name(&field.field_type);
+            format!(
+                "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` when `{ty}` implements `gpui_table::core::filter::FilterValue`."
+            )
+        },
+        _ => "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string(),
+    }
+}
+
+fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
+    match &field.filter_config {
+        FilterComponents::Text(_) => "gpui_table::core::filter::TextValue".to_string(),
+        FilterComponents::NumberRange(_) => {
+            "gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal>"
+                .to_string()
+        },
+        FilterComponents::Faceted(_) => format!(
+            "gpui_table::core::filter::FacetedValue<{}>",
+            compact_type_name(&field.field_type)
+        ),
+        FilterComponents::InfiniteFaceted(_) => format!(
+            "gpui_table::core::filter::SingleValue<{}>",
+            compact_type_name(&field.field_type)
+        ),
+        FilterComponents::DateRange(_) => {
+            "gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate>"
+                .to_string()
+        },
+    }
+}
+
+fn compact_type_name(ty: &impl ToTokens) -> String {
+    ty.to_token_stream()
+        .to_string()
+        .replace(" :: ", "::")
+        .replace(" < ", "<")
+        .replace(" >", ">")
+        .replace(" , ", ", ")
+        .replace(" ( ", "(")
+        .replace(" )", ")")
 }
 
 /// Determine the title expression for a filter based on fluent config.

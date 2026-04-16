@@ -176,3 +176,7 @@ When `#[gpui_table(filters)]` is enabled, generated `XxxFilterEntities` also inc
   delegate state reset behavior before each reload.
 - inherent `read_values(&self, cx)` and `all_filters(&self)` methods, so callers
   do not need to import `FilterEntitiesExt` just to read or render generated filters.
+- generated `XxxFilterValues` wrapper fields (`TextValue`, `RangeValue<_>`,
+  `FacetedValue<_>`, `SingleValue<_>`) that can usually be serialized for
+  server-side loaders via
+  `gpui_table::runtime::generated_filters::QueryFilterValue`.

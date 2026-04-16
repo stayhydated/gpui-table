@@ -58,6 +58,11 @@ pub trait TableFilterComponent: Sized {
 ///
 /// This trait enables filter values to be accessed and used in data fetching
 /// functions like `load_more`.
+///
+/// Generated `XxxFilterValues` from `#[derive(GpuiTable)]` are composed from
+/// wrapper types such as `TextValue`, `RangeValue<T>`, `FacetedValue<T>`, and
+/// `SingleValue<T>`. Server-side loaders can typically call
+/// `to_query_string()` directly on those generated fields.
 pub trait QueryFilterValue: Default + Clone + Send + 'static {
     /// Returns true if the filter has no active value.
     fn is_empty(&self) -> bool;

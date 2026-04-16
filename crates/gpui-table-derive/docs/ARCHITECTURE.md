@@ -78,6 +78,9 @@ columns, filters, and optional registry metadata.
      server-side reloads.
    - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
      reset behavior needs customization.
+   Generated `FilterValues` use typed wrappers from `gpui_table::core::filter`,
+   and those fields can usually be serialized for server-side queries via
+   `gpui_table::runtime::generated_filters::QueryFilterValue`.
 1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
 1. Generated filter code now targets `gpui_table::runtime::generated_filters`
    for built-in components and filter runtime traits.
