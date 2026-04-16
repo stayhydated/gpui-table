@@ -14,6 +14,45 @@ use gpui_component::{
 };
 use std::rc::Rc;
 
+mod date_display {
+    use chrono::{Datelike as _, NaiveDate};
+    use icu::{
+        calendar::{Date, Iso},
+        datetime::{DateTimeFormatter, fieldsets},
+        locale::locale,
+    };
+    use jiff::civil;
+
+    type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
+
+    fn date_formatter() -> Option<DateFormatter> {
+        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+    }
+
+    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
+        let month = i8::try_from(value.month()).ok()?;
+        let day = i8::try_from(value.day()).ok()?;
+        let year = i16::try_from(value.year()).ok()?;
+        civil::Date::new(year, month, day).ok()
+    }
+
+    fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {
+        let month = u8::try_from(value.month()).ok()?;
+        let day = u8::try_from(value.day()).ok()?;
+        Date::try_new_iso(i32::from(value.year()), month, day).ok()
+    }
+
+    pub(super) fn format_date(value: NaiveDate) -> String {
+        chrono_naive_date_to_jiff(&value)
+            .and_then(|value| {
+                let date = to_icu_date(value)?;
+                let formatter = date_formatter()?;
+                Some(formatter.format(&date).to_string())
+            })
+            .unwrap_or_else(|| value.to_string())
+    }
+}
+
 pub struct DateRangeFilter {
     title: Rc<dyn Fn() -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
@@ -194,7 +233,19 @@ impl DateRangeFilter {
 }
 
 fn format_date(date: NaiveDate) -> String {
-    date.format("%b %d, %Y").to_string()
+    date_display::format_date(date)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_date;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn formats_dates_with_icu4x() {
+        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
+        assert_eq!(format_date(date), "Jan 31, 2026");
+    }
 }
 
 impl Render for DateRangeFilter {

@@ -3391,6 +3391,8 @@ dependencies = [
  "gpui-table-core",
  "gpui-table-schema",
  "gpui_platform",
+ "icu",
+ "jiff",
  "rust_decimal",
  "strum 0.28.0",
 ]

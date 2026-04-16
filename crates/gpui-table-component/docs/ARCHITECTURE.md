@@ -29,6 +29,8 @@ status bar. These components are used by the generated filter entities when
     explicit `.range(min, max)` keeps bounds fixed
 - `date_range_filter.rs`
   - Calendar-based date range picker
+  - Formats displayed dates by converting `chrono::NaiveDate` values through
+    `jiff` and ICU4X so trigger text matches runtime cell rendering
 - `reset_filters.rs`
   - Localized reset button for clearing all generated filters
 - `table_status_bar.rs`
@@ -67,6 +69,7 @@ status bar. These components are used by the generated filter entities when
 
 ## Feature flags
 
-- `chrono` (default): enables `DateRangeFilter` and date-based query serialization.
+- `chrono` (default): enables `DateRangeFilter`, date-based query serialization,
+  and ICU4X-backed date display formatting for selected ranges.
 - `rust_decimal` (default): enables `NumberRangeFilter` and decimal-based query serialization.
 - `story`: enables the storybook binary and pulls in both range-filter features.
