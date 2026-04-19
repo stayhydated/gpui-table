@@ -30,9 +30,9 @@ crate-paths = "0.2"
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
-es-fluent = "0.14"
-es-fluent-lang = "0.14"
-es-fluent-manager-embedded = "0.14"
+es-fluent = "0.15"
+es-fluent-lang = "0.15"
+es-fluent-manager-embedded = "0.15"
 fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "15d8660748b508b3525d3403e5d172f1a557bfa5" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
