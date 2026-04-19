@@ -645,7 +645,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.12.1",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -786,7 +786,7 @@ version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "519bd3116aeeb42d5372c29d982d16d0170d3d4a5ed85fc7dd91642ffff3c67c"
 dependencies = [
- "darling 0.23.0",
+ "darling 0.20.11",
  "ident_case",
  "prettyplease",
  "proc-macro2",
@@ -969,6 +969,12 @@ dependencies = [
  "wayland-backend",
  "wayland-client",
 ]
+
+[[package]]
+name = "camino"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e629a66d692cb9ff1a1c664e41771b3dcaf961985a9774c0eb0bd1b51cf60a48"
 
 [[package]]
 name = "castaway"
@@ -1617,6 +1623,7 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
+ "strsim",
  "syn 2.0.117",
 ]
 
@@ -2072,17 +2079,18 @@ dependencies = [
 
 [[package]]
 name = "es-fluent"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3d7bb7b22f7245058bd4940d0fc8fd23392823be26512b657cf34236b4512263"
+checksum = "6c593d572e54e20adc7547e69ea7745f99b14f58b2b8c2ed3eddaf542613c393"
 dependencies = [
  "arc-swap",
  "es-fluent-derive",
- "es-fluent-derive-core",
  "es-fluent-manager-core",
+ "es-fluent-shared",
  "es-fluent-toml",
  "fluent-bundle",
  "inventory",
+ "parking_lot",
  "rust-embed",
  "tracing",
  "unic-langid",
@@ -2090,12 +2098,13 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-derive"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f688b6410facf3c36ec417d5f8fa5347fd42cf2ca707d7d2a7cef3a416b2aa6f"
+checksum = "ff050e9786b0208563412ead0207dcd1574543f0ccb05d72ae2b54a2eb9b0bfd"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
+ "es-fluent-shared",
  "heck 0.5.0",
  "proc-macro-error2",
  "proc-macro2",
@@ -2106,52 +2115,47 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-derive-core"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "faf4e4a035b3cc2abe77e708f8da767b9077d80b77a5b071234eb7ddddf17dc7"
+checksum = "86beb88886b4835807304e37029d08cd1e36507733a248f7e3357e424b961b26"
 dependencies = [
- "anyhow",
  "bon",
  "darling 0.23.0",
- "derive_more 2.1.1",
+ "es-fluent-shared",
  "es-fluent-toml",
- "fluent-syntax",
  "getset",
  "heck 0.5.0",
  "proc-macro-error2",
  "proc-macro2",
  "quote",
- "serde",
- "serde_json",
  "strum 0.27.2",
  "syn 2.0.117",
  "thiserror 2.0.18",
- "toml 1.1.2+spec-1.1.0",
- "unic-langid",
 ]
 
 [[package]]
 name = "es-fluent-lang"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "be55904a3798d1b400fdc7c8e1542f948ece25f6d3627a4d17f61244eca9c166"
+checksum = "1efa44f324269d0c80448ee076ca038fd972e324943cff585676235bed5b2a7d"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
  "fluent-bundle",
+ "icu_experimental",
+ "icu_locale",
  "inventory",
- "rust-embed",
+ "parking_lot",
  "tracing",
  "unic-langid",
 ]
 
 [[package]]
 name = "es-fluent-lang-macro"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "640f9b8452abed1b1d47de5493944a35917eb7a46e2ef2a592cd117343916d5b"
+checksum = "f53a9dee60fa3df50c9eab4579680e43db6251445917ed9186c4e2d8366a0004"
 dependencies = [
- "es-fluent-manager-core",
  "es-fluent-toml",
  "heck 0.5.0",
  "proc-macro-error2",
@@ -2163,53 +2167,86 @@ dependencies = [
 
 [[package]]
 name = "es-fluent-manager-core"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d296fa673bb55e42266bbafadb37d7e2330179bd7e358a83715f3832114ef44b"
+checksum = "1e45eb38cacd44c515a92274d0af9da150fa4136dd26e72e7640ac59e170136e"
 dependencies = [
- "es-fluent-derive-core",
+ "es-fluent-shared",
  "fluent-bundle",
  "fluent-fallback",
+ "futures",
+ "icu_locale",
  "intl-memoizer",
  "inventory",
+ "parking_lot",
  "rust-embed",
+ "rustc-hash 2.1.2",
  "tracing",
  "unic-langid",
 ]
 
 [[package]]
 name = "es-fluent-manager-embedded"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c7d516cff043a8bdea943ae80d908cbb57c031d386b0e18afc23f4fda9fecc52"
+checksum = "ac758455a676d73a87b495b44cc7cf92fcee315e5b249c924babd14fb41568e5"
 dependencies = [
  "arc-swap",
  "es-fluent",
  "es-fluent-manager-core",
  "es-fluent-manager-macros",
+ "parking_lot",
  "tracing",
  "unic-langid",
 ]
 
 [[package]]
 name = "es-fluent-manager-macros"
-version = "0.14.2"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96a460a4a9bb2c1ce267f39571cfc5aeb27c83990d2351affd1620317426b732"
+checksum = "94a7eeae83f2a60cdea52ac9b2881016569b96d60d09498dd9ae4ae83d38b3bb"
 dependencies = [
+ "es-fluent-shared",
  "es-fluent-toml",
  "heck 0.5.0",
+ "path-slash",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
 ]
 
 [[package]]
-name = "es-fluent-toml"
-version = "0.14.2"
+name = "es-fluent-shared"
+version = "0.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e06b63c0e14df945e6fa62280378c15c580b42d1fab5e5e03293ace120d6cdd"
+checksum = "4637ade2ab152e584d8e55989dfcb0698b1924cc5a0572fe9e2934bd3c36d301"
 dependencies = [
+ "anyhow",
+ "camino",
+ "darling 0.23.0",
+ "derive_more 2.1.1",
+ "fluent-syntax",
+ "heck 0.5.0",
+ "icu",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "strum 0.27.2",
+ "syn 2.0.117",
+ "thiserror 2.0.18",
+ "toml 1.1.2+spec-1.1.0",
+ "unic-langid",
+]
+
+[[package]]
+name = "es-fluent-toml"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9aae6add9460c87e0d188fca1e0eb334edc3fdfe6ad6fd41ec8ab81250eca7c4"
+dependencies = [
+ "es-fluent-shared",
+ "fs-err",
+ "path-slash",
  "serde",
  "thiserror 2.0.18",
  "toml 1.1.2+spec-1.1.0",
@@ -2605,6 +2642,15 @@ dependencies = [
  "cc",
  "libc",
  "pkg-config",
+]
+
+[[package]]
+name = "fs-err"
+version = "3.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73fde052dbfc920003cfd2c8e2c6e6d4cc7c1091538c3a24226cec0665ab08c0"
+dependencies = [
+ "autocfg",
 ]
 
 [[package]]
@@ -3193,13 +3239,13 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.2.2"
-source = "git+https://github.com/zed-industries/zed#a8decbea137e267928f2aae12d0b31d912e34645"
+source = "git+https://github.com/zed-industries/zed#1db292d2fc4e74604bf07e9f7a859aa26ab6ea9b"
 replace = "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)"
 
 [[package]]
 name = "gpui-component"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#0a7b1708ed92127b984c317ed78b183a110b62cf"
+source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -3242,7 +3288,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-assets"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#0a7b1708ed92127b984c317ed78b183a110b62cf"
+source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
 dependencies = [
  "anyhow",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed)",
@@ -3256,7 +3302,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#0a7b1708ed92127b984c317ed78b183a110b62cf"
+source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3288,7 +3334,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#55c91d5709f85f0f0a202a189649e4f3f4b4c4bb"
+source = "git+https://github.com/stayhydated/gpui-storybook#0136ccad3cb6ccc82991fcce365d118a55cd9357"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)",
  "gpui-storybook-core",
@@ -3301,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#55c91d5709f85f0f0a202a189649e4f3f4b4c4bb"
+source = "git+https://github.com/stayhydated/gpui-storybook#0136ccad3cb6ccc82991fcce365d118a55cd9357"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)",
  "gpui-component",
@@ -3310,7 +3356,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#55c91d5709f85f0f0a202a189649e4f3f4b4c4bb"
+source = "git+https://github.com/stayhydated/gpui-storybook#0136ccad3cb6ccc82991fcce365d118a55cd9357"
 dependencies = [
  "anyhow",
  "es-fluent",
@@ -3331,7 +3377,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#55c91d5709f85f0f0a202a189649e4f3f4b4c4bb"
+source = "git+https://github.com/stayhydated/gpui-storybook#0136ccad3cb6ccc82991fcce365d118a55cd9357"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3342,7 +3388,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#55c91d5709f85f0f0a202a189649e4f3f4b4c4bb"
+source = "git+https://github.com/stayhydated/gpui-storybook#0136ccad3cb6ccc82991fcce365d118a55cd9357"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -3553,7 +3599,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#a8decbea137e267928f2aae12d0b31d912e34645"
+source = "git+https://github.com/zed-industries/zed#1db292d2fc4e74604bf07e9f7a859aa26ab6ea9b"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -4042,7 +4088,7 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
- "windows-registry 0.6.1",
+ "windows-registry 0.5.3",
 ]
 
 [[package]]
@@ -5929,6 +5975,12 @@ name = "pastey"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "35fb2e5f958ec131621fdd531e9fc186ed768cbe395337403ae56c17a74c68ec"
+
+[[package]]
+name = "path-slash"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1e91099d4268b0e11973f036e885d652fb0b21fedcf69738c627f94db6a44f42"
 
 [[package]]
 name = "pathdiff"
@@ -9964,17 +10016,6 @@ dependencies = [
  "windows-link 0.1.3",
  "windows-result 0.3.4",
  "windows-strings 0.4.2",
-]
-
-[[package]]
-name = "windows-registry"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02752bf7fbdcce7f2a27a742f798510f3e5ad88dbe84871e5168e2120c3d5720"
-dependencies = [
- "windows-link 0.2.1",
- "windows-result 0.4.1",
- "windows-strings 0.5.1",
 ]
 
 [[package]]
