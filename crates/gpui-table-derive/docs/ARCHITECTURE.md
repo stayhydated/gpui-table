@@ -1,149 +1,111 @@
-# Architecture
+# gpui-table-derive Architecture
 
 ## Purpose
 
-`gpui-table-derive` contains the proc-macros that generate table delegates,
-columns, faceted-filter enums, filters, and optional registry metadata.
+`gpui-table-derive` owns the proc-macro expansion pipeline for the workspace.
+It translates row structs, faceted enums, wrapper cells, and load-more impl
+blocks into the generated types consumed by the facade/runtime/schema layers.
 
-## Entry points
+## Entry Points
 
 - `#[derive(GpuiTable)]`
-  - Generates `TableRowMeta`, `TableRowStyle`, column enums, and a
-    `TableDelegate` implementation.
-  - Generates `TableRowGeneratedContextMenu` (default no-op or configured link).
-  - Generates `TableRowContextMenu` unless `#[gpui_table(custom_context_menu)]`
-    is set; generated impl forwards to `TableRowGeneratedContextMenu`.
-  - Optionally generates a default row context-menu link item when
-    context-menu attributes are configured:
-    - row-id source: `context_menu_row_id = "..."` or field `#[gpui_table(context_menu_id)]`
-    - route source: `context_menu_route = "...{id}..."` or `context_menu_route_fn = path::to_fn`
-    - optional label source: `context_menu_label = "..."` or `context_menu_label_fn = path::to_fn`
-  - Implements `TableDataLoader` for the generated delegate (load-more or no-op).
-  - Optionally generates filter entities/values when `#[gpui_table(filters)]`
-    is enabled.
-  - Optionally registers a `GpuiTableShape` in the inventory when the
-    `inventory` feature is enabled.
-- `#[proc_macro_derive(TableCell)]`
-  - Convenience derive for single-field structs/enums that delegate to an
-    inner `TableCell`.
-  - Unit enums render via `EsFluent*` when derived, then `Display`, then the
-    variant name as a fallback.
-- `#[proc_macro_derive(Filterable)]`
-  - Derives `gpui_table::core::filter::FilterValue` and
-    `gpui_table::core::filter::Filterable` for enums used by
-    `filter(faceted(...))`.
-  - Supports enum-level `#[filter(fluent)]` and variant-level
-    `#[filter(label = "...", icon = path::to::Icon)]` metadata.
-  - `#[filter(fluent)]` expects the enum to also derive a compatible
-    `EsFluent*` helper so generated labels can call `to_fluent_string()`.
-  - Generates a `variant_name(&self) -> &'static str` helper for matching and tooling.
+  - Generates row metadata, column enums, delegates, optional filters, optional
+    context-menu helpers, and optional inventory registration.
+- `#[derive(Filterable)]`
+  - Generates `FilterValue`, `Filterable`, and `variant_name()` for faceted enums.
+- `#[derive(TableCell)]`
+  - Generates `TableCell` for wrapper structs and unit enums.
 - `#[gpui_table_impl]`
-  - Attribute macro that wires load-more behavior into a generated delegate.
-  - Supports `impl TableLoader for XxxTableDelegate`, `#[gpui_table_impl(path::to::Trait)]`
-    on a plain impl block, and freestanding impl blocks with `#[load_more]` /
-    `#[threshold]` items.
+  - Attaches load-more behavior to the generated delegate.
 
-## Module map
+## Module Map
 
-- `lib.rs`
-  - Macro entry points and expansion logic
-  - Validates configuration errors early (e.g. invalid `fixed`, invalid
-    `number_range`, missing `chrono` / `rust_decimal` / `spacetimedb` feature
-    requirements, unsupported built-in filter/type combinations, field
-    `filter(...)` without struct `#[gpui_table(filters)]`)
-- `components.rs`
-  - Parses filter configuration attributes (text/number/date/faceted)
-  - `number_range(...)` decimal options preserve source spans, accept numeric
-    literals or quoted decimal strings, and feed compile-time validation/codegen
-- `filterable.rs`
-  - Expands `#[derive(Filterable)]` for enums into
-    `FilterValue` / `Filterable` impls plus `variant_name()`
-- `gpui_table/expand.rs`
-  - Orchestrates `GpuiTable` expansion, including context-menu options and
-    optional inventory registration
-- `gpui_table/delegate.rs`
-  - Generates `XxxTableDelegate`, filter-cache helpers, and `TableDataLoader`
-    impls for derived tables
-- `gpui_table/filter_codegen/`
-  - Shared filter type-token generation, option-chain generation, and
-    field/type validation helpers used during `GpuiTable` expansion
-- `gpui_table/filter_entities.rs`
-  - Generates `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers
-- `gpui_table/filter_matching.rs`
-  - Generates `Matchable<XxxFilterValues>` implementations
-- `gpui_table/meta.rs`
-  - Shared parsed metadata for struct-level and field-level `#[gpui_table(...)]` options
-- `impl_attr.rs`
-  - Parses `#[gpui_table_impl]` blocks and validates load-more signatures
-- `__crate_paths/` (generated)
-  - Provides stable paths to external crates; do not edit by hand
+- `src/lib.rs`
+  - Proc-macro entry points.
+- `src/components.rs`
+  - Parses built-in filter attribute syntax.
+- `src/filterable.rs`
+  - Expansion for `#[derive(Filterable)]`.
+- `src/table_cell.rs`
+  - Expansion for `#[derive(TableCell)]`.
+- `src/impl_attr.rs`
+  - Parsing and validation for `#[gpui_table_impl]`.
+- `src/gpui_table/meta.rs`
+  - Shared parsed representation of struct-level and field-level `#[gpui_table(...)]` options.
+- `src/gpui_table/expand.rs`
+  - Main `GpuiTable` orchestration and high-level validation.
+- `src/gpui_table/delegate.rs`
+  - Delegate generation, row caches, loader wiring, and related helpers.
+- `src/gpui_table/filter_entities.rs`
+  - `XxxFilterEntities`, `XxxFilterValues`, and filter builder/render helpers.
+- `src/gpui_table/filter_matching.rs`
+  - Generated `Matchable<XxxFilterValues>` implementations.
+- `src/gpui_table/filter_codegen/`
+  - Shared filter token generation, chain helpers, and type validation.
+- `src/__crate_paths/`
+  - Generated crate-path snapshots used to keep emitted paths stable.
 
-## Data flow
+## Expansion Pipeline
 
-1. Attributes on the row struct and its fields are parsed via `darling`.
-1. `#[derive(Filterable)]` parses enum-level and variant-level `#[filter(...)]`
-   metadata, then emits `FilterValue` / `Filterable` impls and faceted option
-   metadata.
-1. The macro expands into column enums, `TableRowMeta`/`TableRowStyle`, and
-   `TableDelegate` implementations.
-1. Generated delegates always implement `TableDataLoader`; when
-   `#[gpui_table(load_more)]` is enabled, `load_data()` forwards to the derived
-   load-more bridge, otherwise it is a no-op.
-1. Generated delegates route `TableDelegate::context_menu(...)` through the
-   selected typed row via `TableRowContextMenu`.
-1. When context-menu derive attributes are present, generated
-   `TableRowGeneratedContextMenu` appends a link entry resolved from the
-   selected row-id field (template replacement or runtime function path).
-   This remains composable when users implement `TableRowContextMenu` manually.
-1. Filter metadata expands into `FilterEntities`, `FilterValues`, and
-   `Matchable` implementations, plus grouped filter render helpers
-   (text/number/faceted/date/all), a localized reset-button binding, and
-   single-action filter reset wiring.
-   Generated `FilterEntities` expose inherent `read_values(...)` /
-   `all_filters(...)` methods so consumers do not need a trait import for the
-   common render/read path.
-1. When filters are enabled, generated delegates maintain a filtered row-index
-   cache and expose `set_filter_values(...)` / `clear_filter_values(...)`.
-   Generated helpers wire filter changes directly into `TableState`:
-   - `FilterEntities::build_for_table(...)` for client-side interactive
-     filtering with `DataTable`.
-   - `FilterEntities::build_for_table_loader(...)` for `TableDataLoader`-driven
-     server-side reloads. Its default pre-reload step clears `delegate.rows`
-     and resets `delegate.eof` before calling `load_data(...)`.
-   - `FilterEntities::build_for_table_loader_with(...)` when pre-reload delegate
-     reset behavior needs customization.
-     Generated `FilterValues` use typed wrappers from `gpui_table::core::filter`,
-     and those fields can usually be serialized for server-side queries via
-     `gpui_table::runtime::generated_filters::QueryFilterValue`.
-1. If `inventory` is enabled, a `GpuiTableShape` is registered for tooling.
-1. Generated filter code now targets `gpui_table::runtime::generated_filters`
-   for built-in components and filter runtime traits.
-1. Feature-gated external types such as `chrono::NaiveDate` and
-   `rust_decimal::Decimal` still route through `gpui_table::__deps`, while
-   missing `gpui-table` feature requirements are rejected earlier during macro
-   expansion.
-1. With `rust_decimal` enabled, `number_range(min/max/step)` values are parsed
-   during macro expansion so invalid decimal literals, non-positive steps, and
-   inverted ranges fail before code generation.
-1. Built-in filter/type mismatches are rejected before code generation where
-   the derive can prove the combination is impossible (for example `text()` on
-   `bool`, `faceted()` on `Option<T>`, or `date_range()` on `String`), while
-   still allowing local user types that may implement the required runtime
-   traits.
+1. Parse the input syntax tree with `syn`.
+1. Parse `#[gpui_table(...)]` or `#[filter(...)]` attributes with `darling`.
+1. Validate structural rules such as:
+   - `filter(...)` requires struct-level `#[gpui_table(filters)]`
+   - only one context-menu id source is allowed
+   - `context_menu_route` and `context_menu_route_fn` are mutually exclusive
+   - `number_range(...)` literals and decimal strings are well formed
+   - built-in filter/type combinations are supported
+   - required workspace features are enabled for the selected filter behavior
+1. Generate the main row/delegate code.
+1. Optionally generate filter entities, filter values, and matching logic.
+1. Optionally generate inventory registration.
+1. Optionally attach load-more wiring through `#[gpui_table_impl]`.
 
-## Feature flags
+## Generated Type Contracts
 
-- `chrono`: forwarded from `gpui-table` so `date_range` support can be
-  validated during macro expansion.
-- `fluent`: generates localized titles and `Filterable` labels via
-  `es-fluent` helpers.
-- `inventory`: registers table shapes for prototyping/codegen.
-- `rust_decimal`: forwarded from `gpui-table` so `number_range` support can be
-  validated during macro expansion.
-- `spacetimedb`: forwarded from `gpui-table` so SpacetimeDB range-filter usage
-  can be validated during macro expansion.
+`#[derive(GpuiTable)]` emits a predictable family of symbols:
 
-## Notes
+- `XxxTableColumn`
+- `XxxTableDelegate`
+- `XxxFilterEntities` when filters are enabled
+- `XxxFilterValues` when filters are enabled
 
-- `__crate_paths` is generated via `just update_crate_paths` and should remain
-  untouched.
+Those generated types are consumed by example code, tests, and external users,
+so name changes or path changes are semver-sensitive.
+
+Additional generated contracts:
+
+- Filter UI targets `gpui_table::runtime::generated_filters`.
+- Feature-gated external types route through `gpui_table::__deps`.
+- Load-more glue routes through `gpui_table::__private::LoadMoreDelegate`.
+- Inventory metadata uses `gpui_table::registry::GpuiTableShape` and stores the
+  original `file!()` path in `source_path`.
+
+## Internal Contracts
+
+- Built-in filter syntax is intentionally closed over the hard-coded variants
+  in `components.rs` and `filter_codegen/`. Implementing a new
+  `TableFilterComponent` elsewhere does not automatically make it selectable in
+  `#[gpui_table(filter(...))]`.
+- `TableDataLoader` is generated for every delegate so downstream code can call
+  a uniform loader surface.
+- Filter builder helpers generate both client-side and loader-driven wiring.
+  The loader-driven path resets delegate state before reloading unless callers
+  opt into the `_with(...)` customization hook.
+- `Filterable<bool>` is treated as a normal faceted filter path, not a special
+  runtime exception.
+- `__crate_paths` is generated data. It must be refreshed, not hand-edited.
+
+## Test And Generated Surfaces
+
+- Compile-fail coverage lives under `crates/gpui-table/tests/ui`.
+- Snapshot coverage for table rendering lives under `crates/gpui-table/tests`.
+- `crates/gpui-table/wip` is scratch data for macro stderr work, not a public surface.
+- `src/__crate_paths/` is regenerated via `just update_crate_paths`.
+
+## Feature Gates
+
+- `chrono`, `rust_decimal`, and `spacetimedb` let macro expansion validate
+  supported filter/type combinations at compile time.
+- `fluent` enables localized titles and faceted labels in generated code.
+- `inventory` enables `GpuiTableShape` registration.

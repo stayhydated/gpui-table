@@ -6,8 +6,8 @@ This file is the working guide for contributors and coding agents in the
 Use it to answer three questions quickly:
 
 1. Where does this documentation belong?
-2. Which crates are the default entry points vs integration points vs internals?
-3. What other surfaces must be updated in the same change?
+1. Which crates are the default entry points vs integration points vs internals?
+1. What other surfaces must be updated in the same change?
 
 ## Project summary
 
@@ -16,8 +16,8 @@ Use it to answer three questions quickly:
 Its priorities are:
 
 1. **Type safety**: keep generated columns, filters, delegates, and metadata strongly typed.
-2. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
-3. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping/codegen workflows.
+1. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
+1. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping/codegen workflows.
 
 For most application code, start with `crates/gpui-table`.
 
@@ -73,9 +73,9 @@ When changing a public workflow, feature-flag story, derive syntax, generated
 filter behavior, registry metadata shape, or user-visible API shape:
 
 1. Update the root `README.md`.
-2. Update the affected crate `README.md` files.
-3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-4. Keep these surfaces aligned in the same change unless there is a documented reason not to.
+1. Update the affected crate `README.md` files.
+1. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
+1. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 Additional rules:
 

@@ -1,45 +1,61 @@
-# Architecture
+# gpui-table-core Architecture
 
 ## Purpose
 
-`gpui-table-core` is the pure filter-semantics layer for the workspace. It owns
-typed filter values, filter matching traits, and conversion helpers used by
-derive-generated filtering logic.
+`gpui-table-core` owns the pure filtering model for the workspace. It contains
+no GPUI code and should remain the place where filter matching semantics,
+typed filter wrappers, and faceted value conversion live.
 
-It intentionally does not depend on `gpui` or `gpui-component`.
+## Dependency Edges
 
-## Module map
+- Depends only on `gpui-table-schema` plus optional conversion/i18n crates.
+- Must stay free of GPUI runtime dependencies so it can be reused by tooling,
+  tests, and server-side code.
 
-- `lib.rs`
-  - Exposes the pure filter surface
-- `filter/`
-  - Schema re-exports: `FilterConfig`, `FilterType`, `FacetedFilterOption`, `FacetedFilterIcon`
-  - `value.rs`: `FilterValue`, `Filterable`
-  - `wrappers.rs`: `FacetedValue`, `RangeValue`, `SingleValue`, `TextValue`
-    with manual defaults that do not require inner value types to implement `Default`,
-    and equality semantics that preserve `Eq` whenever the wrapped value type supports it
-  - `traits.rs`: `Matchable`, `FilterValuesExt`
-  - `convert.rs`: `ToDecimal`, `ToNaiveDate` (feature gated)
+## Module Map
 
-## Data flow
+- `src/lib.rs`
+  - Exposes the filter module and optional i18n module.
+- `src/filter/mod.rs`
+  - Re-export hub for the pure filter surface.
+- `src/filter/value.rs`
+  - `FilterValue` and `Filterable`, including the built-in `bool` implementation.
+- `src/filter/wrappers.rs`
+  - `TextValue`, `RangeValue<T>`, `FacetedValue<T>`, and `SingleValue<T>`.
+- `src/filter/traits.rs`
+  - `Matchable<F>` and `FilterValuesExt`.
+- `src/filter/convert.rs`
+  - Feature-gated conversion helpers for number/date range filtering.
+- `src/i18n.rs`, `i18n/`, `build.rs`, `i18n.toml`
+  - Optional localized bool labels for faceted filters.
 
-1. `gpui-table-derive` generates `XxxFilterValues` structs using wrappers from this crate.
-1. Generated `Matchable` impls call into `TextValue` / `RangeValue` / `FacetedValue`
-   helpers plus `ToDecimal` / `ToNaiveDate` conversion traits from this crate.
-1. Faceted filters use `Filterable::options()` to obtain schema-level
-   `FacetedFilterOption` metadata.
+## Internal Contracts
 
-## Extension points
+- Wrapper types default to an inactive state without requiring the inner type
+  to implement `Default`.
+- Wrapper equality preserves `Eq` whenever the wrapped value type supports it.
+- `TextValue::matches(...)` is case-insensitive and that behavior is part of the
+  core filter contract used by derive-generated client-side filtering.
+- `RangeValue` treats missing bounds as open-ended. Codegen and runtime layers
+  both assume that representation.
+- `FilterValue` is the canonical string round-trip contract for faceted values.
+  The schema layer stores strings; the core layer owns how typed values map to them.
+- `bool` remains a built-in `Filterable` type so faceted boolean filters work
+  without any derive or manual glue.
 
-- Implement `FilterValue` / `Filterable` for typed faceted-filter enums.
-- Use `TextValue`, `RangeValue`, `FacetedValue`, and `SingleValue` in your own
-  filtering code.
-- Implement `Matchable<F>` for non-derived filtering flows.
+## Data Flow
 
-## Feature flags
+1. `gpui-table-derive` validates field/filter combinations, then emits
+   `XxxFilterValues` structs composed from wrapper types in this crate.
+1. Generated or manual filtering code calls `Matchable<F>` with those wrapper values.
+1. Faceted filters use `Filterable::options()` to convert typed variants into
+   schema-level `FacetedFilterOption` values.
+1. Loader-oriented code can later serialize the wrapper fields through
+   `gpui-table-component::QueryFilterValue`.
 
-- `chrono`: enables `ToNaiveDate` conversions for date-range filtering.
-- `rust_decimal`: enables `ToDecimal` conversions for numeric-range filtering.
-- `spacetimedb`: adds SpacetimeDB temporal conversions on top of `chrono` /
-  `rust_decimal`.
-- `fluent`: localized bool filter labels used by generated `Filterable<bool>`.
+## Feature Gates
+
+- `chrono` enables `ToNaiveDate`.
+- `rust_decimal` enables `ToDecimal`.
+- `spacetimedb` layers supported SpacetimeDB temporal conversions on top of the range helpers.
+- `fluent` enables localized bool filter labels via `es-fluent`.

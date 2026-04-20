@@ -18,7 +18,7 @@ fn main() {
     app.run(move |app_cx| {
         gpui_component::init(app_cx);
         gpui_storybook::init(Languages::default(), app_cx);
-        gpui_storybook::change_locale(Languages::default());
+        gpui_storybook::change_locale(Languages::default()).unwrap();
         app_cx.activate(true);
 
         gpui_storybook::create_new_window(

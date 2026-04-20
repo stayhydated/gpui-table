@@ -1,45 +1,28 @@
 # gpui-table-component
 
-GPUI filter UI components and a table status bar used by `gpui-table`.
+`gpui-table-component` provides the built-in GPUI filter widgets and
+`TableStatusBar` used across the `gpui-table` ecosystem.
 
-`TextFilter`, `FacetedFilter`, `ResetFilters`, and `TableStatusBar` are
-re-exported at the crate root. `DateRangeFilter` and `NumberRangeFilter` are
-also re-exported when their features are enabled, along with the corresponding
-extension traits (`TextFilterExt`, `FacetedFilterExt`, `DateRangeFilterExt`,
-`NumberRangeFilterExt`).
+Use this crate when you want direct control over filter UI composition.
+Most application code should still start with `gpui-table`.
 
-## Interactive examples
+## Use This Crate When
 
-```sh
-cargo run -p gpui-table-component --bin story --features story
-```
-
-## Components
-
-- `TextFilter`
-- `FacetedFilter`
-- `NumberRangeFilter` (`rust_decimal` feature, enabled by default)
-- `DateRangeFilter` (`chrono` feature, enabled by default)
-- `ResetFilters`
-- `TableStatusBar`
-
-## Traits
-
-- `TableFilterComponent` for built-in filter component construction in generated code
-- `QueryFilterValue` for query-string conversion of raw component values and
-  generated wrapper values (distinct from `gpui_table_core::filter::FilterValue`)
+- you want to instantiate the built-in table filters directly in GPUI code
+- you want `TableStatusBar` without deriving an entire table
+- you need `QueryFilterValue` to serialize raw or generated filter values for loader requests
 
 ## Example
 
 ```rs
+use gpui::{StyleRefinement, px};
 use gpui_table_component::{TableStatusBar, TextFilter, TextFilterExt};
-use gpui::{App, StyleRefinement, Window, px};
 
 let filter = TextFilter::new(
     "Name",
     String::new(),
     move |_value, _window, _cx| {
-        // handle filter change
+        // react to filter changes
     },
     cx,
 )
@@ -52,27 +35,44 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
     .activity_style(StyleRefinement::default().font_semibold());
 ```
 
-## Notes
+## Built-In Components
 
-- The derive macros build these components for generated table filters, but you
-  can also instantiate them directly in manual GPUI code.
-- `#[derive(GpuiTable)]` currently supports the built-in filter syntaxes only;
-  implementing `TableFilterComponent` does not automatically add new
-  `#[gpui_table(filter(...))]` options.
-- Custom filter components are a manual integration point today: instantiate
-  them directly, or build your own filter-entity collection / reload wiring
-  around `TableFilterComponent` and `QueryFilterValue`.
-- `QueryFilterValue` supports the raw values used by the built-in components,
-  the generated wrapper types (`TextValue`, `RangeValue`, `FacetedValue`), and
-  manual `SingleValue` integrations, so generated
-  `XxxFilterEntities::read_values()` can feed query serialization directly.
-- Filter components expose chainable style setters that accept
-  `StyleRefinement` to customize trigger/input/popover subparts.
-- `NumberRangeFilter` uses `rust_decimal` internally; `DateRangeFilter` uses
-  `chrono`.
-- `chrono` and `rust_decimal` are default-enabled for direct crate users; opt
-  out with `default-features = false` if you only need text/faceted filters.
-- This crate ships a small storybook binary at `src/bin/story.rs` for previewing
-  filters and `TableStatusBar`.
-- Story definitions live in `src/stories` and are auto-registered via
-  `gpui-storybook` inventory macros.
+- `TextFilter`
+- `FacetedFilter`
+- `NumberRangeFilter` when `rust_decimal` is enabled
+- `DateRangeFilter` when `chrono` is enabled
+- `ResetFilters`
+- `TableStatusBar`
+
+All filter widgets expose chainable extension-trait setters for styling or
+behavior tweaks.
+
+## Interop With Generated Tables
+
+The derive-generated filter code targets this crate through
+`gpui_table::runtime::generated_filters`.
+
+That means you can:
+
+- let `#[derive(GpuiTable)]` build the standard filters for you
+- use this crate directly when you want manual composition
+- serialize either raw component values or generated wrapper values with `QueryFilterValue`
+
+Custom `TableFilterComponent` implementations are a runtime integration point.
+They are useful for manual filter collections, but they do not add a new
+`#[gpui_table(filter(...))]` syntax on their own.
+
+## Feature Flags
+
+- `chrono` (default): enables `DateRangeFilter`
+- `rust_decimal` (default): enables `NumberRangeFilter`
+- `story`: enables the storybook binary and pulls in the built-in filter stories
+
+## Storybook
+
+```sh
+cargo run -p gpui-table-component --bin story --features story
+```
+
+For internals, module boundaries, and serialization contracts, see
+`docs/ARCHITECTURE.md`.
