@@ -2,63 +2,60 @@
 
 ## Purpose
 
-`gpui-table-prototyping-core` generates gpui table scaffolding from the
-`GpuiTableShape` inventory. It is intended for rapid prototyping and example
-generation, and it depends only on schema metadata rather than the GPUI runtime
-layer.
+`gpui-table-prototyping-core` turns `GpuiTableShape` registry metadata into
+ready-to-format Rust syntax trees. It is intentionally a generator/helper layer,
+not a runtime layer.
 
-## Key modules
+## Dependency Edges
 
-- `code_gen.rs`: adapts `GpuiTableShape` into a `TableShape` and orchestrates code generation.
-  Key public API:
-  - `TableShapeAdapter::parts() -> TableParts` — all pre-computed fragments + identifiers.
-  - `TableShapeAdapter::try_parts() -> Result<TableParts, TableCodegenError>` — fallible version for user-facing tooling that validates generated identifiers before assembling token streams.
-  - `TableShapeAdapter::generate_file(layout: &impl TableLayout) -> syn::File` — generate using a caller-supplied layout.
-  - `TableShapeAdapter::try_generate_file(layout: &impl TableLayout) -> Result<syn::File, TableCodegenError>` — fallible version for user-facing tooling.
-  - `TableLayout` trait — implement to control the entire generated file shape.
-  - `TableParts` — all token-stream fragments exposed as named `pub` fields for use in custom layouts.
-- `identities.rs`: `TableIdentities`, `TableIdentitiesExt`, `ShapeIdentities`
-- `source_path.rs`: `source_path_to_use_path` — converts `file!()` paths to `use` import paths.
-- `imports.rs`: `ImportItem`, `ImportSet` — per-item import tracking and grouped `use` statement rendering.
-- `column.rs`: `ColumnCodeGenerator` trait, `ColumnInfo`, `ColumnIterator` — column-level utilities.
+- Depends on `gpui-table-schema`, not on `gpui-table-runtime`.
+- Depends on `syn`, `quote`, and `proc-macro2` because its output is Rust code,
+  not string templates.
+- Is primarily consumed by `examples/prototyping`, but the API is designed for
+  external generators and CLIs.
 
-## Data flow
+## Module Map
 
-1. A consumer (see `examples/prototyping`) iterates over `inventory::iter::<GpuiTableShape>()`.
-1. `TableShapeAdapter::new(shape, true).try_generate_file(&layout)` is the recommended entry point for user-facing tooling — it returns a ready-to-format `syn::File` or a structured `TableCodegenError`.
-   Internally it:
-   - Derives and validates all identifiers from `GpuiTableShape` via `TableIdentities`.
-   - Converts `shape.source_path` to a glob `use` path via `source_path_to_use_path`.
-   - Calls `required_imports()` to build the minimal deduplicated import set.
-   - Assembles all code fragments into `TableParts`.
-   - For filter-enabled, non-load-more stories, emits
-     `XxxFilterEntities::build_for_table(table.clone(), cx)` so client-side
-     filtering stays interactive with `DataTable`. Generated stories call the
-     inherent `filters.all_filters()` helper directly, so no filter-entity trait
-     import is needed in the output.
-   - For filter-enabled, load-more stories, emits
-     `XxxFilterEntities::build_for_table_loader(table.clone(), window, cx)` so
-     filter changes update delegate-owned filter state and trigger reloads.
-   - Passes `TableParts` to the `TableLayout` implementation which produces the final `syn::File`.
-1. The consumer formats with `prettyplease::unparse` and writes to disk.
+- `src/lib.rs`
+  - Public exports and crate surface.
+- `src/code_gen.rs`
+  - `TableShapeAdapter`, `TableLayout`, `TableParts`, and `TableCodegenError`.
+- `src/column.rs`
+  - Column iteration and column-level generation helpers.
+- `src/imports.rs`
+  - Import tracking, deduplication, and grouped `use` rendering.
+- `src/identities.rs`
+  - Table/story identifier derivation and validation.
+- `src/source_path.rs`
+  - `file!()` path to `use` path normalization for generated imports.
 
-The older `parts()` / `generate_file()` helpers remain as convenience wrappers
-for trusted metadata, but they intentionally panic on malformed shapes; prefer
-the `try_*` variants in generators and CLIs.
-Those `try_*` variants now validate manual filter field references too, so
-invalid shape metadata surfaces as `TableCodegenError` instead of panicking
-during token assembly.
+## Internal Contracts
 
-## Import design
+- `try_*` APIs are the safe external surface. They validate metadata and return
+  `TableCodegenError` instead of panicking.
+- Non-`try_*` helpers are convenience wrappers for trusted metadata and may panic.
+- `TableParts` is the semantic boundary between metadata normalization and
+  layout decisions. Layout implementations should consume it instead of
+  re-deriving identifiers or imports.
+- Import generation is intentionally centralized in `ImportSet` so generators
+  do not drift into repeated or conflicting `use` statements.
+- `source_path_to_use_path(...)` is part of the codegen contract because
+  inventory registrations only preserve `file!()` paths, not ready-made import paths.
 
-Imports are declared at two levels:
+## Data Flow
 
-- Framework items live in `code_gen::FRAMEWORK_IMPORTS` (always included).
-- Filter items live in `code_gen::FILTER_IMPORTS` (conditionally included when filters are present).
-- `ImportSet` deduplicates and groups items into compact `use parent::{a, b as c};` statements.
+1. A generator iterates `inventory::iter::<GpuiTableShape>()`.
+1. `TableShapeAdapter::new(shape, use_fluent_titles)` normalizes registry data.
+1. `try_parts()` or `try_generate_file()` validates identifiers, converts the
+   registry source path into imports, and computes all reusable token fragments.
+1. `TableLayout::generate_file(...)` decides the outer Rust file structure.
+1. The caller formats the resulting `syn::File` and writes it to disk.
 
-## Extension points
+## Generated Output Expectations
 
-- Implement `TableLayout` to produce a completely custom file structure while reusing `TableParts` fragments.
-- Implement `ColumnCodeGenerator` to customize column rendering in generated code.
-- Override `TableShape` implementations to alter individual code generation fragments.
+- Filter-enabled, non-loader stories wire `XxxFilterEntities::build_for_table(...)`.
+- Filter-enabled, loader-driven stories wire `XxxFilterEntities::build_for_table_loader(...)`.
+- Generated stories call the inherent `all_filters()` helper on the filter
+  entity set, which avoids forcing a trait import into every generated file.
+- `examples/prototyping/output` is the canonical generated surface used to
+  validate these assumptions in the workspace.

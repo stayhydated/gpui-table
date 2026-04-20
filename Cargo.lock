@@ -645,7 +645,7 @@ dependencies = [
  "bitflags 2.11.1",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.12.1",
  "log",
  "prettyplease",
  "proc-macro2",
@@ -786,7 +786,7 @@ version = "3.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "519bd3116aeeb42d5372c29d982d16d0170d3d4a5ed85fc7dd91642ffff3c67c"
 dependencies = [
- "darling 0.23.0",
+ "darling 0.20.11",
  "ident_case",
  "prettyplease",
  "proc-macro2",
@@ -1623,6 +1623,7 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
+ "strsim",
  "syn 2.0.117",
 ]
 
@@ -3238,13 +3239,13 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.2.2"
-source = "git+https://github.com/zed-industries/zed#1db292d2fc4e74604bf07e9f7a859aa26ab6ea9b"
+source = "git+https://github.com/zed-industries/zed#66a77d29fd4ede98f224c1a6b6cc5bc27d237366"
 replace = "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)"
 
 [[package]]
 name = "gpui-component"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
+source = "git+https://github.com/longbridge/gpui-component#4ad6c7d202e7f662c5c908f34f2abece7d41970d"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -3287,7 +3288,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-assets"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
+source = "git+https://github.com/longbridge/gpui-component#4ad6c7d202e7f662c5c908f34f2abece7d41970d"
 dependencies = [
  "anyhow",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed)",
@@ -3301,7 +3302,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#564f9fa83145ac8439989242e203471ac86dad11"
+source = "git+https://github.com/longbridge/gpui-component#4ad6c7d202e7f662c5c908f34f2abece7d41970d"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3333,7 +3334,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#3a19d34dc74fa4cd9445e6d8359e22887bdc5f8e"
+source = "git+https://github.com/stayhydated/gpui-storybook#601bb54fc47f1d497417ef19b2bc62a97821cf67"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)",
  "gpui-storybook-core",
@@ -3346,7 +3347,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#3a19d34dc74fa4cd9445e6d8359e22887bdc5f8e"
+source = "git+https://github.com/stayhydated/gpui-storybook#601bb54fc47f1d497417ef19b2bc62a97821cf67"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=15d8660748b508b3525d3403e5d172f1a557bfa5)",
  "gpui-component",
@@ -3355,7 +3356,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#3a19d34dc74fa4cd9445e6d8359e22887bdc5f8e"
+source = "git+https://github.com/stayhydated/gpui-storybook#601bb54fc47f1d497417ef19b2bc62a97821cf67"
 dependencies = [
  "anyhow",
  "es-fluent",
@@ -3377,7 +3378,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#3a19d34dc74fa4cd9445e6d8359e22887bdc5f8e"
+source = "git+https://github.com/stayhydated/gpui-storybook#601bb54fc47f1d497417ef19b2bc62a97821cf67"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3388,7 +3389,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#3a19d34dc74fa4cd9445e6d8359e22887bdc5f8e"
+source = "git+https://github.com/stayhydated/gpui-storybook#601bb54fc47f1d497417ef19b2bc62a97821cf67"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -3599,7 +3600,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#1db292d2fc4e74604bf07e9f7a859aa26ab6ea9b"
+source = "git+https://github.com/zed-industries/zed#66a77d29fd4ede98f224c1a6b6cc5bc27d237366"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -4088,7 +4089,7 @@ dependencies = [
  "tokio",
  "tower-service",
  "tracing",
- "windows-registry 0.6.1",
+ "windows-registry 0.5.3",
 ]
 
 [[package]]
@@ -10016,17 +10017,6 @@ dependencies = [
  "windows-link 0.1.3",
  "windows-result 0.3.4",
  "windows-strings 0.4.2",
-]
-
-[[package]]
-name = "windows-registry"
-version = "0.6.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "02752bf7fbdcce7f2a27a742f798510f3e5ad88dbe84871e5168e2120c3d5720"
-dependencies = [
- "windows-link 0.2.1",
- "windows-result 0.4.1",
- "windows-strings 0.5.1",
 ]
 
 [[package]]

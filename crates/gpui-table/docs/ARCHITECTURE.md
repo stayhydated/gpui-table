@@ -1,63 +1,59 @@
-# Architecture
+# gpui-table Architecture
 
 ## Purpose
 
-`gpui-table` is the facade crate for the workspace. Applications can depend on
-it alone and get:
+`gpui-table` is the public facade crate for the workspace. Its job is not to
+own much logic; its job is to present a stable dependency and path surface for
+application code and for code emitted by `gpui-table-derive`.
 
-- pure filter semantics from `gpui-table-core`
-- GPUI runtime traits/helpers from `gpui-table-runtime`
-- schema/registry metadata from `gpui-table-schema`
-- proc macros from `gpui-table-derive` when the `derive` feature is enabled
-  (default)
+## Dependency Edges
 
-## Structure
+- Always depends on `gpui-table-core`, `gpui-table-runtime`, and `gpui-table-schema`.
+- Optionally depends on `gpui-table-derive` behind the `derive` feature.
+- Re-exports external feature-gated crates through `__deps` so macro-generated
+  code can name `chrono` and `rust_decimal` without each downstream crate
+  having to mirror those dependency paths.
+- Re-exports the load-more bridge through `__private` for macro internals.
 
-- `lib.rs`
-  - Re-exports the core crate as `gpui_table::core`
-  - Re-exports `gpui_table::core::filter` directly as `gpui_table::filter`
-  - Re-exports the runtime crate as `gpui_table::runtime`
-  - Re-exports the schema crate as `gpui_table::schema`
-  - Re-exports `gpui_table::schema::registry` directly as `gpui_table::registry`
-  - Re-exports common runtime traits at the crate root:
-    `FilterEntitiesExt`, `TableCell`, `TableDataLoader`, `TableLoader`,
-    `TableRowContextMenu`, `TableRowGeneratedContextMenu`, `TableRowMeta`,
-    `TableRowStyle`
-  - Re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
-    when the `derive` feature is enabled
-  - Exposes hidden `__deps` for feature-gated external types (`chrono`, `rust_decimal`)
-  - Exposes hidden `__private` load-more bridge for macro-generated code
+## Public Surface Owned Here
 
-## How it fits
+`src/lib.rs` defines the stable namespace layout that downstream code and macro
+expansion depend on:
 
-1. You derive `GpuiTable` on a row type.
-1. You can derive `Filterable` on faceted-filter enums and `TableCell` on
-   supporting cell types through the same facade.
-1. The derive macro generates row/delegate/filter code against traits exported by
-   the facade's explicit `core` / `runtime` / `schema` namespaces, plus the
-   root-level `filter` and convenience trait re-exports.
-1. Generated filter code targets `gpui_table::runtime::generated_filters`
-   instead of directly hard-coding the component crate path.
-1. Tooling such as prototyping/codegen consumes schema metadata from
-   `gpui_table::registry`.
+- `gpui_table::core`
+- `gpui_table::filter`
+- `gpui_table::runtime`
+- `gpui_table::schema`
+- `gpui_table::registry`
 
-## Feature flags
+It also re-exports the commonly used runtime traits at the crate root and, when
+`derive` is enabled, the proc macros from `gpui-table-derive`.
 
-- `derive` (default): enables `GpuiTable`, `Filterable`, and `TableCell`
-  derives plus the `gpui_table_impl` attribute macro.
-- `chrono` (default): forwards chrono/date support into `core`, `runtime`, and `derive`.
-- `inventory`: enables registry metadata for prototyping/codegen.
-- `fluent`: integrates with `es-fluent` for localized titles/labels.
-- `rust_decimal`: forwards numeric-range support into `core`, `runtime`, and `derive`.
-- `spacetimedb`: forwards SpacetimeDB temporal support into `core`, `runtime`, and `derive`.
+## Internal Contracts
 
-## Extension points
+- The facade namespace is part of the generated-code contract. If a re-export
+  moves or is renamed here, the derive crate must be updated in lockstep.
+- `gpui_table::runtime::generated_filters` is the stable runtime target for
+  generated filter code. The facade must continue re-exporting the runtime crate
+  unchanged enough for that path to remain valid.
+- `__deps` and `__private` are hidden from normal user documentation, but they
+  are still semver-sensitive because proc-macro output depends on them.
+- Feature flags on this crate are fan-out switches. Their main job is to keep
+  `core`, `runtime`, and `derive` on the same capability set.
 
-- Implement `gpui_table::runtime::TableRowStyle` for custom rendering.
-- Implement `gpui_table::runtime::TableRowContextMenu` for row context-menu composition.
-- Use `gpui_table::runtime::TableRowGeneratedContextMenu` to compose derive-generated menu links with
-  custom menu actions.
-- Implement `gpui_table::runtime::TableLoader` or
-  `gpui_table::runtime::TableDataLoader` for load-more behavior.
-- Use `gpui_table::runtime::generated_filters` as the stable runtime target when
-  integrating custom generated-filter flows.
+## Data Flow
+
+1. Downstream code derives `GpuiTable`, `Filterable`, or `TableCell` through this crate.
+1. `gpui-table-derive` emits code against the `gpui_table::core`,
+   `gpui_table::runtime`, `gpui_table::schema`, and `gpui_table::registry`
+   namespaces defined here.
+1. Runtime code then executes inside `gpui-table-runtime`, while filter values
+   and metadata route through `gpui-table-core` and `gpui-table-schema`.
+
+## Feature Gates
+
+- `derive` adds the proc-macro re-exports.
+- `chrono`, `rust_decimal`, and `spacetimedb` forward feature support through
+  the workspace layers.
+- `fluent` enables localized label/title generation in the core and derive layers.
+- `inventory` enables registry metadata emission from the derive layer.

@@ -1,14 +1,18 @@
 # gpui-table-prototyping-core
 
-Utilities for generating gpui table scaffolding from `GpuiTableShape` inventory data.
+`gpui-table-prototyping-core` generates GPUI table stories or scaffolding from
+inventory-registered `GpuiTableShape` metadata.
 
-This crate is useful when you want to rapidly prototype tables from your struct
-definitions without hand-writing the gpui widget wiring. It consumes schema
-metadata rather than depending on the GPUI runtime crates directly.
+Use this crate when you are building tooling or prototypes around the registry.
+Most application code should not depend on it directly.
 
-## Usage
+## Use This Crate When
 
-Enable the `inventory` feature on `gpui-table` and iterate the registered shapes:
+- you want to turn `GpuiTableShape` registrations into story files or scaffolding
+- you want reusable adapters and token fragments instead of hard-coding codegen
+- you want generation to stay coupled to schema metadata instead of GPUI runtime internals
+
+## Example
 
 ```rs
 # fn demo() -> Result<(), gpui_table_prototyping_core::TableCodegenError> {
@@ -16,29 +20,57 @@ use gpui_table::registry::{GpuiTableShape, inventory};
 use gpui_table_prototyping_core::{TableLayout, TableParts, TableShapeAdapter};
 use quote::quote;
 
-struct MyLayout;
+struct StoryLayout;
 
-impl TableLayout for MyLayout {
+impl TableLayout for StoryLayout {
     fn generate_file(&self, parts: &TableParts) -> syn::File {
-        let TableParts { imports, story_struct_ident, struct_fields, render_children, .. } = parts;
+        let TableParts {
+            imports,
+            story_struct_ident,
+            struct_fields,
+            render_children,
+            ..
+        } = parts;
+
         syn::parse2(quote! {
             #imports
-            pub struct #story_struct_ident { #struct_fields }
-            // splice #render_children wherever you need it
+
+            pub struct #story_struct_ident {
+                #struct_fields
+            }
+
+            // splice #render_children into your layout
         })
-        .expect("static layout template should parse")
+        .expect("static layout should parse")
     }
 }
 
 for shape in inventory::iter::<GpuiTableShape>() {
-    let syn_file = TableShapeAdapter::new(shape, true).try_generate_file(&MyLayout)?;
-    let _formatted = prettyplease::unparse(&syn_file);
+    let file = TableShapeAdapter::new(shape, true).try_generate_file(&StoryLayout)?;
+    let _formatted = prettyplease::unparse(&file);
 }
 # Ok(())
 # }
 ```
 
-Use the `inventory` re-export from `gpui_table::registry` unless you
-already depend on `inventory` directly.
+## Main Types
 
-See `examples/prototyping` for a full generator that writes formatted files.
+- `TableShapeAdapter`
+  Adapts a `GpuiTableShape` into validated identities, imports, and token fragments.
+- `TableLayout`
+  Lets a generator control the outer file shape.
+- `TableParts`
+  Exposes precomputed token fragments for custom layouts.
+- `TableCodegenError`
+  Structured error type for invalid metadata or identifier generation failures.
+
+The recommended entry points for tools are the `try_*` methods, which return
+`TableCodegenError` instead of panicking on malformed metadata.
+
+## Reference Generator
+
+See `examples/prototyping/src/main.rs` for a complete generator and
+`examples/prototyping/output` for the produced story modules.
+
+For internal generator stages and adapter contracts, see
+`docs/ARCHITECTURE.md`.

@@ -1,18 +1,46 @@
 # gpui-table-schema
 
-Schema and registry metadata for the `gpui-table` ecosystem.
+`gpui-table-schema` contains the UI-neutral metadata shared across the
+`gpui-table` workspace: filter configuration, faceted option metadata, and the
+inventory-backed table-shape registry.
 
-## What it provides
+This crate is for tooling and integration work. Most application code should
+use `gpui-table`.
 
-- Filter metadata types: `FilterConfig`, `FilterType`, `FacetedFilterOption`
-- UI-neutral faceted icon metadata via `FacetedFilterIcon`
-- Inventory-backed table shape metadata: `GpuiTableShape`, `ColumnVariant`,
-  `FilterVariant`, `RegistryFilterType`, `ColumnFixed`
-- The `inventory` re-export used to collect and iterate registered
-  `GpuiTableShape` values
+## Use This Crate When
 
-## Notes
+- you are building tooling around table metadata
+- you want to inspect or transform `GpuiTableShape` inventory registrations
+- you want schema types without depending on GPUI runtime crates
 
-- This crate intentionally does not depend on `gpui` or `gpui-component`.
-- Runtime traits and rendering helpers live in `gpui-table-runtime`.
-- Filter matching and typed filter values live in `gpui-table-core`.
+## Example
+
+```rs
+use gpui_table_schema::registry::{GpuiTableShape, inventory};
+
+for shape in inventory::iter::<GpuiTableShape>() {
+    println!(
+        "{} -> {} columns, {} filters",
+        shape.struct_name,
+        shape.columns.len(),
+        shape.filters.len()
+    );
+}
+```
+
+In normal application code, those registrations are produced by
+`#[derive(GpuiTable)]` with the `inventory` feature enabled on `gpui-table`.
+
+## What It Provides
+
+- `FilterConfig`, `FilterType`, `FacetedFilterOption`, and `FacetedFilterIcon`
+- `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
+- the `inventory` re-export used to collect and iterate registered shapes
+
+This crate intentionally does not depend on `gpui` or `gpui-component`.
+
+If you need derives, loaders, rendering traits, or built-in filter UI, use
+`gpui-table` instead.
+
+For internal metadata contracts and dependency boundaries, see
+`docs/ARCHITECTURE.md`.
