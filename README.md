@@ -14,18 +14,21 @@ The project is organized around three priorities:
 1. **Ergonomics** for `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]`.
 1. **Developer experience** for built-in filters, inventory-backed table shapes, and example-driven workflows.
 
-## Start Here
-
-- Most application code should depend on [`gpui-table`](crates/gpui-table/README.md).
-- Reach for [`gpui-table-component`](crates/gpui-table-component/README.md) when you want to compose the built-in filter widgets or `TableStatusBar` by hand.
-- Reach for [`gpui-table-prototyping-core`](crates/gpui-table-prototyping-core/README.md) when you are generating stories or scaffolding from inventory-registered table shapes.
-
 ## Installation
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["fluent", "inventory", "rust_decimal"] }
+gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"] }
 ```
+
+## Compatibility
+
+| `gpui-table` | `gpui-component` | `gpui` |
+| :----------- | :--------------- | :----- |
+| **crates.io** | | |
+| `0.5.x` | `0.5.1` | `0.2.2` |
+| **git** | | |
+| `branch = "master"` | `branch = "main"` | `rev = "15d8660748b508b3525d3403e5d172f1a557bfa5"` |
 
 `derive` and `chrono` are enabled by default. Add:
 

@@ -1,23 +1,45 @@
 # gpui-table
 
-`gpui-table` is the default entry point for the ecosystem. It exposes the
-derive-based table workflow, built-in filter integration, row/runtime traits,
-and registry support through one dependency.
+[![Build Status](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml/badge.svg)](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml)
+[![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
+[![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
-Most application code should use this crate directly.
+`gpui-table` is a Rust workspace for building strongly typed GPUI tables.
+It combines derive macros, typed filter values, a GPUI runtime layer, UI-neutral
+registry metadata, and prototyping/codegen helpers.
+
+The project is organized around three priorities:
+
+1. **Type safety** for generated columns, filters, delegates, and metadata.
+1. **Ergonomics** for `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]`.
+1. **Developer experience** for built-in filters, inventory-backed table shapes, and example-driven workflows.
 
 ## Installation
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["fluent", "inventory", "rust_decimal"] }
+gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"] }
 ```
 
-`derive` and `chrono` are enabled by default.
+## Compatibility
 
-## Quick Example
+| `gpui-table` | `gpui-component` | `gpui` |
+| :----------- | :--------------- | :----- |
+| **crates.io** | | |
+| `0.5.x` | `0.5.1` | `0.2.2` |
+| **git** | | |
+| `branch = "master"` | `branch = "main"` | `rev = "15d8660748b508b3525d3403e5d172f1a557bfa5"` |
 
-`filter(number_range(...))` requires the `rust_decimal` feature.
+`derive` and `chrono` are enabled by default. Add:
+
+- `rust_decimal` for `filter(number_range(...))`
+- `inventory` for `GpuiTableShape` registration and prototyping/codegen
+- `fluent` for localized table titles and faceted labels through `es-fluent`
+- `spacetimedb` for range filtering over supported SpacetimeDB temporal types
+
+## Quick Start
+
+`number_range(...)` requires the `rust_decimal` feature.
 
 ```rs
 use gpui::{Context, Window};
@@ -26,7 +48,7 @@ use gpui_table::runtime::TableLoader;
 use gpui_table::{Filterable, GpuiTable};
 
 #[derive(Clone, Eq, Hash, PartialEq, Filterable)]
-pub enum Status {
+pub enum UserStatus {
     Active,
     Suspended,
 }
@@ -41,46 +63,48 @@ pub struct User {
     pub age: u8,
 
     #[gpui_table(width = 120., filter(faceted()))]
-    pub status: Status,
+    pub status: UserStatus,
 }
 
 #[gpui_table::gpui_table_impl]
 impl TableLoader for UserTableDelegate {
     fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        // fetch rows, append them to self.rows, then notify
         cx.notify();
     }
 }
 ```
 
-This single derive flow gives you:
+With `#[gpui_table(filters)]`, the derive also generates:
 
 - `UserTableDelegate` and `UserTableColumn`
-- `UserFilterEntities` and `UserFilterValues` when `#[gpui_table(filters)]` is enabled
-- typed client-side matching through generated `Matchable<UserFilterValues>`
-- optional `GpuiTableShape` registration when the `inventory` feature is enabled
+- `UserFilterEntities` for rendering built-in filters
+- `UserFilterValues` for typed filter state
+- `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
-## Main Surface
+If you enable `inventory`, the same derive registers a `GpuiTableShape` for
+tooling and code generation.
 
-The user-facing entry points are:
+## Examples
 
-- `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
-- `gpui_table::runtime` for row traits, loaders, built-in filter interop, and default rendering helpers
-- `gpui_table::registry` for inventory-backed table metadata when `inventory` is enabled
-- root-level runtime re-exports such as `TableLoader`, `TableDataLoader`, `TableRowMeta`, `TableRowStyle`, and `FilterEntitiesExt`
+The canonical end-to-end examples live under [`examples/`](../../examples/README.md).
+
+- `cargo run`
+  Launches `examples/some-lib-tables`, the storybook app for the derived tables.
+- `cargo run -p prototyping`
+  Regenerates `examples/prototyping/output` from `GpuiTableShape` inventory registrations.
+
+The main walkthrough files are:
+
+- `examples/some-lib/src/structs/user.rs` for derived filters, localized titles, and context menus
+- `examples/some-lib/src/structs/item.rs` for load-more and custom row rendering
+- `examples/prototyping/src/main.rs` for inventory-driven code generation
 
 ## Feature Flags
 
-- `derive` (default): enables `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
-- `chrono` (default): date cell support and `filter(date_range())`
-- `fluent`: localized titles and labels through `es-fluent`
-- `inventory`: inventory-backed `GpuiTableShape` registration
+- `derive` (default): re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
+- `chrono` (default): date cell rendering and `filter(date_range())`
+- `fluent`: localized titles and faceted labels through `es-fluent`
+- `inventory`: inventory-backed `GpuiTableShape` registration for tooling
 - `rust_decimal`: numeric range filtering and decimal-backed helpers
-- `spacetimedb`: range filtering support for supported SpacetimeDB temporal types
-
-## When To Reach For Another Crate
-
-- Use `gpui-table-component` when you want to build filter UIs manually rather than through `#[derive(GpuiTable)]`.
-- Use `gpui-table-prototyping-core` when you are generating stories or scaffolding from registered `GpuiTableShape` values.
-
-For implementation details, generated contracts, and crate boundaries, see
-`docs/ARCHITECTURE.md`.
+- `spacetimedb`: SpacetimeDB temporal range filtering support
