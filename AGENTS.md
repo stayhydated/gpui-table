@@ -1,13 +1,12 @@
 # AGENTS.md
 
-This file is the working guide for contributors and coding agents in the
-`gpui-table` workspace.
+This file is the working guide for contributors and coding agents in the `gpui-table` workspace.
 
 Use it to answer three questions quickly:
 
 1. Where does this documentation belong?
-1. Which crates are the default entry points vs integration points vs internals?
-1. What other surfaces must be updated in the same change?
+2. Which crates are public entry points versus integration points versus internals?
+3. What other surfaces must be updated in the same change?
 
 ## Project summary
 
@@ -16,31 +15,28 @@ Use it to answer three questions quickly:
 Its priorities are:
 
 1. **Type safety**: keep generated columns, filters, delegates, and metadata strongly typed.
-1. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
-1. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping/codegen workflows.
+2. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
+3. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping and codegen workflows.
 
 For most application code, start with `crates/gpui-table`.
 
-Reach for `crates/gpui-table-component` when you need direct control over the
-built-in filter widgets or `TableStatusBar`.
+Reach for `crates/gpui-table-component` when you need direct control over the built-in filter widgets or `TableStatusBar`.
 
-Reach for `crates/gpui-table-prototyping-core` when you are generating table
-stories or scaffolding from inventory-registered shapes.
+Reach for `crates/gpui-table-prototyping-core` when you are generating table stories or scaffolding from inventory-registered shapes.
 
 ## Audience labels
 
-These labels describe the crate or surface itself, not the documentation file
-you are editing:
+These labels describe the crate or surface itself, not the documentation file you are editing:
 
-- **User-facing**: normal entry points for application developers.
-- **Public integration**: public crates meant for extensions, tooling, or deeper customization, but not usually the default starting point.
-- **Internal**: workspace plumbing, generated outputs, examples-as-infrastructure, and maintenance tooling.
+- **User-facing**: Normal entry points for application developers.
+- **Public integration**: Public crates meant for extensions, tooling, or deeper customization. These are not usually the default starting point.
+- **Internal**: Workspace plumbing, generated outputs, examples-as-infrastructure, and maintenance tooling.
 
 ## Documentation rules
 
 ### User-facing documentation
 
-These surfaces are user-facing:
+These surfaces are always user-facing:
 
 - the root `README.md`,
 - `examples/README.md`,
@@ -69,13 +65,12 @@ Do not put implementation detail into READMEs.
 
 ## Synchronization rules
 
-When changing a public workflow, feature-flag story, derive syntax, generated
-filter behavior, registry metadata shape, or user-visible API shape:
+When changing a public workflow, feature-flag story, derive syntax, generated filter behavior, registry metadata shape, or other user-visible API shape:
 
 1. Update the root `README.md`.
-1. Update the affected crate `README.md` files.
-1. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-1. Keep these surfaces aligned in the same change unless there is a documented reason not to.
+2. Update the affected crate `README.md` files.
+3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
+4. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 Additional rules:
 
@@ -93,7 +88,7 @@ Additional rules:
 - `crates/gpui-table`
   Audience: **User-facing**
   Docs: [Architecture](crates/gpui-table/docs/ARCHITECTURE.md)
-  Role: workspace facade, default entry point, and home of the public feature gates. Re-exports the core/runtime/schema namespaces and, with `derive`, the proc macros.
+  Role: workspace facade, default entry point, and home of the public feature gates. Re-exports the core and runtime namespaces and, with `derive`, the proc macros.
 
 - `crates/gpui-table-component`
   Audience: **User-facing**
@@ -127,7 +122,7 @@ Additional rules:
   Docs: [Architecture](crates/gpui-table-prototyping-core/docs/ARCHITECTURE.md)
   Role: code-generation helpers that consume `GpuiTableShape` inventory metadata to generate GPUI table stories and scaffolding. Most application users should add this only when building tooling or prototypes.
 
-### Internal tooling and generated surfaces
+### Internal crates and generated surfaces
 
 - `justfile`
   Audience: **Internal**
