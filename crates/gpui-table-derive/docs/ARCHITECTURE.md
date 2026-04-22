@@ -42,8 +42,6 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
   - Generated `Matchable<XxxFilterValues>` implementations.
 - `src/gpui_table/filter_codegen/`
   - Shared filter token generation, chain helpers, and type validation.
-- `src/__crate_paths/`
-  - Generated crate-path snapshots used to keep emitted paths stable.
 
 ## Expansion Pipeline
 
@@ -94,14 +92,12 @@ Additional generated contracts:
   opt into the `_with(...)` customization hook.
 - `Filterable<bool>` is treated as a normal faceted filter path, not a special
   runtime exception.
-- `__crate_paths` is generated data. It must be refreshed, not hand-edited.
 
 ## Test And Generated Surfaces
 
 - Compile-fail coverage lives under `crates/gpui-table/tests/ui`.
 - Snapshot coverage for table rendering lives under `crates/gpui-table/tests`.
 - `crates/gpui-table/wip` is scratch data for macro stderr work, not a public surface.
-- `src/__crate_paths/` is regenerated via `just update_crate_paths`.
 
 ## Feature Gates
 

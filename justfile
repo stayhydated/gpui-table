@@ -16,9 +16,5 @@ check:
 test:
     cargo test --workspace --all-features
 
-update_crate_paths:
-    cargo crate-paths -c gpui -o crates/gpui-table-derive/__crate_paths/gpui.rs
-    cargo crate-paths -c gpui-component -o crates/gpui-table-derive/__crate_paths/gpui_component.rs
-
 test-publish:
     cargo publish --workspace --dry-run --allow-dirty

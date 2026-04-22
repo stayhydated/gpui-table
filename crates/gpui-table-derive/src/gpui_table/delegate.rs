@@ -1,6 +1,3 @@
-use crate::__crate_paths::gpui::{App, Context, IntoElement, Window};
-use crate::__crate_paths::gpui_component::menu::PopupMenu;
-use crate::__crate_paths::gpui_component::table::{Column, ColumnSort, TableDelegate, TableState};
 use crate::gpui_table::meta::FilterFieldMeta;
 
 use quote::quote;
@@ -21,13 +18,13 @@ pub(super) fn generate_delegate(
 
     let (load_more_impl, has_more_impl, threshold_impl, data_loader_impl) = if load_more {
         let load_more_impl = quote! {
-            fn load_more(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+            fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
                 gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
             }
         };
 
         let has_more_impl = quote! {
-            fn has_more(&self, app: &#App) -> bool {
+            fn has_more(&self, app: &gpui::App) -> bool {
                 gpui_table::__private::LoadMoreDelegate::has_more(self, app)
             }
         };
@@ -40,7 +37,11 @@ pub(super) fn generate_delegate(
 
         let data_loader_impl = quote! {
             impl gpui_table::runtime::TableDataLoader for #delegate_name {
-                fn load_data(&mut self, window: &mut #Window, cx: &mut #Context<#TableState<Self>>) {
+                fn load_data(
+                    &mut self,
+                    window: &mut gpui::Window,
+                    cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                ) {
                     gpui_table::__private::LoadMoreDelegate::load_more(self, window, cx);
                 }
             }
@@ -54,11 +55,11 @@ pub(super) fn generate_delegate(
         )
     } else {
         let load_more_impl = quote! {
-            fn load_more(&mut self, _window: &mut #Window, _cx: &mut #Context<#TableState<Self>>) {}
+            fn load_more(&mut self, _window: &mut gpui::Window, _cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {}
         };
 
         let has_more_impl = quote! {
-            fn has_more(&self, _: &#App) -> bool {
+            fn has_more(&self, _: &gpui::App) -> bool {
                 false
             }
         };
@@ -71,7 +72,12 @@ pub(super) fn generate_delegate(
 
         let data_loader_impl = quote! {
             impl gpui_table::runtime::TableDataLoader for #delegate_name {
-                fn load_data(&mut self, _window: &mut #Window, _cx: &mut #Context<#TableState<Self>>) {}
+                fn load_data(
+                    &mut self,
+                    _window: &mut gpui::Window,
+                    _cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+                ) {
+                }
             }
         };
 
@@ -85,13 +91,13 @@ pub(super) fn generate_delegate(
 
     let loading_impl = if let Some(field) = loading {
         quote! {
-            fn loading(&self, app: &#App) -> bool {
+            fn loading(&self, app: &gpui::App) -> bool {
                 self.#field(app)
             }
         }
     } else {
         quote! {
-            fn loading(&self, _: &#App) -> bool {
+            fn loading(&self, _: &gpui::App) -> bool {
                 self.full_loading
             }
         }
@@ -180,14 +186,14 @@ pub(super) fn generate_delegate(
     };
     let rows_count_impl = if has_filters {
         quote! {
-            fn rows_count(&self, _: &#App) -> usize {
+            fn rows_count(&self, _: &gpui::App) -> usize {
                 self.ensure_filter_cache();
                 self.filtered_row_indices.borrow().len()
             }
         }
     } else {
         quote! {
-            fn rows_count(&self, _: &#App) -> usize {
+            fn rows_count(&self, _: &gpui::App) -> usize {
                 self.rows.len()
             }
         }
@@ -218,7 +224,7 @@ pub(super) fn generate_delegate(
 
         pub struct #delegate_name {
             pub rows: Vec<#struct_name>,
-            columns: Vec<#Column>,
+            columns: Vec<gpui_component::table::Column>,
             pub visible_rows: std::ops::Range<usize>,
             pub visible_cols: std::ops::Range<usize>,
             pub eof: bool,
@@ -245,14 +251,14 @@ pub(super) fn generate_delegate(
             #filter_delegate_methods
         }
 
-        impl #TableDelegate for #delegate_name {
-            fn columns_count(&self, _: &#App) -> usize {
+        impl gpui_component::table::TableDelegate for #delegate_name {
+            fn columns_count(&self, _: &gpui::App) -> usize {
                 self.columns.len()
             }
 
             #rows_count_impl
 
-            fn column(&self, col_ix: usize, _: &#App) -> #Column {
+            fn column(&self, col_ix: usize, _: &gpui::App) -> gpui_component::table::Column {
                 self.columns
                     .get(col_ix)
                     .cloned()
@@ -263,9 +269,9 @@ pub(super) fn generate_delegate(
                 &mut self,
                 row_ix: usize,
                 col_ix: usize,
-                window: &mut #Window,
-                cx: &mut #Context<#TableState<Self>>,
-            ) -> impl #IntoElement {
+                window: &mut gpui::Window,
+                cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+            ) -> impl gpui::IntoElement {
                 use gpui_table::runtime::TableRowStyle;
                 #render_row_index_map
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
@@ -274,10 +280,10 @@ pub(super) fn generate_delegate(
             fn context_menu(
                 &mut self,
                 row_ix: usize,
-                menu: #PopupMenu,
-                window: &mut #Window,
-                cx: &mut #Context<#TableState<Self>>,
-            ) -> #PopupMenu {
+                menu: gpui_component::menu::PopupMenu,
+                window: &mut gpui::Window,
+                cx: &mut gpui::Context<gpui_component::table::TableState<Self>>,
+            ) -> gpui_component::menu::PopupMenu {
                 use gpui_table::runtime::TableRowContextMenu;
                 #context_menu_row_index_map
                 self.rows[row_ix].render_table_context_menu(row_ix, menu, window, cx)
@@ -286,8 +292,8 @@ pub(super) fn generate_delegate(
             fn visible_rows_changed(
                 &mut self,
                 visible_range: std::ops::Range<usize>,
-                _: &mut #Window,
-                _: &mut #Context<#TableState<Self>>,
+                _: &mut gpui::Window,
+                _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
             ) {
                 self.visible_rows = visible_range;
             }
@@ -295,8 +301,8 @@ pub(super) fn generate_delegate(
             fn visible_columns_changed(
                 &mut self,
                 visible_range: std::ops::Range<usize>,
-                _: &mut #Window,
-                _: &mut #Context<#TableState<Self>>,
+                _: &mut gpui::Window,
+                _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
             ) {
                 self.visible_cols = visible_range;
             }
@@ -309,9 +315,9 @@ pub(super) fn generate_delegate(
             fn perform_sort(
                 &mut self,
                 col_ix: usize,
-                sort: #ColumnSort,
-                _: &mut #Window,
-                _: &mut #Context<#TableState<Self>>,
+                sort: gpui_component::table::ColumnSort,
+                _: &mut gpui::Window,
+                _: &mut gpui::Context<gpui_component::table::TableState<Self>>,
             ) {
                 match col_ix {
                     #(#sort_arms)*

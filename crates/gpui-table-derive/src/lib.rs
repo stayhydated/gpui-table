@@ -1,5 +1,3 @@
-#[doc(hidden)]
-mod __crate_paths;
 mod components;
 mod filterable;
 mod gpui_table;

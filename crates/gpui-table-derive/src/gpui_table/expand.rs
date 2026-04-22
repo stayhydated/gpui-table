@@ -1,6 +1,3 @@
-use crate::__crate_paths::gpui::{AnyElement, App, IntoElement, Window};
-use crate::__crate_paths::gpui_component::menu::PopupMenu;
-use crate::__crate_paths::gpui_component::table::{Column, ColumnFixed, ColumnSort};
 use crate::gpui_table::delegate::generate_delegate;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
@@ -230,8 +227,12 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         };
 
         let fixed_chain = match field.fixed.as_deref() {
-            Some("left") => quote! { .fixed(#ColumnFixed::Left) },
-            Some("right") => quote! { .fixed(#ColumnFixed::Right) },
+            Some("left") => {
+                quote! { .fixed(::gpui_component::table::ColumnFixed::Left) }
+            },
+            Some("right") => {
+                quote! { .fixed(::gpui_component::table::ColumnFixed::Right) }
+            },
             _ => quote! {},
         };
         let resizable_chain = match field.resizable {
@@ -244,7 +245,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         };
 
         columns_init.push(quote! {
-            #Column::new(#key, #title_expr)
+            ::gpui_component::table::Column::new(#key, #title_expr)
                 .width(#width)
                 #sortable_chain
                 #text_right_chain
@@ -297,8 +298,12 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                         let a_val = &a.#ident;
                         let b_val = &b.#ident;
                         match sort {
-                            #ColumnSort::Ascending => a_val.partial_cmp(b_val).unwrap_or(std::cmp::Ordering::Equal),
-                            #ColumnSort::Descending => b_val.partial_cmp(a_val).unwrap_or(std::cmp::Ordering::Equal),
+                            ::gpui_component::table::ColumnSort::Ascending => {
+                                a_val.partial_cmp(b_val).unwrap_or(std::cmp::Ordering::Equal)
+                            },
+                            ::gpui_component::table::ColumnSort::Descending => {
+                                b_val.partial_cmp(a_val).unwrap_or(std::cmp::Ordering::Equal)
+                            },
                             _ => std::cmp::Ordering::Equal,
                         }
                     });
@@ -400,10 +405,10 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 fn render_table_cell(
                     &self,
                     col: Self::ColumnId,
-                    window: &mut #Window,
-                    cx: &mut #App,
-                ) -> #AnyElement {
-                    use #IntoElement;
+                    window: &mut ::gpui::Window,
+                    cx: &mut ::gpui::App,
+                ) -> ::gpui::AnyElement {
+                    use ::gpui::IntoElement;
                     gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }
@@ -421,10 +426,10 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                     fn render_generated_table_context_menu(
                         &self,
                         _row_ix: usize,
-                        menu: #PopupMenu,
-                        _window: &mut #Window,
-                        _cx: &mut #App,
-                    ) -> #PopupMenu {
+                        menu: ::gpui_component::menu::PopupMenu,
+                        _window: &mut ::gpui::Window,
+                        _cx: &mut ::gpui::App,
+                    ) -> ::gpui_component::menu::PopupMenu {
                         let context_menu_value = &self.#context_menu_row_ident;
                         let href = #context_menu_href_expr;
                         let label = #context_menu_label_expr;
@@ -444,10 +449,10 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 fn render_table_context_menu(
                     &self,
                     row_ix: usize,
-                    menu: #PopupMenu,
-                    window: &mut #Window,
-                    cx: &mut #App,
-                ) -> #PopupMenu {
+                    menu: ::gpui_component::menu::PopupMenu,
+                    window: &mut ::gpui::Window,
+                    cx: &mut ::gpui::App,
+                ) -> ::gpui_component::menu::PopupMenu {
                     use gpui_table::runtime::TableRowGeneratedContextMenu as _;
                     self.render_generated_table_context_menu(row_ix, menu, window, cx)
                 }
@@ -509,7 +514,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
             #table_title_impl
 
-            fn table_columns() -> Vec<#Column> {
+            fn table_columns() -> Vec<::gpui_component::table::Column> {
                 vec![
                     #(#columns_init),*
                 ]

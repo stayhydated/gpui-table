@@ -5,8 +5,8 @@ This file is the working guide for contributors and coding agents in the `gpui-t
 Use it to answer three questions quickly:
 
 1. Where does this documentation belong?
-2. Which crates are public entry points versus integration points versus internals?
-3. What other surfaces must be updated in the same change?
+1. Which crates are public entry points versus integration points versus internals?
+1. What other surfaces must be updated in the same change?
 
 ## Project summary
 
@@ -15,8 +15,8 @@ Use it to answer three questions quickly:
 Its priorities are:
 
 1. **Type safety**: keep generated columns, filters, delegates, and metadata strongly typed.
-2. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
-3. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping and codegen workflows.
+1. **Ergonomics**: keep `#[derive(GpuiTable)]`, `#[derive(Filterable)]`, and `#[gpui_table_impl]` concise enough for normal application use.
+1. **Developer experience**: support built-in filters, inventory-backed table shapes, storybook examples, and prototyping and codegen workflows.
 
 For most application code, start with `crates/gpui-table`.
 
@@ -68,9 +68,9 @@ Do not put implementation detail into READMEs.
 When changing a public workflow, feature-flag story, derive syntax, generated filter behavior, registry metadata shape, or other user-visible API shape:
 
 1. Update the root `README.md`.
-2. Update the affected crate `README.md` files.
-3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-4. Keep these surfaces aligned in the same change unless there is a documented reason not to.
+1. Update the affected crate `README.md` files.
+1. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
+1. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 Additional rules:
 
@@ -78,7 +78,7 @@ Additional rules:
 - Prefer a Rust snippet over prose-only explanations when showing derive, filter, loader, or registry behavior.
 - `examples/some-lib` and `examples/some-lib-tables` are the canonical end-to-end usage examples.
 - If inventory or codegen behavior changes, update `examples/prototyping` and regenerate `examples/prototyping/output`.
-- `examples/prototyping/output` and all `**/__crate_paths/**` directories are generated surfaces; regenerate them instead of hand-editing them.
+- `examples/prototyping/output` is a generated surface; regenerate it instead of hand-editing.
 - When changing public APIs or behavior in a crate, update that crate's `docs/ARCHITECTURE.md`.
 
 ## Workspace map
@@ -126,15 +126,11 @@ Additional rules:
 
 - `justfile`
   Audience: **Internal**
-  Role: workspace maintenance commands for formatting, linting, tests, dry-run publishing, and refreshing generated crate-path snapshots.
+  Role: workspace maintenance commands for formatting, linting, tests, and dry-run publishing.
 
 - `examples/prototyping/output`
   Audience: **Internal**
   Role: generated story modules emitted by `examples/prototyping`. Regenerate with `cargo run -p prototyping` instead of editing by hand.
-
-- `**/__crate_paths/**`
-  Audience: **Internal**
-  Role: generated crate-path snapshots used by proc-macro support code. Ignore them during normal edits and regenerate with `just update_crate_paths` when needed.
 
 - `crates/gpui-table/tests/ui`
   Audience: **Internal**

@@ -1,5 +1,3 @@
-use crate::__crate_paths::gpui::{AnyElement, App, IntoElement, Window};
-
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{DeriveInput, Path, Token, punctuated::Punctuated};
@@ -91,7 +89,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 .collect::<syn::Result<Vec<_>>>()?;
 
             quote! {
-                use #IntoElement;
+                use ::gpui::IntoElement;
                 #fluent_import
                 match self {
                     #(#arms)*
@@ -110,9 +108,9 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         impl gpui_table::runtime::TableCell for #name {
             fn draw(
                 &self,
-                window: &mut #Window,
-                cx: &mut #App
-            ) -> #AnyElement {
+                window: &mut ::gpui::Window,
+                cx: &mut ::gpui::App
+            ) -> ::gpui::AnyElement {
                 #draw_impl
             }
         }
