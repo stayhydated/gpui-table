@@ -26,7 +26,7 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 | `gpui-table` | `gpui-component` | `gpui` |
 | :----------- | :--------------- | :----- |
 | **git** | | |
-| `branch = "master"` | `branch = "main"` | `rev = "15d8660748b508b3525d3403e5d172f1a557bfa5"` |
+| `branch = "master"` | `branch = "main"` | `rev = "f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b"` |
 
 `derive` and `chrono` are enabled by default. Add:
 
