@@ -32,7 +32,7 @@ env_logger = "0.11"
 es-fluent = "0.15"
 es-fluent-lang = "0.15"
 es-fluent-manager-embedded = "0.15"
-fake = "4.4"
+fake = "5.1"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-router = { branch = "git", git = "https://github.com/stayhydated/gpui-router" }
