@@ -29,14 +29,14 @@ chrono = "0.4"
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
-es-fluent = "0.15"
-es-fluent-lang = "0.15"
-es-fluent-manager-embedded = "0.15"
+es-fluent = { branch = "no-singleton", git = "https://github.com/stayhydated/es-fluent" }
+es-fluent-lang = { branch = "no-singleton", git = "https://github.com/stayhydated/es-fluent" }
+es-fluent-manager-embedded = { branch = "no-singleton", git = "https://github.com/stayhydated/es-fluent" }
 fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-router = { branch = "git", git = "https://github.com/stayhydated/gpui-router" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
+gpui-storybook = { branch = "es-fluent-no-singleton", git = "https://github.com/stayhydated/gpui-storybook" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
