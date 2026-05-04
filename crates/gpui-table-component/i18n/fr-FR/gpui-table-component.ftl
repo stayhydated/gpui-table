@@ -13,10 +13,10 @@ number_range_filter_ftl-Between = à
 number_range_filter_ftl-MaxPlaceholder = Maximum
 number_range_filter_ftl-MinPlaceholder = Minimum
 
-## TextFilterFtl
-
-text_filter_ftl-Placeholder = Filtrer par { $title }...
-
 ## ResetFiltersFtl
 
 reset_filters_ftl-Reset = Réinitialiser
+
+## TextFilterFtl
+
+text_filter_ftl-Placeholder = Filtrer par { $title }...

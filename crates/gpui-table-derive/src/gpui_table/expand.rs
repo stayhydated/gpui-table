@@ -355,16 +355,14 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 struct_name.span(),
             );
             quote! { fn table_title() -> String {
-              use es_fluent::ThisFtl as _;
-              #fluent_enum::this_ftl()
+              gpui_table::runtime::generated_filters::localize_label::<#fluent_enum>()
               }
             }
         },
         Some(Override::Inherit) => {
             let fluent_enum = Ident::new(&format!("{}", struct_name), struct_name.span());
             quote! { fn table_title() -> String {
-              use es_fluent::ThisFtl as _;
-              #fluent_enum::this_ftl()
+              gpui_table::runtime::generated_filters::localize_label::<#fluent_enum>()
               }
             }
         },
@@ -571,7 +569,11 @@ fn determine_title_expr(
         let field_name = ident.to_string().to_pascal_case();
         let fluent_variant_ident = Ident::new(&field_name, ident.span());
 
-        quote! { { use es_fluent::ToFluentString as _; #fluent_enum_ident::#fluent_variant_ident.to_fluent_string() } }
+        quote! {
+            gpui_table::runtime::generated_filters::localize_message(
+                &#fluent_enum_ident::#fluent_variant_ident
+            )
+        }
     } else {
         let raw_title = ident.to_string().to_title_case();
         quote! { #raw_title }

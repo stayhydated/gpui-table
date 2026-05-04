@@ -1,4 +1,4 @@
-use es_fluent::{EsFluentThis, EsFluentVariants};
+use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
@@ -22,8 +22,8 @@ pub enum UserStatus {
     Offline,
 }
 
-#[derive(Clone, fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, variants)]
+#[derive(Clone, fake::Dummy, EsFluentLabel, EsFluentVariants, GpuiTable)]
+#[fluent_label(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(
     fluent = "label",

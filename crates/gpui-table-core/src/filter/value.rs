@@ -1,7 +1,7 @@
 //! Filter value traits and implementations.
 
 #[cfg(feature = "fluent")]
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui_table_schema::filter::FacetedFilterOption;
 
 #[cfg_attr(feature = "fluent", derive(EsFluent))]
@@ -27,7 +27,7 @@ impl BoolFilterOption {
     fn label(self) -> String {
         #[cfg(feature = "fluent")]
         {
-            self.to_fluent_string()
+            crate::i18n::localize_message(&self)
         }
 
         #[cfg(not(feature = "fluent"))]

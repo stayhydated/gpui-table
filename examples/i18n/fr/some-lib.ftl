@@ -1,22 +1,22 @@
 ## Article
 
-item_this = Article
+item_label = Article
 
 ## Produit
 
-product_this = Produit
+product_label = Produit
 
 ## Utilisateur
 
-user_this = Utilisateur
+user_label = Utilisateur
 
 ## Événement Spacetime
 
-spacetime_event_this = Événement Spacetime
+spacetime_event_label = Événement Spacetime
 
 ## Variantes d'Article
 
-item_variants_this = Article
+item_variants_label = Article
 item_variants-acquired_on = Date d'acquisition
 item_variants-color = Couleur
 item_variants-id = ID
@@ -52,7 +52,7 @@ product_category-WomensWatches = Montres pour femmes
 
 ## Variantes de Description du Produit
 
-product_description_variants_this = Description du produit
+product_description_variants_label = Description du produit
 product_description_variants-brand = Marque
 product_description_variants-category = Catégorie
 product_description_variants-discount_percentage = Pourcentage de réduction
@@ -64,7 +64,7 @@ product_description_variants-title = Titre
 
 ## Variantes d'Étiquette du Produit
 
-product_label_variants_this = Étiquette produit
+product_label_variants_label = Étiquette produit
 product_label_variants-brand = Marque
 product_label_variants-category = Catégorie
 product_label_variants-discount_percentage = Pourcentage de réduction
@@ -76,7 +76,7 @@ product_label_variants-title = Titre
 
 ## Variantes de Description de l'Utilisateur
 
-user_description_variants_this = Description de l'utilisateur
+user_description_variants_label = Description de l'utilisateur
 user_description_variants-active = Actif
 user_description_variants-age = Âge
 user_description_variants-created_at = Créé le
@@ -88,7 +88,7 @@ user_description_variants-status = Statut
 
 ## Variantes d'Étiquette de l'Utilisateur
 
-user_label_variants_this = Étiquette utilisateur
+user_label_variants_label = Étiquette utilisateur
 user_label_variants-active = Actif
 user_label_variants-age = Âge
 user_label_variants-created_at = Créé le
@@ -100,7 +100,7 @@ user_label_variants-status = Statut
 
 ## Variantes de Description de l'Événement Spacetime
 
-spacetime_event_description_variants_this = Description de l'événement Spacetime
+spacetime_event_description_variants_label = Description de l'événement Spacetime
 spacetime_event_description_variants-committed_at = Validé à
 spacetime_event_description_variants-connection_id = ID de connexion
 spacetime_event_description_variants-mutation = Mutation
@@ -111,7 +111,7 @@ spacetime_event_description_variants-table_name = Nom de table
 
 ## Variantes d'Étiquette de l'Événement Spacetime
 
-spacetime_event_label_variants_this = Étiquette de l'événement Spacetime
+spacetime_event_label_variants_label = Étiquette de l'événement Spacetime
 spacetime_event_label_variants-committed_at = Validé à
 spacetime_event_label_variants-connection_id = ID de connexion
 spacetime_event_label_variants-mutation = Mutation

@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui::{
     App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Task, Window,
     prelude::*, px,
@@ -7,10 +7,10 @@ use gpui::{
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
-    divider::Divider,
     h_flex,
     input::{InputEvent, InputState, NumberInput, NumberInputEvent, StepAction},
     popover::Popover,
+    separator::Separator as Divider,
     slider::{Slider, SliderEvent, SliderState},
     v_flex,
 };
@@ -206,15 +206,15 @@ impl NumberRangeFilter {
     }
 
     fn min_placeholder_text() -> String {
-        NumberRangeFilterFtl::MinPlaceholder.to_fluent_string()
+        crate::i18n::localize_message(&NumberRangeFilterFtl::MinPlaceholder)
     }
 
     fn max_placeholder_text() -> String {
-        NumberRangeFilterFtl::MaxPlaceholder.to_fluent_string()
+        crate::i18n::localize_message(&NumberRangeFilterFtl::MaxPlaceholder)
     }
 
     fn between_text() -> String {
-        NumberRangeFilterFtl::Between.to_fluent_string()
+        crate::i18n::localize_message(&NumberRangeFilterFtl::Between)
     }
 
     fn between_width_px(between: &str) -> f32 {

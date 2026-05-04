@@ -1,4 +1,4 @@
-use es_fluent::{EsFluentThis, EsFluentVariants};
+use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use fake::{Fake, Faker};
@@ -8,8 +8,8 @@ use gpui_table::GpuiTable;
 use gpui_table::runtime::TableLoader;
 use std::time::Duration;
 
-#[derive(fake::Dummy, EsFluentThis, EsFluentVariants, GpuiTable)]
-#[fluent_this(origin, variants)]
+#[derive(fake::Dummy, EsFluentLabel, EsFluentVariants, GpuiTable)]
+#[fluent_label(origin, variants)]
 #[gpui_table(fluent, custom_style, load_more)]
 pub struct Item {
     #[gpui_table(skip)]

@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui::{
     App, Context, Entity, IntoElement, Render, StyleRefinement, Task, Window, prelude::*, px,
 };
@@ -179,10 +179,9 @@ impl TextFilter {
     }
 
     fn placeholder_text(&self) -> String {
-        TextFilterFtl::Placeholder {
+        crate::i18n::localize_message(&TextFilterFtl::Placeholder {
             title: (self.title)(),
-        }
-        .to_fluent_string()
+        })
     }
 
     fn ensure_input_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {

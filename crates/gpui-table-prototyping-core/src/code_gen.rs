@@ -28,8 +28,6 @@ const FRAMEWORK_IMPORTS: &[ImportItem] = &[
     ImportItem::path("gpui_component::table::TableState"),
     ImportItem::aliased("gpui_component::table::TableDelegate", Alias::Anonymous),
     ImportItem::path("gpui_component::v_flex"),
-    // i18n / fluent
-    ImportItem::aliased("es_fluent::ThisFtl", Alias::Anonymous),
 ];
 
 /// Extra imports needed when the table has filters.
@@ -336,7 +334,7 @@ impl<'a> TableShapeAdapter<'a> {
 
     fn title_expr_tokens(struct_name_ident: &syn::Ident) -> TokenStream {
         quote! {
-            #struct_name_ident::this_ftl()
+            gpui_table::runtime::generated_filters::localize_label::<#struct_name_ident>()
         }
     }
 }

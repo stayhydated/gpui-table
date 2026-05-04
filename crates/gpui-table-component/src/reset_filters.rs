@@ -1,4 +1,4 @@
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui::{
     App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
 };
@@ -57,7 +57,7 @@ impl RenderOnce for ResetFilters {
             Button::new(self.button_id)
                 .outline()
                 .small()
-                .label(ResetFiltersFtl::Reset.to_fluent_string())
+                .label(crate::i18n::localize_message(&ResetFiltersFtl::Reset))
                 .refine_style(&self.button_style)
                 .on_click(move |_, window, cx| {
                     on_reset(window, cx);

@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui::{
     App, Context, Entity, IntoElement, Render, StyleRefinement, Window, div, prelude::*, px,
 };
@@ -7,10 +7,10 @@ use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
-    divider::Divider,
     h_flex,
     input::{Input, InputState},
     popover::Popover,
+    separator::Separator as Divider,
     tag::Tag,
     v_flex,
 };
@@ -351,6 +351,8 @@ impl<T: Filterable> FacetedFilter<T> {
 
 impl<T: FilterValue> Render for FacetedFilter<T> {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        crate::i18n::sync_locale();
+
         let should_show_search =
             self.show_search || (self.options)().iter().any(|opt| opt.group.is_some());
 
@@ -419,10 +421,9 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                             Tag::secondary()
                                 .small()
                                 .child(
-                                    FacetedFilterFtl::SelectedCount {
+                                    crate::i18n::localize_message(&FacetedFilterFtl::SelectedCount {
                                         count: selected_count.to_string(),
-                                    }
-                                    .to_fluent_string(),
+                                    }),
                                 )
                                 .refine_style(&selected_tag_style),
                         )
@@ -592,7 +593,9 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                         .justify_center()
                                         .text_sm()
                                         .text_color(cx.theme().muted_foreground)
-                                        .child(FacetedFilterFtl::NoResultsFound.to_fluent_string()),
+                                        .child(crate::i18n::localize_message(
+                                            &FacetedFilterFtl::NoResultsFound,
+                                        )),
                                 )
                             }),
                     )
@@ -603,7 +606,9 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .ghost()
                                     .w_full()
                                     .justify_center()
-                                    .label(FacetedFilterFtl::ClearFilters.to_fluent_string())
+                                    .label(crate::i18n::localize_message(
+                                        &FacetedFilterFtl::ClearFilters,
+                                    ))
                                     .refine_style(&clear_button_style)
                                     .on_click(move |_, window, cx| {
                                         clear_view.update(cx, |this, cx| {

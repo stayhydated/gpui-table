@@ -549,7 +549,11 @@ fn determine_filter_title_expr(
         let field_name = field_ident.to_string().to_pascal_case();
         let fluent_variant_ident = Ident::new(&field_name, field_ident.span());
 
-        quote! { { use es_fluent::ToFluentString as _; #fluent_enum_ident::#fluent_variant_ident.to_fluent_string() } }
+        quote! {
+            gpui_table::runtime::generated_filters::localize_message(
+                &#fluent_enum_ident::#fluent_variant_ident
+            )
+        }
     } else {
         let raw_title = field_ident.to_string().to_title_case();
         quote! { #raw_title.to_string() }

@@ -12,13 +12,8 @@ pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
 }
 
 fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let use_fluent_for_unit_variants = has_derive_with_prefix(&input, "EsFluent");
+    let use_fluent_for_unit_variants = has_derive_named(&input, "EsFluent");
     let use_display_for_unit_variants = has_derive_named(&input, "Display");
-    let fluent_import = if use_fluent_for_unit_variants {
-        quote! { use es_fluent::ToFluentString as _; }
-    } else {
-        quote! {}
-    };
     let name = input.ident;
 
     let draw_impl = match input.data {
@@ -71,7 +66,10 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         }
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
-                                quote! { self.to_fluent_string().into_any_element() }
+                                quote! {
+                                    gpui_table::runtime::generated_filters::localize_message(self)
+                                        .into_any_element()
+                                }
                             } else if use_display_for_unit_variants {
                                 quote! { self.to_string().into_any_element() }
                             } else {
@@ -90,7 +88,6 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
             quote! {
                 use ::gpui::IntoElement;
-                #fluent_import
                 match self {
                     #(#arms)*
                 }

@@ -1,22 +1,22 @@
 ## Item
 
-item_this = Item
+item_label = Item
 
 ## Product
 
-product_this = Product
+product_label = Product
 
 ## User
 
-user_this = User
+user_label = User
 
 ## Spacetime Event
 
-spacetime_event_this = Spacetime Event
+spacetime_event_label = Spacetime Event
 
 ## ItemVariants
 
-item_variants_this = Item
+item_variants_label = Item
 item_variants-acquired_on = Acquired On
 item_variants-color = Color
 item_variants-id = Id
@@ -52,7 +52,7 @@ product_category-WomensWatches = Womens Watches
 
 ## ProductDescriptionVariants
 
-product_description_variants_this = Product Description
+product_description_variants_label = Product Description
 product_description_variants-brand = Brand
 product_description_variants-category = Category
 product_description_variants-discount_percentage = Discount Percentage
@@ -64,7 +64,7 @@ product_description_variants-title = Title
 
 ## ProductLabelVariants
 
-product_label_variants_this = Product Label
+product_label_variants_label = Product Label
 product_label_variants-brand = Brand
 product_label_variants-category = Category
 product_label_variants-discount_percentage = Discount Percentage
@@ -76,7 +76,7 @@ product_label_variants-title = Title
 
 ## UserDescriptionVariants
 
-user_description_variants_this = User Description
+user_description_variants_label = User Description
 user_description_variants-active = Active
 user_description_variants-age = Age
 user_description_variants-created_at = Created At
@@ -88,7 +88,7 @@ user_description_variants-status = Status
 
 ## UserLabelVariants
 
-user_label_variants_this = User Label
+user_label_variants_label = User Label
 user_label_variants-active = Active
 user_label_variants-age = Age
 user_label_variants-created_at = Created At
@@ -100,7 +100,7 @@ user_label_variants-status = Status
 
 ## SpacetimeEventDescriptionVariants
 
-spacetime_event_description_variants_this = Spacetime Event Description
+spacetime_event_description_variants_label = Spacetime Event Description
 spacetime_event_description_variants-committed_at = Committed At
 spacetime_event_description_variants-connection_id = Connection Id
 spacetime_event_description_variants-mutation = Mutation
@@ -111,7 +111,7 @@ spacetime_event_description_variants-table_name = Table Name
 
 ## SpacetimeEventLabelVariants
 
-spacetime_event_label_variants_this = Spacetime Event Label
+spacetime_event_label_variants_label = Spacetime Event Label
 spacetime_event_label_variants-committed_at = Committed At
 spacetime_event_label_variants-connection_id = Connection Id
 spacetime_event_label_variants-mutation = Mutation

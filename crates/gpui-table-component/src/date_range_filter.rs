@@ -8,8 +8,8 @@ use gpui_component::{
     Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
-    divider::Divider,
     popover::Popover,
+    separator::Separator as Divider,
     v_flex,
 };
 use std::rc::Rc;
