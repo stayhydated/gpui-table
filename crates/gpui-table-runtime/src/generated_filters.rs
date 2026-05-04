@@ -1,3 +1,4 @@
+pub use gpui_table_component::i18n::{localize_label, localize_message};
 #[cfg(feature = "chrono")]
 pub use gpui_table_component::{DateRangeFilter, DateRangeFilterExt, date_range_filter};
 pub use gpui_table_component::{
@@ -5,7 +6,6 @@ pub use gpui_table_component::{
     TableStatusBar, TextFilter, TextFilterExt, faceted_filter, reset_filters, table_status_bar,
     text_filter,
 };
-pub use gpui_table_component::i18n::{localize_label, localize_message};
 #[cfg(feature = "rust_decimal")]
 pub use gpui_table_component::{NumberRangeFilter, NumberRangeFilterExt, number_range_filter};
 use gpui_table_schema::filter::FacetedFilterIcon;

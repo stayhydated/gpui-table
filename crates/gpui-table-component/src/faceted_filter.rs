@@ -420,11 +420,11 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                         div().child(
                             Tag::secondary()
                                 .small()
-                                .child(
-                                    crate::i18n::localize_message(&FacetedFilterFtl::SelectedCount {
+                                .child(crate::i18n::localize_message(
+                                    &FacetedFilterFtl::SelectedCount {
                                         count: selected_count.to_string(),
-                                    }),
-                                )
+                                    },
+                                ))
                                 .refine_style(&selected_tag_style),
                         )
                     } else {
