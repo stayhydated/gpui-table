@@ -2,10 +2,11 @@
 
 faceted_filter_ftl-ClearFilters = Effacer les filtres
 faceted_filter_ftl-NoResultsFound = Aucun résultat trouvé
-faceted_filter_ftl-SelectedCount = { $count ->
-    [one] { $count } sélectionné
-   *[other] { $count } sélectionnés
-}
+faceted_filter_ftl-SelectedCount =
+    { $count ->
+        [one] { $count } sélectionné
+       *[other] { $count } sélectionnés
+    }
 
 ## NumberRangeFilterFtl
 
