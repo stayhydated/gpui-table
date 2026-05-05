@@ -3,13 +3,15 @@ use es_fluent::{
 };
 use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError};
 use std::collections::HashMap;
-use std::sync::OnceLock;
+use std::sync::{Mutex, OnceLock};
 
 const FALLBACK_LANGUAGE: &str = "en";
 
 es_fluent_manager_embedded::define_i18n_module!();
 
 static I18N: OnceLock<EmbeddedI18n> = OnceLock::new();
+static ACTIVE_LANGUAGE: Mutex<Option<es_fluent::unic_langid::LanguageIdentifier>> =
+    Mutex::new(None);
 
 struct FallbackLocalizer;
 
@@ -49,14 +51,31 @@ fn i18n() -> Result<&'static EmbeddedI18n, EmbeddedInitError> {
         .expect("gpui-table-component i18n should be initialized"))
 }
 
+fn mark_language_active(language: &es_fluent::unic_langid::LanguageIdentifier) -> bool {
+    let mut active_language = ACTIVE_LANGUAGE
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+
+    if active_language.as_ref() == Some(language) {
+        return true;
+    }
+
+    *active_language = Some(language.clone());
+    false
+}
+
 /// Select the locale used by built-in table filter components.
 pub fn set_locale(locale: impl AsRef<str>) {
     let locale = locale.as_ref();
-    gpui_table_core::i18n::set_locale(locale);
-
     let Ok(language) = locale.parse::<es_fluent::unic_langid::LanguageIdentifier>() else {
         return;
     };
+
+    if mark_language_active(&language) {
+        return;
+    }
+
+    gpui_table_core::i18n::set_locale(language.to_string());
 
     if let Ok(i18n) = i18n() {
         let _ = i18n.select_language(language);
