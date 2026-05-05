@@ -37,7 +37,8 @@ should know about the specific UI composition of those built-in filters.
 - `src/stories/` and `src/bin/story.rs`
   - Storybook infrastructure for previewing the built-in components.
 - `src/i18n.rs`, `i18n/`, `build.rs`, `i18n.toml`
-  - Localized strings and asset tracking for component labels.
+  - Typed `es-fluent` messages, an embedded component localizer, and asset
+    tracking for component labels.
 
 ## Internal Contracts
 
@@ -53,6 +54,10 @@ should know about the specific UI composition of those built-in filters.
 - This crate can add new runtime widgets, but the derive crate only understands
   the hard-coded built-in filter syntaxes. Adding a widget here does not add a
   new `#[gpui_table(filter(...))]` form by itself.
+- Component i18n owns its embedded localizer, synchronizes the core locale, and
+  reads the active `gpui-component` locale before localizing built-in strings.
+  Widget code should call this crate's localization helpers rather than
+  accessing embedded resources directly.
 
 ## Data Flow
 

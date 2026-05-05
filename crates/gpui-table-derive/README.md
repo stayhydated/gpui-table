@@ -64,6 +64,21 @@ pub enum Status {
 
 Use enum-level `#[filter(fluent)]` when labels should come from `es-fluent`.
 
+```rs
+use gpui_table::Filterable;
+
+#[derive(Clone, Eq, Hash, PartialEq, es_fluent::EsFluent, Filterable)]
+#[filter(fluent)]
+pub enum Status {
+    Active,
+    Pending,
+}
+```
+
+Use struct-level `#[gpui_table(fluent = "label")]` with
+`EsFluentLabel`/`EsFluentVariants` when generated table titles and field labels
+should use typed Fluent resources.
+
 ### `#[derive(TableCell)]`
 
 Generates a `TableCell` impl for single-field wrapper types and unit enums.

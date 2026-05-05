@@ -83,6 +83,37 @@ With `#[gpui_table(filters)]`, the derive also generates:
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation.
 
+### Localized labels
+
+With the `fluent` feature, table titles and faceted labels are localized through
+typed `es-fluent` messages and labels.
+
+```rs
+use es_fluent::{EsFluentLabel, EsFluentVariants};
+use gpui_table::{Filterable, GpuiTable};
+
+#[derive(Clone, Eq, Hash, PartialEq, es_fluent::EsFluent, Filterable)]
+#[filter(fluent)]
+pub enum UserStatus {
+    Active,
+    Suspended,
+}
+
+#[derive(Clone, EsFluentLabel, EsFluentVariants, GpuiTable)]
+#[fluent_label(origin, variants)]
+#[fluent_variants(keys = ["label"])]
+#[gpui_table(fluent = "label", filters)]
+pub struct User {
+    #[gpui_table(filter(faceted()))]
+    pub status: UserStatus,
+}
+```
+
+The built-in table/filter helpers localize through their embedded
+`es-fluent` localizers. The example app declares its languages with
+`#[es_fluent_language]` and selects the active locale through the GPUI
+storybook locale APIs.
+
 ## Examples
 
 The canonical end-to-end examples live under [`examples/`](examples/README.md).

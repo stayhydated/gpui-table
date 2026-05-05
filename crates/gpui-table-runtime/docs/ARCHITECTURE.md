@@ -27,13 +27,16 @@ runtime facade that generated filter code compiles against.
   - `TableLoader`, `TableDataLoader`, and the hidden `LoadMoreDelegate` bridge.
 - `src/generated_filters.rs`
   - Stable runtime target for generated filter code.
-  - Re-exports built-in filter components and generic filter traits.
+  - Re-exports built-in filter components, localization helpers, and generic
+    filter traits.
 
 ## Internal Contracts
 
 - `generated_filters` is a compatibility surface, not just a convenience
   module. The derive crate should keep targeting it instead of reaching into
   `gpui-table-component` directly.
+- Generated Fluent labels and messages route through `generated_filters`
+  localization helpers so derive output does not depend on component i18n paths.
 - `__private::LoadMoreDelegate` is hidden from user docs but is part of the
   generated-code contract for load-more tables.
 - `default_render_cell` and `default_render_row` are the baseline rendering

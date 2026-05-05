@@ -43,7 +43,7 @@ impl TableRowStyle for Item {
 - `TableCell` and the built-in cell renderers for common scalar/date/time values
 - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
 - `TableLoader` and `TableDataLoader`
-- `generated_filters`, which re-exports the built-in filter UI, `FilterEntitiesExt`, `TableFilterComponent`, and `QueryFilterValue`
+- `generated_filters`, which re-exports the built-in filter UI, localization helpers, `FilterEntitiesExt`, `TableFilterComponent`, and `QueryFilterValue`
 
 The `generated_filters` module is the stable runtime target for code emitted by
 `#[derive(GpuiTable)]`. Use it when you want manual and generated filter flows

@@ -43,6 +43,7 @@ impl Matchable<UserFilters> for User {
 - `Matchable<F>` and `FilterValuesExt` for strongly typed filtering flows
 - `ToDecimal` and `ToNaiveDate` when the corresponding features are enabled
 - schema re-exports such as `FilterConfig`, `FilterType`, and `FacetedFilterOption`
+- optional typed `es-fluent` localization for built-in bool faceted labels
 
 `bool` already implements `FilterValue` and `Filterable`, so faceted boolean
 filters work without extra glue code.
@@ -50,7 +51,7 @@ filters work without extra glue code.
 ## Feature Flags
 
 - `chrono` (default): enables `ToNaiveDate` conversions for date-range filters
-- `fluent`: localizes built-in bool faceted labels through `es-fluent`
+- `fluent`: localizes built-in bool faceted labels through typed `es-fluent` messages
 - `rust_decimal`: enables `ToDecimal` conversions for numeric-range filters
 - `spacetimedb`: adds supported SpacetimeDB temporal conversions on top of the range helpers
 
