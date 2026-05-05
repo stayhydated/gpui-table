@@ -3163,13 +3163,13 @@ dependencies = [
 [[package]]
 name = "gpui"
 version = "0.2.2"
-source = "git+https://github.com/zed-industries/zed#a03729b6c088bc3cbc13a727546dd45687739c51"
+source = "git+https://github.com/zed-industries/zed#008d54299be7a5219bac4e4dd51f11ab8bfd6197"
 replace = "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b)"
 
 [[package]]
 name = "gpui-component"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#094090261e178ce2ac869aa02e9bcfe640100fb5"
+source = "git+https://github.com/longbridge/gpui-component#bed61519b5220e36860e8ee183d74c918f39464a"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -3212,7 +3212,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-assets"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#094090261e178ce2ac869aa02e9bcfe640100fb5"
+source = "git+https://github.com/longbridge/gpui-component#bed61519b5220e36860e8ee183d74c918f39464a"
 dependencies = [
  "anyhow",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed)",
@@ -3226,7 +3226,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#094090261e178ce2ac869aa02e9bcfe640100fb5"
+source = "git+https://github.com/longbridge/gpui-component#bed61519b5220e36860e8ee183d74c918f39464a"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3258,7 +3258,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#cc2a79e3f818b7621d52e4f0b6e9f49057dd3bf9"
+source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0fffab86120a5945472e9e32ffa4bd1c4f78ff0f"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b)",
  "gpui-storybook-core",
@@ -3271,7 +3271,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#cc2a79e3f818b7621d52e4f0b6e9f49057dd3bf9"
+source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0fffab86120a5945472e9e32ffa4bd1c4f78ff0f"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b)",
  "gpui-component",
@@ -3280,7 +3280,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#cc2a79e3f818b7621d52e4f0b6e9f49057dd3bf9"
+source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0fffab86120a5945472e9e32ffa4bd1c4f78ff0f"
 dependencies = [
  "anyhow",
  "es-fluent",
@@ -3302,7 +3302,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#cc2a79e3f818b7621d52e4f0b6e9f49057dd3bf9"
+source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0fffab86120a5945472e9e32ffa4bd1c4f78ff0f"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3313,7 +3313,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#cc2a79e3f818b7621d52e4f0b6e9f49057dd3bf9"
+source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0fffab86120a5945472e9e32ffa4bd1c4f78ff0f"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -3525,7 +3525,7 @@ dependencies = [
 [[package]]
 name = "gpui_macros"
 version = "0.1.0"
-source = "git+https://github.com/zed-industries/zed#a03729b6c088bc3cbc13a727546dd45687739c51"
+source = "git+https://github.com/zed-industries/zed#008d54299be7a5219bac4e4dd51f11ab8bfd6197"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -5513,9 +5513,9 @@ checksum = "0676bb32a98c1a483ce53e500a81ad9c3d5b3f7c920c28c24e9cb0980d0b5bc8"
 
 [[package]]
 name = "normpath"
-version = "1.5.0"
+version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bf23ab2b905654b4cb177e30b629937b3868311d4e1cba859f899c041046e69b"
+checksum = "b9985ef7269fa99f3b12437bb698381da2428743ab90f20393f399fa14cab21a"
 dependencies = [
  "windows-sys 0.61.2",
 ]
