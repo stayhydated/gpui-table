@@ -18,15 +18,22 @@ mod date_display {
     use chrono::{Datelike as _, NaiveDate};
     use icu::{
         calendar::{Date, Iso},
-        datetime::{DateTimeFormatter, fieldsets},
-        locale::locale,
+        datetime::{DateTimeFormatter, DateTimeFormatterPreferences, fieldsets},
+        locale::{Locale, locale},
     };
     use jiff::civil;
 
     type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
 
+    fn formatter_preferences() -> DateTimeFormatterPreferences {
+        let locale = gpui_component::locale()
+            .parse::<Locale>()
+            .unwrap_or_else(|_| locale!("en-US"));
+        locale.into()
+    }
+
     fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
     }
 
     fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {

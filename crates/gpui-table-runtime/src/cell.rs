@@ -10,11 +10,11 @@ mod datetime_format {
     use icu::{
         calendar::{Date, Iso},
         datetime::{
-            DateTimeFormatter, NoCalendarFormatter,
+            DateTimeFormatter, DateTimeFormatterPreferences, NoCalendarFormatter,
             fieldsets::{self, Combo},
             input::{DateTime as IcuDateTime, Time, UtcOffset, ZonedDateTime},
         },
-        locale::locale,
+        locale::{Locale, locale},
     };
     use jiff::{Timestamp, Zoned, civil, tz::TimeZone};
 
@@ -24,24 +24,31 @@ mod datetime_format {
         DateTimeFormatter<Combo<fieldsets::YMDT, fieldsets::zone::LocalizedOffsetLong>>;
     type TimeFormatter = NoCalendarFormatter<fieldsets::T>;
 
+    fn formatter_preferences() -> DateTimeFormatterPreferences {
+        let locale = gpui_component::locale()
+            .parse::<Locale>()
+            .unwrap_or_else(|_| locale!("en-US"));
+        locale.into()
+    }
+
     fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
     }
 
     fn datetime_formatter() -> Option<DateTimeFormatterNoZone> {
         let fieldset = fieldsets::YMD::medium().with_time_hms();
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
     }
 
     fn zoned_datetime_formatter() -> Option<DateTimeFormatterWithZone> {
         let fieldset = fieldsets::YMD::medium()
             .with_time_hms()
             .with_zone(fieldsets::zone::LocalizedOffsetLong);
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
     }
 
     fn time_formatter() -> Option<TimeFormatter> {
-        NoCalendarFormatter::try_new(locale!("en-US").into(), fieldsets::T::medium()).ok()
+        NoCalendarFormatter::try_new(formatter_preferences(), fieldsets::T::medium()).ok()
     }
 
     fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {
