@@ -8,8 +8,8 @@ use gpui_component::{
     Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
-    divider::Divider,
     popover::Popover,
+    separator::Separator,
     v_flex,
 };
 use std::borrow::Borrow as _;
@@ -289,7 +289,7 @@ impl Render for DateRangeFilter {
             )
             .child(title)
             .when(has_value, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1())
+                b.child(Separator::vertical().h(px(16.)).mx_1())
                     .child(range_display)
             });
 

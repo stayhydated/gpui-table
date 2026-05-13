@@ -7,10 +7,10 @@ use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
-    divider::Divider,
     h_flex,
     input::{Input, InputState},
     popover::Popover,
+    separator::Separator,
     tag::Tag,
     v_flex,
 };
@@ -419,7 +419,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
             )
             .child(title)
             .when(has_selection, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1()).child(
+                b.child(Separator::vertical().h(px(16.)).mx_1()).child(
                     // Show tags for selected values
                     // If more than 2 selected, show "{n} selected" tag
                     // Otherwise show individual tags for each selected value
@@ -582,7 +582,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .refine_style(&search_input_style),
                             ),
                         )
-                        .child(Divider::horizontal())
+                        .child(Separator::horizontal())
                     })
                     .child(
                         v_flex()
@@ -609,7 +609,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                             }),
                     )
                     .when(has_selection, |this| {
-                        this.child(Divider::horizontal()).child(
+                        this.child(Separator::horizontal()).child(
                             div().p_1().child(
                                 Button::new("clear-filters")
                                     .ghost()

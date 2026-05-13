@@ -96,7 +96,7 @@ impl Render for NumberRangeFilter {
             )
             .child(title)
             .when(has_value, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1())
+                b.child(Separator::vertical().h(px(16.)).mx_1())
                     .child(range_display)
             });
 

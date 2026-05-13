@@ -1,145 +1,39 @@
-use es_fluent::{FluentLabel, FluentLocalizer, FluentMessage, FluentValue};
-use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError};
+use es_fluent::{FluentLabel, FluentMessage};
 use gpui::App;
 use std::borrow::Borrow;
-use std::collections::HashMap;
 
 const FALLBACK_LANGUAGE: &str = "en";
 
 es_fluent_manager_embedded::define_i18n_module!();
 
-#[derive(Clone)]
-pub struct I18n {
-    manager: EmbeddedI18n,
-}
-
-impl I18n {
-    fn new(
-        language: es_fluent::unic_langid::LanguageIdentifier,
-    ) -> Result<Self, EmbeddedInitError> {
-        Ok(Self {
-            manager: EmbeddedI18n::try_new_with_language(language)?,
-        })
-    }
-
-    fn select_language(
-        &self,
-        language: es_fluent::unic_langid::LanguageIdentifier,
-    ) -> Result<(), es_fluent_manager_embedded::LocalizationError> {
-        self.manager.select_language(language)
-    }
-
-    fn sync_component_locale(&self) {
-        let locale = gpui_component::locale().to_string();
-        let Ok(language) = locale.parse::<es_fluent::unic_langid::LanguageIdentifier>() else {
-            return;
-        };
-
-        gpui_table_core::i18n::set_locale(&locale);
-        let _ = self.select_language(language);
-    }
-
-    fn localize_message<T>(&self, message: &T) -> String
-    where
-        T: FluentMessage + ?Sized,
-    {
-        self.sync_component_locale();
-        self.manager.localize_message(message)
-    }
-
-    fn localize_label<T>(&self) -> String
-    where
-        T: FluentLabel,
-    {
-        self.sync_component_locale();
-        T::localize_label(&self.manager)
-    }
-}
-
-impl gpui::Global for I18n {}
-
-struct FallbackLocalizer;
-
-impl FluentLocalizer for FallbackLocalizer {
-    fn localize<'a>(
-        &self,
-        id: &str,
-        _args: Option<&HashMap<&str, FluentValue<'a>>>,
-    ) -> Option<String> {
-        Some(humanize_key(id))
-    }
-
-    fn localize_in_domain<'a>(
-        &self,
-        _domain: &str,
-        id: &str,
-        _args: Option<&HashMap<&str, FluentValue<'a>>>,
-    ) -> Option<String> {
-        Some(humanize_key(id))
-    }
-}
-
-fn humanize_key(id: &str) -> String {
-    let id = id.strip_suffix("_label").unwrap_or(id);
-    id.split(['_', '-'])
-        .filter(|part| !part.is_empty())
-        .map(|part| {
-            let mut chars = part.chars();
-            match chars.next() {
-                Some(first) => first.to_uppercase().chain(chars).collect::<String>(),
-                None => String::new(),
-            }
-        })
-        .collect::<Vec<_>>()
-        .join(" ")
-}
-
-fn fallback_language() -> es_fluent::unic_langid::LanguageIdentifier {
-    FALLBACK_LANGUAGE
-        .parse()
-        .expect("gpui-table-component fallback language must be a valid language identifier")
-}
+pub use gpui_es_fluent::{EmbeddedInitError, I18n};
 
 fn component_language() -> es_fluent::unic_langid::LanguageIdentifier {
-    gpui_component::locale()
-        .parse::<es_fluent::unic_langid::LanguageIdentifier>()
-        .unwrap_or_else(|_| fallback_language())
+    gpui_es_fluent::component_language(FALLBACK_LANGUAGE)
+}
+
+fn sync_core_locale(language: &es_fluent::unic_langid::LanguageIdentifier) {
+    gpui_table_core::i18n::set_locale(language.to_string());
 }
 
 /// Initialize table component localization from the active `gpui-component` locale.
 pub fn init(cx: &mut App) -> Result<(), EmbeddedInitError> {
     let language = component_language();
-    gpui_table_core::i18n::set_locale(language.to_string());
-
-    if cx.try_global::<I18n>().is_none() {
-        cx.set_global(I18n::new(language)?);
-    }
-
-    Ok(())
+    sync_core_locale(&language);
+    gpui_es_fluent::replace_with_language(cx, language)
 }
 
 /// Select the locale used by built-in table filter components.
 pub fn set_locale(cx: &mut App, locale: impl AsRef<str>) -> Result<(), EmbeddedInitError> {
-    let locale = locale.as_ref();
-    let language = locale
-        .parse::<es_fluent::unic_langid::LanguageIdentifier>()
-        .unwrap_or_else(|_| fallback_language());
-
-    gpui_component::set_locale(&language.to_string());
-    gpui_table_core::i18n::set_locale(language.to_string());
-
-    cx.set_global(I18n::new(language)?);
-
+    let language = gpui_es_fluent::set_component_locale(cx, locale, FALLBACK_LANGUAGE)?;
+    sync_core_locale(&language);
     Ok(())
 }
 
 /// Synchronize table component localization with the active `gpui-component` locale.
 pub fn sync_locale(cx: &impl Borrow<App>) {
-    if let Some(i18n) = cx.borrow().try_global::<I18n>() {
-        i18n.sync_component_locale();
-    } else {
-        gpui_table_core::i18n::set_locale(gpui_component::locale().to_string());
-    }
+    let language = gpui_es_fluent::sync_component_locale(cx, FALLBACK_LANGUAGE);
+    sync_core_locale(&language);
 }
 
 /// Localize a typed Fluent message through the component embedded i18n context.
@@ -147,6 +41,7 @@ pub fn localize_message<T>(cx: &impl Borrow<App>, message: &T) -> String
 where
     T: FluentMessage + ?Sized,
 {
+    sync_locale(cx);
     cx.borrow()
         .try_global::<I18n>()
         .map(|i18n| i18n.localize_message(message))
@@ -158,6 +53,7 @@ pub fn localize_label<T>(cx: &impl Borrow<App>) -> String
 where
     T: FluentLabel,
 {
+    sync_locale(cx);
     cx.borrow()
         .try_global::<I18n>()
         .map(I18n::localize_label::<T>)
@@ -181,5 +77,5 @@ pub fn fallback_label<T>() -> String
 where
     T: FluentLabel,
 {
-    T::localize_label(&FallbackLocalizer)
+    gpui_es_fluent::fallback_label::<T>()
 }

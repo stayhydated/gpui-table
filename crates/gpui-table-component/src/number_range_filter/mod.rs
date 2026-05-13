@@ -7,10 +7,10 @@ use gpui::{
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
-    divider::Divider,
     h_flex,
     input::{InputEvent, InputState, NumberInput, NumberInputEvent, StepAction},
     popover::Popover,
+    separator::Separator,
     slider::{Slider, SliderEvent, SliderState},
     v_flex,
 };
