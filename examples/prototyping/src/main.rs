@@ -36,7 +36,7 @@ impl TableLayout for StorybookLayout {
             }
 
             impl gpui_storybook::Story for #story_struct_ident {
-                fn title(_: &gpui::App) -> String {
+                fn title(cx: &gpui::App) -> String {
                     #title_expr
                 }
 

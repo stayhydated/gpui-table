@@ -69,7 +69,10 @@ pub trait TableShape {
     /// Generate render children (the .child(...) calls)
     fn render_children(&self) -> TokenStream;
 
-    /// Generate story title expression
+    /// Generate story title expression.
+    ///
+    /// Fluent-backed titles may reference a `cx: &gpui::App` parameter from
+    /// the generated `gpui_storybook::Story::title` implementation.
     fn title_expr(&self) -> TokenStream;
 }
 
@@ -336,7 +339,7 @@ impl<'a> TableShapeAdapter<'a> {
         if self.identities.uses_fluent_labels() {
             let struct_name_ident = self.identities.struct_name_ident();
             quote! {
-                gpui_table::runtime::generated_filters::fallback_label::<#struct_name_ident>()
+                gpui_table::runtime::generated_filters::localize_label::<#struct_name_ident>(cx)
             }
         } else {
             let title = self.identities.table_title();
@@ -385,6 +388,9 @@ pub struct TableParts {
     /// `.child(...)` chains for the render body.
     pub render_children: TokenStream,
     /// Expression for the story title.
+    ///
+    /// For fluent-backed tables this expression expects to be emitted inside a
+    /// scope that provides `cx: &gpui::App`.
     pub title_expr: TokenStream,
 }
 

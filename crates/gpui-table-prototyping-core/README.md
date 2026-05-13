@@ -60,7 +60,10 @@ for shape in inventory::iter::<GpuiTableShape>() {
 - `TableLayout`
   Lets a generator control the outer file shape.
 - `TableParts`
-  Exposes precomputed token fragments for custom layouts.
+  Exposes precomputed token fragments for custom layouts. Fluent-backed
+  `title_expr` fragments are intended to be emitted inside
+  `Story::title(cx: &gpui::App)` so generated Storybook titles follow the
+  active locale.
 - `TableCodegenError`
   Structured error type for invalid metadata or identifier generation failures.
 

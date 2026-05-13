@@ -175,8 +175,8 @@ where
 
 /// Render a type label without consulting process-global locale state.
 ///
-/// This is intended for context-free surfaces such as story metadata. Runtime UI
-/// should use `localize_label` while it is still backed by the component locale.
+/// This is intended for truly context-free surfaces. Runtime UI and Storybook
+/// metadata with access to `gpui::App` should use `localize_label`.
 pub fn fallback_label<T>() -> String
 where
     T: FluentLabel,

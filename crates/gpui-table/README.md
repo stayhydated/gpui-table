@@ -113,7 +113,9 @@ The built-in table/filter widgets keep their embedded `es-fluent` localizer in
 GPUI global state. The example app declares its languages with
 `#[es_fluent_language]`, initializes `gpui_table_component::i18n` during GPUI
 startup, and selects the active locale through the GPUI storybook locale APIs.
-Context-free metadata such as story titles uses fallback label helpers.
+Generated Storybook table titles use the GPUI app context so they follow the
+active Storybook locale; truly context-free metadata can still use fallback
+label helpers.
 
 ## Examples
 

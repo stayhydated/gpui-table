@@ -31,7 +31,8 @@ cargo run -p prototyping
 ```
 
 This iterates the inventory-registered `GpuiTableShape` values and rewrites
-`examples/prototyping/output`.
+`examples/prototyping/output`. Generated Storybook table titles use the active
+example app locale.
 
 Do not hand-edit `examples/prototyping/output`; it is generated output.
 
