@@ -109,10 +109,11 @@ pub struct User {
 }
 ```
 
-The built-in table/filter helpers localize through their embedded
-`es-fluent` localizers. The example app declares its languages with
-`#[es_fluent_language]` and selects the active locale through the GPUI
-storybook locale APIs.
+The built-in table/filter widgets keep their embedded `es-fluent` localizer in
+GPUI global state. The example app declares its languages with
+`#[es_fluent_language]`, initializes `gpui_table_component::i18n` during GPUI
+startup, and selects the active locale through the GPUI storybook locale APIs.
+Context-free metadata such as story titles uses fallback label helpers.
 
 ## Examples
 

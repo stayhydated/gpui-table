@@ -50,14 +50,14 @@ impl Styled for ResetFilters {
 }
 
 impl RenderOnce for ResetFilters {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
+    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
         let on_reset = self.on_reset.clone();
 
         div().refine_style(&self.style).child(
             Button::new(self.button_id)
                 .outline()
                 .small()
-                .label(crate::i18n::localize_message(&ResetFiltersFtl::Reset))
+                .label(crate::i18n::localize_message(cx, &ResetFiltersFtl::Reset))
                 .refine_style(&self.button_style)
                 .on_click(move |_, window, cx| {
                     on_reset(window, cx);

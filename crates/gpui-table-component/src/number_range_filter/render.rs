@@ -1,12 +1,16 @@
 use super::*;
 
+fn app<'a, T>(cx: &'a Context<'_, T>) -> &'a App {
+    cx.borrow()
+}
+
 impl Render for NumberRangeFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure input states exist
         self.ensure_inputs(window, cx);
 
-        let min_placeholder = Self::min_placeholder_text();
-        let max_placeholder = Self::max_placeholder_text();
+        let min_placeholder = Self::min_placeholder_text(cx);
+        let max_placeholder = Self::max_placeholder_text(cx);
 
         // Keep placeholders reactive to locale changes.
         if let Some(min_input) = &self.min_input
@@ -37,7 +41,7 @@ impl Render for NumberRangeFilter {
             (self.on_change)((self.min, self.max), window, cx);
         }
 
-        let title = (self.title)();
+        let title = (self.title)(app(cx));
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity();
@@ -48,7 +52,7 @@ impl Render for NumberRangeFilter {
         ) else {
             return gpui::div().into_any_element();
         };
-        let between = Self::between_text();
+        let between = Self::between_text(cx);
         let trigger_style = self.trigger_style.clone();
         let popover_style = self.popover_style.clone();
         let inputs_row_style = self.inputs_row_style.clone();

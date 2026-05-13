@@ -7,6 +7,7 @@ use gpui_component::{
     Icon, IconName, Sizable as _, StyledExt as _, h_flex,
     input::{Input, InputEvent, InputState},
 };
+use std::borrow::Borrow;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -45,7 +46,7 @@ enum TextFilterFtl {
 }
 
 pub struct TextFilter {
-    title: Rc<dyn Fn() -> String>,
+    title: Rc<dyn Fn(&App) -> String>,
     value: String,
     container_style: StyleRefinement,
     input_style: StyleRefinement,
@@ -131,7 +132,7 @@ impl TableFilterComponent for TextFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 }
 
@@ -144,11 +145,11 @@ impl TextFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 
     fn new_with_title(
-        title: Rc<dyn Fn() -> String>,
+        title: Rc<dyn Fn(&App) -> String>,
         value: String,
         on_change: impl Fn(String, &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -170,7 +171,7 @@ impl TextFilter {
 
     /// Create a text filter with a reactive title provider (e.g. for i18n).
     pub fn new_for(
-        title: impl Fn() -> String + 'static,
+        title: impl Fn(&App) -> String + 'static,
         value: String,
         on_change: impl Fn(String, &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -178,15 +179,18 @@ impl TextFilter {
         Self::new_with_title(Rc::new(title), value, on_change, cx)
     }
 
-    fn placeholder_text(&self) -> String {
-        crate::i18n::localize_message(&TextFilterFtl::Placeholder {
-            title: (self.title)(),
-        })
+    fn placeholder_text(&self, cx: &impl Borrow<App>) -> String {
+        crate::i18n::localize_message(
+            cx,
+            &TextFilterFtl::Placeholder {
+                title: (self.title)(cx.borrow()),
+            },
+        )
     }
 
     fn ensure_input_state(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.input_state.is_none() {
-            let placeholder = self.placeholder_text();
+            let placeholder = self.placeholder_text(cx);
             let initial_placeholder = placeholder.clone();
             let input = cx.new(|cx| {
                 InputState::new(window, cx)
@@ -294,7 +298,7 @@ impl Render for TextFilter {
 
         // Keep placeholder reactive to title changes (e.g. locale switches).
         if let Some(input_state) = &self.input_state {
-            let placeholder = self.placeholder_text();
+            let placeholder = self.placeholder_text(cx);
             if self.last_placeholder.as_deref() != Some(placeholder.as_str()) {
                 self.last_placeholder = Some(placeholder.clone());
                 input_state.update(cx, |input, cx| {

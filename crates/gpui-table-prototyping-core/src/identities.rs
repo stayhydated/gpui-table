@@ -32,6 +32,9 @@ pub trait TableIdentities {
     /// The table title.
     fn table_title(&self) -> &'static str;
 
+    /// Whether the source table uses Fluent-derived labels.
+    fn uses_fluent_labels(&self) -> bool;
+
     /// The snake_case version of struct name for file paths.
     fn snake_case_name(&self) -> String {
         self.struct_name().to_snake_case()
@@ -111,6 +114,10 @@ impl TableIdentities for ShapeIdentities<'_> {
 
     fn table_title(&self) -> &'static str {
         self.0.table_title
+    }
+
+    fn uses_fluent_labels(&self) -> bool {
+        self.0.fluent
     }
 
     fn has_filters(&self) -> bool {

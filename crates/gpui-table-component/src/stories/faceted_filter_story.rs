@@ -55,7 +55,7 @@ impl FacetedFilterStory {
         }
 
         let filter = FacetedFilter::<bool>::new_for(
-            || "Archived".to_string(),
+            |_| "Archived".to_string(),
             selected_values,
             |_value, _window, _cx| {},
             cx,

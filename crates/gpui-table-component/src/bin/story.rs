@@ -17,8 +17,10 @@ fn main() {
 
     app.run(move |app_cx| {
         gpui_component::init(app_cx);
-        gpui_storybook::init(Languages::default(), app_cx);
-        gpui_storybook::change_locale(Languages::default()).unwrap();
+        gpui_table_component::i18n::init(app_cx)
+            .expect("failed to initialize table component i18n");
+        gpui_storybook::init(app_cx, Languages::default());
+        gpui_storybook::change_locale(app_cx, Languages::default()).unwrap();
         app_cx.activate(true);
 
         gpui_storybook::create_new_window(

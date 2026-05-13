@@ -37,6 +37,8 @@ runtime facade that generated filter code compiles against.
   `gpui-table-component` directly.
 - Generated Fluent labels and messages route through `generated_filters`
   localization helpers so derive output does not depend on component i18n paths.
+  Runtime render paths pass GPUI context to those helpers; context-free table
+  metadata uses explicit fallback helpers.
 - `__private::LoadMoreDelegate` is hidden from user docs but is part of the
   generated-code contract for load-more tables.
 - `default_render_cell` and `default_render_row` are the baseline rendering

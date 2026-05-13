@@ -140,7 +140,7 @@ impl<'a> TableShapeAdapter<'a> {
         let field_initializers = self.field_initializers();
         let struct_fields = self.struct_fields_tokens(&struct_name_ident, &delegate_struct_ident);
         let render_children = self.try_render_children()?;
-        let title_expr = Self::title_expr_tokens(&struct_name_ident);
+        let title_expr = self.title_expr_tokens();
 
         Ok(TableParts {
             struct_name_ident,
@@ -332,9 +332,17 @@ impl<'a> TableShapeAdapter<'a> {
         })
     }
 
-    fn title_expr_tokens(struct_name_ident: &syn::Ident) -> TokenStream {
-        quote! {
-            gpui_table::runtime::generated_filters::localize_label::<#struct_name_ident>()
+    fn title_expr_tokens(&self) -> TokenStream {
+        if self.identities.uses_fluent_labels() {
+            let struct_name_ident = self.identities.struct_name_ident();
+            quote! {
+                gpui_table::runtime::generated_filters::fallback_label::<#struct_name_ident>()
+            }
+        } else {
+            let title = self.identities.table_title();
+            quote! {
+                #title.to_string()
+            }
         }
     }
 }
@@ -430,7 +438,7 @@ impl TableShape for TableShapeAdapter<'_> {
     }
 
     fn title_expr(&self) -> TokenStream {
-        Self::title_expr_tokens(&self.identities.struct_name_ident())
+        self.title_expr_tokens()
     }
 }
 
@@ -450,6 +458,7 @@ mod tests {
             "User",
             "users",
             "Users",
+            false,
             &[],
             &FILTERS,
             false,

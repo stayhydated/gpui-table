@@ -438,7 +438,7 @@ fn generate_filter_builder_tokens(
         let #field_ident = {
             let on_filter_change = on_filter_change.clone();
             let filter = #filter_type_tokens::new_for(
-                || #title_expr,
+                |cx| #title_expr,
                 Default::default(),
                 move |_value, window, cx| {
                     if let Some(ref on_change) = on_filter_change {
@@ -551,6 +551,7 @@ fn determine_filter_title_expr(
 
         quote! {
             gpui_table::runtime::generated_filters::localize_message(
+                cx,
                 &#fluent_enum_ident::#fluent_variant_ident
             )
         }

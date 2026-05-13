@@ -7,15 +7,16 @@ use gpui::{
 use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
+    divider::Divider,
     h_flex,
     input::{InputEvent, InputState, NumberInput, NumberInputEvent, StepAction},
     popover::Popover,
-    separator::Separator as Divider,
     slider::{Slider, SliderEvent, SliderState},
     v_flex,
 };
 use rust_decimal::Decimal;
 use rust_decimal::prelude::*;
+use std::borrow::Borrow;
 use std::rc::Rc;
 use std::time::Duration;
 
@@ -80,7 +81,7 @@ enum NumberRangeFilterFtl {
 }
 
 pub struct NumberRangeFilter {
-    title: Rc<dyn Fn() -> String>,
+    title: Rc<dyn Fn(&App) -> String>,
     min: Option<Decimal>,
     max: Option<Decimal>,
     range_min: Decimal,
@@ -125,7 +126,7 @@ impl TableFilterComponent for NumberRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 }
 
@@ -138,11 +139,11 @@ impl NumberRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 
     fn new_with_title(
-        title: Rc<dyn Fn() -> String>,
+        title: Rc<dyn Fn(&App) -> String>,
         value: (Option<Decimal>, Option<Decimal>),
         on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -197,7 +198,7 @@ impl NumberRangeFilter {
 
     /// Create a number range filter with a reactive title provider (e.g. for i18n).
     pub fn new_for(
-        title: impl Fn() -> String + 'static,
+        title: impl Fn(&App) -> String + 'static,
         value: (Option<Decimal>, Option<Decimal>),
         on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -205,16 +206,16 @@ impl NumberRangeFilter {
         Self::new_with_title(Rc::new(title), value, on_change, cx)
     }
 
-    fn min_placeholder_text() -> String {
-        crate::i18n::localize_message(&NumberRangeFilterFtl::MinPlaceholder)
+    fn min_placeholder_text(cx: &impl Borrow<App>) -> String {
+        crate::i18n::localize_message(cx, &NumberRangeFilterFtl::MinPlaceholder)
     }
 
-    fn max_placeholder_text() -> String {
-        crate::i18n::localize_message(&NumberRangeFilterFtl::MaxPlaceholder)
+    fn max_placeholder_text(cx: &impl Borrow<App>) -> String {
+        crate::i18n::localize_message(cx, &NumberRangeFilterFtl::MaxPlaceholder)
     }
 
-    fn between_text() -> String {
-        crate::i18n::localize_message(&NumberRangeFilterFtl::Between)
+    fn between_text(cx: &impl Borrow<App>) -> String {
+        crate::i18n::localize_message(cx, &NumberRangeFilterFtl::Between)
     }
 
     fn between_width_px(between: &str) -> f32 {
@@ -377,7 +378,7 @@ impl NumberRangeFilter {
     fn ensure_inputs(&mut self, window: &mut Window, cx: &mut Context<Self>) {
         if self.min_input.is_none() {
             let min_val = self.min.map(format_decimal).unwrap_or_default();
-            let min_placeholder = Self::min_placeholder_text();
+            let min_placeholder = Self::min_placeholder_text(cx);
             let initial_min_placeholder = min_placeholder.clone();
 
             let input = cx.new(|cx| {
@@ -415,7 +416,7 @@ impl NumberRangeFilter {
 
         if self.max_input.is_none() {
             let max_val = self.max.map(format_decimal).unwrap_or_default();
-            let max_placeholder = Self::max_placeholder_text();
+            let max_placeholder = Self::max_placeholder_text(cx);
             let initial_max_placeholder = max_placeholder.clone();
 
             let input = cx.new(|cx| {

@@ -15,7 +15,7 @@ pub struct UserTableStory {
 }
 impl gpui_storybook::Story for UserTableStory {
     fn title() -> String {
-        gpui_table::runtime::generated_filters::localize_label::<User>()
+        gpui_table::runtime::generated_filters::fallback_label::<User>()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

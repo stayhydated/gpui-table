@@ -50,13 +50,13 @@ impl DateRangeFilterStory {
     fn build_filter(mode: DateRangeStoryMode, cx: &mut App) -> Entity<DateRangeFilter> {
         match mode {
             DateRangeStoryMode::Empty => DateRangeFilter::new_for(
-                || "Created at".to_string(),
+                |_| "Created at".to_string(),
                 (None, None),
                 |_value, _window, _cx| {},
                 cx,
             ),
             DateRangeStoryMode::Preset => DateRangeFilter::new_for(
-                || "Created at".to_string(),
+                |_| "Created at".to_string(),
                 (
                     NaiveDate::from_ymd_opt(2026, 1, 1),
                     NaiveDate::from_ymd_opt(2026, 1, 31),
@@ -65,7 +65,7 @@ impl DateRangeFilterStory {
                 cx,
             ),
             DateRangeStoryMode::Styled => DateRangeFilter::new_for(
-                || "Updated at".to_string(),
+                |_| "Updated at".to_string(),
                 (
                     NaiveDate::from_ymd_opt(2026, 2, 1),
                     NaiveDate::from_ymd_opt(2026, 2, 14),

@@ -2020,12 +2020,10 @@ dependencies = [
 [[package]]
 name = "es-fluent"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
  "es-fluent-shared",
- "es-fluent-toml",
  "fluent-bundle",
  "inventory",
  "rust-embed",
@@ -2034,9 +2032,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "es-fluent-build"
+version = "0.16.0"
+dependencies = [
+ "es-fluent-toml",
+]
+
+[[package]]
 name = "es-fluent-derive"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
@@ -2052,7 +2056,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive-core"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "bon",
  "darling 0.23.0",
@@ -2071,7 +2074,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -2087,7 +2089,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-toml",
  "heck 0.5.0",
@@ -2101,7 +2102,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-core"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-shared",
  "fluent-bundle",
@@ -2120,7 +2120,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-embedded"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -2132,7 +2131,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-macros"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-shared",
  "es-fluent-toml",
@@ -2146,7 +2144,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-shared"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "anyhow",
  "camino",
@@ -2168,7 +2165,6 @@ dependencies = [
 [[package]]
 name = "es-fluent-toml"
 version = "0.16.0"
-source = "git+https://github.com/stayhydated/es-fluent?branch=no-singleton#a15796c930b297263973d23ee4fee828f3f27031"
 dependencies = [
  "es-fluent-shared",
  "fs-err",
@@ -3159,8 +3155,8 @@ replace = "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192
 
 [[package]]
 name = "gpui-component"
-version = "0.5.2"
-source = "git+https://github.com/longbridge/gpui-component#d3d6e56c96659fb7516e2c743b80331af62e546d"
+version = "0.5.1"
+source = "git+https://github.com/longbridge/gpui-component?rev=be000a7eb26649460609fbf3e7ed4e535de4b9c1#be000a7eb26649460609fbf3e7ed4e535de4b9c1"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -3217,7 +3213,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#d3d6e56c96659fb7516e2c743b80331af62e546d"
+source = "git+https://github.com/longbridge/gpui-component?rev=be000a7eb26649460609fbf3e7ed4e535de4b9c1#be000a7eb26649460609fbf3e7ed4e535de4b9c1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3227,7 +3223,6 @@ dependencies = [
 [[package]]
 name = "gpui-router"
 version = "0.3.0"
-source = "git+https://github.com/stayhydated/gpui-router?branch=git#fafdd194f4864ce671622b0975f2e66395997ef8"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
  "gpui-router-macros",
@@ -3239,7 +3234,6 @@ dependencies = [
 [[package]]
 name = "gpui-router-macros"
 version = "0.3.0"
-source = "git+https://github.com/stayhydated/gpui-router?branch=git#fafdd194f4864ce671622b0975f2e66395997ef8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3249,7 +3243,6 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0f3faca4fd45cad753a5b76f5839dcb148ec20a6"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
  "gpui-storybook-core",
@@ -3262,7 +3255,6 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0f3faca4fd45cad753a5b76f5839dcb148ec20a6"
 dependencies = [
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
  "gpui-component",
@@ -3271,10 +3263,10 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0f3faca4fd45cad753a5b76f5839dcb148ec20a6"
 dependencies = [
  "anyhow",
  "es-fluent",
+ "es-fluent-build",
  "es-fluent-manager-embedded",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
  "gpui-component",
@@ -3293,7 +3285,6 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0f3faca4fd45cad753a5b76f5839dcb148ec20a6"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3304,7 +3295,6 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook?branch=es-fluent-no-singleton#0f3faca4fd45cad753a5b76f5839dcb148ec20a6"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -3335,6 +3325,7 @@ version = "0.5.0"
 dependencies = [
  "chrono",
  "es-fluent",
+ "es-fluent-build",
  "es-fluent-lang",
  "es-fluent-manager-embedded",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
@@ -3356,6 +3347,7 @@ dependencies = [
  "chrono",
  "derive_more 2.1.1",
  "es-fluent",
+ "es-fluent-build",
  "es-fluent-manager-embedded",
  "gpui-table-schema",
  "rust_decimal",
@@ -7729,6 +7721,7 @@ version = "0.5.0"
 dependencies = [
  "chrono",
  "es-fluent",
+ "es-fluent-build",
  "es-fluent-manager-embedded",
  "fake",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=832c17e8192e2e1d472f0751e7cef2af84ded622)",
@@ -7756,6 +7749,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "es-fluent",
+ "es-fluent-build",
  "es-fluent-lang",
  "es-fluent-manager-embedded",
  "fake",
@@ -8752,9 +8746,9 @@ dependencies = [
 
 [[package]]
 name = "tree-sitter"
-version = "0.26.8"
+version = "0.25.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "887bd495d0582c5e3e0d8ece2233666169fa56a9644d172fc22ad179ab2d0538"
+checksum = "78f873475d258561b06f1c595d93308a7ed124d9977cb26b148c2084a4a3cc87"
 dependencies = [
  "cc",
  "regex",

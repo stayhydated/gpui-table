@@ -42,9 +42,9 @@ typed filter wrappers, and faceted value conversion live.
   The schema layer stores strings; the core layer owns how typed values map to them.
 - `bool` remains a built-in `Filterable` type so faceted boolean filters work
   without any derive or manual glue.
-- The core i18n module owns its embedded localizer and active language state.
-  Public code should use `i18n::set_locale(...)` and the typed localization
-  helper instead of reaching into embedded resources.
+- The core i18n module owns a context-free embedded localizer for filter metadata
+  and non-GPUI fallback paths. GPUI widget code should use
+  `gpui-table-component` i18n helpers, which synchronize this core locale.
 
 ## Data Flow
 

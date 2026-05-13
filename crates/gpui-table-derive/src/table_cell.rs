@@ -67,7 +67,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
                                 quote! {
-                                    gpui_table::runtime::generated_filters::localize_message(self)
+                                    gpui_table::runtime::generated_filters::localize_message(cx, self)
                                         .into_any_element()
                                 }
                             } else if use_display_for_unit_variants {
@@ -126,23 +126,6 @@ fn has_derive_named(input: &DeriveInput, expected: &str) -> bool {
                     .iter()
                     .filter_map(|path| path.segments.last())
                     .any(|segment| segment.ident == expected)
-            })
-            .unwrap_or(false)
-    })
-}
-
-fn has_derive_with_prefix(input: &DeriveInput, prefix: &str) -> bool {
-    input.attrs.iter().any(|attr| {
-        if !attr.path().is_ident("derive") {
-            return false;
-        }
-
-        attr.parse_args_with(Punctuated::<Path, Token![,]>::parse_terminated)
-            .map(|paths| {
-                paths
-                    .iter()
-                    .filter_map(|path| path.segments.last())
-                    .any(|segment| segment.ident.to_string().starts_with(prefix))
             })
             .unwrap_or(false)
     })

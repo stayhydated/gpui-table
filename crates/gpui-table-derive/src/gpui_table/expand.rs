@@ -348,27 +348,14 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     }
 
     let table_title_impl = match &fluent {
-        Some(Override::Explicit(key)) => {
-            let key_cap = key.to_pascal_case();
-            let fluent_enum = Ident::new(
-                &format!("{}{}{}Variants", struct_name, key_cap, ""),
-                struct_name.span(),
-            );
-            quote! { fn table_title() -> String {
-              gpui_table::runtime::generated_filters::localize_label::<#fluent_enum>()
-              }
+        Some(Override::Explicit(_)) | Some(Override::Inherit) => {
+            quote! {
+                fn table_title() -> String {
+                    gpui_table::runtime::generated_filters::fallback_label::<Self>()
+                }
             }
         },
-        Some(Override::Inherit) => {
-            let fluent_enum = Ident::new(&format!("{}", struct_name), struct_name.span());
-            quote! { fn table_title() -> String {
-              gpui_table::runtime::generated_filters::localize_label::<#fluent_enum>()
-              }
-            }
-        },
-        None => {
-            quote! { fn table_title() -> String { Self::TABLE_TITLE.to_string() } }
-        },
+        None => quote! { fn table_title() -> String { Self::TABLE_TITLE.to_string() } },
     };
 
     let column_enum = quote! {
@@ -480,6 +467,9 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let matches_filters_impl = generate_matches_filters_method(&struct_name, &filter_fields);
 
     #[cfg(feature = "inventory")]
+    let uses_fluent_labels = fluent.is_some();
+
+    #[cfg(feature = "inventory")]
     let shape_impl = {
         quote! {
             gpui_table::schema::registry::inventory::submit! {
@@ -487,6 +477,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                     stringify!(#struct_name),
                     #table_id,
                     #table_title,
+                    #uses_fluent_labels,
                     &[
                         #(#column_variant_constructions),*
                     ],
@@ -570,7 +561,7 @@ fn determine_title_expr(
         let fluent_variant_ident = Ident::new(&field_name, ident.span());
 
         quote! {
-            gpui_table::runtime::generated_filters::localize_message(
+            gpui_table::runtime::generated_filters::fallback_message(
                 &#fluent_enum_ident::#fluent_variant_ident
             )
         }
