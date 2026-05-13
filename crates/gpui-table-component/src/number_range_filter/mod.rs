@@ -466,15 +466,17 @@ impl NumberRangeFilter {
             // Subscribe to slider changes
             let subscription = cx.subscribe(
                 &slider,
-                move |this: &mut Self, _, event: &SliderEvent, cx| {
-                    let SliderEvent::Change(value) = event;
-                    let start = Decimal::from_f32(value.start()).unwrap_or(Decimal::ZERO);
-                    let end = Decimal::from_f32(value.end()).unwrap_or(Decimal::ONE_HUNDRED);
+                move |this: &mut Self, _, event: &SliderEvent, cx| match event {
+                    SliderEvent::Change(value) => {
+                        let start = Decimal::from_f32(value.start()).unwrap_or(Decimal::ZERO);
+                        let end = Decimal::from_f32(value.end()).unwrap_or(Decimal::ONE_HUNDRED);
 
-                    this.min = Some(start);
-                    this.max = Some(end);
-                    this.last_changed = LastChanged::Slider;
-                    this.schedule_debounced_apply(cx);
+                        this.min = Some(start);
+                        this.max = Some(end);
+                        this.last_changed = LastChanged::Slider;
+                        this.schedule_debounced_apply(cx);
+                    },
+                    SliderEvent::Release(_) => {},
                 },
             );
 
