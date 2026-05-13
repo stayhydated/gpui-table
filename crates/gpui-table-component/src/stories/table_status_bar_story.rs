@@ -36,7 +36,7 @@ impl Focusable for TableStatusBarStory {
 }
 
 impl gpui_storybook::Story for TableStatusBarStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Table Status Bar".into()
     }
 

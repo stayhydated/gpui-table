@@ -99,7 +99,7 @@ impl Focusable for NumberRangeFilterStory {
 }
 
 impl gpui_storybook::Story for NumberRangeFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Number Range Filter".into()
     }
 

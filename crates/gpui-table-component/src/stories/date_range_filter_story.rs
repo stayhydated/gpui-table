@@ -97,7 +97,7 @@ impl Focusable for DateRangeFilterStory {
 }
 
 impl gpui_storybook::Story for DateRangeFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Date Range Filter".into()
     }
 

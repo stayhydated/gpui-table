@@ -1,10 +1,10 @@
-use some_lib::structs::item::*;
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
-    Styled, Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
+    Subscription, Window,
 };
-use gpui_component::v_flex;
 use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+use gpui_component::v_flex;
+use some_lib::structs::item::*;
 #[gpui_storybook::story_init]
 pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
@@ -13,7 +13,7 @@ pub struct ItemTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for ItemTableStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         gpui_table::runtime::generated_filters::fallback_label::<Item>()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
@@ -32,39 +32,34 @@ impl ItemTableStory {
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = ItemTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        table
-            .update(
-                cx,
-                |table, cx| {
-                    use gpui_table::runtime::TableDataLoader as _;
-                    table.delegate_mut().load_data(window, cx);
-                },
-            );
+        table.update(cx, |table, cx| {
+            use gpui_table::runtime::TableDataLoader as _;
+            table.delegate_mut().load_data(window, cx);
+        });
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
-        Self { table, _subscription }
+        Self {
+            table,
+            _subscription,
+        }
     }
 }
 impl Render for ItemTableStory {
-    fn render(
-        &mut self,
-        _window: &mut Window,
-        cx: &mut Context<Self>,
-    ) -> impl IntoElement {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let table = self.table.read(cx);
         let delegate = table.delegate();
         v_flex()
             .size_full()
             .gap_4()
             .p_4()
+            .child(gpui_table::runtime::generated_filters::TableStatusBar::new(
+                delegate.rows.len(),
+                delegate.loading,
+                delegate.eof,
+            ))
             .child(
-                gpui_table::runtime::generated_filters::TableStatusBar::new(
-                    delegate.rows.len(),
-                    delegate.loading,
-                    delegate.eof,
-                ),
-            )
-            .child(
-                DataTable::new(&self.table).stripe(true).scrollbar_visible(true, true),
+                DataTable::new(&self.table)
+                    .stripe(true)
+                    .scrollbar_visible(true, true),
             )
     }
 }

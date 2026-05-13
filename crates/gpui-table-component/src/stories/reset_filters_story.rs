@@ -75,7 +75,7 @@ impl Focusable for ResetFiltersStory {
 }
 
 impl gpui_storybook::Story for ResetFiltersStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Reset Filters".into()
     }
 

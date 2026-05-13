@@ -98,7 +98,7 @@ impl Focusable for FacetedFilterStory {
 }
 
 impl gpui_storybook::Story for FacetedFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Faceted Filter".into()
     }
 

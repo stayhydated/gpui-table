@@ -65,7 +65,7 @@ impl Focusable for TextFilterStory {
 }
 
 impl gpui_storybook::Story for TextFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Text Filter".into()
     }
 

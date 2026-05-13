@@ -13,7 +13,7 @@ pub struct ItemTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for ItemTableStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         gpui_table::runtime::generated_filters::fallback_label::<Item>()
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
