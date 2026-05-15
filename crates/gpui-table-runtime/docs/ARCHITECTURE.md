@@ -19,7 +19,8 @@ runtime facade that generated filter code compiles against.
   - Re-export hub for the runtime surface.
   - Defines hidden `__private::LoadMoreDelegate` bridge for macro output.
 - `src/cell.rs`
-  - `TableCell` and the built-in cell renderers for common value types.
+  - `TableCell`, value-object wrappers, and the built-in cell renderers for
+    common value types.
 - `src/row.rs`
   - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`,
     `TableRowGeneratedContextMenu`, `default_render_cell`, and `default_render_row`.

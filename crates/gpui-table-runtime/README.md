@@ -41,6 +41,7 @@ impl TableRowStyle for Item {
 ## What It Provides
 
 - `TableCell` and the built-in cell renderers for common scalar/date/time values
+- `DisplayCell` and `FormattedCell` wrappers for generic value-object rendering
 - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
 - `TableLoader` and `TableDataLoader`
 - `generated_filters`, which re-exports the built-in filter UI, localization helpers, `FilterEntitiesExt`, `TableFilterComponent`, and `QueryFilterValue`

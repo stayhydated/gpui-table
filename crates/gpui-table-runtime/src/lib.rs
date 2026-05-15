@@ -3,7 +3,7 @@ pub mod generated_filters;
 mod load;
 mod row;
 
-pub use cell::TableCell;
+pub use cell::{DisplayCell, FormattedCell, TableCell};
 pub use generated_filters::FilterEntitiesExt;
 pub use load::{TableDataLoader, TableLoader};
 pub use row::{

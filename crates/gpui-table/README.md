@@ -83,6 +83,35 @@ With `#[gpui_table(filters)]`, the derive also generates:
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation.
 
+### Table cells for value objects
+
+Single-field wrappers still render by delegating to their inner value by
+default. When a wrapper should render through its own display implementation or
+a formatter, use `#[table_cell(display)]` or `#[table_cell(format = ...)]`.
+
+```rs
+use gpui_table::TableCell;
+use std::fmt;
+
+#[derive(TableCell)]
+#[table_cell(display)]
+pub struct AccountCode(String);
+
+impl fmt::Display for AccountCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{}", self.0)
+    }
+}
+
+fn format_percentage(value: &Percentage) -> String {
+    format!("{}%", value.0)
+}
+
+#[derive(TableCell)]
+#[table_cell(format = format_percentage)]
+pub struct Percentage(i64);
+```
+
 ### Localized labels
 
 With the `fluent` feature, table titles and faceted labels are localized through

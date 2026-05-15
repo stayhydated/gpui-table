@@ -14,7 +14,8 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 - `#[derive(Filterable)]`
   - Generates `FilterValue`, `Filterable`, and `variant_name()` for faceted enums.
 - `#[derive(TableCell)]`
-  - Generates `TableCell` for wrapper structs and unit enums.
+  - Generates `TableCell` for wrapper structs and unit enums, with optional
+    display or formatter overrides through `#[table_cell(...)]`.
 - `#[gpui_table_impl]`
   - Attaches load-more behavior to the generated delegate.
 

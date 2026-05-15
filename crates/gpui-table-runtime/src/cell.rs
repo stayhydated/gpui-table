@@ -1,8 +1,61 @@
 use gpui::{AnyElement, App, IntoElement as _, Window};
+use std::fmt::Display;
 
 /// A value that can be displayed in a table cell.
 pub trait TableCell {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement;
+}
+
+/// Table-cell wrapper for values that should render through [`Display`].
+///
+/// This is useful for value objects where a blanket `TableCell for T:
+/// Display` implementation would conflict with downstream implementations.
+pub struct DisplayCell<T>(pub T);
+
+impl<T> DisplayCell<T> {
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: Display> TableCell for DisplayCell<T> {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.0.to_string().into_any_element()
+    }
+}
+
+/// Table-cell wrapper that renders a value with a caller-provided formatter.
+pub struct FormattedCell<T, F> {
+    value: T,
+    formatter: F,
+}
+
+impl<T, F> FormattedCell<T, F> {
+    pub fn new(value: T, formatter: F) -> Self {
+        Self { value, formatter }
+    }
+
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    pub fn into_inner(self) -> T {
+        self.value
+    }
+}
+
+impl<T, F, S> TableCell for FormattedCell<T, F>
+where
+    F: Fn(&T) -> S,
+    S: Display,
+{
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        (self.formatter)(&self.value).to_string().into_any_element()
+    }
 }
 
 #[cfg(feature = "jiff")]
