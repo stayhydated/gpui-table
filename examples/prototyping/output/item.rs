@@ -1,5 +1,4 @@
 use some_lib::structs::item::*;
-use es_fluent::ThisFtl as _;
 use gpui::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
     Styled, Subscription, Window,
@@ -14,8 +13,8 @@ pub struct ItemTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for ItemTableStory {
-    fn title() -> String {
-        Item::this_ftl()
+    fn title(cx: &gpui::App) -> String {
+        gpui_table::runtime::generated_filters::localize_label::<Item>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

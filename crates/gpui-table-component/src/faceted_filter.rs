@@ -1,5 +1,5 @@
 use crate::TableFilterComponent;
-use es_fluent::{EsFluent, ToFluentString as _};
+use es_fluent::EsFluent;
 use gpui::{
     App, Context, Entity, IntoElement, Render, StyleRefinement, Window, div, prelude::*, px,
 };
@@ -7,17 +7,22 @@ use gpui_component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
-    divider::Divider,
     h_flex,
     input::{Input, InputState},
     popover::Popover,
+    separator::Separator,
     tag::Tag,
     v_flex,
 };
 use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
+use std::borrow::Borrow as _;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::rc::Rc;
+
+fn app<'a, T>(cx: &'a Context<'_, T>) -> &'a App {
+    cx.borrow()
+}
 
 #[derive(Clone, EsFluent)]
 enum FacetedFilterFtl {
@@ -27,8 +32,8 @@ enum FacetedFilterFtl {
 }
 
 pub struct FacetedFilter<T: FilterValue> {
-    title: Rc<dyn Fn() -> String>,
-    options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
+    title: Rc<dyn Fn(&App) -> String>,
+    options: Rc<dyn Fn(&App) -> Vec<FacetedFilterOption>>,
     selected_values: HashSet<T>,
     trigger_style: StyleRefinement,
     selected_tag_style: StyleRefinement,
@@ -156,8 +161,8 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
     ) -> Entity<Self> {
         let title = title.into();
         Self::new_inner(
-            Rc::new(move || title.clone()),
-            Rc::new(Vec::new),
+            Rc::new(move |_| title.clone()),
+            Rc::new(|_| Vec::new()),
             value,
             Rc::new(on_change),
             cx,
@@ -167,8 +172,8 @@ impl<T: FilterValue> TableFilterComponent for FacetedFilter<T> {
 
 impl<T: FilterValue> FacetedFilter<T> {
     fn new_inner(
-        title: Rc<dyn Fn() -> String>,
-        options: Rc<dyn Fn() -> Vec<FacetedFilterOption>>,
+        title: Rc<dyn Fn(&App) -> String>,
+        options: Rc<dyn Fn(&App) -> Vec<FacetedFilterOption>>,
         selected_values: HashSet<T>,
         on_change: Rc<dyn Fn(HashSet<T>, &mut Window, &mut App) + 'static>,
         cx: &mut App,
@@ -200,8 +205,8 @@ impl<T: FilterValue> FacetedFilter<T> {
     ) -> Entity<Self> {
         let title = title.into();
         Self::new_inner(
-            Rc::new(move || title.clone()),
-            Rc::new(Vec::new),
+            Rc::new(move |_| title.clone()),
+            Rc::new(|_| Vec::new()),
             selected_values,
             Rc::new(on_change),
             cx,
@@ -260,8 +265,8 @@ impl<T: FilterValue> FacetedFilter<T> {
     }
 
     /// Get the labels of selected values for display.
-    fn get_selected_labels(&self) -> Vec<String> {
-        let options = (self.options)();
+    fn get_selected_labels(&self, cx: &App) -> Vec<String> {
+        let options = (self.options)(cx);
         let selected_strings: HashSet<String> = self
             .selected_values
             .iter()
@@ -307,21 +312,21 @@ impl<T: Filterable> FacetedFilter<T> {
     /// }
     ///
     /// let filter = FacetedFilter::<Priority>::new_for(
-    ///     || "Priority".to_string(),
+    ///     |_| "Priority".to_string(),
     ///     HashSet::new(),
     ///     move |value, _window, cx| { /* handle change */ },
     ///     cx,
     /// );
     /// ```
     pub fn new_for(
-        title: impl Fn() -> String + 'static,
+        title: impl Fn(&App) -> String + 'static,
         selected_values: HashSet<T>,
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
         Self::new_inner(
             Rc::new(title),
-            Rc::new(T::options),
+            Rc::new(|_| T::options()),
             selected_values,
             Rc::new(on_change),
             cx,
@@ -333,8 +338,8 @@ impl<T: Filterable> FacetedFilter<T> {
     /// Use this constructor when you need to provide options dynamically
     /// (e.g., for i18n support where labels need to update on language change).
     pub fn new_with_options(
-        title: impl Fn() -> String + 'static,
-        options: impl Fn() -> Vec<FacetedFilterOption> + 'static,
+        title: impl Fn(&App) -> String + 'static,
+        options: impl Fn(&App) -> Vec<FacetedFilterOption> + 'static,
         selected_values: HashSet<T>,
         on_change: impl Fn(HashSet<T>, &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -351,18 +356,22 @@ impl<T: Filterable> FacetedFilter<T> {
 
 impl<T: FilterValue> Render for FacetedFilter<T> {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        let should_show_search =
-            self.show_search || (self.options)().iter().any(|opt| opt.group.is_some());
+        crate::i18n::sync_locale(cx);
+
+        let should_show_search = self.show_search
+            || (self.options)(app(cx))
+                .iter()
+                .any(|opt| opt.group.is_some());
 
         // Only create search state if searchable is enabled or grouping benefits from search.
         if should_show_search {
             self.ensure_search_state(window, cx);
         }
 
-        let title = (self.title)();
+        let title = (self.title)(app(cx));
         let selected_count = self.selected_values.len();
         let has_selection = selected_count > 0;
-        let selected_labels = self.get_selected_labels();
+        let selected_labels = self.get_selected_labels(app(cx));
 
         let view = cx.entity();
         let options_fn = self.options.clone();
@@ -410,7 +419,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
             )
             .child(title)
             .when(has_selection, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1()).child(
+                b.child(Separator::vertical().h(px(16.)).mx_1()).child(
                     // Show tags for selected values
                     // If more than 2 selected, show "{n} selected" tag
                     // Otherwise show individual tags for each selected value
@@ -418,12 +427,12 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                         div().child(
                             Tag::secondary()
                                 .small()
-                                .child(
-                                    FacetedFilterFtl::SelectedCount {
+                                .child(crate::i18n::localize_message(
+                                    cx,
+                                    &FacetedFilterFtl::SelectedCount {
                                         count: selected_count.to_string(),
-                                    }
-                                    .to_fluent_string(),
-                                )
+                                    },
+                                ))
                                 .refine_style(&selected_tag_style),
                         )
                     } else {
@@ -450,7 +459,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                 let clear_button_style = clear_button_style.clone();
 
                 // Get fresh options (for i18n reactivity)
-                let options = options_fn();
+                let options = options_fn(app(cx));
 
                 // Get search query to filter options (only if search is enabled)
                 let search_query = search_state
@@ -573,7 +582,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                     .refine_style(&search_input_style),
                             ),
                         )
-                        .child(Divider::horizontal())
+                        .child(Separator::horizontal())
                     })
                     .child(
                         v_flex()
@@ -592,18 +601,24 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                                         .justify_center()
                                         .text_sm()
                                         .text_color(cx.theme().muted_foreground)
-                                        .child(FacetedFilterFtl::NoResultsFound.to_fluent_string()),
+                                        .child(crate::i18n::localize_message(
+                                            cx,
+                                            &FacetedFilterFtl::NoResultsFound,
+                                        )),
                                 )
                             }),
                     )
                     .when(has_selection, |this| {
-                        this.child(Divider::horizontal()).child(
+                        this.child(Separator::horizontal()).child(
                             div().p_1().child(
                                 Button::new("clear-filters")
                                     .ghost()
                                     .w_full()
                                     .justify_center()
-                                    .label(FacetedFilterFtl::ClearFilters.to_fluent_string())
+                                    .label(crate::i18n::localize_message(
+                                        cx,
+                                        &FacetedFilterFtl::ClearFilters,
+                                    ))
                                     .refine_style(&clear_button_style)
                                     .on_click(move |_, window, cx| {
                                         clear_view.update(cx, |this, cx| {

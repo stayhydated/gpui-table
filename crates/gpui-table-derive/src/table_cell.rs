@@ -1,6 +1,10 @@
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{DeriveInput, Path, Token, punctuated::Punctuated};
+use syn::{
+    Attribute, DeriveInput, LitStr, Path, Token,
+    parse::{Parse, ParseStream},
+    punctuated::Punctuated,
+};
 
 pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
     let input = syn::parse_macro_input!(input as DeriveInput);
@@ -12,42 +16,41 @@ pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
 }
 
 fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let use_fluent_for_unit_variants = has_derive_with_prefix(&input, "EsFluent");
+    let use_fluent_for_unit_variants = has_derive_named(&input, "EsFluent");
     let use_display_for_unit_variants = has_derive_named(&input, "Display");
-    let fluent_import = if use_fluent_for_unit_variants {
-        quote! { use es_fluent::ToFluentString as _; }
-    } else {
-        quote! {}
-    };
+    let options = TableCellOptions::parse_attrs(&input.attrs)?;
     let name = input.ident;
 
-    let draw_impl = match input.data {
-        syn::Data::Struct(data) => match data.fields {
-            syn::Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
-                quote! { self.0.draw(window, cx) }
+    let draw_impl = if let Some(render_override) = options.render_override() {
+        render_override.draw_tokens()
+    } else {
+        match input.data {
+            syn::Data::Struct(data) => match data.fields {
+                syn::Fields::Unnamed(fields) if fields.unnamed.len() == 1 => {
+                    quote! { self.0.draw(window, cx) }
+                },
+                syn::Fields::Named(fields) if fields.named.len() == 1 => {
+                    let field_name = fields
+                        .named
+                        .first()
+                        .and_then(|field| field.ident.clone())
+                        .ok_or_else(|| {
+                            syn::Error::new(
+                                name.span(),
+                                "TableCell derive could not resolve the single named field",
+                            )
+                        })?;
+                    quote! { self.#field_name.draw(window, cx) }
+                },
+                _ => {
+                    return Err(syn::Error::new(
+                        name.span(),
+                        "TableCell derive for struct requires exactly one field",
+                    ));
+                },
             },
-            syn::Fields::Named(fields) if fields.named.len() == 1 => {
-                let field_name = fields
-                    .named
-                    .first()
-                    .and_then(|field| field.ident.clone())
-                    .ok_or_else(|| {
-                        syn::Error::new(
-                            name.span(),
-                            "TableCell derive could not resolve the single named field",
-                        )
-                    })?;
-                quote! { self.#field_name.draw(window, cx) }
-            },
-            _ => {
-                return Err(syn::Error::new(
-                    name.span(),
-                    "TableCell derive for struct requires exactly one field",
-                ));
-            },
-        },
-        syn::Data::Enum(data) => {
-            let arms = data
+            syn::Data::Enum(data) => {
+                let arms = data
                 .variants
                 .iter()
                 .map(|v| {
@@ -71,7 +74,10 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         }
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
-                                quote! { self.to_fluent_string().into_any_element() }
+                                quote! {
+                                    gpui_table::runtime::generated_filters::localize_message(cx, self)
+                                        .into_any_element()
+                                }
                             } else if use_display_for_unit_variants {
                                 quote! { self.to_string().into_any_element() }
                             } else {
@@ -88,20 +94,20 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 })
                 .collect::<syn::Result<Vec<_>>>()?;
 
-            quote! {
-                use ::gpui::IntoElement;
-                #fluent_import
-                match self {
-                    #(#arms)*
+                quote! {
+                    use ::gpui::IntoElement;
+                    match self {
+                        #(#arms)*
+                    }
                 }
-            }
-        },
-        syn::Data::Union(_) => {
-            return Err(syn::Error::new(
-                name.span(),
-                "TableCell cannot be derived for unions",
-            ));
-        },
+            },
+            syn::Data::Union(_) => {
+                return Err(syn::Error::new(
+                    name.span(),
+                    "TableCell cannot be derived for unions",
+                ));
+            },
+        }
     };
 
     Ok(quote! {
@@ -117,6 +123,85 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     })
 }
 
+#[derive(Clone)]
+enum TableCellRender {
+    Display,
+    Format(Path),
+}
+
+impl TableCellRender {
+    fn draw_tokens(&self) -> proc_macro2::TokenStream {
+        match self {
+            Self::Display => quote! {
+                use ::gpui::IntoElement;
+                self.to_string().into_any_element()
+            },
+            Self::Format(formatter) => quote! {
+                use ::gpui::IntoElement;
+                #formatter(self).to_string().into_any_element()
+            },
+        }
+    }
+}
+
+#[derive(Default)]
+struct TableCellOptions {
+    render: Option<TableCellRender>,
+}
+
+impl TableCellOptions {
+    fn parse_attrs(attrs: &[Attribute]) -> syn::Result<Self> {
+        let mut options = Self::default();
+
+        for attr in attrs
+            .iter()
+            .filter(|attr| attr.path().is_ident("table_cell"))
+        {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("display") {
+                    options.set_render(TableCellRender::Display, &meta.path)
+                } else if meta.path.is_ident("format") {
+                    let value = meta.value()?;
+                    let formatter = value.parse::<PathValue>()?.0;
+                    options.set_render(TableCellRender::Format(formatter), &meta.path)
+                } else {
+                    Err(meta.error("unsupported table_cell option"))
+                }
+            })?;
+        }
+
+        Ok(options)
+    }
+
+    fn render_override(&self) -> Option<&TableCellRender> {
+        self.render.as_ref()
+    }
+
+    fn set_render(&mut self, render: TableCellRender, path: &Path) -> syn::Result<()> {
+        if self.render.is_some() {
+            return Err(syn::Error::new_spanned(
+                path,
+                "`table_cell` accepts only one render mode; use either `display` or `format = ...`",
+            ));
+        }
+        self.render = Some(render);
+        Ok(())
+    }
+}
+
+struct PathValue(Path);
+
+impl Parse for PathValue {
+    fn parse(input: ParseStream<'_>) -> syn::Result<Self> {
+        if input.peek(LitStr) {
+            let lit: LitStr = input.parse()?;
+            lit.parse::<Path>().map(Self)
+        } else {
+            input.parse::<Path>().map(Self)
+        }
+    }
+}
+
 fn has_derive_named(input: &DeriveInput, expected: &str) -> bool {
     input.attrs.iter().any(|attr| {
         if !attr.path().is_ident("derive") {
@@ -129,23 +214,6 @@ fn has_derive_named(input: &DeriveInput, expected: &str) -> bool {
                     .iter()
                     .filter_map(|path| path.segments.last())
                     .any(|segment| segment.ident == expected)
-            })
-            .unwrap_or(false)
-    })
-}
-
-fn has_derive_with_prefix(input: &DeriveInput, prefix: &str) -> bool {
-    input.attrs.iter().any(|attr| {
-        if !attr.path().is_ident("derive") {
-            return false;
-        }
-
-        attr.parse_args_with(Punctuated::<Path, Token![,]>::parse_terminated)
-            .map(|paths| {
-                paths
-                    .iter()
-                    .filter_map(|path| path.segments.last())
-                    .any(|segment| segment.ident.to_string().starts_with(prefix))
             })
             .unwrap_or(false)
     })

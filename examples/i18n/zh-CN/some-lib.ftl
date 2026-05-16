@@ -1,27 +1,55 @@
-## 项目
+## Spacetime 事件
 
-item_this = 物品
+spacetime_event_label = Spacetime 事件
 
 ## 商品
 
-product_this = 商品
+product_label = 商品
 
 ## 用户
 
-user_this = 用户
+user_label = 用户
 
-## Spacetime 事件
+## 项目
 
-spacetime_event_this = Spacetime 事件
 
 ## ItemVariants
 
-item_variants_this = 物品
+item_label = 物品
+item_variants_label = 物品
 item_variants-acquired_on = 获取于
 item_variants-color = 颜色
 item_variants-id = 编号
 item_variants-name = 名称
 item_variants-weight = 重量
+
+## Spacetime 事件描述变体
+
+spacetime_event_description_variants_label = Spacetime 事件描述
+spacetime_event_description_variants-committed_at = 提交时间
+spacetime_event_description_variants-connection_id = 连接 ID
+spacetime_event_description_variants-mutation = 变更类型
+spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-rows_touched = 影响行数
+spacetime_event_description_variants-sender = 发送者
+spacetime_event_description_variants-table_name = 表名
+
+## Spacetime 事件标签变体
+
+spacetime_event_label_variants_label = Spacetime 事件标签
+spacetime_event_label_variants-committed_at = 提交时间
+spacetime_event_label_variants-connection_id = 连接 ID
+spacetime_event_label_variants-mutation = 变更类型
+spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-rows_touched = 影响行数
+spacetime_event_label_variants-sender = 发送者
+spacetime_event_label_variants-table_name = 表名
+
+## Spacetime 变更类型
+
+spacetime_mutation-Delete = 删除
+spacetime_mutation-Insert = 插入
+spacetime_mutation-Update = 更新
 
 ## 产品类别
 
@@ -52,7 +80,7 @@ product_category-WomensWatches = 女士手表
 
 ## 商品描述变体
 
-product_description_variants_this = 商品描述
+product_description_variants_label = 商品描述
 product_description_variants-brand = 品牌
 product_description_variants-category = 类别
 product_description_variants-discount_percentage = 折扣百分比
@@ -64,7 +92,7 @@ product_description_variants-title = 标题
 
 ## 商品标签变体
 
-product_label_variants_this = 商品标签
+product_label_variants_label = 商品标签
 product_label_variants-brand = 品牌
 product_label_variants-category = 类别
 product_label_variants-discount_percentage = 折扣百分比
@@ -76,7 +104,7 @@ product_label_variants-title = 标题
 
 ## 用户描述变体
 
-user_description_variants_this = 用户描述
+user_description_variants_label = 用户描述
 user_description_variants-active = 活跃
 user_description_variants-age = 年龄
 user_description_variants-created_at = 创建时间
@@ -88,7 +116,7 @@ user_description_variants-status = 状态
 
 ## 用户标签变体
 
-user_label_variants_this = 用户标签
+user_label_variants_label = 用户标签
 user_label_variants-active = 活跃
 user_label_variants-age = 年龄
 user_label_variants-created_at = 创建时间
@@ -98,36 +126,8 @@ user_label_variants-id = 编号
 user_label_variants-name = 姓名
 user_label_variants-status = 状态
 
-## Spacetime 事件描述变体
-
-spacetime_event_description_variants_this = Spacetime 事件描述
-spacetime_event_description_variants-committed_at = 提交时间
-spacetime_event_description_variants-connection_id = 连接 ID
-spacetime_event_description_variants-mutation = 变更类型
-spacetime_event_description_variants-reducer = Reducer
-spacetime_event_description_variants-rows_touched = 影响行数
-spacetime_event_description_variants-sender = 发送者
-spacetime_event_description_variants-table_name = 表名
-
-## Spacetime 事件标签变体
-
-spacetime_event_label_variants_this = Spacetime 事件标签
-spacetime_event_label_variants-committed_at = 提交时间
-spacetime_event_label_variants-connection_id = 连接 ID
-spacetime_event_label_variants-mutation = 变更类型
-spacetime_event_label_variants-reducer = Reducer
-spacetime_event_label_variants-rows_touched = 影响行数
-spacetime_event_label_variants-sender = 发送者
-spacetime_event_label_variants-table_name = 表名
-
 ## 用户状态
 
 user_status-Active = 活跃
 user_status-Offline = 离线
 user_status-Suspended = 已暂停
-
-## Spacetime 变更类型
-
-spacetime_mutation-Delete = 删除
-spacetime_mutation-Insert = 插入
-spacetime_mutation-Update = 更新

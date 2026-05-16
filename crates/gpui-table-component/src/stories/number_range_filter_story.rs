@@ -50,13 +50,13 @@ impl NumberRangeFilterStory {
     fn build_filter(mode: NumberRangeStoryMode, cx: &mut App) -> Entity<NumberRangeFilter> {
         match mode {
             NumberRangeStoryMode::Basic => NumberRangeFilter::new_for(
-                || "Price".to_string(),
+                |_| "Price".to_string(),
                 (None, None),
                 |_value, _window, _cx| {},
                 cx,
             ),
             NumberRangeStoryMode::Bounded => NumberRangeFilter::new_for(
-                || "Price".to_string(),
+                |_| "Price".to_string(),
                 (Some(Decimal::new(10, 0)), Some(Decimal::new(80, 0))),
                 |_value, _window, _cx| {},
                 cx,
@@ -64,7 +64,7 @@ impl NumberRangeFilterStory {
             .range(Decimal::ZERO, Decimal::new(100, 0), cx)
             .step(Decimal::new(5, 0), cx),
             NumberRangeStoryMode::Styled => NumberRangeFilter::new_for(
-                || "Weight".to_string(),
+                |_| "Weight".to_string(),
                 (Some(Decimal::new(5, 0)), Some(Decimal::new(25, 0))),
                 |_value, _window, _cx| {},
                 cx,
@@ -99,7 +99,7 @@ impl Focusable for NumberRangeFilterStory {
 }
 
 impl gpui_storybook::Story for NumberRangeFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Number Range Filter".into()
     }
 

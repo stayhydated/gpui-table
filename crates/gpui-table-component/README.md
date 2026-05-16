@@ -47,6 +47,22 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 All filter widgets expose chainable extension-trait setters for styling or
 behavior tweaks.
 
+## Localization
+
+Built-in component text is localized through typed `es-fluent` messages. Manual
+component composition should initialize the component localizer in GPUI startup
+and can later select a locale through the public i18n helper:
+
+```rs
+gpui_table_component::i18n::init(cx)?;
+gpui_table_component::i18n::set_locale(cx, "en")?;
+```
+
+Generated filter flows call the same localization helpers through
+`gpui_table::runtime::generated_filters`. Runtime widget text reads the
+`EmbeddedI18n` handle from GPUI global state; context-free metadata such as
+storybook titles uses explicit fallback helpers.
+
 ## Interop With Generated Tables
 
 The derive-generated filter code targets this crate through

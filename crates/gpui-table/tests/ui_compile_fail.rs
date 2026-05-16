@@ -1,6 +1,7 @@
 #[test]
 fn ui_compile_fail() {
     let t = trybuild::TestCases::new();
+    t.pass("tests/ui/table_cell_display_format.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
     t.compile_fail("tests/ui/invalid_load_more_signature.rs");

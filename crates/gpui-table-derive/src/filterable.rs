@@ -51,7 +51,9 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         let value = variant_ident.to_string(); // Or snake_case? Using variant name for now.
 
         let label_expr = if fluent {
-            quote! { { use es_fluent::ToFluentString as _; Self::#variant_ident.to_fluent_string() } }
+            quote! {
+                gpui_table::runtime::generated_filters::fallback_message(&Self::#variant_ident)
+            }
         } else {
             let label = variant
                 .label

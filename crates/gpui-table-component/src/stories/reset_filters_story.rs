@@ -35,19 +35,19 @@ impl ResetFiltersStory {
         Self {
             focus_handle: cx.focus_handle(),
             text_filter: TextFilter::new_for(
-                || "Title".to_string(),
+                |_| "Title".to_string(),
                 "Invoice 42".to_string(),
                 |_value, _window, _cx| {},
                 cx,
             ),
             faceted_filter: FacetedFilter::<bool>::new_for(
-                || "Archived".to_string(),
+                |_| "Archived".to_string(),
                 selected_values,
                 |_value, _window, _cx| {},
                 cx,
             ),
             number_filter: NumberRangeFilter::new_for(
-                || "Price".to_string(),
+                |_| "Price".to_string(),
                 (Some(Decimal::new(10, 0)), Some(Decimal::new(90, 0))),
                 |_value, _window, _cx| {},
                 cx,
@@ -55,7 +55,7 @@ impl ResetFiltersStory {
             .range(Decimal::ZERO, Decimal::new(100, 0), cx)
             .step(Decimal::new(5, 0), cx),
             date_filter: DateRangeFilter::new_for(
-                || "Created at".to_string(),
+                |_| "Created at".to_string(),
                 (
                     NaiveDate::from_ymd_opt(2026, 1, 1),
                     NaiveDate::from_ymd_opt(2026, 1, 31),
@@ -75,7 +75,7 @@ impl Focusable for ResetFiltersStory {
 }
 
 impl gpui_storybook::Story for ResetFiltersStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Reset Filters".into()
     }
 

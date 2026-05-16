@@ -438,7 +438,7 @@ fn generate_filter_builder_tokens(
         let #field_ident = {
             let on_filter_change = on_filter_change.clone();
             let filter = #filter_type_tokens::new_for(
-                || #title_expr,
+                |cx| #title_expr,
                 Default::default(),
                 move |_value, window, cx| {
                     if let Some(ref on_change) = on_filter_change {
@@ -549,7 +549,12 @@ fn determine_filter_title_expr(
         let field_name = field_ident.to_string().to_pascal_case();
         let fluent_variant_ident = Ident::new(&field_name, field_ident.span());
 
-        quote! { { use es_fluent::ToFluentString as _; #fluent_enum_ident::#fluent_variant_ident.to_fluent_string() } }
+        quote! {
+            gpui_table::runtime::generated_filters::localize_message(
+                cx,
+                &#fluent_enum_ident::#fluent_variant_ident
+            )
+        }
     } else {
         let raw_title = field_ident.to_string().to_title_case();
         quote! { #raw_title.to_string() }

@@ -55,7 +55,7 @@ impl FacetedFilterStory {
         }
 
         let filter = FacetedFilter::<bool>::new_for(
-            || "Archived".to_string(),
+            |_| "Archived".to_string(),
             selected_values,
             |_value, _window, _cx| {},
             cx,
@@ -98,7 +98,7 @@ impl Focusable for FacetedFilterStory {
 }
 
 impl gpui_storybook::Story for FacetedFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Faceted Filter".into()
     }
 

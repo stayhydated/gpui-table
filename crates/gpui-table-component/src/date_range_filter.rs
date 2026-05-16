@@ -8,25 +8,37 @@ use gpui_component::{
     Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
-    divider::Divider,
     popover::Popover,
+    separator::Separator,
     v_flex,
 };
+use std::borrow::Borrow as _;
 use std::rc::Rc;
+
+fn app<'a, T>(cx: &'a Context<'_, T>) -> &'a App {
+    cx.borrow()
+}
 
 mod date_display {
     use chrono::{Datelike as _, NaiveDate};
     use icu::{
         calendar::{Date, Iso},
-        datetime::{DateTimeFormatter, fieldsets},
-        locale::locale,
+        datetime::{DateTimeFormatter, DateTimeFormatterPreferences, fieldsets},
+        locale::{Locale, locale},
     };
     use jiff::civil;
 
     type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
 
+    fn formatter_preferences() -> DateTimeFormatterPreferences {
+        let locale = gpui_component::locale()
+            .parse::<Locale>()
+            .unwrap_or_else(|_| locale!("en-US"));
+        locale.into()
+    }
+
     fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
     }
 
     fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
@@ -54,7 +66,7 @@ mod date_display {
 }
 
 pub struct DateRangeFilter {
-    title: Rc<dyn Fn() -> String>,
+    title: Rc<dyn Fn(&App) -> String>,
     selected_range: (Option<NaiveDate>, Option<NaiveDate>),
     trigger_style: StyleRefinement,
     popover_style: StyleRefinement,
@@ -78,7 +90,7 @@ impl TableFilterComponent for DateRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 }
 
@@ -91,11 +103,11 @@ impl DateRangeFilter {
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
-        Self::new_with_title(Rc::new(move || title.clone()), value, on_change, cx)
+        Self::new_with_title(Rc::new(move |_| title.clone()), value, on_change, cx)
     }
 
     fn new_with_title(
-        title: Rc<dyn Fn() -> String>,
+        title: Rc<dyn Fn(&App) -> String>,
         value: (Option<NaiveDate>, Option<NaiveDate>),
         on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -115,7 +127,7 @@ impl DateRangeFilter {
 
     /// Create a date range filter with a reactive title provider (e.g. for i18n).
     pub fn new_for(
-        title: impl Fn() -> String + 'static,
+        title: impl Fn(&App) -> String + 'static,
         value: (Option<NaiveDate>, Option<NaiveDate>),
         on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
         cx: &mut App,
@@ -236,7 +248,7 @@ impl Render for DateRangeFilter {
         // Ensure calendar exists
         self.ensure_calendar(window, cx);
 
-        let title = (self.title)();
+        let title = (self.title)(app(cx));
         let has_value = self.has_value();
         let range_display = self.format_range();
         let view = cx.entity();
@@ -277,7 +289,7 @@ impl Render for DateRangeFilter {
             )
             .child(title)
             .when(has_value, |b| {
-                b.child(Divider::vertical().h(px(16.)).mx_1())
+                b.child(Separator::vertical().h(px(16.)).mx_1())
                     .child(range_display)
             });
 

@@ -21,7 +21,7 @@ impl TextFilterStory {
 
     fn new(_window: &mut Window, cx: &mut Context<Self>) -> Self {
         let default_filter = TextFilter::new_for(
-            || "Search".to_string(),
+            |_| "Search".to_string(),
             String::new(),
             |_value, _window, _cx| {},
             cx,
@@ -30,7 +30,7 @@ impl TextFilterStory {
         .input_style(StyleRefinement::default().w(px(360.)), cx);
 
         let numeric_filter = TextFilter::new_for(
-            || "Order ID".to_string(),
+            |_| "Order ID".to_string(),
             "42".to_string(),
             |_value, _window, _cx| {},
             cx,
@@ -40,7 +40,7 @@ impl TextFilterStory {
         .input_style(StyleRefinement::default().w(px(280.)), cx);
 
         let alphanumeric_filter = TextFilter::new_for(
-            || "SKU".to_string(),
+            |_| "SKU".to_string(),
             "SKU-123".to_string(),
             |_value, _window, _cx| {},
             cx,
@@ -65,7 +65,7 @@ impl Focusable for TextFilterStory {
 }
 
 impl gpui_storybook::Story for TextFilterStory {
-    fn title() -> String {
+    fn title(_: &gpui::App) -> String {
         "Text Filter".into()
     }
 

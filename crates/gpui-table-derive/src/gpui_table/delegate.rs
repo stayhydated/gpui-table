@@ -259,10 +259,17 @@ pub(super) fn generate_delegate(
             #rows_count_impl
 
             fn column(&self, col_ix: usize, _: &gpui::App) -> gpui_component::table::Column {
-                self.columns
+                let mut column = self.columns
                     .get(col_ix)
                     .cloned()
-                    .expect("Invalid column index")
+                    .expect("Invalid column index");
+                if let Some(fresh_column) = <#struct_name as gpui_table::TableRowMeta>::table_columns()
+                    .into_iter()
+                    .find(|fresh_column| fresh_column.key == column.key)
+                {
+                    column.name = fresh_column.name;
+                }
+                column
             }
 
             fn render_td(

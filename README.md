@@ -26,7 +26,7 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 | `gpui-table` | `gpui-component` | `gpui` |
 | :----------- | :--------------- | :----- |
 | **git** | | |
-| `branch = "master"` | `branch = "main"` | `rev = "f7d46cf7d02c88d3d71ec495a31d7f19bd5eb96b"` |
+| `branch = "master"` | `branch = "main"` | `rev = "832c17e8192e2e1d472f0751e7cef2af84ded622"` |
 
 `derive` and `chrono` are enabled by default. Add:
 
@@ -82,6 +82,69 @@ With `#[gpui_table(filters)]`, the derive also generates:
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation.
+
+### Table cells for value objects
+
+Single-field wrappers still render by delegating to their inner value by
+default. When a wrapper should render through its own display implementation or
+a formatter, use `#[table_cell(display)]` or `#[table_cell(format = ...)]`.
+
+```rs
+use gpui_table::TableCell;
+use std::fmt;
+
+#[derive(TableCell)]
+#[table_cell(display)]
+pub struct AccountCode(String);
+
+impl fmt::Display for AccountCode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{}", self.0)
+    }
+}
+
+fn format_percentage(value: &Percentage) -> String {
+    format!("{}%", value.0)
+}
+
+#[derive(TableCell)]
+#[table_cell(format = format_percentage)]
+pub struct Percentage(i64);
+```
+
+### Localized labels
+
+With the `fluent` feature, table titles and faceted labels are localized through
+typed `es-fluent` messages and labels.
+
+```rs
+use es_fluent::{EsFluentLabel, EsFluentVariants};
+use gpui_table::{Filterable, GpuiTable};
+
+#[derive(Clone, Eq, Hash, PartialEq, es_fluent::EsFluent, Filterable)]
+#[filter(fluent)]
+pub enum UserStatus {
+    Active,
+    Suspended,
+}
+
+#[derive(Clone, EsFluentLabel, EsFluentVariants, GpuiTable)]
+#[fluent_label(origin, variants)]
+#[fluent_variants(keys = ["label"])]
+#[gpui_table(fluent = "label", filters)]
+pub struct User {
+    #[gpui_table(filter(faceted()))]
+    pub status: UserStatus,
+}
+```
+
+The built-in table/filter widgets keep their embedded `es-fluent` localizer in
+GPUI global state. The example app declares its languages with
+`#[es_fluent_language]`, initializes `gpui_table_component::i18n` during GPUI
+startup, and selects the active locale through the GPUI storybook locale APIs.
+Generated Storybook table titles use the GPUI app context so they follow the
+active Storybook locale; truly context-free metadata can still use fallback
+label helpers.
 
 ## Examples
 

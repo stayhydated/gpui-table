@@ -20,6 +20,7 @@ Use it to see:
 - derived columns rendered in `gpui_component::table::DataTable`
 - generated built-in filters wired with `UserFilterEntities::build_for_table(...)`
 - `TableStatusBar` and filter layout composition
+- typed `es-fluent` titles, descriptions, and faceted labels
 - custom row rendering and load-more behavior
 - optional row-context-menu routing when `some-lib-tables` is run with `--features router`
 
@@ -30,7 +31,8 @@ cargo run -p prototyping
 ```
 
 This iterates the inventory-registered `GpuiTableShape` values and rewrites
-`examples/prototyping/output`.
+`examples/prototyping/output`. Generated Storybook table titles use the active
+example app locale.
 
 Do not hand-edit `examples/prototyping/output`; it is generated output.
 
@@ -39,11 +41,30 @@ Do not hand-edit `examples/prototyping/output`; it is generated output.
 - `examples/i18n`
   Shared Fluent resources used by the example crates.
 - `examples/some-lib`
-  Domain types, `#[derive(GpuiTable)]` rows, `#[derive(Filterable)]` enums, and shared i18n setup.
+  Domain types, `#[derive(GpuiTable)]` rows, `#[derive(Filterable)]` enums, and embedded i18n setup.
 - `examples/some-lib-tables`
   Storybook-style GPUI app that renders the generated tables and filters.
 - `examples/prototyping`
   Inventory-driven generator that writes story modules into `examples/prototyping/output`.
+
+## Fluent Setup
+
+The examples use `es-fluent` typed messages directly: row structs derive
+`EsFluentLabel`/`EsFluentVariants`, faceted enums derive `EsFluent`, and table
+attributes opt into localized labels.
+
+```rs
+#[derive(Clone, Eq, Hash, PartialEq, es_fluent::EsFluent, gpui_table::Filterable)]
+#[filter(fluent)]
+pub enum UserStatus {
+    Active,
+    Suspended,
+}
+```
+
+`examples/some-lib/src/i18n.rs` declares the embedded resources, while
+`examples/some-lib-tables/src/main.rs` declares the app language enum with
+`#[es_fluent_language]` and selects the storybook locale before rendering.
 
 ## Files To Read First
 

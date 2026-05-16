@@ -14,7 +14,8 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 - `#[derive(Filterable)]`
   - Generates `FilterValue`, `Filterable`, and `variant_name()` for faceted enums.
 - `#[derive(TableCell)]`
-  - Generates `TableCell` for wrapper structs and unit enums.
+  - Generates `TableCell` for wrapper structs and unit enums, with optional
+    display or formatter overrides through `#[table_cell(...)]`.
 - `#[gpui_table_impl]`
   - Attaches load-more behavior to the generated delegate.
 
@@ -74,6 +75,8 @@ so name changes or path changes are semver-sensitive.
 Additional generated contracts:
 
 - Filter UI targets `gpui_table::runtime::generated_filters`.
+- Fluent table labels, field titles, and faceted labels are emitted as typed
+  `es-fluent` label/message calls through the runtime localization helpers.
 - Feature-gated external types route through `gpui_table::__deps`.
 - Load-more glue routes through `gpui_table::__private::LoadMoreDelegate`.
 - Inventory metadata uses `gpui_table::registry::GpuiTableShape` and stores the
@@ -103,5 +106,5 @@ Additional generated contracts:
 
 - `chrono`, `rust_decimal`, and `spacetimedb` let macro expansion validate
   supported filter/type combinations at compile time.
-- `fluent` enables localized titles and faceted labels in generated code.
+- `fluent` enables typed `es-fluent` titles and faceted labels in generated code.
 - `inventory` enables `GpuiTableShape` registration.

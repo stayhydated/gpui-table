@@ -1,8 +1,61 @@
 use gpui::{AnyElement, App, IntoElement as _, Window};
+use std::fmt::Display;
 
 /// A value that can be displayed in a table cell.
 pub trait TableCell {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement;
+}
+
+/// Table-cell wrapper for values that should render through [`Display`].
+///
+/// This is useful for value objects where a blanket `TableCell for T:
+/// Display` implementation would conflict with downstream implementations.
+pub struct DisplayCell<T>(pub T);
+
+impl<T> DisplayCell<T> {
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: Display> TableCell for DisplayCell<T> {
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        self.0.to_string().into_any_element()
+    }
+}
+
+/// Table-cell wrapper that renders a value with a caller-provided formatter.
+pub struct FormattedCell<T, F> {
+    value: T,
+    formatter: F,
+}
+
+impl<T, F> FormattedCell<T, F> {
+    pub fn new(value: T, formatter: F) -> Self {
+        Self { value, formatter }
+    }
+
+    pub fn value(&self) -> &T {
+        &self.value
+    }
+
+    pub fn into_inner(self) -> T {
+        self.value
+    }
+}
+
+impl<T, F, S> TableCell for FormattedCell<T, F>
+where
+    F: Fn(&T) -> S,
+    S: Display,
+{
+    fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
+        (self.formatter)(&self.value).to_string().into_any_element()
+    }
 }
 
 #[cfg(feature = "jiff")]
@@ -10,11 +63,11 @@ mod datetime_format {
     use icu::{
         calendar::{Date, Iso},
         datetime::{
-            DateTimeFormatter, NoCalendarFormatter,
+            DateTimeFormatter, DateTimeFormatterPreferences, NoCalendarFormatter,
             fieldsets::{self, Combo},
             input::{DateTime as IcuDateTime, Time, UtcOffset, ZonedDateTime},
         },
-        locale::locale,
+        locale::{Locale, locale},
     };
     use jiff::{Timestamp, Zoned, civil, tz::TimeZone};
 
@@ -24,24 +77,31 @@ mod datetime_format {
         DateTimeFormatter<Combo<fieldsets::YMDT, fieldsets::zone::LocalizedOffsetLong>>;
     type TimeFormatter = NoCalendarFormatter<fieldsets::T>;
 
+    fn formatter_preferences() -> DateTimeFormatterPreferences {
+        let locale = gpui_component::locale()
+            .parse::<Locale>()
+            .unwrap_or_else(|_| locale!("en-US"));
+        locale.into()
+    }
+
     fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldsets::YMD::medium()).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
     }
 
     fn datetime_formatter() -> Option<DateTimeFormatterNoZone> {
         let fieldset = fieldsets::YMD::medium().with_time_hms();
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
     }
 
     fn zoned_datetime_formatter() -> Option<DateTimeFormatterWithZone> {
         let fieldset = fieldsets::YMD::medium()
             .with_time_hms()
             .with_zone(fieldsets::zone::LocalizedOffsetLong);
-        DateTimeFormatter::try_new(locale!("en-US").into(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
     }
 
     fn time_formatter() -> Option<TimeFormatter> {
-        NoCalendarFormatter::try_new(locale!("en-US").into(), fieldsets::T::medium()).ok()
+        NoCalendarFormatter::try_new(formatter_preferences(), fieldsets::T::medium()).ok()
     }
 
     fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {

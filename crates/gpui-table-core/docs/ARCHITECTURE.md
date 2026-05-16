@@ -27,7 +27,7 @@ typed filter wrappers, and faceted value conversion live.
 - `src/filter/convert.rs`
   - Feature-gated conversion helpers for number/date range filtering.
 - `src/i18n.rs`, `i18n/`, `build.rs`, `i18n.toml`
-  - Optional localized bool labels for faceted filters.
+  - Optional typed `es-fluent` localizer for built-in bool faceted labels.
 
 ## Internal Contracts
 
@@ -42,6 +42,9 @@ typed filter wrappers, and faceted value conversion live.
   The schema layer stores strings; the core layer owns how typed values map to them.
 - `bool` remains a built-in `Filterable` type so faceted boolean filters work
   without any derive or manual glue.
+- The core i18n module owns a context-free embedded localizer for filter metadata
+  and non-GPUI fallback paths. GPUI widget code should use
+  `gpui-table-component` i18n helpers, which synchronize this core locale.
 
 ## Data Flow
 
@@ -58,4 +61,4 @@ typed filter wrappers, and faceted value conversion live.
 - `chrono` enables `ToNaiveDate`.
 - `rust_decimal` enables `ToDecimal`.
 - `spacetimedb` layers supported SpacetimeDB temporal conversions on top of the range helpers.
-- `fluent` enables localized bool filter labels via `es-fluent`.
+- `fluent` enables localized bool filter labels via typed `es-fluent` messages.

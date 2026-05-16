@@ -28,8 +28,6 @@ const FRAMEWORK_IMPORTS: &[ImportItem] = &[
     ImportItem::path("gpui_component::table::TableState"),
     ImportItem::aliased("gpui_component::table::TableDelegate", Alias::Anonymous),
     ImportItem::path("gpui_component::v_flex"),
-    // i18n / fluent
-    ImportItem::aliased("es_fluent::ThisFtl", Alias::Anonymous),
 ];
 
 /// Extra imports needed when the table has filters.
@@ -71,7 +69,10 @@ pub trait TableShape {
     /// Generate render children (the .child(...) calls)
     fn render_children(&self) -> TokenStream;
 
-    /// Generate story title expression
+    /// Generate story title expression.
+    ///
+    /// Fluent-backed titles may reference a `cx: &gpui::App` parameter from
+    /// the generated `gpui_storybook::Story::title` implementation.
     fn title_expr(&self) -> TokenStream;
 }
 
@@ -142,7 +143,7 @@ impl<'a> TableShapeAdapter<'a> {
         let field_initializers = self.field_initializers();
         let struct_fields = self.struct_fields_tokens(&struct_name_ident, &delegate_struct_ident);
         let render_children = self.try_render_children()?;
-        let title_expr = Self::title_expr_tokens(&struct_name_ident);
+        let title_expr = self.title_expr_tokens();
 
         Ok(TableParts {
             struct_name_ident,
@@ -334,9 +335,17 @@ impl<'a> TableShapeAdapter<'a> {
         })
     }
 
-    fn title_expr_tokens(struct_name_ident: &syn::Ident) -> TokenStream {
-        quote! {
-            #struct_name_ident::this_ftl()
+    fn title_expr_tokens(&self) -> TokenStream {
+        if self.identities.uses_fluent_labels() {
+            let struct_name_ident = self.identities.struct_name_ident();
+            quote! {
+                gpui_table::runtime::generated_filters::localize_label::<#struct_name_ident>(cx)
+            }
+        } else {
+            let title = self.identities.table_title();
+            quote! {
+                #title.to_string()
+            }
         }
     }
 }
@@ -379,6 +388,9 @@ pub struct TableParts {
     /// `.child(...)` chains for the render body.
     pub render_children: TokenStream,
     /// Expression for the story title.
+    ///
+    /// For fluent-backed tables this expression expects to be emitted inside a
+    /// scope that provides `cx: &gpui::App`.
     pub title_expr: TokenStream,
 }
 
@@ -432,7 +444,7 @@ impl TableShape for TableShapeAdapter<'_> {
     }
 
     fn title_expr(&self) -> TokenStream {
-        Self::title_expr_tokens(&self.identities.struct_name_ident())
+        self.title_expr_tokens()
     }
 }
 
@@ -452,6 +464,7 @@ mod tests {
             "User",
             "users",
             "Users",
+            false,
             &[],
             &FILTERS,
             false,

@@ -34,6 +34,7 @@ es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
+gpui-es-fluent = { features = [ "component" ], workspace = true }
 gpui-storybook = { optional = true, workspace = true }
 gpui-table-core = { default-features = false, features = [ "fluent" ], workspace = true }
 gpui-table-schema = { workspace = true }
@@ -44,7 +45,7 @@ rust_decimal = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
 
 [build-dependencies]
-es-fluent = { features = [ "build" ], workspace = true }
+es-fluent-build = { workspace = true }
 
 [lints]
 workspace = true

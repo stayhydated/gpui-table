@@ -1,3 +1,6 @@
+pub use gpui_table_component::i18n::{
+    fallback_label, fallback_message, localize_label, localize_message,
+};
 #[cfg(feature = "chrono")]
 pub use gpui_table_component::{DateRangeFilter, DateRangeFilterExt, date_range_filter};
 pub use gpui_table_component::{

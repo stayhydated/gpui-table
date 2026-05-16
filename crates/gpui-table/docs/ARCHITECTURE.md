@@ -55,5 +55,8 @@ It also re-exports the commonly used runtime traits at the crate root and, when
 - `derive` adds the proc-macro re-exports.
 - `chrono`, `rust_decimal`, and `spacetimedb` forward feature support through
   the workspace layers.
-- `fluent` enables localized label/title generation in the core and derive layers.
+- `fluent` forwards typed `es-fluent` label/title support through the core and
+  derive layers. Generated runtime code localizes through
+  `gpui_table::runtime::generated_filters::localize_*` helpers with GPUI
+  context; context-free metadata uses the matching fallback helpers.
 - `inventory` enables registry metadata emission from the derive layer.

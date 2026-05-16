@@ -64,11 +64,47 @@ pub enum Status {
 
 Use enum-level `#[filter(fluent)]` when labels should come from `es-fluent`.
 
+```rs
+use gpui_table::Filterable;
+
+#[derive(Clone, Eq, Hash, PartialEq, es_fluent::EsFluent, Filterable)]
+#[filter(fluent)]
+pub enum Status {
+    Active,
+    Pending,
+}
+```
+
+Use struct-level `#[gpui_table(fluent = "label")]` with
+`EsFluentLabel`/`EsFluentVariants` when generated table titles and field labels
+should use typed Fluent resources.
+
 ### `#[derive(TableCell)]`
 
 Generates a `TableCell` impl for single-field wrapper types and unit enums.
 This is useful when a column should render through an inner type but you still
 want a dedicated wrapper in your domain model.
+
+Use `#[table_cell(display)]` when the wrapper's own `Display` implementation
+should be used instead of delegating to the inner field, or
+`#[table_cell(format = path::to::formatter)]` when a dedicated formatter should
+own the label.
+
+```rs
+use gpui_table::TableCell;
+
+#[derive(TableCell)]
+#[table_cell(display)]
+pub struct AccountCode(String);
+
+fn render_percent(value: &Percent) -> String {
+    format!("{}%", value.0)
+}
+
+#[derive(TableCell)]
+#[table_cell(format = render_percent)]
+pub struct Percent(u8);
+```
 
 ### `#[gpui_table_impl]`
 

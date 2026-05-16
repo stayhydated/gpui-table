@@ -1,4 +1,3 @@
-use es_fluent::ThisFtl as _;
 use fake::{Fake, Faker};
 #[cfg(feature = "router")]
 use gpui::InteractiveElement as _;
@@ -18,8 +17,8 @@ pub struct UserTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for UserTableStory {
-    fn title() -> String {
-        User::this_ftl()
+    fn title(cx: &gpui::App) -> String {
+        gpui_table::runtime::generated_filters::localize_label::<User>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

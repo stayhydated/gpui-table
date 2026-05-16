@@ -8,6 +8,7 @@ pub struct GpuiTableShape {
     pub struct_name: &'static str,
     pub table_id: &'static str,
     pub table_title: &'static str,
+    pub fluent: bool,
     pub columns: &'static [ColumnVariant],
     pub filters: &'static [FilterVariant],
     /// Whether load_more is enabled on the table via #[gpui_table(load_more)].
@@ -22,6 +23,7 @@ impl GpuiTableShape {
         struct_name: &'static str,
         table_id: &'static str,
         table_title: &'static str,
+        fluent: bool,
         columns: &'static [ColumnVariant],
         filters: &'static [FilterVariant],
         load_more: bool,
@@ -31,6 +33,7 @@ impl GpuiTableShape {
             struct_name,
             table_id,
             table_title,
+            fluent,
             columns,
             filters,
             load_more,

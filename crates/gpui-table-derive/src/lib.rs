@@ -49,7 +49,7 @@ pub fn derive_filterable(input: TokenStream) -> TokenStream {
     filterable::derive_filterable(input)
 }
 
-#[proc_macro_derive(TableCell)]
+#[proc_macro_derive(TableCell, attributes(table_cell))]
 pub fn derive_table_cell(input: TokenStream) -> TokenStream {
     table_cell::derive_table_cell(input)
 }
