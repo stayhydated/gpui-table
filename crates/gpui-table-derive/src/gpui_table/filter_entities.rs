@@ -506,7 +506,7 @@ fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
         },
         FilterComponents::Faceted(_) => format!(
             "gpui_table::core::filter::FacetedValue<{}>",
-            compact_type_name(&field.field_type)
+            compact_type_name(faceted_filter_value_type(&field.field_type))
         ),
         FilterComponents::DateRange(_) => {
             "gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate>"
@@ -524,6 +524,31 @@ fn compact_type_name(ty: &impl ToTokens) -> String {
         .replace(" , ", ", ")
         .replace(" ( ", "(")
         .replace(" )", ")")
+}
+
+fn faceted_filter_value_type(ty: &syn::Type) -> &syn::Type {
+    option_inner_type(ty).unwrap_or(ty)
+}
+
+fn option_inner_type(ty: &syn::Type) -> Option<&syn::Type> {
+    let syn::Type::Path(type_path) = ty else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Option" {
+        return None;
+    }
+
+    let syn::PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let syn::GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
 }
 
 /// Determine the title expression for a filter based on fluent config.

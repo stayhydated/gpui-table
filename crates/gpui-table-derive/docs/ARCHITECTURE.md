@@ -95,6 +95,10 @@ Additional generated contracts:
   opt into the `_with(...)` customization hook.
 - `Filterable<bool>` is treated as a normal faceted filter path, not a special
   runtime exception.
+- Optional and vector faceted fields are generated as `FacetedValue<T>` and
+  `FacetedFilter<T>` for `Option<T>` and `Vec<T>` fields. Matching treats
+  `None` or a vector without any selected value as a non-match only when the
+  facet is active.
 
 ## Test And Generated Surfaces
 

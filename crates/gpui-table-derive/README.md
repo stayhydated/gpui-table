@@ -38,6 +38,11 @@ Built-in filter syntaxes:
 - `filter(date_range())`
 - `filter(faceted(...))`
 
+Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
+filter state uses `T` in all cases, so optional and vector fields can facet over
+present values without requiring `Option<T>` or `Vec<T>` itself to implement
+`Filterable`.
+
 Feature requirements are validated during macro expansion:
 
 - `number_range(...)` requires `gpui-table/rust_decimal`

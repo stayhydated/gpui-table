@@ -1,5 +1,5 @@
-error: `filter(faceted(...))` does not support `Option<bool>`; use a non-optional field type that implements `gpui_table::core::filter::Filterable`
- --> tests/ui/invalid_faceted_option_type.rs:7:13
+error: `filter(faceted(...))` on `Option < String >` requires a field type that implements `gpui_table::core::filter::Filterable`; `Option<T>` and `Vec<T>` work when `T` implements `Filterable`, `bool` works out of the box, and enums can `#[derive(Filterable)]`
+ --> tests/ui/invalid_faceted_option_type.rs:7:12
   |
-7 |     active: Option<bool>,
-  |             ^^^^^^^^^^^^
+7 |     label: Option<String>,
+  |            ^^^^^^^^^^^^^^

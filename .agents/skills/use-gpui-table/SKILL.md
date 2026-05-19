@@ -82,7 +82,8 @@ Use built-in filters through field attributes when they match the application
 workflow:
 
 - `filter(text)` for text search.
-- `filter(faceted)` for enum-like values derived with `Filterable`.
+- `filter(faceted)` for enum-like `T`, `Option<T>`, or `Vec<T>` fields when
+  `T` derives or implements `Filterable`.
 - `filter(number_range(...))` for numeric ranges.
 - `filter(date_range(...))` for temporal ranges.
 

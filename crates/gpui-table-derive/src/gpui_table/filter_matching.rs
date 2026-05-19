@@ -21,7 +21,10 @@ pub(super) fn generate_matches_filters_method(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let is_option = option_inner_type(&f.field_type).is_some();
+            let option_inner = option_inner_type(&f.field_type);
+            let value_ty = option_inner.unwrap_or(&f.field_type);
+            let is_option = option_inner.is_some();
+            let is_vec = vec_inner_type(value_ty).is_some();
 
             match &f.filter_config {
                 FilterComponents::Text(_) => {
@@ -80,7 +83,43 @@ pub(super) fn generate_matches_filters_method(
                     }
                 }
                 FilterComponents::Faceted(_) => {
-                    quote! { filters.#field_ident.matches(&self.#field_ident) }
+                    if is_option && is_vec {
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .as_ref()
+                                    .is_some_and(|values| {
+                                        values
+                                            .iter()
+                                            .any(|value| filters.#field_ident.matches(value))
+                                    })
+                            } else {
+                                true
+                            }
+                        }
+                    } else if is_vec {
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .iter()
+                                    .any(|value| filters.#field_ident.matches(value))
+                            } else {
+                                true
+                            }
+                        }
+                    } else if is_option {
+                        quote! {
+                            if filters.#field_ident.is_active() {
+                                self.#field_ident
+                                    .as_ref()
+                                    .is_some_and(|value| filters.#field_ident.matches(value))
+                            } else {
+                                true
+                            }
+                        }
+                    } else {
+                        quote! { filters.#field_ident.matches(&self.#field_ident) }
+                    }
                 }
             }
         })
@@ -102,6 +141,27 @@ fn option_inner_type(ty: &Type) -> Option<&Type> {
 
     let segment = type_path.path.segments.last()?;
     if segment.ident != "Option" {
+        return None;
+    }
+
+    let PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
+}
+
+fn vec_inner_type(ty: &Type) -> Option<&Type> {
+    let Type::Path(type_path) = ty else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Vec" {
         return None;
     }
 

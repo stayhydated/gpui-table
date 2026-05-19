@@ -159,17 +159,9 @@ fn validate_date_range_filter_field_type(field_ty: &Type) -> syn::Result<()> {
 }
 
 fn validate_faceted_filter_field_type(field_ty: &Type) -> syn::Result<()> {
-    if let Some(inner_ty) = option_inner_type(field_ty) {
-        return Err(syn::Error::new_spanned(
-            field_ty,
-            format!(
-                "`filter(faceted(...))` does not support `Option<{}>`; use a non-optional field type that implements `gpui_table::core::filter::Filterable`",
-                type_name(inner_ty)
-            ),
-        ));
-    }
-
-    if is_bool_type(field_ty) || !is_obviously_non_faceted_filter_type(field_ty) {
+    let value_ty = option_inner_type(field_ty).unwrap_or(field_ty);
+    let value_ty = vec_inner_type(value_ty).unwrap_or(value_ty);
+    if is_bool_type(value_ty) || !is_obviously_non_faceted_filter_type(value_ty) {
         return Ok(());
     }
 
@@ -177,7 +169,7 @@ fn validate_faceted_filter_field_type(field_ty: &Type) -> syn::Result<()> {
     Err(syn::Error::new_spanned(
         field_ty,
         format!(
-            "`filter(faceted(...))` on `{type_name}` requires a non-optional field type that implements `gpui_table::core::filter::Filterable`; `bool` works out of the box and enums can `#[derive(Filterable)]`"
+            "`filter(faceted(...))` on `{type_name}` requires a field type that implements `gpui_table::core::filter::Filterable`; `Option<T>` and `Vec<T>` work when `T` implements `Filterable`, `bool` works out of the box, and enums can `#[derive(Filterable)]`"
         ),
     ))
 }
@@ -201,6 +193,27 @@ fn option_inner_type(ty: &Type) -> Option<&Type> {
 
     let segment = type_path.path.segments.last()?;
     if segment.ident != "Option" {
+        return None;
+    }
+
+    let PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
+}
+
+fn vec_inner_type(ty: &Type) -> Option<&Type> {
+    let Type::Path(type_path) = normalized_type(ty) else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Vec" {
         return None;
     }
 

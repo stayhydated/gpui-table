@@ -4,7 +4,7 @@ use gpui_table::GpuiTable;
 #[gpui_table(filters)]
 struct InvalidFacetedOptionType {
     #[gpui_table(filter(faceted()))]
-    active: Option<bool>,
+    label: Option<String>,
 }
 
 fn main() {}

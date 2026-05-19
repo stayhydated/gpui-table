@@ -233,6 +233,27 @@ impl<T: TableCell> TableCell for Option<T> {
     }
 }
 
+impl<T: TableCell> TableCell for Vec<T> {
+    fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
+        use gpui::{ParentElement as _, Styled as _};
+
+        let mut children = Vec::with_capacity(self.len().saturating_mul(2));
+        for (index, value) in self.iter().enumerate() {
+            if index > 0 {
+                children.push(", ".into_any_element());
+            }
+            children.push(value.draw(window, cx));
+        }
+
+        gpui::div()
+            .flex()
+            .items_center()
+            .gap_1()
+            .children(children)
+            .into_any_element()
+    }
+}
+
 impl_table_cell_display!(
     String, &str, usize, isize, u8, u16, u32, u64, u128, i8, i16, i32, i64, i128
 );

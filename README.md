@@ -80,6 +80,11 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `UserFilterValues` for typed filter state
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
+Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
+implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
+store selected `T` values in the generated filter state; when a selection is
+active, rows with `None` or no matching vector element do not match that facet.
+
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation.
 

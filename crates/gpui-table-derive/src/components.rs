@@ -1,6 +1,6 @@
 use darling::{Error as DarlingError, FromMeta};
 use quote::{ToTokens as _, quote};
-use syn::{Expr, Lit, Path, UnOp, spanned::Spanned as _};
+use syn::{Expr, GenericArgument, Lit, Path, PathArguments, Type, UnOp, spanned::Spanned as _};
 
 /// Built-in text validation modes
 #[derive(Clone, Debug, FromMeta)]
@@ -241,7 +241,8 @@ impl FilterComponents {
             },
             Self::Faceted(_) => {
                 if let Some(ty) = field_ty {
-                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#ty> }
+                    let filter_value_ty = faceted_filter_value_type(ty);
+                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#filter_value_ty> }
                 } else {
                     quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
                 }
@@ -280,7 +281,8 @@ impl FilterComponents {
                 quote! { gpui_table::core::filter::FilterType::DateRange }
             },
             Self::Faceted(_) => {
-                quote! { gpui_table::core::filter::FilterType::Faceted(<#field_ty as gpui_table::core::filter::Filterable>::options()) }
+                let filter_value_ty = faceted_filter_value_type(field_ty);
+                quote! { gpui_table::core::filter::FilterType::Faceted(<#filter_value_ty as gpui_table::core::filter::Filterable>::options()) }
             },
         }
     }
@@ -291,7 +293,10 @@ impl FilterComponents {
             Self::NumberRange(_) => {
                 quote! { (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) }
             },
-            Self::Faceted(_) => quote! { std::collections::HashSet<#field_ty> },
+            Self::Faceted(_) => {
+                let filter_value_ty = faceted_filter_value_type(field_ty);
+                quote! { std::collections::HashSet<#filter_value_ty> }
+            },
             Self::DateRange(_) => {
                 quote! { (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) }
             },
@@ -307,7 +312,10 @@ impl FilterComponents {
             Self::NumberRange(_) => {
                 quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
             },
-            Self::Faceted(_) => quote! { gpui_table::core::filter::FacetedValue<#field_ty> },
+            Self::Faceted(_) => {
+                let filter_value_ty = faceted_filter_value_type(field_ty);
+                quote! { gpui_table::core::filter::FacetedValue<#filter_value_ty> }
+            },
             Self::DateRange(_) => {
                 quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
             },
@@ -328,6 +336,53 @@ impl FilterComponents {
             },
         }
     }
+}
+
+fn faceted_filter_value_type(ty: &Type) -> &Type {
+    let value_ty = option_inner_type(ty).unwrap_or(ty);
+    vec_inner_type(value_ty).unwrap_or(value_ty)
+}
+
+fn option_inner_type(ty: &Type) -> Option<&Type> {
+    let Type::Path(type_path) = ty else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Option" {
+        return None;
+    }
+
+    let PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
+}
+
+fn vec_inner_type(ty: &Type) -> Option<&Type> {
+    let Type::Path(type_path) = ty else {
+        return None;
+    };
+
+    let segment = type_path.path.segments.last()?;
+    if segment.ident != "Vec" {
+        return None;
+    }
+
+    let PathArguments::AngleBracketed(args) = &segment.arguments else {
+        return None;
+    };
+
+    let GenericArgument::Type(inner) = args.args.first()? else {
+        return None;
+    };
+
+    Some(inner)
 }
 
 fn parse_decimal_literal(expr: &Expr) -> Result<DecimalLiteral, String> {
