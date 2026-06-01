@@ -19,7 +19,8 @@ should know about the specific UI composition of those built-in filters.
 
 - `src/lib.rs`
   - Exports the component types.
-  - Defines `TableFilterComponent`, the constructor trait used by generated filter entities.
+  - Defines `TableFilterComponent`, the constructor trait used by manual filter
+    composition helpers.
   - Defines `QueryFilterValue`, the serialization trait shared by raw widget
     values and generated wrapper values.
 - `src/text_filter.rs`
@@ -42,18 +43,21 @@ should know about the specific UI composition of those built-in filters.
 
 ## Internal Contracts
 
-- `TableFilterComponent::new(...)` is the constructor contract generated
-  `XxxFilterEntities` rely on. Changes here must stay compatible with the
-  derive/runtime layers.
+- Built-in filter component structs implement `ComponentShapeMetadata`. The
+  runtime crate attaches `GpuiTableFilterShape` and
+  `GpuiTableFilterShapeFor<Field>` impls to those component types.
+- `TableFilterComponent::new(...)` remains a manual composition contract.
+  Generated `XxxFilterEntities` construct widgets through the runtime shape
+  contract instead.
 - `QueryFilterValue` must serialize empty values as `None`. Generated loader
   flows depend on that to omit inactive filters.
 - Faceted query serialization is sorted before joining with commas. That keeps
   logically equivalent selections deterministic across runs.
 - Range serialization uses `>=x`, `<=x`, or `min-max`. Loader code should treat
   that as the canonical wire format for the built-in widgets.
-- This crate can add new runtime widgets, but the derive crate only understands
-  the hard-coded built-in filter syntaxes. Adding a widget here does not add a
-  new `#[gpui_table(filter(...))]` form by itself.
+- This crate can add new runtime widgets, but a widget is only usable in
+  `#[gpui_table(filter(...))]` once the runtime shape contract is implemented
+  for its shape type.
 - Component i18n stores its embedded localizer in GPUI global state, synchronizes
   the context-free core locale, and reads the active `gpui-component` locale
   before localizing built-in strings.
@@ -63,9 +67,8 @@ should know about the specific UI composition of those built-in filters.
 ## Data Flow
 
 1. `gpui-table-derive` emits `XxxFilterEntities` that call
-   `gpui_table::runtime::generated_filters::TableFilterComponent::new(...)`.
-1. `gpui-table-runtime::generated_filters` re-exports this crate as the stable
-   runtime target.
+   `gpui_table::runtime::shape::GpuiTableFilterShape::new_for(...)`.
+1. `gpui-table-runtime::shape` maps shape types to concrete filter components.
 1. Each component owns its immediate UI state and invokes the supplied
    `on_change` callback.
 1. Generated filter collections then snapshot the current widget state into

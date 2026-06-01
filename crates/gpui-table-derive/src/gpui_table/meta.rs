@@ -1,7 +1,10 @@
-use crate::components::FilterComponents;
+use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
-use darling::{FromDeriveInput, FromField, util::Override};
-use syn::Ident;
+use darling::{Error as DarlingError, FromDeriveInput, FromField, util::Override};
+use syn::{
+    Expr, Ident, LitBool, LitFloat, LitInt, LitStr, Token, TypePath, parenthesized,
+    spanned::Spanned as _,
+};
 
 #[derive(FromDeriveInput)]
 #[darling(attributes(gpui_table), supports(struct_named))]
@@ -69,42 +72,238 @@ fn default_delegate() -> bool {
     true
 }
 
-#[derive(FromField)]
-#[darling(attributes(gpui_table))]
 pub(super) struct TableColumn {
     pub(super) ident: Option<Ident>,
     pub(super) ty: syn::Type,
 
-    #[darling(default)]
     pub(super) col: Option<String>,
-    #[darling(default)]
     pub(super) title: Option<String>,
-    #[darling(default)]
     pub(super) width: Option<f32>,
-    #[darling(default)]
     pub(super) fixed: Option<String>,
-    #[darling(default)]
     pub(super) sortable: bool,
-    #[darling(default)]
     pub(super) ascending: bool,
-    #[darling(default)]
     pub(super) descending: bool,
-    #[darling(default)]
     pub(super) text_right: bool,
-    #[darling(default)]
     pub(super) resizable: Option<bool>,
-    #[darling(default)]
     pub(super) movable: Option<bool>,
-    #[darling(default)]
     pub(super) skip: bool,
-    /// Filter component configuration using function-style syntax.
-    /// Examples: `filter = text()`, `filter = number_range(min = 0, max = 100)`
-    #[darling(default)]
-    pub(super) filter: Option<FilterComponents>,
+    /// Filter shape path.
+    /// Example: `filter(gpui_table_component::TextFilter)`
+    pub(super) filter: Option<FilterShapeOptions>,
 
     /// Marks this field as the value source for generated row context-menu route/label.
-    #[darling(default)]
     pub(super) context_menu_id: bool,
+}
+
+impl FromField for TableColumn {
+    fn from_field(field: &syn::Field) -> darling::Result<Self> {
+        let mut column = Self {
+            ident: field.ident.clone(),
+            ty: field.ty.clone(),
+            col: None,
+            title: None,
+            width: None,
+            fixed: None,
+            sortable: false,
+            ascending: false,
+            descending: false,
+            text_right: false,
+            resizable: None,
+            movable: None,
+            skip: false,
+            filter: None,
+            context_menu_id: false,
+        };
+
+        for attr in field
+            .attrs
+            .iter()
+            .filter(|attr| attr.path().is_ident("gpui_table"))
+        {
+            attr.parse_nested_meta(|meta| {
+                if meta.path.is_ident("col") {
+                    set_option(
+                        &mut column.col,
+                        parse_string_value(&meta)?,
+                        "col",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("title") {
+                    set_option(
+                        &mut column.title,
+                        parse_string_value(&meta)?,
+                        "title",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("width") {
+                    set_option(
+                        &mut column.width,
+                        parse_f32_value(&meta)?,
+                        "width",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("fixed") {
+                    set_option(
+                        &mut column.fixed,
+                        parse_string_value(&meta)?,
+                        "fixed",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("sortable") {
+                    set_flag(
+                        &mut column.sortable,
+                        parse_bool_flag_or_value(&meta)?,
+                        "sortable",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("ascending") {
+                    set_flag(
+                        &mut column.ascending,
+                        parse_bool_flag_or_value(&meta)?,
+                        "ascending",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("descending") {
+                    set_flag(
+                        &mut column.descending,
+                        parse_bool_flag_or_value(&meta)?,
+                        "descending",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("text_right") {
+                    set_flag(
+                        &mut column.text_right,
+                        parse_bool_flag_or_value(&meta)?,
+                        "text_right",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("resizable") {
+                    set_option(
+                        &mut column.resizable,
+                        parse_bool_flag_or_value(&meta)?,
+                        "resizable",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("movable") {
+                    set_option(
+                        &mut column.movable,
+                        parse_bool_flag_or_value(&meta)?,
+                        "movable",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("skip") {
+                    set_flag(
+                        &mut column.skip,
+                        parse_bool_flag_or_value(&meta)?,
+                        "skip",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("filter") {
+                    set_option(
+                        &mut column.filter,
+                        parse_filter_shape(&meta)?,
+                        "filter",
+                        meta.path.span(),
+                    )
+                } else if meta.path.is_ident("context_menu_id") {
+                    set_flag(
+                        &mut column.context_menu_id,
+                        parse_bool_flag_or_value(&meta)?,
+                        "context_menu_id",
+                        meta.path.span(),
+                    )
+                } else {
+                    Err(meta.error("unknown `gpui_table` field option"))
+                }
+            })
+            .map_err(DarlingError::from)?;
+        }
+
+        Ok(column)
+    }
+}
+
+fn set_option<T>(
+    slot: &mut Option<T>,
+    value: T,
+    option_name: &'static str,
+    span: proc_macro2::Span,
+) -> syn::Result<()> {
+    if slot.is_some() {
+        return Err(syn::Error::new(
+            span,
+            format!("duplicate `{option_name}` option"),
+        ));
+    }
+    *slot = Some(value);
+    Ok(())
+}
+
+fn set_flag(
+    slot: &mut bool,
+    value: bool,
+    option_name: &'static str,
+    span: proc_macro2::Span,
+) -> syn::Result<()> {
+    if *slot {
+        return Err(syn::Error::new(
+            span,
+            format!("duplicate `{option_name}` option"),
+        ));
+    }
+    *slot = value;
+    Ok(())
+}
+
+fn parse_string_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<String> {
+    Ok(meta.value()?.parse::<LitStr>()?.value())
+}
+
+fn parse_f32_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<f32> {
+    let value = meta.value()?;
+    if value.peek(LitFloat) {
+        value.parse::<LitFloat>()?.base10_parse::<f32>()
+    } else if value.peek(LitInt) {
+        value.parse::<LitInt>()?.base10_parse::<f32>()
+    } else {
+        Err(meta.error("expected a numeric literal"))
+    }
+}
+
+fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<bool> {
+    if meta.input.peek(Token![=]) {
+        Ok(meta.value()?.parse::<LitBool>()?.value)
+    } else {
+        Ok(true)
+    }
+}
+
+fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
+    if meta.input.peek(Token![=]) {
+        let expr = meta.value()?.parse::<Expr>()?;
+        let Expr::Path(ref expr_path) = expr else {
+            return Err(syn::Error::new(
+                expr.span(),
+                "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
+            ));
+        };
+        return Ok(FilterShapeOptions::from_shape_with_span(
+            expr_path.path.clone(),
+            expr.span(),
+        ));
+    }
+
+    let content;
+    parenthesized!(content in meta.input);
+    let type_path = content.parse::<TypePath>()?;
+    if !content.is_empty() {
+        return Err(content.error("expected exactly one filter shape path"));
+    }
+    let span = type_path.span();
+    Ok(FilterShapeOptions::from_shape_with_span(
+        type_path.path,
+        span,
+    ))
 }
 
 /// Filter field metadata for delegate generation.
@@ -112,8 +311,6 @@ pub(super) struct TableColumn {
 pub(super) struct FilterFieldMeta {
     /// The field name identifier
     pub(super) field_ident: Ident,
-    /// The filter component configuration
-    pub(super) filter_config: FilterComponents,
-    /// The field type (e.g., String, bool, Priority enum, chrono::DateTime)
-    pub(super) field_type: syn::Type,
+    /// The resolved filter shape configuration.
+    pub(super) filter_config: ResolvedFilterShape,
 }

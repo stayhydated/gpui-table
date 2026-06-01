@@ -1,5 +1,0 @@
-error: invalid decimal literal `oops` for `number_range(step = ...)`; use a plain decimal like `0.25` or a quoted decimal string like "0.25"
- --> tests/ui/invalid_number_range_literal.rs:6:45
-  |
-6 |     #[gpui_table(filter(number_range(step = "oops")))]
-  |                                             ^^^^^^

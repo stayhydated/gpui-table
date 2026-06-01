@@ -2,6 +2,8 @@ use strum::{Display, EnumString, IntoStaticStr};
 
 inventory::collect!(GpuiTableShape);
 
+pub use component_shape::{RustPath, RustType};
+
 /// Metadata for a table row type, collected via inventory.
 #[derive(Debug)]
 pub struct GpuiTableShape {
@@ -47,13 +49,22 @@ impl GpuiTableShape {
 pub struct FilterVariant {
     pub field_name: &'static str,
     pub filter_type: RegistryFilterType,
+    pub shape_path: RustPath,
+    pub component_path: RustPath,
 }
 
 impl FilterVariant {
-    pub const fn new(field_name: &'static str, filter_type: RegistryFilterType) -> Self {
+    pub const fn new(
+        field_name: &'static str,
+        filter_type: RegistryFilterType,
+        shape_path: RustPath,
+        component_path: RustPath,
+    ) -> Self {
         Self {
             field_name,
             filter_type,
+            shape_path,
+            component_path,
         }
     }
 }
@@ -71,7 +82,7 @@ pub enum RegistryFilterType {
 #[derive(Debug)]
 pub struct ColumnVariant {
     pub field_name: &'static str,
-    pub field_type: &'static str,
+    pub field_type: RustType,
     pub title: &'static str,
     pub width: f32,
     pub sortable: bool,
@@ -81,7 +92,7 @@ pub struct ColumnVariant {
 impl ColumnVariant {
     pub const fn new(
         field_name: &'static str,
-        field_type: &'static str,
+        field_type: RustType,
         title: &'static str,
         width: f32,
         sortable: bool,

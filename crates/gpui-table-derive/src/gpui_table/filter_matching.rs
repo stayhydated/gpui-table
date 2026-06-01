@@ -1,11 +1,9 @@
-use crate::components::FilterComponents;
 use crate::gpui_table::meta::FilterFieldMeta;
 
 use quote::quote;
-use syn::{GenericArgument, Ident, PathArguments, Type};
+use syn::Ident;
 
 /// Generate the matches_filters() method on the struct.
-/// This method checks if all filter values match the struct's fields.
 pub(super) fn generate_matches_filters_method(
     struct_name: &Ident,
     filter_fields: &[FilterFieldMeta],
@@ -19,110 +17,7 @@ pub(super) fn generate_matches_filters_method(
 
     let match_exprs: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
-        .map(|f| {
-            let field_ident = &f.field_ident;
-            let option_inner = option_inner_type(&f.field_type);
-            let value_ty = option_inner.unwrap_or(&f.field_type);
-            let is_option = option_inner.is_some();
-            let is_vec = vec_inner_type(value_ty).is_some();
-
-            match &f.filter_config {
-                FilterComponents::Text(_) => {
-                    if is_option {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .is_some_and(|value| filters.#field_ident.matches(value.as_ref()))
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        quote! { filters.#field_ident.matches(self.#field_ident.as_ref()) }
-                    }
-                }
-                FilterComponents::NumberRange(_) => {
-                    if is_option {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .map(|value| {
-                                        filters.#field_ident.matches(
-                                            &gpui_table::core::filter::ToDecimal::to_decimal(value),
-                                        )
-                                    })
-                                    .unwrap_or(false)
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        quote! { filters.#field_ident.matches(&gpui_table::core::filter::ToDecimal::to_decimal(&self.#field_ident)) }
-                    }
-                }
-                FilterComponents::DateRange(_) => {
-                    if is_option {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .map(|value| {
-                                        filters.#field_ident.matches(
-                                            &gpui_table::core::filter::ToNaiveDate::to_naive_date(value),
-                                        )
-                                    })
-                                    .unwrap_or(false)
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        quote! { filters.#field_ident.matches(&gpui_table::core::filter::ToNaiveDate::to_naive_date(&self.#field_ident)) }
-                    }
-                }
-                FilterComponents::Faceted(_) => {
-                    if is_option && is_vec {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .is_some_and(|values| {
-                                        values
-                                            .iter()
-                                            .any(|value| filters.#field_ident.matches(value))
-                                    })
-                            } else {
-                                true
-                            }
-                        }
-                    } else if is_vec {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .iter()
-                                    .any(|value| filters.#field_ident.matches(value))
-                            } else {
-                                true
-                            }
-                        }
-                    } else if is_option {
-                        quote! {
-                            if filters.#field_ident.is_active() {
-                                self.#field_ident
-                                    .as_ref()
-                                    .is_some_and(|value| filters.#field_ident.matches(value))
-                            } else {
-                                true
-                            }
-                        }
-                    } else {
-                        quote! { filters.#field_ident.matches(&self.#field_ident) }
-                    }
-                }
-            }
-        })
+        .map(|f| f.filter_config.matches_field_expr(&f.field_ident))
         .collect();
 
     quote! {
@@ -132,46 +27,4 @@ pub(super) fn generate_matches_filters_method(
             }
         }
     }
-}
-
-fn option_inner_type(ty: &Type) -> Option<&Type> {
-    let Type::Path(type_path) = ty else {
-        return None;
-    };
-
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Option" {
-        return None;
-    }
-
-    let PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
-
-    let GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
-}
-
-fn vec_inner_type(ty: &Type) -> Option<&Type> {
-    let Type::Path(type_path) = ty else {
-        return None;
-    };
-
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Vec" {
-        return None;
-    }
-
-    let PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
-
-    let GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
 }

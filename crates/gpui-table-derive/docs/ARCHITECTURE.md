@@ -24,7 +24,7 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 - `src/lib.rs`
   - Proc-macro entry points.
 - `src/components.rs`
-  - Parses built-in filter attribute syntax.
+  - Parses filter shape paths and resolves `_` generics against field types.
 - `src/filterable.rs`
   - Expansion for `#[derive(Filterable)]`.
 - `src/table_cell.rs`
@@ -52,9 +52,9 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
    - `filter(...)` requires struct-level `#[gpui_table(filters)]`
    - only one context-menu id source is allowed
    - `context_menu_route` and `context_menu_route_fn` are mutually exclusive
-   - `number_range(...)` literals and decimal strings are well formed
-   - built-in filter/type combinations are supported
-   - required workspace features are enabled for the selected filter behavior
+   - selected filter shapes implement the declared-shape and field
+     compatibility contracts
+   - required workspace features are enabled for the selected filter shapes
 1. Generate the main row/delegate code.
 1. Optionally generate filter entities, filter values, and matching logic.
 1. Optionally generate inventory registration.
@@ -84,10 +84,12 @@ Additional generated contracts:
 
 ## Internal Contracts
 
-- Built-in filter syntax is intentionally closed over the hard-coded variants
-  in `components.rs` and `filter_codegen/`. Implementing a new
-  `TableFilterComponent` elsewhere does not automatically make it selectable in
-  `#[gpui_table(filter(...))]`.
+- `filter(...)` accepts a shape type path. The generated code asserts
+  `DeclaredGpuiTableFilterShape`, `GpuiTableFilterShape`, and
+  `GpuiTableFilterShapeFor<Field>` at the field span.
+- Implementing `TableFilterComponent` alone does not make a widget selectable in
+  `#[gpui_table(filter(...))]`; the table filter shape contract must also be
+  implemented.
 - `TableDataLoader` is generated for every delegate so downstream code can call
   a uniform loader surface.
 - Filter builder helpers generate both client-side and loader-driven wiring.
@@ -96,9 +98,9 @@ Additional generated contracts:
 - `Filterable<bool>` is treated as a normal faceted filter path, not a special
   runtime exception.
 - Optional and vector faceted fields are generated as `FacetedValue<T>` and
-  `FacetedFilter<T>` for `Option<T>` and `Vec<T>` fields. Matching treats
-  `None` or a vector without any selected value as a non-match only when the
-  facet is active.
+  `gpui_table_component::FacetedFilter<T>` for `Option<T>` and `Vec<T>` fields.
+  Matching treats `None` or a vector without any selected value as a non-match
+  only when the facet is active.
 
 ## Test And Generated Surfaces
 

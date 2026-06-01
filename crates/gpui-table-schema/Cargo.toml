@@ -12,6 +12,7 @@ repository.workspace = true
 readme = "README.md"
 
 [dependencies]
+component-shape = { workspace = true }
 inventory = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 

@@ -64,6 +64,8 @@ pub struct TextFilter {
     last_placeholder: Option<String>,
 }
 
+impl component_shape::ComponentShapeMetadata for TextFilter {}
+
 /// Extension trait for configuring TextFilter via method chaining.
 pub trait TextFilterExt: Sized {
     /// Only allow alphabetic characters (a-z, A-Z) in the input.

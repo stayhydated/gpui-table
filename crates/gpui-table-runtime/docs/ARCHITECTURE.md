@@ -26,6 +26,9 @@ runtime facade that generated filter code compiles against.
     `TableRowGeneratedContextMenu`, `default_render_cell`, and `default_render_row`.
 - `src/load.rs`
   - `TableLoader`, `TableDataLoader`, and the hidden `LoadMoreDelegate` bridge.
+- `src/shape.rs`
+  - Table-specific filter shape contracts, built-in component shape impls, and
+    field compatibility/matching behavior.
 - `src/generated_filters.rs`
   - Stable runtime target for generated filter code.
   - Re-exports built-in filter components, localization helpers, and generic
@@ -33,9 +36,13 @@ runtime facade that generated filter code compiles against.
 
 ## Internal Contracts
 
-- `generated_filters` is a compatibility surface, not just a convenience
-  module. The derive crate should keep targeting it instead of reaching into
-  `gpui-table-component` directly.
+- `generated_filters` is a stable generated-code surface, not just a
+  convenience module. The derive crate should keep targeting it instead of
+  reaching into `gpui-table-component` directly.
+- `shape::GpuiTableFilterShape` is the generated-code construction contract for
+  filter widgets. Built-in filter component types are their own shape types.
+- `shape::GpuiTableFilterShapeFor<Field>` owns field-type compatibility and
+  client-side matching semantics for each shape.
 - Generated Fluent labels and messages route through `generated_filters`
   localization helpers so derive output does not depend on component i18n paths.
   Runtime render paths pass GPUI context to those helpers; context-free table
@@ -52,8 +59,8 @@ runtime facade that generated filter code compiles against.
 
 1. `gpui-table-derive` emits delegates, row traits, and filter code against the
    types exported from this crate.
-1. Built-in filters are instantiated through `generated_filters`, which
-   forwards to `gpui-table-component`.
+1. Built-in filters are instantiated through `shape::GpuiTableFilterShape`,
+   which forwards to `gpui-table-component`.
 1. Client-side filtering stores typed wrapper values on the generated delegate
    and then evaluates `Matchable<F>` against in-memory rows.
 1. Loader-driven tables also store those wrapper values on the delegate, then

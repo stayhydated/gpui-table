@@ -49,6 +49,8 @@ pub struct FacetedFilter<T: FilterValue> {
     _marker: PhantomData<T>,
 }
 
+impl<T: FilterValue> component_shape::ComponentShapeMetadata for FacetedFilter<T> {}
+
 #[derive(Clone)]
 struct FacetedOptionGroup {
     title: Option<String>,

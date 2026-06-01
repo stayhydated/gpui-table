@@ -30,14 +30,14 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 
 `derive` and `chrono` are enabled by default. Add:
 
-- `rust_decimal` for `filter(number_range(...))`
+- `rust_decimal` for `gpui_table_component::NumberRangeFilter`
 - `inventory` for `GpuiTableShape` registration and prototyping/codegen
 - `fluent` for localized table titles and faceted labels through `es-fluent`
 - `spacetimedb` for range filtering over supported SpacetimeDB temporal types
 
 ## Quick Start
 
-`number_range(...)` requires the `rust_decimal` feature.
+`gpui_table_component::NumberRangeFilter` requires the `rust_decimal` feature.
 
 ```rs
 use gpui::{Context, Window};
@@ -54,13 +54,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(text()))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(faceted()))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -138,7 +138,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(faceted()))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```
@@ -169,7 +169,7 @@ The main walkthrough files are:
 ## Feature Flags
 
 - `derive` (default): re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
-- `chrono` (default): date cell rendering and `filter(date_range())`
+- `chrono` (default): date cell rendering and `gpui_table_component::DateRangeFilter`
 - `fluent`: localized titles and faceted labels through `es-fluent`
 - `inventory`: inventory-backed `GpuiTableShape` registration for tooling
 - `rust_decimal`: numeric range filtering and decimal-backed helpers

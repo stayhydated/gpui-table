@@ -26,16 +26,11 @@ use std::collections::HashSet;
 
 /// Constructor interface shared by the built-in table filter components.
 ///
-/// Generated `XxxFilterEntities` use this trait to instantiate the built-in
-/// filter components supported by `#[derive(GpuiTable)]`.
-///
-/// Implementing this trait can still be useful for standalone components in
-/// your own UI code or for custom filter collections you build manually.
-/// The derive macro currently only wires the built-in `filter(text())`,
-/// `filter(number_range())`, `filter(date_range())`, and `filter(faceted())`
-/// syntaxes; implementing
-/// `TableFilterComponent` does not register a new `#[gpui_table(filter(...))]`
-/// option on its own.
+/// Implementing this trait is useful for standalone components in your own UI
+/// code or for custom filter collections you build manually.
+/// The derive macro consumes filter shapes, such as
+/// `gpui_table_component::TextFilter`; generated filter entities construct
+/// those shapes through `gpui_table::runtime::shape::GpuiTableFilterShape`.
 pub trait TableFilterComponent: Sized {
     /// The type used to store the filter's current value/state.
     type Value: Default + Clone + Send + 'static;

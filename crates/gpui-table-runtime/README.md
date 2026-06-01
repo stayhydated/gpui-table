@@ -44,11 +44,15 @@ impl TableRowStyle for Item {
 - `DisplayCell` and `FormattedCell` wrappers for generic value-object rendering
 - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
 - `TableLoader` and `TableDataLoader`
+- `shape`, the table filter shape contract used by generated filter entities
 - `generated_filters`, which re-exports the built-in filter UI, localization helpers, `FilterEntitiesExt`, `TableFilterComponent`, and `QueryFilterValue`
 
 The `generated_filters` module is the stable runtime target for code emitted by
 `#[derive(GpuiTable)]`. Use it when you want manual and generated filter flows
 to share the same runtime surface.
+Built-in filter component types such as `gpui_table_component::TextFilter` are
+their own shape types; generated entities construct them through
+`shape::GpuiTableFilterShape`.
 
 ## Feature Flags
 

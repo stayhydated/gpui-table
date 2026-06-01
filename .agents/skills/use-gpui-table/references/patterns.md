@@ -10,7 +10,7 @@ gpui-table = { version = "*", features = ["fluent", "rust_decimal"] }
 ```
 
 - `derive` and `chrono` are default features.
-- `rust_decimal` is required for `filter(number_range(...))`.
+- `rust_decimal` is required for `gpui_table_component::NumberRangeFilter`.
 - `fluent` localizes table titles and faceted labels with typed `es-fluent` resources.
 - `spacetimedb` enables supported temporal range filtering helpers.
 
@@ -31,13 +31,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(text()))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(faceted()))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -57,22 +57,19 @@ With `#[gpui_table(filters)]`, the derive generates:
 - `<Row>FilterValues`
 - `Matchable<<Row>FilterValues>` for strongly typed client-side filtering
 
-## Built-In Filter Syntax
+## Built-In Filter Shapes
 
 ```rust
-#[gpui_table(filter(text()))]
+#[gpui_table(filter(gpui_table_component::TextFilter))]
 name: String,
 
-#[gpui_table(filter(number_range()))]
+#[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
 age: u8,
 
-#[gpui_table(filter(number_range(min = 0, max = 120)))]
-score: u8,
-
-#[gpui_table(filter(date_range()))]
+#[gpui_table(filter(gpui_table_component::DateRangeFilter))]
 created_at: chrono::DateTime<chrono::Utc>,
 
-#[gpui_table(filter(faceted()))]
+#[gpui_table(filter(gpui_table_component::FacetedFilter::<bool>))]
 active: bool,
 ```
 
@@ -109,7 +106,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(faceted()))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```

@@ -2,6 +2,7 @@ mod cell;
 pub mod generated_filters;
 mod load;
 mod row;
+pub mod shape;
 
 pub use cell::{DisplayCell, FormattedCell, TableCell};
 pub use generated_filters::FilterEntitiesExt;

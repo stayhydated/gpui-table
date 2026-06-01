@@ -44,6 +44,9 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `ResetFilters`
 - `TableStatusBar`
 
+The filter component types are also the built-in `#[gpui_table(filter(...))]`
+shape types consumed through `gpui-table-runtime`.
+
 All filter widgets expose chainable extension-trait setters for styling or
 behavior tweaks.
 
@@ -75,8 +78,9 @@ That means you can:
 - serialize either raw component values or generated wrapper values with `QueryFilterValue`
 
 Custom `TableFilterComponent` implementations are a runtime integration point.
-They are useful for manual filter collections, but they do not add a new
-`#[gpui_table(filter(...))]` syntax on their own.
+They are useful for manual filter collections, but generated tables also require
+a `GpuiTableFilterShape` implementation before a component can be used in
+`#[gpui_table(filter(...))]`.
 
 ## Feature Flags
 

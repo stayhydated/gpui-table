@@ -29,6 +29,7 @@ story = [
 
 [dependencies]
 chrono = { features = [ "serde" ], optional = true, workspace = true }
+component-shape = { workspace = true }
 es-fluent = { features = [ "derive" ], workspace = true }
 es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }

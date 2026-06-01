@@ -20,23 +20,23 @@ use gpui_table::GpuiTable;
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(text()))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 90., filter(faceted()))]
+    #[gpui_table(width = 90., filter(gpui_table_component::FacetedFilter::<bool>))]
     pub active: bool,
 }
 ```
 
-Built-in filter syntaxes:
+Built-in filter shapes:
 
-- `filter(text())`
-- `filter(number_range(...))`
-- `filter(date_range())`
-- `filter(faceted(...))`
+- `gpui_table_component::TextFilter`
+- `gpui_table_component::NumberRangeFilter`
+- `gpui_table_component::DateRangeFilter`
+- `gpui_table_component::FacetedFilter<T>`
 
 Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
 filter state uses `T` in all cases, so optional and vector fields can facet over
@@ -45,8 +45,8 @@ present values without requiring `Option<T>` or `Vec<T>` itself to implement
 
 Feature requirements are validated during macro expansion:
 
-- `number_range(...)` requires `gpui-table/rust_decimal`
-- `date_range()` requires `gpui-table/chrono`
+- `gpui_table_component::NumberRangeFilter` requires `gpui-table/rust_decimal`
+- `gpui_table_component::DateRangeFilter` requires `gpui-table/chrono`
 - supported SpacetimeDB range usage requires `gpui-table/spacetimedb`
 
 ### `#[derive(Filterable)]`

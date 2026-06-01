@@ -1,0 +1,5 @@
+error[E0433]: cannot find `filters` in `gpui_table_component`
+ --> tests/ui/legacy_filter_alias_rejected.rs:6:47
+  |
+6 |     #[gpui_table(filter(gpui_table_component::filters::Text))]
+  |                                               ^^^^^^^ could not find `filters` in `gpui_table_component`

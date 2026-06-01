@@ -31,9 +31,9 @@ Start from the user-facing facade. Most application code uses `gpui-table` for
 derives, generated types, and runtime helpers:
 
 1. Enable the smallest feature set needed. `derive` and `chrono` are default
-   features, `rust_decimal` supports `filter(number_range(...))`, `fluent`
-   supports localized labels through `es-fluent`, and `spacetimedb` supports
-   SpacetimeDB temporal range filtering.
+   features, `rust_decimal` supports `gpui_table_component::NumberRangeFilter`,
+   `fluent` supports localized labels through `es-fluent`, and `spacetimedb`
+   supports SpacetimeDB temporal range filtering.
 2. Define row structs with `#[derive(Clone, GpuiTable)]`.
 3. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
@@ -81,11 +81,11 @@ Generated names follow the row type:
 Use built-in filters through field attributes when they match the application
 workflow:
 
-- `filter(text)` for text search.
-- `filter(faceted)` for enum-like `T`, `Option<T>`, or `Vec<T>` fields when
-  `T` derives or implements `Filterable`.
-- `filter(number_range(...))` for numeric ranges.
-- `filter(date_range(...))` for temporal ranges.
+- `filter(gpui_table_component::TextFilter)` for text search.
+- `filter(gpui_table_component::FacetedFilter::<T>)` for enum-like `T`,
+  `Option<T>`, or `Vec<T>` fields when `T` derives or implements `Filterable`.
+- `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges.
+- `filter(gpui_table_component::DateRangeFilter)` for temporal ranges.
 
 Keep localized labels explicit. Use `#[filter(fluent)]` or the matching table
 label attributes only when the application owns an `es-fluent` localizer and the

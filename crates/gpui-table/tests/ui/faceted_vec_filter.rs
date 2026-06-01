@@ -9,14 +9,14 @@ enum Role {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct VecFacetedRow {
-    #[gpui_table(filter(faceted()))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Role>))]
     roles: Vec<Role>,
 }
 
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct OptionalVecFacetedRow {
-    #[gpui_table(filter(faceted()))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Role>))]
     roles: Option<Vec<Role>>,
 }
 

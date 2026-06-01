@@ -1,5 +1,0 @@
-error: number_range values cannot use numeric suffixes; use `1.25` or "1.25"
- --> tests/ui/invalid_number_range_suffix.rs:6:45
-  |
-6 |     #[gpui_table(filter(number_range(step = 1f32)))]
-  |                                             ^^^^

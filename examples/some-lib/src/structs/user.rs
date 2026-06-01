@@ -38,29 +38,33 @@ pub struct User {
     #[allow(dead_code)]
     pub id: uuid::Uuid,
 
-    #[gpui_table(sortable, width = 150., filter(text()))]
+    #[gpui_table(sortable, width = 150., filter(gpui_table_component::TextFilter))]
     #[dummy(faker = "Name()")]
     pub name: String,
 
-    #[gpui_table(sortable, width = 80., filter(number_range()))]
+    #[gpui_table(sortable, width = 80., filter(gpui_table_component::NumberRangeFilter))]
     #[dummy(faker = "18..67")]
     pub age: u8,
 
-    #[gpui_table(sortable, width = 150., filter(number_range()))]
+    #[gpui_table(
+        sortable,
+        width = 150.,
+        filter(gpui_table_component::NumberRangeFilter)
+    )]
     #[dummy(faker = "PositiveDecimal")]
     pub debt: Decimal,
 
-    #[gpui_table(width = 200., filter(text()))]
+    #[gpui_table(width = 200., filter(gpui_table_component::TextFilter))]
     #[dummy(faker = "SafeEmail()")]
     pub email: String,
 
-    #[gpui_table(width = 70., filter(faceted()))]
+    #[gpui_table(width = 70., filter(gpui_table_component::FacetedFilter::<bool>))]
     pub active: bool,
 
-    #[gpui_table(width = 100., filter(faceted()))]
+    #[gpui_table(width = 100., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 
-    #[gpui_table(sortable, width = 300., filter(date_range()))]
+    #[gpui_table(sortable, width = 300., filter(gpui_table_component::DateRangeFilter))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
 }

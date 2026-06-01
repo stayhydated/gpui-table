@@ -1,5 +1,38 @@
-error: `filter(date_range())` on `String` requires a field type supported by `gpui_table::core::filter::ToNaiveDate`; built-in support covers `chrono::NaiveDate`, `chrono::NaiveDateTime`, `chrono::DateTime<_>`, and `Option<...>` of those
- --> tests/ui/invalid_date_range_type.rs:7:11
+error[E0277]: table filter shape `DateRangeFilter` is not compatible with field value `std::string::String`
+ --> tests/ui/invalid_date_range_type.rs:6:25
   |
-7 |     name: String,
-  |           ^^^^^^
+6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `DateRangeFilter`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type
+  = help: `DateRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::datetime::DateTime<Tz>>>
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::date::NaiveDate>>
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>>
+            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::datetime::DateTime<Tz>>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::date::NaiveDate>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>
+            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
+note: required by a bound in `__gpui_table_assert_name_filter_shape_compatibility`
+ --> tests/ui/invalid_date_range_type.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^ required by this bound in `__gpui_table_assert_name_filter_shape_compatibility`
+
+error[E0277]: table filter shape `DateRangeFilter` is not compatible with field value `std::string::String`
+ --> tests/ui/invalid_date_range_type.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `DateRangeFilter`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type
+  = help: `DateRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::datetime::DateTime<Tz>>>
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::date::NaiveDate>>
+            GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>>
+            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::datetime::DateTime<Tz>>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::date::NaiveDate>
+            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>
+            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>

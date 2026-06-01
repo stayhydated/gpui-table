@@ -77,6 +77,8 @@ pub struct DateRangeFilter {
     _subscriptions: Vec<Subscription>,
 }
 
+impl component_shape::ComponentShapeMetadata for DateRangeFilter {}
+
 impl TableFilterComponent for DateRangeFilter {
     type Value = (Option<NaiveDate>, Option<NaiveDate>);
 

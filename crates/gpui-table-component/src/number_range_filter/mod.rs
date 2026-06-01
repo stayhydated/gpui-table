@@ -113,6 +113,8 @@ pub struct NumberRangeFilter {
     last_max_placeholder: Option<String>,
 }
 
+impl component_shape::ComponentShapeMetadata for NumberRangeFilter {}
+
 impl TableFilterComponent for NumberRangeFilter {
     type Value = (Option<Decimal>, Option<Decimal>);
 

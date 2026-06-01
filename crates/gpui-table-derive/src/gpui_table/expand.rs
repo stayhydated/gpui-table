@@ -1,7 +1,7 @@
 use crate::gpui_table::delegate::generate_delegate;
+use crate::gpui_table::filter_codegen::get_filter_type_expr;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
-use crate::gpui_table::filter_codegen::{get_filter_type_expr, validate_filter_config};
 use crate::gpui_table::filter_entities::generate_filter_entities;
 use crate::gpui_table::filter_matching::generate_matches_filters_method;
 use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
@@ -173,6 +173,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let mut into_usize_arms = Vec::new();
     let mut filters_init = Vec::new();
     let mut filter_fields: Vec<FilterFieldMeta> = Vec::new();
+    let mut filter_shape_type_checks = Vec::new();
 
     #[cfg(feature = "inventory")]
     let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
@@ -259,9 +260,11 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         });
 
         // Only process filter attributes when filters are enabled at struct level
-        if filters_enabled && let Some(ref filter_config) = field.filter {
-            validate_filter_config(filter_config, ident, &field.ty)?;
-            let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
+        if filters_enabled && let Some(ref filter_options) = field.filter {
+            let filter_config = filter_options.resolve(ident.to_string(), field.ty.clone());
+            filter_config.validate_feature_gate()?;
+            filter_shape_type_checks.push(filter_config.type_check_tokens());
+            let filter_type_ts = get_filter_type_expr(&filter_config);
 
             filters_init.push(quote! {
                 gpui_table::core::filter::FilterConfig {
@@ -274,18 +277,21 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             filter_fields.push(FilterFieldMeta {
                 field_ident: ident.clone(),
                 filter_config: filter_config.clone(),
-                field_type: field.ty.clone(),
             });
 
             #[cfg(feature = "inventory")]
             {
                 let field_name_str = ident.to_string();
-                let registry_filter_type = get_registry_filter_type(filter_config);
+                let registry_filter_type = get_registry_filter_type(&filter_config);
+                let shape_path = filter_config.shape_path_tokens();
+                let component_path = filter_config.component_path_tokens();
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::schema::registry::FilterVariant::new(
                         #field_name_str,
                         #registry_filter_type,
+                        #shape_path,
+                        #component_path,
                     )
                 });
             }
@@ -337,7 +343,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             column_variant_constructions.push(quote! {
                 gpui_table::schema::registry::ColumnVariant::new(
                     #field_name_str,
-                    #field_type_str,
+                    gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str),
                     #title_str,
                     #width,
                     #sortable,
@@ -495,6 +501,8 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let shape_impl = quote! {};
 
     Ok(quote! {
+        #(#filter_shape_type_checks)*
+
         #column_enum
 
         impl gpui_table::TableRowMeta for #struct_name {
