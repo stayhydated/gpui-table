@@ -2,7 +2,7 @@ use strum::{Display, EnumString, IntoStaticStr};
 
 inventory::collect!(GpuiTableShape);
 
-pub use component_shape::{RustPath, RustType};
+pub use component_shape::{ComponentShapeUse, RustPath, RustType};
 
 /// Metadata for a table row type, collected via inventory.
 #[derive(Debug)]
@@ -48,6 +48,7 @@ impl GpuiTableShape {
 /// Metadata for a single filter in a table.
 #[derive(Debug)]
 pub struct FilterVariant {
+    pub shape_use: ComponentShapeUse,
     pub field_name: &'static str,
     pub filter_type: RegistryFilterType,
     pub shape_path: RustPath,
@@ -61,7 +62,9 @@ impl FilterVariant {
         shape_path: RustPath,
         component_path: RustPath,
     ) -> Self {
+        let shape_use = ComponentShapeUse::new(field_name, shape_path);
         Self {
+            shape_use,
             field_name,
             filter_type,
             shape_path,
@@ -121,3 +124,27 @@ pub enum ColumnFixed {
 }
 
 pub use inventory;
+
+#[cfg(test)]
+mod tests {
+    use super::{FilterVariant, RegistryFilterType, RustPath};
+
+    #[test]
+    fn filter_variant_records_neutral_shape_use_metadata() {
+        let variant = FilterVariant::new(
+            "status",
+            RegistryFilterType::Faceted,
+            RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
+            RustPath::from_macro_tokens_unchecked("crate::StatusFilter"),
+        );
+
+        assert_eq!(variant.shape_use.field_name(), "status");
+        assert_eq!(
+            variant.shape_use.shape_path().as_str(),
+            "crate::StatusFilterShape"
+        );
+        assert_eq!(variant.field_name, "status");
+        assert_eq!(variant.shape_path.as_str(), "crate::StatusFilterShape");
+        assert_eq!(variant.component_path.as_str(), "crate::StatusFilter");
+    }
+}

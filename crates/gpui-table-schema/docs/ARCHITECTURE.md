@@ -27,6 +27,9 @@ table shapes so tooling can consume it without inheriting GPUI dependencies.
   `inventory` directly from macro expansion.
 - `ColumnVariant::field_type` uses `component_shape::RustType` so tooling can
   recognize Rust syntax metadata without treating it as an untyped string.
+- `FilterVariant::shape_use` stores the backend-neutral field-to-shape fact as
+  `component_shape::ComponentShapeUse`; compatibility fields still expose the
+  field name and shape path directly.
 - `FilterVariant::component_path` uses `component_shape::RustPath` to preserve
   the `gpui-table-component` filter component generated for a field.
 - `GpuiTableShape::source_path` preserves the original `file!()` path because
