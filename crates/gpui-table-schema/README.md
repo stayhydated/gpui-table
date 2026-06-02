@@ -36,7 +36,7 @@ In normal application code, those registrations are produced by
 - `FilterConfig`, `FilterType`, `FacetedFilterOption`, and `FacetedFilterIcon`
 - `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
 - `RustPath` and `RustType` for Rust syntax captured from macro-generated schema metadata
-- the `inventory` re-export used to collect and iterate registered shapes
+- the `inventory` re-export for collecting and iterating registered shapes
 
 This crate intentionally does not depend on `gpui` or `gpui-component`.
 

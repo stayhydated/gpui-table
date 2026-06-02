@@ -6,12 +6,13 @@ fn ui_compile_fail() {
     t.pass("tests/ui/faceted_vec_filter.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
-    t.compile_fail("tests/ui/invalid_load_more_signature.rs");
+    t.compile_fail("tests/ui/invalid_gpui_table_impl_arguments.rs");
+    t.compile_fail("tests/ui/invalid_gpui_table_impl_target.rs");
     t.compile_fail("tests/ui/invalid_context_menu_route_without_row_id.rs");
     t.compile_fail("tests/ui/invalid_context_menu_row_id_field.rs");
     t.compile_fail("tests/ui/invalid_context_menu_route_and_route_fn.rs");
     t.compile_fail("tests/ui/invalid_context_menu_multiple_id_fields.rs");
-    t.compile_fail("tests/ui/legacy_filter_alias_rejected.rs");
+    t.compile_fail("tests/ui/invalid_filter_shape_path.rs");
     t.compile_fail("tests/ui/invalid_text_filter_type.rs");
     t.compile_fail("tests/ui/invalid_faceted_filter_type.rs");
     t.compile_fail("tests/ui/invalid_faceted_option_type.rs");

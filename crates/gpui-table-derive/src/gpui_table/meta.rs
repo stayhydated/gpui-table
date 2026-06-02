@@ -27,12 +27,12 @@ pub(super) struct TableMeta {
     pub(super) custom_context_menu: Option<Override<bool>>,
 
     /// Generates a default context-menu link entry using this field as row id.
-    /// Must be used together with `context_menu_route`.
+    /// Must be paired with `context_menu_route`.
     #[darling(default)]
     pub(super) context_menu_row_id: Option<String>,
 
-    /// Route template used for generated row context-menu link.
-    /// Must contain `{id}` placeholder and be used with `context_menu_row_id`.
+    /// Route template for generated row context-menu link.
+    /// Must contain `{id}` placeholder and be paired with `context_menu_row_id`.
     #[darling(default)]
     pub(super) context_menu_route: Option<String>,
 
@@ -40,13 +40,13 @@ pub(super) struct TableMeta {
     #[darling(default)]
     pub(super) context_menu_label: Option<String>,
 
-    /// Function path used to build a route string at runtime.
-    /// Signature should be compatible with `fn(&T) -> impl ToString`.
+    /// Function path that builds a route string at runtime.
+    /// Signature should match `fn(&T) -> impl ToString`.
     #[darling(default)]
     pub(super) context_menu_route_fn: Option<syn::Path>,
 
-    /// Function path used to build a label string at runtime.
-    /// Signature should be compatible with `fn(&T) -> impl ToString`.
+    /// Function path that builds a label string at runtime.
+    /// Signature should match `fn(&T) -> impl ToString`.
     #[darling(default)]
     pub(super) context_menu_label_fn: Option<syn::Path>,
 

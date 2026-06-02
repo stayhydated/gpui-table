@@ -22,9 +22,6 @@ not a runtime layer.
   - `TableShapeAdapter`, `TableLayout`, `TableParts`, and `TableCodegenError`.
 - `src/column.rs`
   - Column iteration and column-level generation helpers.
-- `src/imports.rs`
-  - Compatibility re-export of `component_shape_codegen::imports`, which owns
-    import tracking, deduplication, and grouped `use` rendering.
 - `src/identities.rs`
   - Table/story identifier derivation and validation.
 - `src/source_path.rs`
@@ -59,5 +56,5 @@ not a runtime layer.
 - Filter-enabled, loader-driven stories wire `XxxFilterEntities::build_for_table_loader(...)`.
 - Generated stories call the inherent `all_filters()` helper on the filter
   entity set, which avoids forcing a trait import into every generated file.
-- `examples/prototyping/output` is the canonical generated surface used to
-  validate these assumptions in the workspace.
+- `examples/prototyping/output` is the canonical generated surface that
+  validates these assumptions in the workspace.

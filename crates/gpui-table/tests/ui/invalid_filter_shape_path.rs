@@ -2,8 +2,8 @@ use gpui_table::GpuiTable;
 
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
-struct LegacyFilterAliasRejected {
-    #[gpui_table(filter(gpui_table_component::filters::Text))]
+struct InvalidFilterShapePath {
+    #[gpui_table(filter(gpui_table_component::MissingFilter))]
     name: String,
 }
 

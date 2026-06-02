@@ -8,14 +8,8 @@ use proc_macro::TokenStream;
 
 /// Attribute macro for table delegate impl blocks.
 ///
-/// This macro processes an `impl` block for a table delegate and generates
-/// the appropriate `TableDelegate` trait method implementations based on
-/// inner attributes.
-///
-/// # Supported Attributes
-///
-/// - `#[load_more]` - Marks a method as the load_more handler
-/// - `#[threshold]` - Marks a const as the load_more threshold value
+/// This macro processes a `TableLoader` impl for a generated table delegate and
+/// wires it into the generated `TableDelegate` implementation.
 ///
 /// Note: the table struct must set `#[gpui_table(load_more)]` for the generated
 /// delegate to call these load_more hooks.
@@ -23,12 +17,12 @@ use proc_macro::TokenStream;
 /// # Example
 ///
 /// ```ignore
-/// #[gpui_table_impl]
-/// impl ProductTableDelegate {
-///     #[threshold]
-///     const LOAD_MORE_THRESHOLD: usize = 20;
+/// use gpui_table::runtime::TableLoader;
 ///
-///     #[load_more]
+/// #[gpui_table_impl]
+/// impl TableLoader for ProductTableDelegate {
+///     const THRESHOLD: usize = 20;
+///
 ///     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
 ///         // Load more data...
 ///     }

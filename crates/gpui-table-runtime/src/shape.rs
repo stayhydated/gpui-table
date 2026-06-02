@@ -31,13 +31,13 @@ pub trait GpuiTableFilterShape: component_shape::ComponentShapeMetadata {
 /// Marker for filter shapes declared by a component crate or user crate.
 #[diagnostic::on_unimplemented(
     message = "table filter shape `{Self}` must implement `DeclaredGpuiTableFilterShape`",
-    note = "use a shape from `gpui_table_component::filters` or implement the table filter shape contract for your custom shape"
+    note = "use a built-in shape such as `gpui_table_component::TextFilter` or implement the table filter shape contract for your custom shape"
 )]
 pub trait DeclaredGpuiTableFilterShape: GpuiTableFilterShape {}
 
-/// Compatibility and matching behavior for a shape used against a table field.
+/// Field support and matching behavior for a shape used against a table field.
 #[diagnostic::on_unimplemented(
-    message = "table filter shape `{Self}` is not compatible with field value `{Field}`",
+    message = "table filter shape `{Self}` does not support field value `{Field}`",
     note = "implement `GpuiTableFilterShapeFor<{Field}>` for `{Self}`, or choose a filter shape that supports the field type"
 )]
 pub trait GpuiTableFilterShapeFor<Field>: GpuiTableFilterShape {

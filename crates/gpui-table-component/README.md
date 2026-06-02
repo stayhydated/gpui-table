@@ -4,7 +4,7 @@
 `TableStatusBar` used across the `gpui-table` ecosystem.
 
 Use this crate when you want direct control over filter UI composition.
-Most application code should still start with `gpui-table`.
+Most application code should start with `gpui-table`.
 
 ## Use This Crate When
 

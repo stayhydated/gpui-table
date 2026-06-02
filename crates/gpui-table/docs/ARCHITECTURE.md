@@ -37,7 +37,7 @@ It also re-exports the commonly used runtime traits at the crate root and, when
   generated filter code. The facade must continue re-exporting the runtime crate
   unchanged enough for that path to remain valid.
 - `__deps` and `__private` are hidden from normal user documentation, but they
-  are still semver-sensitive because proc-macro output depends on them.
+  are semver-sensitive because proc-macro output depends on them.
 - Feature flags on this crate are fan-out switches. Their main job is to keep
   `core`, `runtime`, and `derive` on the same capability set.
 

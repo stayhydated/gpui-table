@@ -87,8 +87,8 @@ should use typed Fluent resources.
 ### `#[derive(TableCell)]`
 
 Generates a `TableCell` impl for single-field wrapper types and unit enums.
-This is useful when a column should render through an inner type but you still
-want a dedicated wrapper in your domain model.
+This is useful when a column should render through an inner type and keep a
+dedicated wrapper in your domain model.
 
 Use `#[table_cell(display)]` when the wrapper's own `Display` implementation
 should be used instead of delegating to the inner field, or

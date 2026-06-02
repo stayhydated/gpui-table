@@ -192,7 +192,7 @@ impl ResolvedFilterShape {
             ],
             quote! { #runtime_crate::shape::GpuiTableFilterShapeFor },
             "declared_filter_shape",
-            "filter_shape_compatibility",
+            "filter_shape_field_support",
         )
     }
 

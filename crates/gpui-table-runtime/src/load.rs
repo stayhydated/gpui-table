@@ -3,8 +3,8 @@ use gpui_component::table::{TableDelegate, TableState};
 
 /// Internal trait implemented by `#[gpui_table_impl]` to provide loading behavior.
 ///
-/// This trait bridges user-defined loading logic (via `TableLoader` trait or
-/// freestanding `#[load_more]` methods) to the generated `TableDelegate` implementation.
+/// This trait bridges user-defined `TableLoader` logic to the generated
+/// `TableDelegate` implementation.
 pub trait LoadMoreDelegate: TableDelegate {
     /// Check if there is more data to load.
     fn has_more(&self, app: &App) -> bool;

@@ -28,7 +28,7 @@ runtime facade that generated filter code compiles against.
   - `TableLoader`, `TableDataLoader`, and the hidden `LoadMoreDelegate` bridge.
 - `src/shape.rs`
   - Table-specific filter shape contracts, built-in component shape impls, and
-    field compatibility/matching behavior.
+    field support and matching behavior.
 - `src/generated_filters.rs`
   - Stable runtime target for generated filter code.
   - Re-exports built-in filter components, localization helpers, and generic
@@ -41,7 +41,7 @@ runtime facade that generated filter code compiles against.
   reaching into `gpui-table-component` directly.
 - `shape::GpuiTableFilterShape` is the generated-code construction contract for
   filter widgets. Built-in filter component types are their own shape types.
-- `shape::GpuiTableFilterShapeFor<Field>` owns field-type compatibility and
+- `shape::GpuiTableFilterShapeFor<Field>` owns field-type support and
   client-side matching semantics for each shape.
 - Generated Fluent labels and messages route through `generated_filters`
   localization helpers so derive output does not depend on component i18n paths.

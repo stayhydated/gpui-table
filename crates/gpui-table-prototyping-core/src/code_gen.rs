@@ -5,9 +5,9 @@ use thiserror::Error;
 
 use crate::{
     identities::{ShapeIdentities, TableIdentities as _, TableIdentitiesExt as _, parse_ident},
-    imports::{Alias, ImportItem, ImportSet},
     source_path::source_path_to_use_path,
 };
+use component_shape_codegen::imports::{Alias, ImportItem, ImportSet};
 
 /// Imports every generated table story needs regardless of configuration.
 const FRAMEWORK_IMPORTS: &[ImportItem] = &[

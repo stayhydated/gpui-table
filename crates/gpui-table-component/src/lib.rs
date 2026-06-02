@@ -32,7 +32,7 @@ use std::collections::HashSet;
 /// `gpui_table_component::TextFilter`; generated filter entities construct
 /// those shapes through `gpui_table::runtime::shape::GpuiTableFilterShape`.
 pub trait TableFilterComponent: Sized {
-    /// The type used to store the filter's current value/state.
+    /// The filter's current value/state type.
     type Value: Default + Clone + Send + 'static;
 
     /// The filter type identifier for registry purposes.

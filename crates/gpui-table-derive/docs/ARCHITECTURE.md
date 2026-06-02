@@ -53,8 +53,8 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
    - `filter(...)` requires struct-level `#[gpui_table(filters)]`
    - only one context-menu id source is allowed
    - `context_menu_route` and `context_menu_route_fn` are mutually exclusive
-   - selected filter shapes implement the declared-shape and field
-     compatibility contracts
+   - selected filter shapes implement the declared-shape and field support
+     contracts
    - required workspace features are enabled for the selected filter shapes
 1. Generate the main row/delegate code.
 1. Optionally generate filter entities, filter values, and matching logic.

@@ -21,7 +21,7 @@ The project is organized around three priorities:
 gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"] }
 ```
 
-## Compatibility
+## Dependency Matrix
 
 | `gpui-table` | `gpui-component` | `gpui` |
 | :----------- | :--------------- | :----- |
@@ -90,9 +90,9 @@ tooling and code generation.
 
 ### Table cells for value objects
 
-Single-field wrappers still render by delegating to their inner value by
-default. When a wrapper should render through its own display implementation or
-a formatter, use `#[table_cell(display)]` or `#[table_cell(format = ...)]`.
+Single-field wrappers render by delegating to their inner value by default.
+When a wrapper should render through its own display implementation or a
+formatter, use `#[table_cell(display)]` or `#[table_cell(format = ...)]`.
 
 ```rs
 use gpui_table::TableCell;
@@ -148,8 +148,7 @@ GPUI global state. The example app declares its languages with
 `#[es_fluent_language]`, initializes `gpui_table_component::i18n` during GPUI
 startup, and selects the active locale through the GPUI storybook locale APIs.
 Generated Storybook table titles use the GPUI app context so they follow the
-active Storybook locale; truly context-free metadata can still use fallback
-label helpers.
+active Storybook locale; context-free metadata uses fallback label helpers.
 
 ## Examples
 

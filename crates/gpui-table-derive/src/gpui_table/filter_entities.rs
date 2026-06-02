@@ -150,7 +150,7 @@ pub(super) fn generate_filter_entities(
         .collect();
 
     let build_doc = format!(
-        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` can be used to snapshot the current state into `{filter_values_name}`."
+        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` snapshots the current state into `{filter_values_name}`."
     );
     let build_for_table_doc = format!(
         "Build filters and wire them directly into a generated table delegate for client-side filtering.\n\nOn each filter change this reads `{filter_values_name}`, calls `table.delegate_mut().set_filter_values(...)`, and notifies the table so generated `Matchable` logic re-runs against the in-memory rows."
