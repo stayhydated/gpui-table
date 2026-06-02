@@ -33,7 +33,7 @@ mod date_display {
     fn formatter_preferences() -> DateTimeFormatterPreferences {
         let locale = gpui_component::locale()
             .parse::<Locale>()
-            .unwrap_or_else(|_| locale!("en-US"));
+            .unwrap_or(locale!("en-US"));
         locale.into()
     }
 
