@@ -23,7 +23,8 @@ not a runtime layer.
 - `src/column.rs`
   - Column iteration and column-level generation helpers.
 - `src/imports.rs`
-  - Import tracking, deduplication, and grouped `use` rendering.
+  - Compatibility re-export of `component_shape_codegen::imports`, which owns
+    import tracking, deduplication, and grouped `use` rendering.
 - `src/identities.rs`
   - Table/story identifier derivation and validation.
 - `src/source_path.rs`
@@ -37,8 +38,9 @@ not a runtime layer.
 - `TableParts` is the semantic boundary between metadata normalization and
   layout decisions. Layout implementations should consume it instead of
   re-deriving identifiers or imports.
-- Import generation is intentionally centralized in `ImportSet` so generators
-  do not drift into repeated or conflicting `use` statements.
+- Import generation is intentionally centralized in
+  `component_shape_codegen::imports::ImportSet` so generators do not drift into
+  repeated or conflicting `use` statements.
 - `source_path_to_use_path(...)` is part of the codegen contract because
   inventory registrations only preserve `file!()` paths, not ready-made import paths.
 

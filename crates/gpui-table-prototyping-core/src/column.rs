@@ -81,7 +81,7 @@ impl<'a> ColumnInfo<'a> {
 
     /// Fallible version of [`ColumnInfo::field_type_syn`] for user-facing tooling.
     pub fn try_field_type_syn(&self) -> syn::Result<syn::Type> {
-        syn::parse_str(self.variant.field_type.as_str()).map_err(|err| {
+        self.variant.field_type.parse().map_err(|err| {
             syn::Error::new(
                 proc_macro2::Span::call_site(),
                 format!(

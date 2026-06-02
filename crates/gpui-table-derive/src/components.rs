@@ -2,11 +2,11 @@
 use component_shape_codegen::rust_path_metadata_tokens;
 use component_shape_codegen::{
     ResolvedComponentShape as SharedResolvedComponentShape, ShapeOptions as SharedShapeOptions,
-    field_assertion_ident_fragment, tokens_with_span,
+    shape_path_from_expr, shape_type_assertion_tokens_with_suffixes,
 };
 use darling::{Error as DarlingError, FromMeta, ast::NestedMeta};
 use proc_macro2::{Span, TokenStream};
-use quote::{ToTokens as _, format_ident, quote, quote_spanned};
+use quote::{ToTokens as _, quote};
 use syn::{Expr, Path, spanned::Spanned as _};
 
 #[derive(Clone, Debug)]
@@ -40,17 +40,13 @@ impl FromMeta for FilterShapeOptions {
     }
 
     fn from_expr(expr: &Expr) -> darling::Result<Self> {
-        let Expr::Path(expr_path) = expr else {
-            return Err(DarlingError::custom(
-                "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
-            )
-            .with_span(expr));
-        };
+        let shape = shape_path_from_expr(
+            expr,
+            "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
+        )
+        .map_err(DarlingError::from)?;
 
-        Ok(Self::from_shape_with_span(
-            expr_path.path.clone(),
-            expr.span(),
-        ))
+        Ok(Self::from_shape_with_span(shape, expr.span()))
     }
 }
 
@@ -183,32 +179,21 @@ impl ResolvedFilterShape {
         let field_type = self.field_type();
         let span = self.span();
         let runtime_crate: syn::Path = syn::parse_quote!(gpui_table::runtime);
-        let runtime_crate = tokens_with_span(&runtime_crate, span);
-        let field_fragment = field_assertion_ident_fragment(self.field_name());
-        let declared_shape_assertion = format_ident!(
-            "__gpui_table_assert_{field_fragment}_declared_filter_shape",
-            span = span
-        );
-        let shape_compat_assertion = format_ident!(
-            "__gpui_table_assert_{field_fragment}_filter_shape_compatibility",
-            span = span
-        );
 
-        quote_spanned! {span=>
-            const _: () = {
-                const fn #declared_shape_assertion<
-                    Shape: #runtime_crate::shape::DeclaredGpuiTableFilterShape
-                        + #runtime_crate::shape::GpuiTableFilterShape,
-                >() {}
-                #declared_shape_assertion::<#shape>();
-
-                const fn #shape_compat_assertion<
-                    Shape: #runtime_crate::shape::GpuiTableFilterShapeFor<Field>,
-                    Field,
-                >() {}
-                #shape_compat_assertion::<#shape, #field_type>();
-            };
-        }
+        shape_type_assertion_tokens_with_suffixes(
+            "gpui_table",
+            self.field_name(),
+            shape,
+            field_type,
+            span,
+            [
+                quote! { #runtime_crate::shape::DeclaredGpuiTableFilterShape },
+                quote! { #runtime_crate::shape::GpuiTableFilterShape },
+            ],
+            quote! { #runtime_crate::shape::GpuiTableFilterShapeFor },
+            "declared_filter_shape",
+            "filter_shape_compatibility",
+        )
     }
 
     #[cfg(feature = "inventory")]

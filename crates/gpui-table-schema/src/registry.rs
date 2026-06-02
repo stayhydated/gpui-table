@@ -21,6 +21,7 @@ pub struct GpuiTableShape {
 }
 
 impl GpuiTableShape {
+    #[allow(clippy::too_many_arguments)]
     pub const fn new(
         struct_name: &'static str,
         table_id: &'static str,

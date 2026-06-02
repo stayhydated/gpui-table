@@ -14,8 +14,6 @@ error[E0277]: table filter shape `NumberRangeFilter` is not compatible with fiel
             GpuiTableFilterShapeFor<Option<i64>>
             GpuiTableFilterShapeFor<Option<i8>>
             GpuiTableFilterShapeFor<Option<isize>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::time_duration::TimeDuration>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
             GpuiTableFilterShapeFor<Option<u16>>
             GpuiTableFilterShapeFor<Option<u32>>
             GpuiTableFilterShapeFor<Option<u64>>
@@ -29,8 +27,6 @@ error[E0277]: table filter shape `NumberRangeFilter` is not compatible with fiel
             GpuiTableFilterShapeFor<i64>
             GpuiTableFilterShapeFor<i8>
             GpuiTableFilterShapeFor<isize>
-            GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
-            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
             GpuiTableFilterShapeFor<u16>
             GpuiTableFilterShapeFor<u32>
             GpuiTableFilterShapeFor<u64>
@@ -58,8 +54,6 @@ error[E0277]: table filter shape `NumberRangeFilter` is not compatible with fiel
             GpuiTableFilterShapeFor<Option<i64>>
             GpuiTableFilterShapeFor<Option<i8>>
             GpuiTableFilterShapeFor<Option<isize>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::time_duration::TimeDuration>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
             GpuiTableFilterShapeFor<Option<u16>>
             GpuiTableFilterShapeFor<Option<u32>>
             GpuiTableFilterShapeFor<Option<u64>>
@@ -73,8 +67,6 @@ error[E0277]: table filter shape `NumberRangeFilter` is not compatible with fiel
             GpuiTableFilterShapeFor<i64>
             GpuiTableFilterShapeFor<i8>
             GpuiTableFilterShapeFor<isize>
-            GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
-            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
             GpuiTableFilterShapeFor<u16>
             GpuiTableFilterShapeFor<u32>
             GpuiTableFilterShapeFor<u64>

@@ -9,11 +9,9 @@ error[E0277]: table filter shape `DateRangeFilter` is not compatible with field 
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::datetime::DateTime<Tz>>>
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::date::NaiveDate>>
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::datetime::DateTime<Tz>>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::date::NaiveDate>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>
-            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
 note: required by a bound in `__gpui_table_assert_name_filter_shape_compatibility`
  --> tests/ui/invalid_date_range_type.rs:6:25
   |
@@ -31,8 +29,6 @@ error[E0277]: table filter shape `DateRangeFilter` is not compatible with field 
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::datetime::DateTime<Tz>>>
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::date::NaiveDate>>
             GpuiTableFilterShapeFor<Option<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::datetime::DateTime<Tz>>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::date::NaiveDate>
             GpuiTableFilterShapeFor<gpui_table::__deps::chrono::naive::datetime::NaiveDateTime>
-            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>

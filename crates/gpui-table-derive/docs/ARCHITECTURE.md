@@ -24,7 +24,8 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 - `src/lib.rs`
   - Proc-macro entry points.
 - `src/components.rs`
-  - Parses filter shape paths and resolves `_` generics against field types.
+  - Wraps shared filter shape path options and resolves `_` generics against
+    field types.
 - `src/filterable.rs`
   - Expansion for `#[derive(Filterable)]`.
 - `src/table_cell.rs`
@@ -87,6 +88,8 @@ Additional generated contracts:
 - `filter(...)` accepts a shape type path. The generated code asserts
   `DeclaredGpuiTableFilterShape`, `GpuiTableFilterShape`, and
   `GpuiTableFilterShapeFor<Field>` at the field span.
+- Filter shape path extraction uses `component-shape-codegen` helpers; table
+  option grammar, duplicate checks, and diagnostics remain owned by this crate.
 - Implementing `TableFilterComponent` alone does not make a widget selectable in
   `#[gpui_table(filter(...))]`; the table filter shape contract must also be
   implemented.

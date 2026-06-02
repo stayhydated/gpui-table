@@ -1,9 +1,9 @@
 use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
+use component_shape_codegen::{parse_single_shape_path, shape_path_from_expr};
 use darling::{Error as DarlingError, FromDeriveInput, FromField, util::Override};
 use syn::{
-    Expr, Ident, LitBool, LitFloat, LitInt, LitStr, Token, TypePath, parenthesized,
-    spanned::Spanned as _,
+    Expr, Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _,
 };
 
 #[derive(FromDeriveInput)]
@@ -281,29 +281,18 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
     if meta.input.peek(Token![=]) {
         let expr = meta.value()?.parse::<Expr>()?;
-        let Expr::Path(ref expr_path) = expr else {
-            return Err(syn::Error::new(
-                expr.span(),
-                "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
-            ));
-        };
-        return Ok(FilterShapeOptions::from_shape_with_span(
-            expr_path.path.clone(),
-            expr.span(),
-        ));
+        let shape = shape_path_from_expr(
+            &expr,
+            "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
+        )?;
+        return Ok(FilterShapeOptions::from_shape_with_span(shape, expr.span()));
     }
 
     let content;
     parenthesized!(content in meta.input);
-    let type_path = content.parse::<TypePath>()?;
-    if !content.is_empty() {
-        return Err(content.error("expected exactly one filter shape path"));
-    }
-    let span = type_path.span();
-    Ok(FilterShapeOptions::from_shape_with_span(
-        type_path.path,
-        span,
-    ))
+    let shape = parse_single_shape_path(&content, "expected exactly one filter shape path")?;
+    let span = shape.span();
+    Ok(FilterShapeOptions::from_shape_with_span(shape, span))
 }
 
 /// Filter field metadata for delegate generation.
