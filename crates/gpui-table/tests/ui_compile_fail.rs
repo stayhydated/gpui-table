@@ -22,8 +22,11 @@ fn ui_compile_fail() {
     #[cfg(feature = "chrono")]
     t.pass("tests/ui/date_range_requires_chrono.rs");
 
-    #[cfg(feature = "chrono")]
+    #[cfg(all(feature = "chrono", not(feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_date_range_type.rs");
+
+    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    t.compile_fail("tests/ui/invalid_date_range_type_spacetimedb.rs");
 
     #[cfg(not(feature = "rust_decimal"))]
     t.compile_fail("tests/ui/number_range_requires_rust_decimal.rs");

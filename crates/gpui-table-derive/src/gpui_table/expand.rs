@@ -8,6 +8,8 @@ use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
 
 use darling::util::Override;
 use heck::{ToPascalCase as _, ToTitleCase as _};
+#[cfg(feature = "inventory")]
+use quote::ToTokens as _;
 use quote::quote;
 use syn::Ident;
 
@@ -282,6 +284,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             #[cfg(feature = "inventory")]
             {
                 let field_name_str = ident.to_string();
+                let field_type_str = field.ty.to_token_stream().to_string();
                 let registry_filter_type = get_registry_filter_type(&filter_config);
                 let shape_path = filter_config.shape_path_tokens();
                 let component_path = filter_config.component_path_tokens();
@@ -292,6 +295,9 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                         #registry_filter_type,
                         #shape_path,
                         #component_path,
+                    )
+                    .with_field_type(
+                        gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str)
                     )
                 });
             }
@@ -327,7 +333,6 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
         #[cfg(feature = "inventory")]
         {
-            use quote::ToTokens as _;
             let field_name_str = ident.to_string();
             let field_type_str = field.ty.to_token_stream().to_string();
             let title_str = field

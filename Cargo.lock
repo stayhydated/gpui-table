@@ -1237,6 +1237,7 @@ dependencies = [
 name = "component-shape"
 version = "0.1.0"
 dependencies = [
+ "heck 0.5.0",
  "syn 2.0.117",
  "thiserror 2.0.18",
 ]
@@ -1246,7 +1247,6 @@ name = "component-shape-codegen"
 version = "0.1.0"
 dependencies = [
  "component-shape",
- "heck 0.5.0",
  "proc-macro2",
  "quote",
  "syn 2.0.117",
@@ -3394,6 +3394,7 @@ dependencies = [
  "icu",
  "jiff",
  "rust_decimal",
+ "spacetimedb-lib",
  "strum 0.28.0",
 ]
 

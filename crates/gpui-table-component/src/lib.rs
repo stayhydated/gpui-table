@@ -210,7 +210,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::QueryFilterValue;
+    use super::{FacetedFilter, QueryFilterValue, TextFilter};
     use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
     use std::collections::HashSet;
 
@@ -275,5 +275,50 @@ mod tests {
             RangeValue::from((Some(5_u8), None)).to_query_string(),
             Some(">=5".into())
         );
+    }
+
+    fn assert_declared<Shape>()
+    where
+        Shape: component_shape::DeclaredComponentShape,
+    {
+    }
+
+    fn assert_shape_for<Shape, Value>()
+    where
+        Shape: component_shape::ComponentShapeFor<Value>,
+    {
+    }
+
+    #[test]
+    fn built_in_filters_publish_neutral_shape_markers() {
+        assert_declared::<TextFilter>();
+        assert_shape_for::<TextFilter, String>();
+        assert_shape_for::<TextFilter, Option<String>>();
+
+        assert_declared::<FacetedFilter<bool>>();
+        assert_shape_for::<FacetedFilter<bool>, bool>();
+        assert_shape_for::<FacetedFilter<bool>, Option<bool>>();
+        assert_shape_for::<FacetedFilter<bool>, Vec<bool>>();
+        assert_shape_for::<FacetedFilter<bool>, Option<Vec<bool>>>();
+
+        #[cfg(feature = "rust_decimal")]
+        {
+            use super::NumberRangeFilter;
+
+            assert_declared::<NumberRangeFilter>();
+            assert_shape_for::<NumberRangeFilter, i64>();
+            assert_shape_for::<NumberRangeFilter, Option<i64>>();
+            assert_shape_for::<NumberRangeFilter, rust_decimal::Decimal>();
+        }
+
+        #[cfg(feature = "chrono")]
+        {
+            use super::DateRangeFilter;
+
+            assert_declared::<DateRangeFilter>();
+            assert_shape_for::<DateRangeFilter, chrono::NaiveDate>();
+            assert_shape_for::<DateRangeFilter, Option<chrono::NaiveDate>>();
+            assert_shape_for::<DateRangeFilter, chrono::NaiveDateTime>();
+        }
     }
 }

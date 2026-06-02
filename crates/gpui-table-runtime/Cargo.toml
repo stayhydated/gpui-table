@@ -20,7 +20,12 @@ rust_decimal = [
   "gpui-table-component/rust_decimal",
   "gpui-table-core/rust_decimal",
 ]
-spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]
+spacetimedb = [
+  "dep:spacetimedb-lib",
+  "chrono",
+  "gpui-table-component/spacetimedb",
+  "gpui-table-core/spacetimedb",
+]
 
 [dependencies]
 chrono = { optional = true, workspace = true }

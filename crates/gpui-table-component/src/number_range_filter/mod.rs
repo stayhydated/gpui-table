@@ -114,6 +114,23 @@ pub struct NumberRangeFilter {
 }
 
 impl component_shape::ComponentShapeMetadata for NumberRangeFilter {}
+impl component_shape::DeclaredComponentShape for NumberRangeFilter {}
+
+macro_rules! impl_number_range_component_shape_for {
+    ($($ty:ty),* $(,)?) => {
+        $(
+            impl component_shape::ComponentShapeFor<$ty> for NumberRangeFilter {}
+            impl component_shape::ComponentShapeFor<Option<$ty>> for NumberRangeFilter {}
+        )*
+    };
+}
+
+impl_number_range_component_shape_for!(
+    f32, f64, i8, i16, i32, i64, isize, Decimal, u8, u16, u32, u64, usize,
+);
+
+#[cfg(feature = "spacetimedb")]
+impl_number_range_component_shape_for!(spacetimedb_lib::Timestamp, spacetimedb_lib::TimeDuration);
 
 impl TableFilterComponent for NumberRangeFilter {
     type Value = (Option<Decimal>, Option<Decimal>);

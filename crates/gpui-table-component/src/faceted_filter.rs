@@ -50,6 +50,11 @@ pub struct FacetedFilter<T: FilterValue> {
 }
 
 impl<T: FilterValue> component_shape::ComponentShapeMetadata for FacetedFilter<T> {}
+impl<T: Filterable> component_shape::DeclaredComponentShape for FacetedFilter<T> {}
+impl<T: Filterable> component_shape::ComponentShapeFor<T> for FacetedFilter<T> {}
+impl<T: Filterable> component_shape::ComponentShapeFor<Option<T>> for FacetedFilter<T> {}
+impl<T: Filterable> component_shape::ComponentShapeFor<Vec<T>> for FacetedFilter<T> {}
+impl<T: Filterable> component_shape::ComponentShapeFor<Option<Vec<T>>> for FacetedFilter<T> {}
 
 #[derive(Clone)]
 struct FacetedOptionGroup {

@@ -33,7 +33,10 @@ pub trait GpuiTableFilterShape: component_shape::ComponentShapeMetadata {
     message = "table filter shape `{Self}` must implement `DeclaredGpuiTableFilterShape`",
     note = "use a built-in shape such as `gpui_table_component::TextFilter` or implement the table filter shape contract for your custom shape"
 )]
-pub trait DeclaredGpuiTableFilterShape: GpuiTableFilterShape {}
+pub trait DeclaredGpuiTableFilterShape:
+    GpuiTableFilterShape + component_shape::DeclaredComponentShape
+{
+}
 
 /// Field support and matching behavior for a shape used against a table field.
 #[diagnostic::on_unimplemented(

@@ -78,6 +78,27 @@ pub struct DateRangeFilter {
 }
 
 impl component_shape::ComponentShapeMetadata for DateRangeFilter {}
+impl component_shape::DeclaredComponentShape for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<NaiveDate> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<NaiveDate>> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<chrono::NaiveDateTime> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<chrono::NaiveDateTime>> for DateRangeFilter {}
+
+impl<Tz> component_shape::ComponentShapeFor<chrono::DateTime<Tz>> for DateRangeFilter where
+    Tz: chrono::TimeZone
+{
+}
+
+impl<Tz> component_shape::ComponentShapeFor<Option<chrono::DateTime<Tz>>> for DateRangeFilter where
+    Tz: chrono::TimeZone
+{
+}
+
+#[cfg(feature = "spacetimedb")]
+impl component_shape::ComponentShapeFor<spacetimedb_lib::Timestamp> for DateRangeFilter {}
+
+#[cfg(feature = "spacetimedb")]
+impl component_shape::ComponentShapeFor<Option<spacetimedb_lib::Timestamp>> for DateRangeFilter {}
 
 impl TableFilterComponent for DateRangeFilter {
     type Value = (Option<NaiveDate>, Option<NaiveDate>);

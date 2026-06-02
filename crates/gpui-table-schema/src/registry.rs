@@ -71,6 +71,11 @@ impl FilterVariant {
             component_path,
         }
     }
+
+    pub const fn with_field_type(mut self, field_type: RustType) -> Self {
+        self.shape_use = self.shape_use.with_field_type(field_type);
+        self
+    }
 }
 
 /// Type of filter for registry (metadata only).
@@ -127,7 +132,7 @@ pub use inventory;
 
 #[cfg(test)]
 mod tests {
-    use super::{FilterVariant, RegistryFilterType, RustPath};
+    use super::{FilterVariant, RegistryFilterType, RustPath, RustType};
 
     #[test]
     fn filter_variant_records_neutral_shape_use_metadata() {
@@ -146,5 +151,21 @@ mod tests {
         assert_eq!(variant.field_name, "status");
         assert_eq!(variant.shape_path.as_str(), "crate::StatusFilterShape");
         assert_eq!(variant.component_path.as_str(), "crate::StatusFilter");
+    }
+
+    #[test]
+    fn filter_variant_records_field_type_in_neutral_shape_use() {
+        let variant = FilterVariant::new(
+            "status",
+            RegistryFilterType::Faceted,
+            RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
+            RustPath::from_macro_tokens_unchecked("crate::StatusFilter"),
+        )
+        .with_field_type(RustType::from_macro_tokens_unchecked("crate::Status"));
+
+        assert_eq!(
+            variant.shape_use.field_type().map(RustType::as_str),
+            Some("crate::Status")
+        );
     }
 }

@@ -65,6 +65,9 @@ pub struct TextFilter {
 }
 
 impl component_shape::ComponentShapeMetadata for TextFilter {}
+impl component_shape::DeclaredComponentShape for TextFilter {}
+impl component_shape::ComponentShapeFor<String> for TextFilter {}
+impl component_shape::ComponentShapeFor<Option<String>> for TextFilter {}
 
 /// Extension trait for configuring TextFilter via method chaining.
 pub trait TextFilterExt: Sized {

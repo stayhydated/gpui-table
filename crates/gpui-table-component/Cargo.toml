@@ -18,6 +18,7 @@ required-features = [ "story" ]
 chrono = [ "dep:chrono", "dep:icu", "dep:jiff" ]
 default = [ "chrono", "rust_decimal" ]
 rust_decimal = [ "dep:rust_decimal" ]
+spacetimedb = [ "chrono", "dep:spacetimedb-lib" ]
 story = [
   "chrono",
   "rust_decimal",
@@ -43,6 +44,7 @@ gpui_platform = { optional = true, workspace = true }
 icu = { optional = true, workspace = true }
 jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
+spacetimedb-lib = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
 
 [build-dependencies]
