@@ -16,24 +16,15 @@ client = [
   "dep:fake",
   "dep:gpui",
   "dep:gpui-component",
-  "dep:gpui-router",
   "dep:gpui-table",
   "dep:gpui-table-component",
-  "dep:gpui_tokio",
-  "dep:heck",
-  "dep:log",
-  "dep:reqwest",
   "dep:rust_decimal",
   "dep:serde",
-  "dep:serde_json",
-  "dep:strum",
-  "dep:tokio",
-  "dep:urlencoding",
   "dep:uuid",
 ]
 db = [  ]
 default = [  ]
-router = [ "client", "dep:gpui-router" ]
+router = [ "client" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
@@ -48,7 +39,6 @@ fake = { features = [
 ], optional = true, workspace = true }
 gpui = { optional = true, workspace = true }
 gpui-component = { optional = true, workspace = true }
-gpui-router = { optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",
@@ -56,16 +46,8 @@ gpui-table = { features = [
   "chrono",
 ], optional = true, workspace = true }
 gpui-table-component = { optional = true, workspace = true }
-gpui_tokio = { optional = true, workspace = true }
-heck = { optional = true, workspace = true }
-log = { optional = true, workspace = true }
-reqwest = { features = [ "json" ], optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
-serde_json = { optional = true, workspace = true }
-strum = { features = [ "derive" ], optional = true, workspace = true }
-tokio = { optional = true, workspace = true }
-urlencoding = { optional = true, workspace = true }
 uuid = { optional = true, workspace = true }
 
 [build-dependencies]
