@@ -26,8 +26,8 @@ version = "0.5.0"
 [workspace.dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-component-shape = { path = "../component-shape/crates/component-shape" }
-component-shape-codegen = { path = "../component-shape/crates/component-shape-codegen" }
+component-shape = { git = "https://github.com/stayhydated/component-shape" }
+component-shape-codegen = { git = "https://github.com/stayhydated/component-shape" }
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
@@ -37,10 +37,10 @@ es-fluent-lang = "0.16"
 es-fluent-manager-embedded = "0.16"
 fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "4bee412118dafea3bbd491cd044d354f16b3d665" }
-gpui-component = { git = "https://github.com/longbridge/gpui-component", rev = "277f220a6196572116a8fd84fba6c36187094cab" }
-gpui-es-fluent = { path = "../gpui-es-fluent/crates/gpui-es-fluent" }
-gpui-router = { path = "../gpui-router/crates/router" }
-gpui-storybook = { path = "../gpui-storybook/crates/gpui-storybook" }
+gpui-component = { git = "https://github.com/longbridge/gpui-component" }
+gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
+gpui-router = { branch = "git", git = "https://github.com/stayhydated/gpui-router" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
