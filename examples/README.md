@@ -30,7 +30,8 @@ Use it to see:
 cargo run -p prototyping
 ```
 
-This iterates the inventory-registered `GpuiTableShape` values and rewrites
+This iterates the inventory-registered `GpuiTableShape` values, including
+`ComponentShapeUse` filter metadata, and rewrites
 `examples/prototyping/output`. Generated Storybook table titles use the active
 example app locale.
 

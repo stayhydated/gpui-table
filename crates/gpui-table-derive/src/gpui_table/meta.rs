@@ -1,10 +1,8 @@
 use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
-use component_shape_codegen::{parse_single_shape_path, shape_path_from_expr};
+use component_shape_codegen::parse_single_shape_path;
 use darling::{Error as DarlingError, FromDeriveInput, FromField, util::Override};
-use syn::{
-    Expr, Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _,
-};
+use syn::{Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _};
 
 #[derive(FromDeriveInput)]
 #[darling(attributes(gpui_table), supports(struct_named))]
@@ -279,15 +277,6 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
 }
 
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
-    if meta.input.peek(Token![=]) {
-        let expr = meta.value()?.parse::<Expr>()?;
-        let shape = shape_path_from_expr(
-            &expr,
-            "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
-        )?;
-        return Ok(FilterShapeOptions::from_shape_with_span(shape, expr.span()));
-    }
-
     let content;
     parenthesized!(content in meta.input);
     let shape = parse_single_shape_path(&content, "expected exactly one filter shape path")?;

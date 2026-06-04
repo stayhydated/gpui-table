@@ -2,12 +2,11 @@
 use component_shape_codegen::rust_path_metadata_tokens;
 use component_shape_codegen::{
     ResolvedComponentShape as SharedResolvedComponentShape, ShapeOptions as SharedShapeOptions,
-    shape_path_from_expr, shape_type_assertion_tokens_with_suffixes,
+    shape_type_assertion_tokens_with_suffixes,
 };
-use darling::{Error as DarlingError, FromMeta, ast::NestedMeta};
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens as _, quote};
-use syn::{Expr, Path, spanned::Spanned as _};
+use syn::Path;
 
 #[derive(Clone, Debug)]
 pub(crate) struct FilterShapeOptions {
@@ -25,28 +24,6 @@ impl FilterShapeOptions {
         ResolvedFilterShape {
             inner: self.inner.resolve(field_name, field_type),
         }
-    }
-}
-
-impl FromMeta for FilterShapeOptions {
-    fn from_list(items: &[NestedMeta]) -> darling::Result<Self> {
-        let [NestedMeta::Meta(syn::Meta::Path(path))] = items else {
-            return Err(DarlingError::custom(
-                "`filter(...)` expects exactly one filter shape path",
-            ));
-        };
-
-        Ok(Self::from_shape_with_span(path.clone(), path.span()))
-    }
-
-    fn from_expr(expr: &Expr) -> darling::Result<Self> {
-        let shape = shape_path_from_expr(
-            expr,
-            "`filter(...)` expects a filter shape path such as `gpui_table_component::TextFilter`",
-        )
-        .map_err(DarlingError::from)?;
-
-        Ok(Self::from_shape_with_span(shape, expr.span()))
     }
 }
 

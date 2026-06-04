@@ -13,6 +13,7 @@ gpui-table = { version = "*", features = ["fluent", "rust_decimal"] }
 - `rust_decimal` is required for `gpui_table_component::NumberRangeFilter`.
 - `fluent` localizes table titles and faceted labels with typed `es-fluent` resources.
 - `spacetimedb` enables supported temporal range filtering helpers.
+- `inventory` registers `GpuiTableShape` metadata for tooling; filter metadata is exposed through `ComponentShapeUse`.
 
 ## Basic Derived Table
 

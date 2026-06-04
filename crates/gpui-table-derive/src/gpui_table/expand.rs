@@ -291,13 +291,15 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::schema::registry::FilterVariant::new(
-                        #field_name_str,
+                        gpui_table::schema::registry::ComponentShapeUse::new(
+                            #field_name_str,
+                            #shape_path,
+                        )
+                        .with_field_type(
+                            gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str)
+                        ),
                         #registry_filter_type,
-                        #shape_path,
                         #component_path,
-                    )
-                    .with_field_type(
-                        gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str)
                     )
                 });
             }

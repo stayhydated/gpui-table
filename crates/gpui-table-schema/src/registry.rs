@@ -49,32 +49,21 @@ impl GpuiTableShape {
 #[derive(Debug)]
 pub struct FilterVariant {
     pub shape_use: ComponentShapeUse,
-    pub field_name: &'static str,
     pub filter_type: RegistryFilterType,
-    pub shape_path: RustPath,
     pub component_path: RustPath,
 }
 
 impl FilterVariant {
     pub const fn new(
-        field_name: &'static str,
+        shape_use: ComponentShapeUse,
         filter_type: RegistryFilterType,
-        shape_path: RustPath,
         component_path: RustPath,
     ) -> Self {
-        let shape_use = ComponentShapeUse::new(field_name, shape_path);
         Self {
             shape_use,
-            field_name,
             filter_type,
-            shape_path,
             component_path,
         }
-    }
-
-    pub const fn with_field_type(mut self, field_type: RustType) -> Self {
-        self.shape_use = self.shape_use.with_field_type(field_type);
-        self
     }
 }
 
@@ -132,14 +121,16 @@ pub use inventory;
 
 #[cfg(test)]
 mod tests {
-    use super::{FilterVariant, RegistryFilterType, RustPath, RustType};
+    use super::{ComponentShapeUse, FilterVariant, RegistryFilterType, RustPath, RustType};
 
     #[test]
     fn filter_variant_records_neutral_shape_use_metadata() {
         let variant = FilterVariant::new(
-            "status",
+            ComponentShapeUse::new(
+                "status",
+                RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
+            ),
             RegistryFilterType::Faceted,
-            RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
             RustPath::from_macro_tokens_unchecked("crate::StatusFilter"),
         );
 
@@ -148,20 +139,20 @@ mod tests {
             variant.shape_use.shape_path().as_str(),
             "crate::StatusFilterShape"
         );
-        assert_eq!(variant.field_name, "status");
-        assert_eq!(variant.shape_path.as_str(), "crate::StatusFilterShape");
         assert_eq!(variant.component_path.as_str(), "crate::StatusFilter");
     }
 
     #[test]
     fn filter_variant_records_field_type_in_neutral_shape_use() {
         let variant = FilterVariant::new(
-            "status",
+            ComponentShapeUse::new(
+                "status",
+                RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
+            )
+            .with_field_type(RustType::from_macro_tokens_unchecked("crate::Status")),
             RegistryFilterType::Faceted,
-            RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
             RustPath::from_macro_tokens_unchecked("crate::StatusFilter"),
-        )
-        .with_field_type(RustType::from_macro_tokens_unchecked("crate::Status"));
+        );
 
         assert_eq!(
             variant.shape_use.field_type().map(RustType::as_str),

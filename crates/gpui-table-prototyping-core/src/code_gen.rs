@@ -299,7 +299,7 @@ impl<'a> TableShapeAdapter<'a> {
                         parse_ident(
                             "filter field identifier",
                             self.shape.struct_name,
-                            filter.field_name.to_string(),
+                            filter.shape_use.field_name().to_string(),
                         )
                     })
                     .collect::<Result<Vec<_>, _>>()?;
@@ -451,14 +451,18 @@ impl TableShape for TableShapeAdapter<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui_table_schema::registry::{FilterVariant, RegistryFilterType, RustPath};
+    use gpui_table_schema::registry::{
+        ComponentShapeUse, FilterVariant, RegistryFilterType, RustPath,
+    };
 
     #[test]
     fn try_parts_rejects_invalid_manual_filter_field_identifiers() {
         static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
-            "invalid field",
+            ComponentShapeUse::new(
+                "invalid field",
+                RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
+            ),
             RegistryFilterType::Text,
-            RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
             RustPath::from_macro_tokens_unchecked(
                 "gpui_table::runtime::generated_filters::text_filter::TextFilter",
             ),

@@ -80,7 +80,8 @@ Additional generated contracts:
   `es-fluent` label/message calls through the runtime localization helpers.
 - Feature-gated external types route through `gpui_table::__deps`.
 - Load-more glue routes through `gpui_table::__private::LoadMoreDelegate`.
-- Inventory metadata uses `gpui_table::registry::GpuiTableShape` and stores the
+- Inventory metadata uses `gpui_table::registry::GpuiTableShape`, stores filter
+  field/type/shape metadata through `ComponentShapeUse`, and stores the
   original `file!()` path in `source_path`.
 
 ## Internal Contracts

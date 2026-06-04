@@ -32,6 +32,7 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 
 - `rust_decimal` for `gpui_table_component::NumberRangeFilter`
 - `inventory` for `GpuiTableShape` registration and prototyping/codegen
+  metadata, including `ComponentShapeUse` filter metadata
 - `fluent` for localized table titles and faceted labels through `es-fluent`
 - `spacetimedb` for range filtering over supported SpacetimeDB temporal types
 
@@ -86,7 +87,8 @@ store selected `T` values in the generated filter state; when a selection is
 active, rows with `None` or no matching vector element do not match that facet.
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
-tooling and code generation.
+tooling and code generation. Filter registrations expose their field, field
+type, and shape path through `ComponentShapeUse`.
 
 ### Table cells for value objects
 
@@ -171,6 +173,7 @@ The main walkthrough files are:
 - `derive` (default): re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
 - `chrono` (default): date cell rendering and `gpui_table_component::DateRangeFilter`
 - `fluent`: localized titles and faceted labels through `es-fluent`
-- `inventory`: inventory-backed `GpuiTableShape` registration for tooling
+- `inventory`: inventory-backed `GpuiTableShape` registration for tooling,
+  including `ComponentShapeUse` filter metadata
 - `rust_decimal`: numeric range filtering and decimal-backed helpers
 - `spacetimedb`: SpacetimeDB temporal range filtering support
