@@ -14,7 +14,7 @@ readme = "README.md"
 [features]
 chrono = [ "dep:chrono" ]
 default = [ "chrono" ]
-fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded", "es-fluent/derive" ]
+fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded" ]
 rust_decimal = [ "dep:rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono" ]
 

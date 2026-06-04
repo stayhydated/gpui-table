@@ -63,8 +63,9 @@ pub enum UserStatus {
 ```
 
 `examples/some-lib/src/i18n.rs` declares the embedded resources, while
-`examples/some-lib-tables/src/main.rs` declares the app language enum with
-`#[es_fluent_language]` and selects the storybook locale before rendering.
+`examples/some-lib-tables/src/i18n.rs` declares the app language enum with
+`#[es_fluent_language]`. The binary imports that language enum and selects the
+storybook locale before rendering.
 
 ## Files To Read First
 

@@ -31,16 +31,16 @@ component-shape-codegen = { git = "https://github.com/stayhydated/component-shap
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
-es-fluent = "0.16"
-es-fluent-build = "0.16"
-es-fluent-lang = "0.16"
-es-fluent-manager-embedded = "0.16"
+es-fluent = { path = "../es-fluent/crates/es-fluent", version = "0.16" }
+es-fluent-build = { path = "../es-fluent/crates/es-fluent-build", version = "0.16" }
+es-fluent-lang = { path = "../es-fluent/crates/es-fluent-lang", version = "0.16" }
+es-fluent-manager-embedded = { path = "../es-fluent/crates/es-fluent-manager-embedded", version = "0.16" }
 fake = "4.4"
 gpui = { git = "https://github.com/zed-industries/zed", rev = "b077f41a9f26ae5ed7fadfea55a501d34afb25de" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
-gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
+gpui-es-fluent = { path = "../gpui-es-fluent/crates/gpui-es-fluent", version = "0.1" }
 gpui-router = { branch = "git", git = "https://github.com/stayhydated/gpui-router" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
+gpui-storybook = { path = "../gpui-storybook/crates/gpui-storybook", version = "0.5.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }

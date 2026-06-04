@@ -28,7 +28,7 @@ router = [ "client" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-es-fluent = { features = [ "derive" ], optional = true, workspace = true }
+es-fluent = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 fake = { features = [
   "derive",
