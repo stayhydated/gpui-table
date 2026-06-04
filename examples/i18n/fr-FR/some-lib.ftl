@@ -1,20 +1,20 @@
-## Article
+## Item
 
 item_label = Article
 
-## Produit
+## Product
 
 product_label = Produit
 
-## Utilisateur
+## User
 
 user_label = Utilisateur
 
-## Événement Spacetime
+## Spacetime Event
 
 spacetime_event_label = Événement Spacetime
 
-## Catégorie de Produit
+## ProductCategory
 
 product_category-Beauty = Beauté
 product_category-Fragrances = Parfums
@@ -41,28 +41,28 @@ product_category-WomensJewellery = Bijoux pour femmes
 product_category-WomensShoes = Chaussures pour femmes
 product_category-WomensWatches = Montres pour femmes
 
-## Mutation Spacetime
+## SpacetimeMutation
 
 spacetime_mutation-Delete = Supprimer
 spacetime_mutation-Insert = Insérer
 spacetime_mutation-Update = Mettre à jour
 
-## Statut de l'Utilisateur
+## UserStatus
 
 user_status-Active = Actif
 user_status-Offline = Hors ligne
 user_status-Suspended = Suspendu
 
-## Variantes d'Article
+## ItemVariants
 
 item_variants_label = Article
 item_variants-acquired_on = Date d'acquisition
 item_variants-color = Couleur
-item_variants-id = ID
+item_variants-id = Identifiant
 item_variants-name = Nom
 item_variants-weight = Poids
 
-## Variantes d'Étiquette de l'Utilisateur
+## UserLabelVariants
 
 user_label_variants_label = Étiquette utilisateur
 user_label_variants-active = Actif
@@ -70,34 +70,34 @@ user_label_variants-age = Âge
 user_label_variants-created_at = Créé le
 user_label_variants-debt = Dette
 user_label_variants-email = E-mail
-user_label_variants-id = ID
+user_label_variants-id = Identifiant
 user_label_variants-name = Nom
 user_label_variants-status = Statut
 
-## Variantes d'Étiquette de l'Événement Spacetime
+## SpacetimeEventLabelVariants
 
 spacetime_event_label_variants_label = Étiquette de l'événement Spacetime
 spacetime_event_label_variants-committed_at = Validé à
 spacetime_event_label_variants-connection_id = ID de connexion
 spacetime_event_label_variants-mutation = Mutation
-spacetime_event_label_variants-reducer = Reducer
+spacetime_event_label_variants-reducer = Réducteur
 spacetime_event_label_variants-rows_touched = Lignes touchées
 spacetime_event_label_variants-sender = Émetteur
 spacetime_event_label_variants-table_name = Nom de table
 
-## Variantes d'Étiquette du Produit
+## ProductLabelVariants
 
 product_label_variants_label = Étiquette produit
 product_label_variants-brand = Marque
 product_label_variants-category = Catégorie
 product_label_variants-discount_percentage = Pourcentage de réduction
-product_label_variants-id = ID
+product_label_variants-id = Identifiant
 product_label_variants-price = Prix
 product_label_variants-rating = Note
 product_label_variants-stock = Stock
 product_label_variants-title = Titre
 
-## Variantes de Description de l'Utilisateur
+## UserDescriptionVariants
 
 user_description_variants_label = Description de l'utilisateur
 user_description_variants-active = Actif
@@ -105,28 +105,28 @@ user_description_variants-age = Âge
 user_description_variants-created_at = Créé le
 user_description_variants-debt = Dette
 user_description_variants-email = E-mail
-user_description_variants-id = ID
+user_description_variants-id = Identifiant
 user_description_variants-name = Nom
 user_description_variants-status = Statut
 
-## Variantes de Description de l'Événement Spacetime
+## SpacetimeEventDescriptionVariants
 
 spacetime_event_description_variants_label = Description de l'événement Spacetime
 spacetime_event_description_variants-committed_at = Validé à
 spacetime_event_description_variants-connection_id = ID de connexion
 spacetime_event_description_variants-mutation = Mutation
-spacetime_event_description_variants-reducer = Reducer
+spacetime_event_description_variants-reducer = Réducteur
 spacetime_event_description_variants-rows_touched = Lignes touchées
 spacetime_event_description_variants-sender = Émetteur
 spacetime_event_description_variants-table_name = Nom de table
 
-## Variantes de Description du Produit
+## ProductDescriptionVariants
 
 product_description_variants_label = Description du produit
 product_description_variants-brand = Marque
 product_description_variants-category = Catégorie
 product_description_variants-discount_percentage = Pourcentage de réduction
-product_description_variants-id = ID
+product_description_variants-id = Identifiant
 product_description_variants-price = Prix
 product_description_variants-rating = Note
 product_description_variants-stock = Stock
