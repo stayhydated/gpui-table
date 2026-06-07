@@ -11,8 +11,6 @@ router = [ "dep:gpui-router", "some-lib/router" ]
 
 [dependencies]
 env_logger = { workspace = true }
-es-fluent = { workspace = true }
-es-fluent-lang = { workspace = true }
 fake = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
@@ -25,6 +23,3 @@ gpui_tokio = { workspace = true }
 reqwest_client = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
 strum = { workspace = true }
-
-[build-dependencies]
-es-fluent-build = { workspace = true }

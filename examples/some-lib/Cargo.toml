@@ -12,6 +12,7 @@ crate-type = [ "cdylib", "lib" ]
 client = [
   "dep:chrono",
   "dep:es-fluent",
+  "dep:es-fluent-lang",
   "dep:es-fluent-manager-embedded",
   "dep:fake",
   "dep:gpui",
@@ -20,6 +21,7 @@ client = [
   "dep:gpui-table-component",
   "dep:rust_decimal",
   "dep:serde",
+  "dep:strum",
   "dep:uuid",
 ]
 db = [  ]
@@ -29,6 +31,7 @@ router = [ "client" ]
 [dependencies]
 chrono = { optional = true, workspace = true }
 es-fluent = { optional = true, workspace = true }
+es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 fake = { features = [
   "derive",
@@ -48,6 +51,7 @@ gpui-table = { features = [
 gpui-table-component = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
+strum = { optional = true, workspace = true }
 uuid = { optional = true, workspace = true }
 
 [build-dependencies]

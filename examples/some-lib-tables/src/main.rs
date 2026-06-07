@@ -1,5 +1,5 @@
 use gpui_storybook::{Assets, Gallery};
-use some_lib_tables::i18n::Languages;
+use some_lib::i18n::Languages;
 
 // bring the stories in scope for inventory
 #[allow(unused_imports, clippy::single_component_path_imports)]

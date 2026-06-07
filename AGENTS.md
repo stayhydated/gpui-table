@@ -205,16 +205,14 @@ When changing public APIs or behavior in a crate, update that crate's
   Canonical index of runnable examples. Keep this aligned with the root `README.md`.
 
 - `examples/some-lib`
-  Shared domain types, derived tables, and filterable enums used by the example app and prototyping generator.
+  Shared domain types, derived tables, filterable enums, and package-local
+  Fluent translation assets used by the example app and prototyping generator.
 
 - `examples/some-lib-tables`
   Storybook-style GPUI app for exercising generated tables and filters. `cargo run` from the workspace root lands here by default.
 
 - `examples/prototyping`
   Inventory-driven generator that writes story modules into `examples/prototyping/output`.
-
-- `examples/i18n`
-  Shared Fluent translation assets used by the example crates.
 
 ## Validation and Editing Rules
 

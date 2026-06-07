@@ -39,10 +39,8 @@ Do not hand-edit `examples/prototyping/output`; it is generated output.
 
 ## Workspace Layout
 
-- `examples/i18n`
-  Shared Fluent resources used by the example crates.
 - `examples/some-lib`
-  Domain types, `#[derive(GpuiTable)]` rows, `#[derive(Filterable)]` enums, and embedded i18n setup.
+  Domain types, `#[derive(GpuiTable)]` rows, `#[derive(Filterable)]` enums, and package-local i18n setup.
 - `examples/some-lib-tables`
   Storybook-style GPUI app that renders the generated tables and filters.
 - `examples/prototyping`
@@ -63,10 +61,10 @@ pub enum UserStatus {
 }
 ```
 
-`examples/some-lib/src/i18n.rs` declares the embedded resources, while
-`examples/some-lib-tables/src/i18n.rs` declares the app language enum with
-`#[es_fluent_language]`. The binary imports that language enum and selects the
-storybook locale before rendering.
+`examples/some-lib/i18n.toml` lives next to that package's `Cargo.toml`, and
+`examples/some-lib/src/i18n.rs` declares both the embedded resources and the
+app language enum with `#[es_fluent_language]`. The storybook binary imports
+`some_lib::i18n::Languages` and selects the storybook locale before rendering.
 
 ## Files To Read First
 
