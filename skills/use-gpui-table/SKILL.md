@@ -14,16 +14,14 @@ description: >-
 
 ## Scope Boundary
 
-Treat this skill as a hosted public-usage guide for `gpui-table` consumers. Use
-it only for user-facing application workflows: deriving typed tables, generated
-delegates and filters, built-in filter widgets, `TableStatusBar`, load-more
-behavior, custom row rendering, row context menus, localization, and feature
-selection.
+Use this skill for user-facing application workflows with `gpui-table`:
+deriving typed tables, generated delegates and filters, built-in filter widgets,
+`TableStatusBar`, load-more behavior, custom row rendering, row context menus,
+localization, and feature selection.
 
-Do not use this skill as a contributor guide for `gpui-table` repository
-internals. For build, test, format, lint, maintenance, release, generated-output
-regeneration, or architecture work, read the repository source, `AGENTS.md`, and
-the relevant crate documentation directly.
+This skill is for application code that consumes `gpui-table`. It avoids
+repository maintenance, release, generated-output, and implementation-internal
+guidance.
 
 ## Core Workflow
 

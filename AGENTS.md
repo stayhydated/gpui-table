@@ -40,7 +40,7 @@ Before editing, classify the change:
 3. **Sync public workflow changes.** If derive syntax, generated filter
    behavior, registry metadata shape, feature flags, generated output,
    localization, or recommended usage changes, update the relevant README,
-   example, generated surface, architecture note, and `.agents/skills/*`
+   example, generated surface, architecture note, and public `skills/*`
    guidance in the same change when applicable.
 4. **Validate narrowly.** Run the smallest command that proves the edited
    behavior or documentation surface is still sound.
@@ -91,13 +91,28 @@ Keep these topics in architecture documents, not in READMEs:
 
 ### Skill Guidance
 
-`.agents/skills/use-gpui-table` is hosted in this repository as public
-`gpui-table` usage guidance for application developers. It is not internal
-architecture, maintenance, CI, release, or contributor-only workflow
-documentation.
+Skill directories are split by audience and intended distribution:
 
-Update relevant in-repository `.agents/skills/*` guidance when a code change
-alters user-facing workflows, derive syntax, generated filter behavior, registry
+- `.agents/skills/*-dev` contains repo-scoped development skills for Codex and
+  local agent use inside this repository. These skills may include internal
+  wording, repo-specific assumptions, implementation details, maintainer
+  workflows, and development-only instructions. Each directory and its
+  `SKILL.md` `name` field must use the same `-dev` suffix.
+- `skills/*` contains public, user-facing skills intended to be reusable outside
+  this repository or distributed as part of a skills catalog/plugin. These
+  skills must not include internal wording, maintainer-only language,
+  repo-private assumptions, or implementation details that belong only in a
+  corresponding `*-dev` skill.
+
+Do not assume root-level `skills/*` are auto-loaded as repo-local Codex skills.
+Use `.agents/skills` for auto-discovered repo-local skills; use `skills/*` as
+the source location for public/reusable skills.
+
+`skills/use-gpui-table` is the public `gpui-table` usage skill for application
+developers.
+
+Update relevant public `skills/*` guidance when a code change alters
+user-facing workflows, derive syntax, generated filter behavior, registry
 metadata, generated output, localization patterns, feature flags, or recommended
 usage.
 
@@ -110,7 +125,7 @@ user-visible API shape:
 1. Update the root `README.md`.
 2. Update the affected crate `README.md` files.
 3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-4. Update relevant in-repository `.agents/skills/*` guidance.
+4. Update relevant public `skills/*` guidance.
 5. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 `examples/some-lib` and `examples/some-lib-tables` are the canonical
@@ -218,7 +233,7 @@ When changing public APIs or behavior in a crate, update that crate's
 - Keep READMEs user-facing.
 - Move macro expansion details, generated-code internals, and subsystem design into `docs/ARCHITECTURE.md`.
 - Prefer examples over prose-only explanations.
-- Sync the root `README.md`, affected crate `README.md` files, `examples/README.md`, and `.agents/skills/*` guidance in the same change when public behavior changes.
+- Sync the root `README.md`, affected crate `README.md` files, `examples/README.md`, and public `skills/*` guidance in the same change when public behavior changes.
 - If the change affects runnable flows, update the relevant example crates too.
 
 ### When Editing Rust Crates
