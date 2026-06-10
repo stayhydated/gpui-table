@@ -91,25 +91,13 @@ Keep these topics in architecture documents, not in READMEs:
 
 ### Skill Guidance
 
-Skill directories are split by audience and intended distribution:
+`skills/use-gpui-table` is the public reusable `gpui-table` usage skill for
+application developers. It must not include maintainer-only wording,
+repo-private assumptions, or implementation details that belong in this
+`AGENTS.md` or the relevant `docs/ARCHITECTURE.md`.
 
-- `.agents/skills/*-dev` contains repo-scoped development skills for Codex and
-  local agent use inside this repository. These skills may include internal
-  wording, repo-specific assumptions, implementation details, maintainer
-  workflows, and development-only instructions. Each directory and its
-  `SKILL.md` `name` field must use the same `-dev` suffix.
-- `skills/*` contains public, user-facing skills intended to be reusable outside
-  this repository or distributed as part of a skills catalog/plugin. These
-  skills must not include internal wording, maintainer-only language,
-  repo-private assumptions, or implementation details that belong only in a
-  corresponding `*-dev` skill.
-
-Do not assume root-level `skills/*` are auto-loaded as repo-local Codex skills.
-Use `.agents/skills` for auto-discovered repo-local skills; use `skills/*` as
-the source location for public/reusable skills.
-
-`skills/use-gpui-table` is the public `gpui-table` usage skill for application
-developers.
+Do not assume root-level `skills/*` entries are auto-loaded as repo-local Codex
+skills. Treat `skills/*` as public distribution sources.
 
 Update relevant public `skills/*` guidance when a code change alters
 user-facing workflows, derive syntax, generated filter behavior, registry
