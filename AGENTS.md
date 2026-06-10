@@ -40,7 +40,7 @@ Before editing, classify the change:
 3. **Sync public workflow changes.** If derive syntax, generated filter
    behavior, registry metadata shape, feature flags, generated output,
    localization, or recommended usage changes, update the relevant README,
-   example, generated surface, architecture note, and public `skills/*`
+   example, generated surface, architecture note, and `skills/use-gpui-table`
    guidance in the same change when applicable.
 4. **Validate narrowly.** Run the smallest command that proves the edited
    behavior or documentation surface is still sound.
@@ -91,18 +91,13 @@ Keep these topics in architecture documents, not in READMEs:
 
 ### Skill Guidance
 
-`skills/use-gpui-table` is the public reusable `gpui-table` usage skill for
-application developers. It must not include maintainer-only wording,
-repo-private assumptions, or implementation details that belong in this
-`AGENTS.md` or the relevant `docs/ARCHITECTURE.md`.
+`skills/use-gpui-table` is public application-developer guidance, not repo-local
+maintenance guidance. Keep maintainer-only details in this guide or the relevant
+`docs/ARCHITECTURE.md`.
 
-Do not assume root-level `skills/*` entries are auto-loaded as repo-local Codex
-skills. Treat `skills/*` as public distribution sources.
-
-Update relevant public `skills/*` guidance when a code change alters
-user-facing workflows, derive syntax, generated filter behavior, registry
-metadata, generated output, localization patterns, feature flags, or recommended
-usage.
+Update it when user-facing workflows, derive syntax, generated filter behavior,
+registry metadata, generated output, localization patterns, feature flags, or
+recommended usage change.
 
 ## Synchronization Rules
 
@@ -113,7 +108,7 @@ user-visible API shape:
 1. Update the root `README.md`.
 2. Update the affected crate `README.md` files.
 3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-4. Update relevant public `skills/*` guidance.
+4. Update `skills/use-gpui-table` when public usage guidance changes.
 5. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 `examples/some-lib` and `examples/some-lib-tables` are the canonical
@@ -219,7 +214,9 @@ When changing public APIs or behavior in a crate, update that crate's
 - Keep READMEs user-facing.
 - Move macro expansion details, generated-code internals, and subsystem design into `docs/ARCHITECTURE.md`.
 - Prefer examples over prose-only explanations.
-- Sync the root `README.md`, affected crate `README.md` files, `examples/README.md`, and public `skills/*` guidance in the same change when public behavior changes.
+- Sync the root `README.md`, affected crate `README.md` files,
+  `examples/README.md`, and `skills/use-gpui-table` when public behavior
+  changes.
 - If the change affects runnable flows, update the relevant example crates too.
 
 ### When Editing Rust Crates
