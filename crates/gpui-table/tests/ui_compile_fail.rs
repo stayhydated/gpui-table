@@ -2,9 +2,16 @@
 fn ui_compile_fail() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/table_cell_display_format.rs");
+    t.pass("tests/ui/inferred_filter_shapes.rs");
     t.pass("tests/ui/faceted_option_filter.rs");
     t.pass("tests/ui/faceted_vec_filter.rs");
+    #[cfg(feature = "mcp")]
+    t.pass("tests/ui/mcp_filter_shape_derive.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
+    #[cfg(not(feature = "mcp"))]
+    t.compile_fail("tests/ui/mcp_requires_feature.rs");
+    #[cfg(feature = "mcp")]
+    t.compile_fail("tests/ui/mcp_filter_shape_requires_decode.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_arguments.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_target.rs");
@@ -34,8 +41,11 @@ fn ui_compile_fail() {
     #[cfg(feature = "rust_decimal")]
     t.pass("tests/ui/number_range_requires_rust_decimal.rs");
 
-    #[cfg(feature = "rust_decimal")]
+    #[cfg(all(feature = "rust_decimal", not(feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_number_range_type.rs");
+
+    #[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
+    t.compile_fail("tests/ui/invalid_number_range_type_spacetimedb.rs");
 
     #[cfg(all(feature = "chrono", not(feature = "spacetimedb")))]
     t.compile_fail("tests/ui/spacetimedb_requires_feature.rs");

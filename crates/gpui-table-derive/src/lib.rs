@@ -2,6 +2,10 @@ mod components;
 mod filterable;
 mod gpui_table;
 mod impl_attr;
+#[cfg(feature = "mcp")]
+mod mcp_filter_shape;
+#[cfg(feature = "mcp")]
+mod mcp_handlers;
 mod table_cell;
 
 use proc_macro::TokenStream;
@@ -31,6 +35,24 @@ use proc_macro::TokenStream;
 #[proc_macro_attribute]
 pub fn gpui_table_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
     impl_attr::gpui_table_impl(attr.into(), item.into()).into()
+}
+
+#[cfg(feature = "mcp")]
+#[proc_macro_attribute]
+pub fn mcp_query(attr: TokenStream, item: TokenStream) -> TokenStream {
+    match mcp_handlers::expand_query(attr.into(), item.into()) {
+        Ok(tokens) => tokens.into(),
+        Err(error) => error.to_compile_error().into(),
+    }
+}
+
+#[cfg(feature = "mcp")]
+#[proc_macro_derive(McpFilterShape)]
+pub fn derive_mcp_filter_shape(input: TokenStream) -> TokenStream {
+    match mcp_filter_shape::expand(input.into()) {
+        Ok(tokens) => tokens.into(),
+        Err(error) => error.to_compile_error().into(),
+    }
 }
 
 #[proc_macro_derive(GpuiTable, attributes(gpui_table))]

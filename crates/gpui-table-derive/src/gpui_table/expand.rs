@@ -4,6 +4,8 @@ use crate::gpui_table::filter_codegen::get_filter_type_expr;
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
 use crate::gpui_table::filter_entities::generate_filter_entities;
 use crate::gpui_table::filter_matching::generate_matches_filters_method;
+#[cfg(feature = "mcp")]
+use crate::gpui_table::mcp::generate_mcp_impl;
 use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
 
 use darling::util::Override;
@@ -31,7 +33,19 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         loading,
         load_more,
         filters: filters_enabled,
+        mcp,
     } = meta;
+
+    if let Some(mcp) = mcp.as_ref() {
+        mcp.validate(struct_name.span())?;
+    }
+    #[cfg(not(feature = "mcp"))]
+    if mcp.is_some() {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`#[gpui_table(mcp)]` requires the `gpui-table/mcp` feature",
+        ));
+    }
 
     let table_id = id.unwrap_or_else(|| struct_name.to_string());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
@@ -200,7 +214,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         if !filters_enabled && field.filter.is_some() {
             return Err(syn::Error::new(
                 ident.span(),
-                "field-level `filter(...)` requires struct-level `#[gpui_table(filters)]`",
+                "field-level `filter` or `filter(...)` requires struct-level `#[gpui_table(filters)]`",
             ));
         }
         if let Some(fixed) = field.fixed.as_deref()
@@ -479,6 +493,22 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     // Generate matches_filters() method on the struct (only when filters enabled)
     let matches_filters_impl = generate_matches_filters_method(&struct_name, &filter_fields);
 
+    #[cfg(feature = "mcp")]
+    let mcp_impl = if let Some(mcp_options) = mcp.as_ref() {
+        generate_mcp_impl(
+            &struct_name,
+            &table_id,
+            &table_title,
+            &filter_fields,
+            Some(mcp_options),
+        )
+    } else {
+        quote! {}
+    };
+
+    #[cfg(not(feature = "mcp"))]
+    let mcp_impl = quote! {};
+
     #[cfg(feature = "inventory")]
     let uses_fluent_labels = fluent.is_some();
 
@@ -545,6 +575,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         #delegate_impl
         #filter_entities_impl
         #matches_filters_impl
+        #mcp_impl
     })
 }
 

@@ -64,7 +64,9 @@ pub struct TextFilter {
     last_placeholder: Option<String>,
 }
 
-impl component_shape::ComponentShapeMetadata for TextFilter {}
+impl component_shape::ComponentShapeMetadata for TextFilter {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::string();
+}
 impl component_shape::DeclaredComponentShape for TextFilter {}
 impl component_shape::ComponentShapeFor<String> for TextFilter {}
 impl component_shape::ComponentShapeFor<Option<String>> for TextFilter {}

@@ -1,0 +1,5 @@
+error: `#[gpui_table(mcp)]` requires the `gpui-table/mcp` feature
+ --> tests/ui/mcp_requires_feature.rs:5:8
+  |
+5 | struct UserRow {
+  |        ^^^^^^^

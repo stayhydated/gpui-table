@@ -1,6 +1,8 @@
-use es_fluent::{FluentLocalizer, FluentLocalizerExt as _, FluentMessage, FluentValue};
+use es_fluent::{
+    FluentArgs, FluentLocalizer, FluentLocalizerExt as _, FluentMessage,
+    registry::{StaticFluentDomain, StaticFluentEntryId},
+};
 use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError};
-use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 const FALLBACK_LANGUAGE: &str = "en";
@@ -16,19 +18,19 @@ struct FallbackLocalizer;
 impl FluentLocalizer for FallbackLocalizer {
     fn localize<'a>(
         &self,
-        id: &str,
-        _args: Option<&HashMap<&str, FluentValue<'a>>>,
+        id: StaticFluentEntryId,
+        _args: Option<&FluentArgs<'a>>,
     ) -> Option<String> {
-        Some(id.to_string())
+        Some(id.as_ref().to_string())
     }
 
     fn localize_in_domain<'a>(
         &self,
-        _domain: &str,
-        id: &str,
-        _args: Option<&HashMap<&str, FluentValue<'a>>>,
+        _domain: StaticFluentDomain,
+        id: StaticFluentEntryId,
+        _args: Option<&FluentArgs<'a>>,
     ) -> Option<String> {
-        Some(id.to_string())
+        Some(id.as_ref().to_string())
     }
 }
 

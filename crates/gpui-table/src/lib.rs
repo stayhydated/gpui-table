@@ -2,6 +2,7 @@
 //!
 //! Public API is namespaced by responsibility:
 //! - `gpui_table::core` for pure filter semantics
+//! - `gpui_table::mcp` for experimental MCP table query integration
 //! - `gpui_table::runtime` for GPUI-facing traits/helpers
 //! - `gpui_table::schema` for metadata and registry types
 //! - root-level proc macros from `gpui-table-derive`
@@ -32,6 +33,8 @@ pub use gpui_table_derive::*;
 
 pub use gpui_table_core as core;
 pub use gpui_table_core::filter;
+#[cfg(feature = "mcp")]
+pub use gpui_table_mcp as mcp;
 pub use gpui_table_runtime as runtime;
 pub use gpui_table_runtime::{
     FilterEntitiesExt, TableCell, TableDataLoader, TableLoader, TableRowContextMenu,

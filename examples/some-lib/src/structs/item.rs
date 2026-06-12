@@ -9,7 +9,6 @@ use gpui_table::runtime::TableLoader;
 use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentLabel, EsFluentVariants, GpuiTable)]
-#[fluent_label(origin, variants)]
 #[gpui_table(fluent, custom_style, load_more)]
 pub struct Item {
     #[gpui_table(skip)]

@@ -1,0 +1,13 @@
+[package]
+name = "mcp-query"
+version.workspace = true
+edition.workspace = true
+license = "Unlicense"
+publish = false
+
+[dependencies]
+chrono = { workspace = true }
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+gpui-table = { features = [ "mcp", "rust_decimal" ], workspace = true }
+serde = { features = [ "derive" ], workspace = true }

@@ -18,13 +18,16 @@ proc-macro = true
 chrono = [  ]
 fluent = [  ]
 inventory = [  ]
+mcp = [ "inventory" ]
 rust_decimal = [  ]
 spacetimedb = [  ]
 
 [dependencies]
+component-shape = { workspace = true }
 component-shape-codegen = { workspace = true }
 darling = { workspace = true }
 heck = { workspace = true }
+proc-macro-crate = { workspace = true }
 proc-macro2 = { workspace = true }
 quote = { workspace = true }
 syn = { features = [ "full" ], workspace = true }

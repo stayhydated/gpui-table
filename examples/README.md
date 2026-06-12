@@ -37,12 +37,36 @@ example app locale.
 
 Do not hand-edit `examples/prototyping/output`; it is generated output.
 
+### Query rows through MCP
+
+```sh
+cargo run -p mcp-query
+```
+
+This starts a stdio MCP server that exposes a derived table as a query tool.
+The tool accepts JSON filters, `limit`, and `offset`, decodes them into the
+generated typed filter values, and returns matching in-memory rows. The table
+declares explicit MCP tool metadata with `#[gpui_table(mcp(...))]`.
+
+```sh
+printf '%s\n' \
+  '{"jsonrpc":"2.0","id":0,"method":"initialize","params":{"protocolVersion":"2025-11-25","capabilities":{},"clientInfo":{"name":"manual","version":"0.0.0"}}}' \
+  '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}' \
+  '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+  | cargo run -q -p mcp-query
+```
+
 ## Workspace Layout
 
 - `examples/some-lib`
   Domain types, `#[derive(GpuiTable)]` rows, `#[derive(Filterable)]` enums, and package-local i18n setup.
 - `examples/some-lib-tables`
   Storybook-style GPUI app that renders the generated tables and filters.
+- `examples/mcp-query`
+  Stdio MCP query proof-of-concept backed by generated table filters.
+- `../gpui-form/examples/mcp-form-table`
+  Sibling-workspace composed MCP example with a custom form component shape and
+  inferred table filter MCP arguments.
 - `examples/prototyping`
   Inventory-driven generator that writes story modules into `examples/prototyping/output`.
 
@@ -74,6 +98,8 @@ app language enum with `#[es_fluent_language]`. The storybook binary imports
   Load-more wiring via `#[gpui_table_impl]` plus custom `TableRowStyle`.
 - `examples/some-lib-tables/src/tables/user.rs`
   How generated filters are composed into a screen with `DataTable`.
+- `examples/mcp-query/src/main.rs`
+  How `#[gpui_table::mcp_query]` exposes generated filters as MCP tool arguments.
 - `examples/prototyping/src/main.rs`
   A complete generator built on `TableShapeAdapter`, `TableLayout`, and `TableParts`.
 

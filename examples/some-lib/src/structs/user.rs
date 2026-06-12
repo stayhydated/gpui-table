@@ -23,7 +23,6 @@ pub enum UserStatus {
 }
 
 #[derive(Clone, fake::Dummy, EsFluentLabel, EsFluentVariants, GpuiTable)]
-#[fluent_label(origin, variants)]
 #[fluent_variants(keys = ["description", "label"])]
 #[gpui_table(
     fluent = "label",
@@ -38,33 +37,29 @@ pub struct User {
     #[allow(dead_code)]
     pub id: uuid::Uuid,
 
-    #[gpui_table(sortable, width = 150., filter(gpui_table_component::TextFilter))]
+    #[gpui_table(sortable, width = 150., filter)]
     #[dummy(faker = "Name()")]
     pub name: String,
 
-    #[gpui_table(sortable, width = 80., filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(sortable, width = 80., filter)]
     #[dummy(faker = "18..67")]
     pub age: u8,
 
-    #[gpui_table(
-        sortable,
-        width = 150.,
-        filter(gpui_table_component::NumberRangeFilter)
-    )]
+    #[gpui_table(sortable, width = 150., filter)]
     #[dummy(faker = "PositiveDecimal")]
     pub debt: Decimal,
 
-    #[gpui_table(width = 200., filter(gpui_table_component::TextFilter))]
+    #[gpui_table(width = 200., filter)]
     #[dummy(faker = "SafeEmail()")]
     pub email: String,
 
-    #[gpui_table(width = 70., filter(gpui_table_component::FacetedFilter::<bool>))]
+    #[gpui_table(width = 70., filter)]
     pub active: bool,
 
-    #[gpui_table(width = 100., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 100., filter)]
     pub status: UserStatus,
 
-    #[gpui_table(sortable, width = 300., filter(gpui_table_component::DateRangeFilter))]
+    #[gpui_table(sortable, width = 300., filter)]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
 }

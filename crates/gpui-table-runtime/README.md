@@ -44,7 +44,10 @@ impl TableRowStyle for Item {
 - `DisplayCell` and `FormattedCell` wrappers for generic value-object rendering
 - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
 - `TableLoader` and `TableDataLoader`
-- `shape`, the table filter shape contract used by generated filter entities
+- `shape`, the table filter shape contract used by generated filter entities,
+  plus facade re-exports for `ComponentShapeMetadata`, `DeclaredComponentShape`,
+  `ComponentShapeFor`, `McpInput`, and built-in filter shape types when
+  implementing custom filters
 - `generated_filters`, which re-exports the built-in filter UI, localization helpers, `FilterEntitiesExt`, `TableFilterComponent`, and `QueryFilterValue`
 
 The `generated_filters` module is the stable runtime target for code emitted by

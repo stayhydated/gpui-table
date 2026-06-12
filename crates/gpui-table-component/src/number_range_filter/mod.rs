@@ -113,7 +113,9 @@ pub struct NumberRangeFilter {
     last_max_placeholder: Option<String>,
 }
 
-impl component_shape::ComponentShapeMetadata for NumberRangeFilter {}
+impl component_shape::ComponentShapeMetadata for NumberRangeFilter {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::decimal_range();
+}
 impl component_shape::DeclaredComponentShape for NumberRangeFilter {}
 
 macro_rules! impl_number_range_component_shape_for {

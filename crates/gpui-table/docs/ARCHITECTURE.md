@@ -10,6 +10,7 @@ application code and for code emitted by `gpui-table-derive`.
 
 - Always depends on `gpui-table-core`, `gpui-table-runtime`, and `gpui-table-schema`.
 - Optionally depends on `gpui-table-derive` behind the `derive` feature.
+- Optionally depends on `gpui-table-mcp` behind the `mcp` feature.
 - Re-exports external feature-gated crates through `__deps` so macro-generated
   code can name `chrono` and `rust_decimal` without each downstream crate
   having to mirror those dependency paths.
@@ -22,6 +23,7 @@ expansion depend on:
 
 - `gpui_table::core`
 - `gpui_table::filter`
+- `gpui_table::mcp` when the `mcp` feature is enabled
 - `gpui_table::runtime`
 - `gpui_table::schema`
 - `gpui_table::registry`
@@ -45,8 +47,8 @@ It also re-exports the commonly used runtime traits at the crate root and, when
 
 1. Downstream code derives `GpuiTable`, `Filterable`, or `TableCell` through this crate.
 1. `gpui-table-derive` emits code against the `gpui_table::core`,
-   `gpui_table::runtime`, `gpui_table::schema`, and `gpui_table::registry`
-   namespaces defined here.
+   `gpui_table::runtime`, `gpui_table::schema`, `gpui_table::registry`, and
+   feature-gated `gpui_table::mcp` namespaces defined here.
 1. Runtime code then executes inside `gpui-table-runtime`, while filter values
    and metadata route through `gpui-table-core` and `gpui-table-schema`.
 
@@ -60,3 +62,11 @@ It also re-exports the commonly used runtime traits at the crate root and, when
   `gpui_table::runtime::generated_filters::localize_*` helpers with GPUI
   context; context-free metadata uses the matching fallback helpers.
 - `inventory` enables registry metadata emission from the derive layer.
+- `mcp` re-exports `gpui-table-mcp`, enables inventory, and forwards MCP
+  generation to `gpui-table-derive` for row types that opt in with
+  `#[gpui_table(mcp)]`. Custom MCP query handlers can be synchronous or async
+  and must return `Result<TableQueryResult<Row>, E>`. It also forwards
+  `chrono`, `rust_decimal`, and `spacetimedb` support to the MCP crate when
+  those facade features are enabled.
+  Struct-level `#[gpui_table(mcp(...))]` options override generated MCP tool
+  names, titles, and descriptions.

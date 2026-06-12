@@ -3,6 +3,8 @@ mod expand;
 mod filter_codegen;
 mod filter_entities;
 mod filter_matching;
+#[cfg(feature = "mcp")]
+mod mcp;
 mod meta;
 
 use darling::FromDeriveInput as _;

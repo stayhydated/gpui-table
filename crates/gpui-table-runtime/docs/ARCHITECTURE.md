@@ -9,6 +9,8 @@ runtime facade that generated filter code compiles against.
 ## Dependency Edges
 
 - Depends on `gpui` and `gpui-component` for table integration and rendering.
+- Depends on `component-shape` for shared filter-shape metadata and MCP input
+  metadata contracts.
 - Depends on `gpui-table-core` for filter semantics.
 - Depends on `gpui-table-component` for the built-in filter UI.
 - Depends on `gpui-table-schema` for filter metadata types used by the runtime.
@@ -29,6 +31,9 @@ runtime facade that generated filter code compiles against.
 - `src/shape.rs`
   - Table-specific filter shape contracts, built-in component shape impls, and
     field support and matching behavior.
+  - Re-exports shared component-shape metadata traits, `McpInput`, and built-in
+    filter shape types so custom and generated filter paths can stay on the
+    `gpui-table-runtime` facade.
 - `src/generated_filters.rs`
   - Stable runtime target for generated filter code.
   - Re-exports built-in filter components, localization helpers, and generic

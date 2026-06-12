@@ -11,6 +11,10 @@ pub use row::{
     TableRowContextMenu, TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
     default_render_cell, default_render_row,
 };
+pub use shape::{
+    ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInput, McpInputShape,
+    McpPrimitiveKind,
+};
 
 /// Private module for macro internals. Not part of public API.
 #[doc(hidden)]

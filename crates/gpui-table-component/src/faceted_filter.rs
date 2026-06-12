@@ -49,7 +49,9 @@ pub struct FacetedFilter<T: FilterValue> {
     _marker: PhantomData<T>,
 }
 
-impl<T: FilterValue> component_shape::ComponentShapeMetadata for FacetedFilter<T> {}
+impl<T: FilterValue> component_shape::ComponentShapeMetadata for FacetedFilter<T> {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::string_set();
+}
 impl<T: Filterable> component_shape::DeclaredComponentShape for FacetedFilter<T> {}
 impl<T: Filterable> component_shape::ComponentShapeFor<T> for FacetedFilter<T> {}
 impl<T: Filterable> component_shape::ComponentShapeFor<Option<T>> for FacetedFilter<T> {}

@@ -1,0 +1,28 @@
+error[E0277]: table filter shape `LocalTextFilter` cannot be decoded from MCP tool arguments
+  --> tests/ui/mcp_filter_shape_requires_decode.rs:64:25
+   |
+64 |     #[gpui_table(filter(LocalTextFilter))]
+   |                         ^^^^^^^^^^^^^^^ unsatisfied trait bound
+   |
+help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
+  --> tests/ui/mcp_filter_shape_requires_decode.rs:12:1
+   |
+12 | struct LocalTextFilter;
+   | ^^^^^^^^^^^^^^^^^^^^^^
+   = note: derive `gpui_table::McpFilterShape` when the shape raw value implements serde::de::DeserializeOwned and gpui_table::mcp::McpJsonSchema, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
+help: the following other types implement trait `McpFilterShape`
+  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
+   |
+   |   impl McpFilterShape for gpui_table_component::TextFilter {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
+...
+   | / impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
+   | | where
+   | |     T: gpui_table_core::filter::Filterable,
+   | |___________________________________________^ `FacetedFilter<T>`
+...
+   |   impl McpFilterShape for gpui_table_component::NumberRangeFilter {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `NumberRangeFilter`
+...
+   |   impl McpFilterShape for gpui_table_component::DateRangeFilter {
+   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `DateRangeFilter`

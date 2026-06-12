@@ -159,6 +159,11 @@ When changing public APIs or behavior in a crate, update that crate's
   Docs: [Architecture](crates/gpui-table-derive/docs/ARCHITECTURE.md)
   Role: proc-macro crate for `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`. Most users should depend on `gpui-table` instead of this crate directly.
 
+- `crates/gpui-table-mcp`
+  Audience: **Public integration**
+  Docs: [Architecture](crates/gpui-table-mcp/docs/ARCHITECTURE.md)
+  Role: experimental MCP query registry, `rmcp` stdio serving, and JSON filter decoding for generated table filter values. Most application users should enable it through `gpui-table/mcp` only when exposing tables to MCP clients.
+
 - `crates/gpui-table-prototyping-core`
   Audience: **Public integration**
   Docs: [Architecture](crates/gpui-table-prototyping-core/docs/ARCHITECTURE.md)
@@ -193,6 +198,9 @@ When changing public APIs or behavior in a crate, update that crate's
 
 - `examples/some-lib-tables`
   Storybook-style GPUI app for exercising generated tables and filters. `cargo run` from the workspace root lands here by default.
+
+- `examples/mcp-query`
+  Stdio MCP proof-of-concept that exposes generated table filters as query tool arguments and returns matching in-memory rows.
 
 - `examples/prototyping`
   Inventory-driven generator that writes story modules into `examples/prototyping/output`.

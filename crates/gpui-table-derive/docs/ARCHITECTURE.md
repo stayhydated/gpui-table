@@ -24,8 +24,8 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 - `src/lib.rs`
   - Proc-macro entry points.
 - `src/components.rs`
-  - Wraps shared filter shape path options and resolves `_` generics against
-    field types.
+  - Wraps shared filter shape options, infers built-in shapes for bare
+    `filter`, and resolves `_` generics against field types.
 - `src/filterable.rs`
   - Expansion for `#[derive(Filterable)]`.
 - `src/table_cell.rs`
@@ -44,13 +44,20 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
   - Generated `Matchable<XxxFilterValues>` implementations.
 - `src/gpui_table/filter_codegen/`
   - Shared filter token generation, chain helpers, and type validation.
+- `src/gpui_table/mcp.rs`
+  - Generated `McpTable` descriptors, query decoders, and MCP inventory
+    registration when the `mcp` feature is enabled.
+- `src/mcp_filter_shape.rs`
+  - `#[derive(McpFilterShape)]`, which emits raw-value serde decoding and
+    `McpJsonSchema`-backed schema defaults for custom filter shapes.
 
 ## Expansion Pipeline
 
 1. Parse the input syntax tree with `syn`.
 1. Parse `#[gpui_table(...)]` or `#[filter(...)]` attributes with `darling`.
 1. Validate structural rules such as:
-   - `filter(...)` requires struct-level `#[gpui_table(filters)]`
+   - field-level `filter` or `filter(...)` requires struct-level
+     `#[gpui_table(filters)]`
    - only one context-menu id source is allowed
    - `context_menu_route` and `context_menu_route_fn` are mutually exclusive
    - selected filter shapes implement the declared-shape and field support
@@ -59,6 +66,7 @@ blocks into the generated types consumed by the facade/runtime/schema layers.
 1. Generate the main row/delegate code.
 1. Optionally generate filter entities, filter values, and matching logic.
 1. Optionally generate inventory registration.
+1. Optionally generate MCP table query registration.
 1. Optionally attach load-more wiring through `#[gpui_table_impl]`.
 
 ## Generated Type Contracts
@@ -83,12 +91,17 @@ Additional generated contracts:
 - Inventory metadata uses `gpui_table::registry::GpuiTableShape`, stores filter
   field/type/shape metadata through `ComponentShapeUse`, and stores the
   original `file!()` path in `source_path`.
+- MCP query metadata uses `gpui_table::mcp::McpTableFilter` and
+  `McpTableDescriptor`. The generated decoder builds `XxxFilterValues` from
+  structured JSON arguments before application-owned query execution.
 
 ## Internal Contracts
 
-- `filter(...)` accepts a shape type path. The generated code asserts
+- Bare `filter` infers a built-in shape from the field type before validation.
+  `filter(...)` accepts an explicit shape type path. The generated code asserts
   `DeclaredGpuiTableFilterShape`, `GpuiTableFilterShape`, and
-  `GpuiTableFilterShapeFor<Field>` at the field span.
+  `GpuiTableFilterShapeFor<Field>` at the field span after inference or
+  explicit path resolution.
 - Filter shape path extraction uses `component-shape-codegen` helpers; table
   option grammar, duplicate checks, and diagnostics remain owned by this crate.
 - Implementing `TableFilterComponent` alone does not make a widget selectable in
@@ -105,11 +118,18 @@ Additional generated contracts:
   `gpui_table_component::FacetedFilter<T>` for `Option<T>` and `Vec<T>` fields.
   Matching treats `None` or a vector without any selected value as a non-match
   only when the facet is active.
+- MCP emission is intentionally tied to explicit row opt-in with
+  `#[gpui_table(mcp)]`. Tables without filter fields still receive an empty
+  `XxxFilterValues` type when they opt in, so MCP tools can expose pagination
+  without filter arguments.
 
 ## Test And Generated Surfaces
 
 - Compile-fail coverage lives under `crates/gpui-table/tests/ui`.
 - Snapshot coverage for table rendering lives under `crates/gpui-table/tests`.
+- MCP query coverage lives in `crates/gpui-table/tests/mcp_query.rs` and
+  exercises generated schema, inventory, and direct tool calls. The runnable
+  `examples/mcp-query` binary covers SDK-backed stdio `tools/call`.
 - `crates/gpui-table/wip` is scratch data for macro stderr work, not a public surface.
 
 ## Feature Gates
@@ -118,3 +138,29 @@ Additional generated contracts:
   supported filter/type combinations at compile time.
 - `fluent` enables typed `es-fluent` titles and faceted labels in generated code.
 - `inventory` enables `GpuiTableShape` registration.
+- `mcp` implies `inventory` and exposes table MCP generation for structs that
+  opt in with `#[gpui_table(mcp)]`. Opted-in tables receive `McpTable`
+  implementations plus `McpTableRegistration` inventory items, including
+  pagination-only registrations when no filters are declared. The feature also
+  exposes the `mcp_query` attribute macro, which infers row types from
+  `TableQuery<Row>` and
+  zero-argument `Result<Vec<Row>, E>` handler signatures and emits
+  `McpQueryHandlerRegistration` inventory items for application-owned handler
+  functions. `mcp_query` routes custom handlers to the matching
+  `table::<Row>(&mut server)` builder method using `query` for
+  `Result<TableQueryResult<Row>, E>` handlers. Local row sources route to
+  `row_source` or `row_source_async`.
+  Struct-level `#[gpui_table(mcp(name = ..., title = ..., description = ...))]`
+  options are emitted as `McpToolMetadata` on the generated table descriptor.
+  `mcp_query` handlers fail at compile time when the inferred row type does not
+  implement `McpTable`, which normally means the row type is missing
+  `#[gpui_table(mcp)]`.
+  MCP-enabled table descriptors and decoders use the same inferred or explicit
+  filter shape selected for generated UI. Every selected shape must implement
+  `gpui_table::mcp::McpFilterShape`, so custom filters without explicit JSON
+  decoding fail at the field that selected the shape.
+  The `McpFilterShape` derive covers raw-value serde decoding for common
+  custom filters; implement `gpui_table::mcp::McpFilterShape` manually for
+  custom JSON contracts.
+  The handler registration macros propagate setup errors from registration and
+  resolve the facade crate path for downstream renamed dependencies.

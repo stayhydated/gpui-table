@@ -1,13 +1,23 @@
 //! Table filter shape contracts.
 
+pub use component_shape::{
+    ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInput, McpInputShape,
+    McpPrimitiveKind,
+};
 use gpui::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterType, TextValue};
 use gpui_table_schema::registry::RegistryFilterType;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
+#[cfg(feature = "chrono")]
+pub use gpui_table_component::DateRangeFilter;
+#[cfg(feature = "rust_decimal")]
+pub use gpui_table_component::NumberRangeFilter;
+pub use gpui_table_component::{FacetedFilter, TextFilter};
+
 /// Table-specific filter shape contract consumed by `#[derive(GpuiTable)]`.
-pub trait GpuiTableFilterShape: component_shape::ComponentShapeMetadata {
+pub trait GpuiTableFilterShape: ComponentShapeMetadata {
     type Component: 'static;
     type RawValue: Default + Clone + Send + 'static;
     type FilterValue: Clone + Send + 'static;
@@ -33,10 +43,7 @@ pub trait GpuiTableFilterShape: component_shape::ComponentShapeMetadata {
     message = "table filter shape `{Self}` must implement `DeclaredGpuiTableFilterShape`",
     note = "use a built-in shape such as `gpui_table_component::TextFilter` or implement the table filter shape contract for your custom shape"
 )]
-pub trait DeclaredGpuiTableFilterShape:
-    GpuiTableFilterShape + component_shape::DeclaredComponentShape
-{
-}
+pub trait DeclaredGpuiTableFilterShape: GpuiTableFilterShape + DeclaredComponentShape {}
 
 /// Field support and matching behavior for a shape used against a table field.
 #[diagnostic::on_unimplemented(

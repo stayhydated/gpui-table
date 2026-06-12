@@ -1,7 +1,7 @@
 use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
 use component_shape_codegen::parse_single_shape_path;
-use darling::{Error as DarlingError, FromDeriveInput, FromField, util::Override};
+use darling::{Error as DarlingError, FromDeriveInput, FromField, FromMeta, util::Override};
 use syn::{Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _};
 
 #[derive(FromDeriveInput)]
@@ -64,10 +64,72 @@ pub(super) struct TableMeta {
     /// only processed when this is enabled.
     #[darling(default)]
     pub(super) filters: bool,
+
+    #[darling(default)]
+    pub(super) mcp: Option<McpToolOptions>,
 }
 
 fn default_delegate() -> bool {
     true
+}
+
+#[derive(Clone, Debug, Default)]
+pub(super) struct McpToolOptions {
+    pub(super) name: Option<String>,
+    pub(super) title: Option<String>,
+    pub(super) description: Option<String>,
+}
+
+#[derive(Clone, Debug, Default, darling::FromMeta)]
+struct McpToolOptionsMeta {
+    #[darling(default)]
+    name: Option<String>,
+    #[darling(default)]
+    title: Option<String>,
+    #[darling(default)]
+    description: Option<String>,
+}
+
+impl FromMeta for McpToolOptions {
+    fn from_word() -> darling::Result<Self> {
+        Ok(Self::default())
+    }
+
+    fn from_list(items: &[darling::ast::NestedMeta]) -> darling::Result<Self> {
+        let options: Self = McpToolOptionsMeta::from_list(items)?.into();
+        options
+            .validate(proc_macro2::Span::call_site())
+            .map_err(|error| DarlingError::custom(error.to_string()))?;
+        Ok(options)
+    }
+}
+
+impl From<McpToolOptionsMeta> for McpToolOptions {
+    fn from(value: McpToolOptionsMeta) -> Self {
+        Self {
+            name: value.name,
+            title: value.title,
+            description: value.description,
+        }
+    }
+}
+
+impl McpToolOptions {
+    pub(super) fn validate(&self, span: proc_macro2::Span) -> syn::Result<()> {
+        if let Some(name) = self.name.as_deref() {
+            component_shape::validate_mcp_tool_name(name)
+                .map_err(|error| syn::Error::new(span, error.to_string()))?;
+        }
+        if let Some(title) = self.title.as_deref() {
+            component_shape::validate_mcp_tool_metadata_text("title", title)
+                .map_err(|error| syn::Error::new(span, error.to_string()))?;
+        }
+        if let Some(description) = self.description.as_deref() {
+            component_shape::validate_mcp_tool_metadata_text("description", description)
+                .map_err(|error| syn::Error::new(span, error.to_string()))?;
+        }
+        Ok(())
+    }
 }
 
 pub(super) struct TableColumn {
@@ -85,8 +147,8 @@ pub(super) struct TableColumn {
     pub(super) resizable: Option<bool>,
     pub(super) movable: Option<bool>,
     pub(super) skip: bool,
-    /// Filter shape path.
-    /// Example: `filter(gpui_table_component::TextFilter)`
+    /// Filter shape path, or inferred when the field uses bare `filter`.
+    /// Example: `filter` or `filter(gpui_table_component::TextFilter)`
     pub(super) filter: Option<FilterShapeOptions>,
 
     /// Marks this field as the value source for generated row context-menu route/label.
@@ -277,11 +339,67 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
 }
 
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
+    if meta.input.is_empty() {
+        return Ok(FilterShapeOptions::inferred(meta.path.span()));
+    }
+
     let content;
     parenthesized!(content in meta.input);
     let shape = parse_single_shape_path(&content, "expected exactly one filter shape path")?;
     let span = shape.span();
     Ok(FilterShapeOptions::from_shape_with_span(shape, span))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mcp_tool_options_accept_word_form() {
+        let options = McpToolOptions::from_word().expect("mcp word form should parse");
+
+        assert!(options.name.is_none());
+        assert!(options.title.is_none());
+        assert!(options.description.is_none());
+    }
+
+    #[test]
+    fn mcp_tool_options_reject_invalid_name() {
+        let error = McpToolOptions::from_list(&[darling::ast::NestedMeta::Meta(
+            syn::parse_quote!(name = "bad name"),
+        )])
+        .expect_err("invalid name should fail");
+
+        assert!(
+            error.to_string().contains("tool name may only contain"),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn mcp_tool_options_reject_empty_title_and_description() {
+        let error = McpToolOptions::from_list(&[
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(title = "  ")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(name = "users")),
+        ])
+        .expect_err("blank title should fail");
+        assert!(
+            error.to_string().contains("tool title cannot be empty"),
+            "unexpected error: {error}"
+        );
+
+        let error = McpToolOptions::from_list(&[
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(description = "")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(name = "users")),
+        ])
+        .expect_err("blank description should fail");
+        assert!(
+            error
+                .to_string()
+                .contains("tool description cannot be empty"),
+            "unexpected error: {error}"
+        );
+    }
 }
 
 /// Filter field metadata for delegate generation.

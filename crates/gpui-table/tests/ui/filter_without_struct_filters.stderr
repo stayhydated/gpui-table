@@ -1,4 +1,4 @@
-error: field-level `filter(...)` requires struct-level `#[gpui_table(filters)]`
+error: field-level `filter` or `filter(...)` requires struct-level `#[gpui_table(filters)]`
  --> tests/ui/filter_without_struct_filters.rs:6:5
   |
 6 |     name: String,

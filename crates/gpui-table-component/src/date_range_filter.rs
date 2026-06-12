@@ -77,7 +77,9 @@ pub struct DateRangeFilter {
     _subscriptions: Vec<Subscription>,
 }
 
-impl component_shape::ComponentShapeMetadata for DateRangeFilter {}
+impl component_shape::ComponentShapeMetadata for DateRangeFilter {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::date_range();
+}
 impl component_shape::DeclaredComponentShape for DateRangeFilter {}
 impl component_shape::ComponentShapeFor<NaiveDate> for DateRangeFilter {}
 impl component_shape::ComponentShapeFor<Option<NaiveDate>> for DateRangeFilter {}

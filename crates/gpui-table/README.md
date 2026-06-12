@@ -30,9 +30,11 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 
 `derive` and `chrono` are enabled by default. Add:
 
-- `rust_decimal` for `gpui_table_component::NumberRangeFilter`
+- `rust_decimal` for numeric range filters
 - `inventory` for `GpuiTableShape` registration and prototyping/codegen
   metadata, including `ComponentShapeUse` filter metadata
+- `mcp` for experimental MCP query tools backed by generated typed filter
+  values; this also enables inventory registration
 - `fluent` for localized table titles and faceted labels through `es-fluent`
 - `spacetimedb` for range filtering over supported SpacetimeDB temporal types
 
@@ -55,13 +57,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
+    #[gpui_table(sortable, width = 160., filter)]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(width = 80., filter)]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 120., filter)]
     pub status: UserStatus,
 }
 
@@ -81,6 +83,11 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `UserFilterValues` for typed filter state
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
+Bare `#[gpui_table(filter)]` infers common filter shapes from the field type:
+strings use `TextFilter`, numbers use `NumberRangeFilter`, date-like values use
+`DateRangeFilter`, and other enum-like values use `FacetedFilter::<T>`.
+Use `filter(path::ToShape)` when a field needs a custom or non-inferred shape.
+
 Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
 implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
 store selected `T` values in the generated filter state; when a selection is
@@ -89,6 +96,85 @@ active, rows with `None` or no matching vector element do not match that facet.
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
 type, and shape path through `ComponentShapeUse`.
+
+### MCP query tools
+
+With the `mcp` feature, tables that opt in with `#[gpui_table(mcp)]` also get a
+`gpui_table::mcp::McpTable` implementation and an MCP tool registration. The
+tool accepts structured JSON arguments with generated filter fields plus optional
+`limit` and `offset`; for tables without any generated filters, only
+pagination arguments are accepted. It decodes filters into the generated
+`FilterValues` type and lets an
+application-owned handler return rows.
+
+```rs
+#[gpui_table::mcp_query]
+fn rows() -> Result<Vec<User>, String> {
+    Ok(vec![/* rows */])
+}
+
+fn main() -> gpui_table::mcp::ServeStdioResult {
+    gpui_table::mcp::serve_stdio_blocking()
+}
+```
+
+Built-in text, faceted, number range, and date range filters decode from the
+same values used by generated filter widgets. Faceted MCP arguments use
+`Filterable::to_filter_string()` values, for example
+`{"status": ["Active"]}`.
+Generated schemas publish faceted arguments as unique string sets, include
+valid facet values under the filter's item `enum`, and preserve labels in
+`x-gpuiTableFacetOptions`, so MCP clients can discover valid facet strings from
+`tools/list`.
+
+Use `#[gpui_table::mcp_query]` for both application-owned backend functions
+that accept `gpui_table::mcp::TableQuery<User>` and local row sources that
+return `Result<Vec<User>, E>`. The row type must opt in with
+`#[gpui_table(mcp)]`. The handler signature chooses the mode, and local
+sources are called for each MCP query. Custom query handlers can be synchronous
+or async. Return `Result<gpui_table::mcp::TableQueryResult<User>, E>` for
+explicit MCP errors, where `User: serde::Serialize`. Use
+`query.result(rows, total)` to build the standard response from a decoded query.
+Use struct-level
+`#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
+override the generated MCP tool name, title, or description. The lower-level
+`McpServer` API remains available when an
+application wants to compose table tools with other `component-shape-mcp`
+integrations. Use `gpui_table::mcp::server_named(name, version)?` when generated
+table handlers should advertise application-owned metadata, then call
+`.serve_stdio().await` or `.serve_stdio_blocking()`. Use
+`gpui_table::mcp::builder()` or `builder_named(name, version)` when deferred
+setup is useful. Use `gpui_table::mcp::serve_stdio_blocking()` for the default
+stdio server.
+
+For a composed server, such as a binary that also depends on `gpui-form`, use
+the shared builder:
+
+```rs
+let server = gpui_table::mcp::McpServer::builder("my-app", env!("CARGO_PKG_VERSION"))
+    .register(gpui_table::mcp::register)
+    .register(gpui_form::mcp::register)
+    .build()?;
+```
+
+Manual table tools can still be registered directly:
+`gpui_table::mcp::table::<User>(&mut server).query(handler)?` for
+`Result<gpui_table::mcp::TableQueryResult<User>, E>` handlers,
+`.rows(rows)?` for fixed row vectors,
+`.row_source(source)?` for per-query local rows, or
+`.row_source_async(source)?` for async local row sources.
+Registration reports setup errors such as duplicate tool names.
+Custom filter shapes can derive `gpui_table::McpFilterShape` when their
+`RawValue` implements `serde::de::DeserializeOwned` and
+`gpui_table::mcp::McpJsonSchema`; the derive decodes the raw value and wraps it
+with the table filter shape contract. Use `gpui_table::mcp::McpRange<T>` for
+custom `{ "min": ..., "max": ... }` range raw values. Implement
+`gpui_table::mcp::McpFilterShape` manually when a custom filter needs richer
+schema or decoding than raw-value serde. The `McpJsonSchema` derive follows
+serde deserialize names, includes enum deserialize aliases, skips
+deserialization-skipped fields, rejects flattened fields, and treats
+serde-defaulted fields as not required; app-owned named structs, transparent
+newtypes, and fieldless enums can derive it.
 
 ### Table cells for value objects
 
@@ -136,11 +222,10 @@ pub enum UserStatus {
 }
 
 #[derive(Clone, EsFluentLabel, EsFluentVariants, GpuiTable)]
-#[fluent_label(origin, variants)]
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(filter)]
     pub status: UserStatus,
 }
 ```
@@ -161,11 +246,18 @@ The canonical end-to-end examples live under [`examples/`](../../examples/README
   Launches `examples/some-lib-tables`, the storybook app for the derived tables.
 - `cargo run -p prototyping`
   Regenerates `examples/prototyping/output` from `GpuiTableShape` inventory registrations.
+- `cargo run -p mcp-query`
+  Starts a stdio MCP proof-of-concept that queries in-memory table rows.
+- From the sibling `gpui-form` workspace, `cargo run -p mcp-form-table`
+  runs a composed form-submit plus table-query MCP server with custom shapes.
 
 The main walkthrough files are:
 
 - `examples/some-lib/src/structs/user.rs` for derived filters, localized titles, and context menus
 - `examples/some-lib/src/structs/item.rs` for load-more and custom row rendering
+- `examples/mcp-query/src/main.rs` for MCP tools that control generated filters and return rows
+- `../gpui-form/examples/mcp-form-table/src/main.rs` for a composed
+  `gpui-form` plus `gpui-table` MCP server with custom shapes
 - `examples/prototyping/src/main.rs` for inventory-driven code generation
 
 ## Feature Flags
@@ -175,5 +267,7 @@ The main walkthrough files are:
 - `fluent`: localized titles and faceted labels through `es-fluent`
 - `inventory`: inventory-backed `GpuiTableShape` registration for tooling,
   including `ComponentShapeUse` filter metadata
+- `mcp`: experimental stdio MCP query integration through generated
+  `McpTable` implementations; implies `inventory`
 - `rust_decimal`: numeric range filtering and decimal-backed helpers
 - `spacetimedb`: SpacetimeDB temporal range filtering support

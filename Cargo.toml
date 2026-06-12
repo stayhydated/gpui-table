@@ -5,9 +5,11 @@ members = [
   "crates/gpui-table-component",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
+  "crates/gpui-table-mcp",
   "crates/gpui-table-prototyping-core",
   "crates/gpui-table-runtime",
   "crates/gpui-table-schema",
+  "examples/mcp-query",
   "examples/prototyping",
   "examples/some-lib",
   "examples/some-lib-tables",
@@ -26,8 +28,9 @@ version = "0.5.0"
 [workspace.dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-component-shape = { git = "https://github.com/stayhydated/component-shape" }
-component-shape-codegen = { git = "https://github.com/stayhydated/component-shape" }
+component-shape = { path = "../component-shape/crates/component-shape", version = "0.1.0" }
+component-shape-codegen = { path = "../component-shape/crates/component-shape-codegen", version = "0.1.0" }
+component-shape-mcp = { path = "../component-shape/crates/component-shape-mcp", version = "0.1.0" }
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
@@ -45,6 +48,7 @@ gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
+gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.5.0" }
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
 gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.5.0" }
 gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.5.0" }
@@ -63,6 +67,7 @@ itertools = "0.14"
 jiff = "0.2"
 log = "0.4"
 prettyplease = "0.2"
+proc-macro-crate = "3.2"
 proc-macro2 = "1.0"
 quote = "1.0"
 reqwest = "0.13"

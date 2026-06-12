@@ -9,7 +9,19 @@ pub(super) fn generate_matches_filters_method(
     filter_fields: &[FilterFieldMeta],
 ) -> proc_macro2::TokenStream {
     if filter_fields.is_empty() {
-        return quote! {};
+        let filter_values_name =
+            Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
+
+        return quote! {
+            #[derive(Clone, Copy, Default)]
+            struct #filter_values_name;
+
+            impl gpui_table::core::filter::Matchable<#filter_values_name> for #struct_name {
+                fn matches_filters(&self, _filters: &#filter_values_name) -> bool {
+                    true
+                }
+            }
+        };
     }
 
     let filter_values_name =
