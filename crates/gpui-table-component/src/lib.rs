@@ -1,3 +1,15 @@
+//! Built-in GPUI filter widgets and table support components.
+//!
+//! This crate owns the concrete UI for text, faceted, number-range, and
+//! date-range filters plus `ResetFilters` and `TableStatusBar`. It is useful
+//! when applications need direct widget composition; most derive-based tables
+//! should reach it through `gpui-table`.
+//!
+//! Generated filter entities do not construct widgets through ad hoc paths.
+//! They target `gpui_table::runtime::generated_filters` and the runtime shape
+//! contract. Manual filter collections can use [`TableFilterComponent`] and
+//! [`QueryFilterValue`] directly.
+
 #[cfg(feature = "chrono")]
 pub mod date_range_filter;
 pub mod faceted_filter;

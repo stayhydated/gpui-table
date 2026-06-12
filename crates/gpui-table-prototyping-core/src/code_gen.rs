@@ -94,7 +94,7 @@ impl<'a> TableShapeAdapter<'a> {
 
     /// Collect all imports needed by this table's generated file.
     ///
-    /// Starts with the universal [`FRAMEWORK_IMPORTS`] base, then conditionally
+    /// Starts with the universal `FRAMEWORK_IMPORTS` base, then conditionally
     /// adds filter imports. The result can be rendered as grouped `use`
     /// statements via [`ImportSet::to_token_stream`].
     pub fn required_imports(&self) -> ImportSet {

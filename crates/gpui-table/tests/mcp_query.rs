@@ -10,7 +10,7 @@ use gpui_table::{
 };
 use serde::Serialize;
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Filterable, TableCell)]
+#[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
 enum UserStatus {
     Active,
     Blocked,

@@ -53,8 +53,8 @@ serde = { features = [ "derive" ], workspace = true }
 [dev-dependencies]
 chrono = { workspace = true }
 gpui-table-component = { workspace = true }
-serde_json = { workspace = true }
 insta = { features = [ "yaml" ], workspace = true }
+serde_json = { workspace = true }
 spacetimedb-lib = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 trybuild = { workspace = true }

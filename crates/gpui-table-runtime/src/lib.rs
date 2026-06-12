@@ -1,3 +1,11 @@
+//! GPUI-facing runtime contracts for generated and manual table integrations.
+//!
+//! This crate owns row rendering traits, load-more traits, default cell
+//! rendering, filter-shape contracts, and the stable
+//! [`generated_filters`] facade targeted by `#[derive(gpui_table::GpuiTable)]`
+//! output. Generated code should keep using this runtime facade instead of
+//! depending on concrete component internals.
+
 mod cell;
 pub mod generated_filters;
 mod load;

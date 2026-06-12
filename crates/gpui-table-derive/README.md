@@ -181,5 +181,6 @@ impl TableLoader for UserTableDelegate {
   stdio server, or generated table query contracts.
 - Use `gpui-table-prototyping-core` if you are consuming inventory metadata for generation.
 
-For expansion details, generated type contracts, and test coverage boundaries,
-see `docs/ARCHITECTURE.md`.
+For expansion details and generated type contracts, read the crate rustdocs, the
+macro modules under `src/gpui_table`, and the compile-fail fixtures under
+`crates/gpui-table/tests/ui`.

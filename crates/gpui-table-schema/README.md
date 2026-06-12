@@ -43,5 +43,5 @@ This crate intentionally does not depend on `gpui` or `gpui-component`.
 If you need derives, loaders, rendering traits, or built-in filter UI, use
 `gpui-table` instead.
 
-For internal metadata contracts and dependency boundaries, see
-`docs/ARCHITECTURE.md`.
+For internal metadata contracts and dependency boundaries, read the crate
+rustdocs and the registry module.

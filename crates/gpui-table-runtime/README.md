@@ -66,4 +66,5 @@ their own shape types; generated entities construct them through
 If you only want the normal derive-based workflow, depend on `gpui-table`
 instead of this crate directly.
 
-For crate boundaries and internal runtime contracts, see `docs/ARCHITECTURE.md`.
+For crate boundaries and internal runtime contracts, read the crate rustdocs and
+the focused row, load, cell, shape, and generated-filter modules.

@@ -7,6 +7,11 @@
 //! - `gpui_table::schema` for metadata and registry types
 //! - root-level proc macros from `gpui-table-derive`
 //!
+//! The facade owns the stable paths that macro-generated code names. Changes to
+//! root re-exports, `runtime::generated_filters`, `registry`, `__deps`, or
+//! `__private` must stay aligned with `gpui-table-derive`, examples, and UI
+//! compile-fail fixtures.
+//!
 //! # Quick Start
 //!
 //! ```ignore

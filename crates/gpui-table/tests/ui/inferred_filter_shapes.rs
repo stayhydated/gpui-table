@@ -1,7 +1,7 @@
 use chrono::NaiveDate;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Filterable, TableCell)]
+#[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, TableCell)]
 enum Status {
     Active,
     Suspended,

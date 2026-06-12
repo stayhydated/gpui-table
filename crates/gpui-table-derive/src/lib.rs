@@ -1,3 +1,15 @@
+//! Proc macros for the `gpui-table` derive workflow.
+//!
+//! `#[derive(GpuiTable)]` emits generated table delegates, column enums, row
+//! metadata, optional filter entities and values, optional inventory metadata,
+//! optional context-menu helpers, and optional MCP query metadata. The emitted
+//! code depends on stable paths re-exported by the `gpui-table` facade.
+//!
+//! `#[derive(Filterable)]`, `#[derive(TableCell)]`, `#[derive(McpFilterShape)]`
+//! when the `mcp` feature is enabled, and `#[gpui_table_impl]` provide the
+//! supporting generated contracts used by the public README examples and UI
+//! compile-fail fixtures.
+
 mod components;
 mod filterable;
 mod gpui_table;

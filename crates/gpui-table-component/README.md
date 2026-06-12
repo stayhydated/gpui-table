@@ -94,5 +94,5 @@ a `GpuiTableFilterShape` implementation before a component can be used in
 cargo run -p gpui-table-component --bin story --features story
 ```
 
-For internals, module boundaries, and serialization contracts, see
-`docs/ARCHITECTURE.md`.
+For internals, module boundaries, and serialization contracts, read the crate
+rustdocs and the focused tests in `src/lib.rs`.

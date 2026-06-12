@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use serde::Serialize;
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Filterable, TableCell)]
+#[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
 enum IssueState {
     Open,
     InReview,

@@ -3,12 +3,9 @@
 This is the working guide for contributors and coding agents in the
 `gpui-table` workspace.
 
-Use it to decide:
-
-1. where documentation belongs,
-2. whether a crate or surface is user-facing, public integration, or internal,
-3. which related docs, examples, and skills must change together,
-4. which validation command should run before handoff.
+Use it to decide where a change belongs, which documentation and generated
+surfaces must move with it, and which validation command should run before
+handoff.
 
 For most application code, start with `crates/gpui-table`.
 
@@ -34,14 +31,15 @@ Before editing, classify the change:
 
 1. **Find the surface in the workspace map.** Use its audience label to decide
    how much public explanation the change needs.
-2. **Place documentation by content, not by crate audience.** README files are
-   always user-facing. Internal design belongs in the matching
-   `docs/ARCHITECTURE.md`.
+2. **Place documentation by content, not by crate audience.** README files,
+   `examples/README.md`, and `skills/use-gpui-table` are user-facing. Internal
+   contracts belong next to code in rustdoc, tests, snapshots, or this routing
+   guide.
 3. **Sync public workflow changes.** If derive syntax, generated filter
    behavior, registry metadata shape, feature flags, generated output,
    localization, or recommended usage changes, update the relevant README,
-   example, generated surface, architecture note, and `skills/use-gpui-table`
-   guidance in the same change when applicable.
+   example, rustdoc, generated surface, and `skills/use-gpui-table` guidance in
+   the same change when applicable.
 4. **Validate narrowly.** Run the smallest command that proves the edited
    behavior or documentation surface is still sound.
 
@@ -56,13 +54,14 @@ being edited:
 
 ## Documentation Placement
 
-### User-Facing Documentation
-
 Treat these surfaces as user-facing:
 
 - the root `README.md`,
 - `examples/README.md`,
-- crate-level `README.md` files.
+- crate-level `README.md` files,
+- `examples/some-lib` and `examples/some-lib-tables`,
+- `examples/mcp-query`,
+- `skills/use-gpui-table`.
 
 Even README files for public-integration crates should explain:
 
@@ -76,24 +75,19 @@ behavior.
 
 ### Internal Documentation
 
-Use the relevant `docs/ARCHITECTURE.md` file for internal documentation, such
-as the crate-level paths listed in the workspace map.
+Keep implementation details out of user-facing READMEs unless they are required
+to use the public API. Put durable internal contracts in crate or module
+rustdocs near the code that enforces them. Prefer tests, compile-fail fixtures,
+snapshots, and generated examples for executable contracts.
 
-Keep these topics in architecture documents, not in READMEs:
-
-- implementation details,
-- macro expansion and parsing details,
-- subsystem boundaries,
-- generated-code and runtime contracts,
-- data flow,
-- design rationale,
-- inter-crate relationships.
+Use this guide only for cross-surface routing and synchronization rules. Do not
+recreate long design notes here.
 
 ### Skill Guidance
 
 `skills/use-gpui-table` is public application-developer guidance, not repo-local
-maintenance guidance. Keep maintainer-only details in this guide or the relevant
-`docs/ARCHITECTURE.md`.
+maintenance guidance. Keep maintainer-only details in this guide, source
+rustdocs, tests, or generated fixtures.
 
 Update it when user-facing workflows, derive syntax, generated filter behavior,
 registry metadata, generated output, localization patterns, feature flags, or
@@ -120,8 +114,8 @@ regenerate `examples/prototyping/output`.
 `examples/prototyping/output` is a generated surface; regenerate it instead of
 hand-editing.
 
-When changing public APIs or behavior in a crate, update that crate's
-`docs/ARCHITECTURE.md`.
+When changing public APIs or behavior in a crate, update that crate's README and
+crate-level or module rustdocs when they describe the affected contract.
 
 ## Workspace Map
 
@@ -129,44 +123,36 @@ When changing public APIs or behavior in a crate, update that crate's
 
 - `crates/gpui-table`
   Audience: **User-facing**
-  Docs: [Architecture](crates/gpui-table/docs/ARCHITECTURE.md)
   Role: workspace facade, default entry point, and home of the public feature gates. Re-exports the core and runtime namespaces and, with `derive`, the proc macros.
 
 - `crates/gpui-table-component`
   Audience: **User-facing**
-  Docs: [Architecture](crates/gpui-table-component/docs/ARCHITECTURE.md)
   Role: built-in GPUI filter widgets and `TableStatusBar` for teams that need direct UI composition outside fully derive-generated flows. Most users should still start with `gpui-table`.
 
 ### Public Integration Crates
 
 - `crates/gpui-table-core`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-core/docs/ARCHITECTURE.md)
   Role: pure filter semantics, typed filter values, and feature-gated conversion helpers. Most application users should start with `gpui-table` instead.
 
 - `crates/gpui-table-runtime`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-runtime/docs/ARCHITECTURE.md)
   Role: GPUI-facing row traits, default cell rendering, load-more support, and the stable generated-filter runtime facade. Most application users should start with `gpui-table` instead.
 
 - `crates/gpui-table-schema`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-schema/docs/ARCHITECTURE.md)
   Role: UI-neutral filter metadata and inventory-backed table-shape registry types used by tooling and generated flows. Most application users should start with `gpui-table` instead.
 
 - `crates/gpui-table-derive`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-derive/docs/ARCHITECTURE.md)
   Role: proc-macro crate for `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`. Most users should depend on `gpui-table` instead of this crate directly.
 
 - `crates/gpui-table-mcp`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-mcp/docs/ARCHITECTURE.md)
   Role: experimental MCP query registry, `rmcp` stdio serving, and JSON filter decoding for generated table filter values. Most application users should enable it through `gpui-table/mcp` only when exposing tables to MCP clients.
 
 - `crates/gpui-table-prototyping-core`
   Audience: **Public integration**
-  Docs: [Architecture](crates/gpui-table-prototyping-core/docs/ARCHITECTURE.md)
   Role: code-generation helpers that consume `GpuiTableShape` inventory metadata to generate GPUI table stories and scaffolding. Most application users should add this only when building tooling or prototypes.
 
 ### Internal Crates and Generated Surfaces
@@ -199,6 +185,9 @@ When changing public APIs or behavior in a crate, update that crate's
 - `examples/some-lib-tables`
   Storybook-style GPUI app for exercising generated tables and filters. `cargo run` from the workspace root lands here by default.
 
+- `crates/gpui-table-component` storybook
+  Built-in filter and status-bar preview app. Run with `cargo run -p gpui-table-component --bin story --features story`.
+
 - `examples/mcp-query`
   Stdio MCP proof-of-concept that exposes generated table filters as query tool arguments and returns matching in-memory rows.
 
@@ -220,7 +209,9 @@ When changing public APIs or behavior in a crate, update that crate's
 ### When Editing Docs
 
 - Keep READMEs user-facing.
-- Move macro expansion details, generated-code internals, and subsystem design into `docs/ARCHITECTURE.md`.
+- Keep macro expansion details, generated-code internals, and subsystem design
+  in rustdocs, focused tests, compile-fail fixtures, snapshots, or this guide
+  when the detail changes contributor routing.
 - Prefer examples over prose-only explanations.
 - Sync the root `README.md`, affected crate `README.md` files,
   `examples/README.md`, and `skills/use-gpui-table` when public behavior
@@ -238,7 +229,7 @@ When changing public APIs or behavior in a crate, update that crate's
 ### When Editing Derives, Filters, or Registry Metadata
 
 - Keep `gpui-table`, `gpui-table-derive`, `gpui-table-runtime`, and `gpui-table-schema` aligned when generated code contracts change.
-- If `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, or inventory registration changes, update the relevant README files, architecture docs, and regenerate `examples/prototyping/output`.
+- If `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, or inventory registration changes, update the relevant README files and rustdocs, then regenerate `examples/prototyping/output`.
 - If built-in filter behavior or query-value behavior changes, update `crates/gpui-table-component` stories and any affected example tables in `examples/some-lib-tables`.
 - If `fluent` behavior changes, update the relevant `i18n/` assets in crates and examples.
 
