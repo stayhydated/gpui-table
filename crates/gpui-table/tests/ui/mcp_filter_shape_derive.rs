@@ -10,6 +10,27 @@ use gpui_table::{
 };
 use serde::{Deserialize, Serialize};
 
+#[derive(Clone, Default)]
+struct PrefixText(String);
+
+impl gpui_table::mcp::McpToolValue for PrefixText {
+    fn tool_value_schema() -> gpui_table::mcp::McpSchema {
+        gpui_table::mcp::McpSchema::new(gpui_table::mcp::serde_json::json!({
+            "type": "string"
+        }))
+    }
+
+    fn from_tool_value(
+        field: &str,
+        value: gpui_table::mcp::serde_json::Value,
+    ) -> Result<Self, gpui_table::mcp::McpToolError> {
+        let raw = value
+            .as_str()
+            .ok_or_else(|| gpui_table::mcp::McpToolError::decode(field, "expected string"))?;
+        Ok(Self(raw.to_string()))
+    }
+}
+
 #[derive(McpFilterShape)]
 struct LocalTextFilter;
 
@@ -18,7 +39,7 @@ impl DeclaredComponentShape for LocalTextFilter {}
 
 impl GpuiTableFilterShape for LocalTextFilter {
     type Component = gpui_table_component::TextFilter;
-    type RawValue = String;
+    type RawValue = PrefixText;
     type FilterValue = TextValue;
 
     const FILTER_TYPE: RegistryFilterType = RegistryFilterType::Text;
@@ -33,11 +54,11 @@ impl GpuiTableFilterShape for LocalTextFilter {
     }
 
     fn read_value(_entity: &Entity<Self::Component>, _cx: &gpui::App) -> Self::RawValue {
-        String::new()
+        PrefixText::default()
     }
 
     fn wrap_value(value: Self::RawValue) -> Self::FilterValue {
-        TextValue::from(value)
+        TextValue::from(value.0)
     }
 
     fn reset_silent(

@@ -137,8 +137,9 @@ explicit MCP errors, where `User: serde::Serialize`. Use
 `query.result(rows, total)` to build the standard response from a decoded query.
 Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
-override the generated MCP tool name, title, or description. The lower-level
-`McpServer` API remains available when an
+override the generated MCP tool name, title, or description. When
+`description` is omitted, the derive uses the row type's Rust doc comment.
+The lower-level `McpServer` API remains available when an
 application wants to compose table tools with other `component-shape-mcp`
 integrations. Use `gpui_table::mcp::server_named(name, version)?` when generated
 table handlers should advertise application-owned metadata, then call
@@ -165,16 +166,23 @@ Manual table tools can still be registered directly:
 `.row_source_async(source)?` for async local row sources.
 Registration reports setup errors such as duplicate tool names.
 Custom filter shapes can derive `gpui_table::McpFilterShape` when their
-`RawValue` implements `serde::de::DeserializeOwned` and
-`gpui_table::mcp::McpJsonSchema`; the derive decodes the raw value and wraps it
-with the table filter shape contract. Use `gpui_table::mcp::McpRange<T>` for
-custom `{ "min": ..., "max": ... }` range raw values. Implement
+`RawValue` implements `gpui_table::mcp::McpToolValue`; the blanket
+implementation covers `Deserialize` raw values that implement or derive
+`gpui_table::mcp::McpJsonSchema`; use `gpui_table::mcp::McpAny` when a typed
+raw value or manual tool input intentionally accepts unconstrained JSON. The
+derive decodes the raw value and wraps it with the table filter shape contract.
+Use `gpui_table::mcp::McpRange<T>` for custom `{ "min": ..., "max": ... }`
+range raw values. Implement
 `gpui_table::mcp::McpFilterShape` manually when a custom filter needs richer
-schema or decoding than raw-value serde. The `McpJsonSchema` derive follows
-serde deserialize names, includes enum deserialize aliases, skips
+schema or decoding than the blanket `McpToolValue` contract. The `McpJsonSchema` derive follows
+serde deserialize names, records field aliases in `x-mcpAliases`, includes enum aliases, skips
 deserialization-skipped fields, rejects flattened fields, and treats
-serde-defaulted fields as not required; app-owned named structs, transparent
-newtypes, and fieldless enums can derive it.
+serde-defaulted fields as not required. Fixed tuples with 1 to 4 elements
+publish exact array schemas; app-owned named structs, transparent newtypes, and
+fieldless enums can derive it. Custom top-level MCP tool argument structs can
+also derive `gpui_table::mcp::McpToolInput` through the facade when composing
+manual typed tools; that derive also implements `McpJsonSchema`, so object
+inputs can be reused as field or filter values.
 
 ### Table cells for value objects
 

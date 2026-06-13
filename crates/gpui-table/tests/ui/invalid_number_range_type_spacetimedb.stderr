@@ -6,21 +6,6 @@ error[E0277]: table filter shape `NumberRangeFilter` does not support field valu
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `NumberRangeFilter`, or choose a filter shape that supports the field type
   = help: `NumberRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
-            GpuiTableFilterShapeFor<Option<f32>>
-            GpuiTableFilterShapeFor<Option<f64>>
-            GpuiTableFilterShapeFor<Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
-            GpuiTableFilterShapeFor<Option<i16>>
-            GpuiTableFilterShapeFor<Option<i32>>
-            GpuiTableFilterShapeFor<Option<i64>>
-            GpuiTableFilterShapeFor<Option<i8>>
-            GpuiTableFilterShapeFor<Option<isize>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::time_duration::TimeDuration>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
-            GpuiTableFilterShapeFor<Option<u16>>
-            GpuiTableFilterShapeFor<Option<u32>>
-            GpuiTableFilterShapeFor<Option<u64>>
-            GpuiTableFilterShapeFor<Option<u8>>
-            GpuiTableFilterShapeFor<Option<usize>>
             GpuiTableFilterShapeFor<f32>
             GpuiTableFilterShapeFor<f64>
             GpuiTableFilterShapeFor<gpui_table::__deps::rust_decimal::decimal::Decimal>
@@ -31,6 +16,21 @@ error[E0277]: table filter shape `NumberRangeFilter` does not support field valu
             GpuiTableFilterShapeFor<isize>
             GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
             GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
+            GpuiTableFilterShapeFor<std::option::Option<f32>>
+            GpuiTableFilterShapeFor<std::option::Option<f64>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
+            GpuiTableFilterShapeFor<std::option::Option<i16>>
+            GpuiTableFilterShapeFor<std::option::Option<i32>>
+            GpuiTableFilterShapeFor<std::option::Option<i64>>
+            GpuiTableFilterShapeFor<std::option::Option<i8>>
+            GpuiTableFilterShapeFor<std::option::Option<isize>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::time_duration::TimeDuration>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<u16>>
+            GpuiTableFilterShapeFor<std::option::Option<u32>>
+            GpuiTableFilterShapeFor<std::option::Option<u64>>
+            GpuiTableFilterShapeFor<std::option::Option<u8>>
+            GpuiTableFilterShapeFor<std::option::Option<usize>>
             GpuiTableFilterShapeFor<u16>
             GpuiTableFilterShapeFor<u32>
             GpuiTableFilterShapeFor<u64>
@@ -50,21 +50,6 @@ error[E0277]: table filter shape `NumberRangeFilter` does not support field valu
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `NumberRangeFilter`, or choose a filter shape that supports the field type
   = help: `NumberRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
-            GpuiTableFilterShapeFor<Option<f32>>
-            GpuiTableFilterShapeFor<Option<f64>>
-            GpuiTableFilterShapeFor<Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
-            GpuiTableFilterShapeFor<Option<i16>>
-            GpuiTableFilterShapeFor<Option<i32>>
-            GpuiTableFilterShapeFor<Option<i64>>
-            GpuiTableFilterShapeFor<Option<i8>>
-            GpuiTableFilterShapeFor<Option<isize>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::time_duration::TimeDuration>>
-            GpuiTableFilterShapeFor<Option<spacetimedb_sats::timestamp::Timestamp>>
-            GpuiTableFilterShapeFor<Option<u16>>
-            GpuiTableFilterShapeFor<Option<u32>>
-            GpuiTableFilterShapeFor<Option<u64>>
-            GpuiTableFilterShapeFor<Option<u8>>
-            GpuiTableFilterShapeFor<Option<usize>>
             GpuiTableFilterShapeFor<f32>
             GpuiTableFilterShapeFor<f64>
             GpuiTableFilterShapeFor<gpui_table::__deps::rust_decimal::decimal::Decimal>
@@ -75,6 +60,21 @@ error[E0277]: table filter shape `NumberRangeFilter` does not support field valu
             GpuiTableFilterShapeFor<isize>
             GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
             GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
+            GpuiTableFilterShapeFor<std::option::Option<f32>>
+            GpuiTableFilterShapeFor<std::option::Option<f64>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
+            GpuiTableFilterShapeFor<std::option::Option<i16>>
+            GpuiTableFilterShapeFor<std::option::Option<i32>>
+            GpuiTableFilterShapeFor<std::option::Option<i64>>
+            GpuiTableFilterShapeFor<std::option::Option<i8>>
+            GpuiTableFilterShapeFor<std::option::Option<isize>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::time_duration::TimeDuration>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<u16>>
+            GpuiTableFilterShapeFor<std::option::Option<u32>>
+            GpuiTableFilterShapeFor<std::option::Option<u64>>
+            GpuiTableFilterShapeFor<std::option::Option<u8>>
+            GpuiTableFilterShapeFor<std::option::Option<usize>>
             GpuiTableFilterShapeFor<u16>
             GpuiTableFilterShapeFor<u32>
             GpuiTableFilterShapeFor<u64>

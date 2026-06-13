@@ -16,8 +16,7 @@ pub fn expand(input: proc_macro2::TokenStream) -> syn::Result<proc_macro2::Token
 
     generics.make_where_clause().predicates.push(parse_quote!(
         <#self_type as #facade_crate::runtime::shape::GpuiTableFilterShape>::RawValue:
-            #facade_crate::mcp::DeserializeOwned
-                + #facade_crate::mcp::McpJsonSchema
+            #facade_crate::mcp::McpToolValue
     ));
 
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
@@ -28,13 +27,13 @@ pub fn expand(input: proc_macro2::TokenStream) -> syn::Result<proc_macro2::Token
         {
             fn input_schema(
                 filter: #facade_crate::mcp::McpTableFilter
-            ) -> #facade_crate::mcp::serde_json::Value {
+            ) -> #facade_crate::mcp::McpSchema {
                 #facade_crate::mcp::default_filter_shape_input_schema::<Self>(filter)
             }
 
             fn decode_filter(
                 field: &'static str,
-                value: #facade_crate::mcp::serde_json::Value,
+                value: #facade_crate::mcp::McpAny,
             ) -> Result<
                 <Self as #facade_crate::runtime::shape::GpuiTableFilterShape>::FilterValue,
                 #facade_crate::mcp::McpToolError,
@@ -61,8 +60,7 @@ mod tests {
             .to_string();
 
         assert!(expanded.contains("McpFilterShape"));
-        assert!(expanded.contains("DeserializeOwned"));
-        assert!(expanded.contains("McpJsonSchema"));
+        assert!(expanded.contains("McpToolValue"));
         assert!(expanded.contains("default_filter_shape_input_schema"));
         assert!(expanded.contains("decode_raw_filter_shape"));
     }

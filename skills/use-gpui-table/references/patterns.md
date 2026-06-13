@@ -214,7 +214,8 @@ Custom query handlers can be synchronous or async and must return
 Use `query.result(rows, total)` to build the standard response from a decoded
 query.
 Use struct-level `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]`
-when generated MCP tools need application-owned names or descriptions.
+when generated MCP tools need application-owned names or descriptions. If
+`description` is omitted, the derive uses the row type's Rust doc comment.
 Use `gpui_table::mcp::server()?` for the default generated server and
 `gpui_table::mcp::server_named(name, version)?` when application-owned server
 metadata is needed. Use `gpui_table::mcp::builder()` or
@@ -232,11 +233,14 @@ Registration reports setup errors such as duplicate tool names.
 Bare `#[gpui_table(filter)]` infers the MCP schema and decoder through the same
 shape selected for generated filter UI.
 Custom filter shapes can derive `gpui_table::McpFilterShape` when their
-`RawValue` implements `serde::de::DeserializeOwned` and
-`gpui_table::mcp::McpJsonSchema`; use `gpui_table::mcp::McpRange<T>` for
-`{ "min": ..., "max": ... }` range raw values and a manual `McpFilterShape`
-impl when raw-value serde is not the right MCP contract. The `McpJsonSchema`
-derive supports named structs, tuple or named transparent newtypes, and
-fieldless enums; it follows serde deserialize names, skips
+`RawValue` implements `gpui_table::mcp::McpToolValue`; the blanket
+implementation covers `Deserialize` raw values that implement or derive
+`gpui_table::mcp::McpJsonSchema`; use `gpui_table::mcp::McpAny` when a typed
+raw value or manual tool input intentionally accepts unconstrained JSON. Use
+`gpui_table::mcp::McpRange<T>` for `{ "min": ..., "max": ... }` range raw
+values and a manual `McpFilterShape` impl when the blanket `McpToolValue`
+contract is not the right MCP contract. The `McpJsonSchema` derive supports
+named structs, tuple or named transparent newtypes, fieldless enums, and fixed
+tuples with 1 to 4 elements; it follows serde deserialize names, skips
 deserialization-skipped fields, rejects flattened fields, and treats
 serde-defaulted fields as not required.

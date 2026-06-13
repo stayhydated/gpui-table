@@ -2,7 +2,7 @@
 
 pub use component_shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInput, McpInputShape,
-    McpPrimitiveKind,
+    McpPrimitiveKind, McpRangeBoundKind,
 };
 use gpui::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterType, TextValue};

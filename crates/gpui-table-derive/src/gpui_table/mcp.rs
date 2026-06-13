@@ -1,8 +1,9 @@
 use crate::gpui_table::meta::{FilterFieldMeta, McpToolOptions};
 use crate::mcp_handlers::resolve_crate_path;
 
+use component_shape_codegen::{McpToolMetadataParts, mcp_tool_metadata_tokens};
 use quote::{ToTokens as _, format_ident, quote};
-use syn::{Ident, Path};
+use syn::{DeriveInput, Ident, Path};
 
 pub(super) fn generate_mcp_impl(
     struct_name: &Ident,
@@ -10,15 +11,17 @@ pub(super) fn generate_mcp_impl(
     table_title: &str,
     filter_fields: &[FilterFieldMeta],
     mcp_tool_options: Option<&McpToolOptions>,
-) -> proc_macro2::TokenStream {
+    original_input: &DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
     if let Some(field) = filter_fields
         .iter()
         .find(|field| matches!(field.field_ident.to_string().as_str(), "limit" | "offset"))
     {
         let field_ident = &field.field_ident;
-        return quote::quote_spanned! { field_ident.span() =>
-            compile_error!("MCP table filters cannot be named `limit` or `offset`; those argument names are reserved for pagination");
-        };
+        return Err(syn::Error::new(
+            field_ident.span(),
+            "MCP table filters cannot be named `limit` or `offset`; those argument names are reserved for pagination",
+        ));
     }
 
     let filter_values_name =
@@ -27,7 +30,7 @@ pub(super) fn generate_mcp_impl(
     let filters_const_ident = format_ident!("__{}GpuiTableMcpFilters", struct_name);
     let descriptor_fn_ident = format_ident!("__{}_gpui_table_mcp_descriptor", struct_name);
     let facade_crate = resolve_crate_path("gpui-table", "::gpui_table");
-    let tool_metadata = tool_metadata_tokens(&facade_crate, mcp_tool_options);
+    let tool_metadata = tool_metadata_tokens(&facade_crate, mcp_tool_options, original_input)?;
 
     let filter_descriptors: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
@@ -38,7 +41,7 @@ pub(super) fn generate_mcp_impl(
         .map(|field| filter_decode_tokens(&facade_crate, field))
         .collect();
 
-    quote! {
+    Ok(quote! {
         #[doc(hidden)]
             #[allow(non_upper_case_globals)]
         pub const #filters_const_ident: &[#facade_crate::mcp::McpTableFilter] = &[
@@ -67,9 +70,11 @@ pub(super) fn generate_mcp_impl(
                 let mut __gpui_table_filters = #filter_values_type::default();
                 let mut __gpui_table_arguments = call.into_arguments();
                 let __gpui_table_limit =
-                    __gpui_table_arguments.take_optional_usize("limit")?;
+                    __gpui_table_arguments.take_present_tool_value::<usize>("limit")?;
                 let __gpui_table_offset =
-                    __gpui_table_arguments.take_usize("offset")?.unwrap_or(0);
+                    __gpui_table_arguments
+                        .take_present_tool_value::<usize>("offset")?
+                        .unwrap_or(0);
                 #(#filter_decoders)*
 
                 __gpui_table_arguments.finish()?;
@@ -91,33 +96,25 @@ pub(super) fn generate_mcp_impl(
         #facade_crate::mcp::registry::inventory::submit! {
             #facade_crate::mcp::registry::McpTableRegistration::new(#descriptor_fn_ident)
         }
-    }
+    })
 }
 
 fn tool_metadata_tokens(
     facade_crate: &Path,
     options: Option<&McpToolOptions>,
-) -> proc_macro2::TokenStream {
-    let mut tokens = quote! {
-        #facade_crate::mcp::McpToolMetadata::new()
-    };
-
-    if let Some(options) = options {
-        if let Some(name) = &options.name {
-            let name = syn::LitStr::new(name, proc_macro2::Span::call_site());
-            tokens = quote! { #tokens.with_name(#name) };
-        }
-        if let Some(title) = &options.title {
-            let title = syn::LitStr::new(title, proc_macro2::Span::call_site());
-            tokens = quote! { #tokens.with_title(#title) };
-        }
-        if let Some(description) = &options.description {
-            let description = syn::LitStr::new(description, proc_macro2::Span::call_site());
-            tokens = quote! { #tokens.with_description(#description) };
-        }
-    }
-
-    tokens
+    original_input: &DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    let mcp_crate: Path = syn::parse_quote!(#facade_crate::mcp);
+    mcp_tool_metadata_tokens(
+        &mcp_crate,
+        &original_input.attrs,
+        McpToolMetadataParts {
+            name: options.and_then(|options| options.name.as_deref()),
+            title: options.and_then(|options| options.title.as_deref()),
+            description: options.and_then(|options| options.description.as_deref()),
+        },
+        original_input.ident.span(),
+    )
 }
 
 fn filter_descriptor_tokens(
@@ -150,7 +147,7 @@ fn filter_decode_tokens(facade_crate: &Path, field: &FilterFieldMeta) -> proc_ma
             __gpui_table_filters.#field_ident =
                 <#shape as #facade_crate::mcp::McpFilterShape>::decode_filter(
                     #field_name,
-                    __gpui_table_value,
+                    #facade_crate::mcp::McpAny::from(__gpui_table_value),
                 )?;
         }
     }

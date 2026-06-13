@@ -9,23 +9,27 @@ use std::{
     fmt,
     future::Future,
     marker::PhantomData,
+    pin::Pin,
     sync::Arc,
 };
 
 pub use gpui_table_runtime::shape::ComponentShapeMetadata;
 use gpui_table_runtime::shape::GpuiTableFilterShape;
 use gpui_table_schema::registry::{RegistryFilterType, RustPath, RustType};
-pub use serde::{Serialize, de::DeserializeOwned};
-use serde_json::{Map, Value, json};
+pub use serde::Serialize;
+use serde_json::{Value, json};
 
-pub type FilterSchemaFn = fn(McpTableFilter) -> Value;
+pub type FilterSchemaFn = fn(McpTableFilter) -> McpSchema;
 
-pub use component_shape::{McpInput, McpInputShape, McpPrimitiveKind};
+pub use component_shape::{McpInput, McpInputShape, McpPrimitiveKind, McpRangeBoundKind};
 pub use component_shape_mcp::{
-    ContentBlock, MCP_PROTOCOL_VERSION, McpArguments, McpJsonSchema, McpRange, McpServer,
-    McpServerBuilder, McpToolArguments, McpToolCall, McpToolError, McpToolMetadata,
-    ServeStdioResult, ToolCallResult, ToolDefinition, object_schema, rmcp, serde_json,
+    ContentBlock, MCP_PROTOCOL_VERSION, McpAny, McpArguments, McpJsonSchema, McpRange, McpSchema,
+    McpSchemaProperties, McpServer, McpServerBuilder, McpToolArguments, McpToolCall, McpToolError,
+    McpToolInput, McpToolMetadata, McpToolValue, McpTypedTool, ServeStdioResult, ToolCallResult,
+    ToolDefinition, object_schema, rmcp, serde, serde_json,
 };
+
+type ToolFuture = Pin<Box<dyn Future<Output = ToolCallResult> + Send + 'static>>;
 
 #[derive(Clone, Copy, Debug)]
 pub struct McpTableFilter {
@@ -73,7 +77,7 @@ impl McpTableFilter {
         self.filter_type
     }
 
-    pub fn input_schema(self) -> Value {
+    pub fn input_schema(self) -> McpSchema {
         (self.input_schema)(self)
     }
 }
@@ -166,15 +170,15 @@ impl McpTableDescriptor {
             })
     }
 
-    pub fn input_schema(self) -> Value {
+    pub fn input_schema(self) -> McpSchema {
         input_schema_for_filters(self.filters)
     }
 
-    pub fn output_schema(self) -> Value {
+    pub fn output_schema(self) -> McpSchema {
         table_query_output_schema()
     }
 
-    pub fn tool_definition(self) -> Result<ToolDefinition, McpToolError> {
+    fn tool_definition(self) -> Result<ToolDefinition, McpToolError> {
         component_shape_mcp::tool_definition(
             self.tool_name(),
             Some(self.title()),
@@ -248,44 +252,94 @@ pub trait McpTable: Sized + 'static {
     fn decode_query(call: McpToolCall) -> Result<TableQuery<Self>, McpToolError>;
 }
 
+/// Typed MCP query input for a generated table.
+///
+/// Registration uses this wrapper to keep the descriptor schema, generated
+/// query decoding, and handler input type paired at the shared MCP server
+/// boundary.
+pub struct McpTableQueryInput<Table>
+where
+    Table: McpTable,
+{
+    query: TableQuery<Table>,
+}
+
+impl<Table> McpTableQueryInput<Table>
+where
+    Table: McpTable,
+{
+    pub fn tool_definition() -> Result<McpTypedTool<Self>, McpToolError> {
+        let descriptor = Table::descriptor();
+        component_shape_mcp::tool_definition_for_input::<Self>(
+            descriptor.tool_name(),
+            Some(descriptor.title()),
+            Some(descriptor.description()),
+            Some(descriptor.output_schema()),
+        )
+    }
+
+    pub fn into_query(self) -> TableQuery<Table> {
+        self.query
+    }
+}
+
+impl<Table> McpToolInput for McpTableQueryInput<Table>
+where
+    Table: McpTable,
+{
+    fn input_schema() -> McpSchema {
+        Table::descriptor().input_schema()
+    }
+
+    fn from_tool_call(call: McpToolCall) -> Result<Self, McpToolError> {
+        Ok(Self {
+            query: Table::decode_query(call)?,
+        })
+    }
+}
+
 #[diagnostic::on_unimplemented(
     message = "table filter shape `{Self}` cannot be decoded from MCP tool arguments",
-    note = "derive `gpui_table::McpFilterShape` when the shape raw value implements serde::de::DeserializeOwned and gpui_table::mcp::McpJsonSchema, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding"
+    note = "derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding"
 )]
 pub trait McpFilterShape: GpuiTableFilterShape {
-    fn input_schema(filter: McpTableFilter) -> Value {
+    fn input_schema(filter: McpTableFilter) -> McpSchema {
         default_filter_input_schema(filter)
     }
 
-    fn decode_filter(field: &'static str, value: Value) -> Result<Self::FilterValue, McpToolError>;
+    fn decode_filter(field: &'static str, value: McpAny)
+    -> Result<Self::FilterValue, McpToolError>;
 }
 
-pub fn default_filter_shape_input_schema<Shape>(_filter: McpTableFilter) -> Value
+pub fn default_filter_shape_input_schema<Shape>(_filter: McpTableFilter) -> McpSchema
 where
     Shape: GpuiTableFilterShape,
-    Shape::RawValue: McpJsonSchema,
+    Shape::RawValue: McpToolValue,
 {
-    Shape::RawValue::json_schema()
+    <Shape::RawValue as McpToolValue>::tool_value_schema()
 }
 
 pub fn decode_raw_filter_shape<Shape>(
     field: &'static str,
-    value: Value,
+    value: McpAny,
 ) -> Result<Shape::FilterValue, McpToolError>
 where
     Shape: GpuiTableFilterShape,
-    Shape::RawValue: DeserializeOwned,
+    Shape::RawValue: McpToolValue,
 {
-    let value = component_shape_mcp::decode_present_field::<Shape::RawValue>(field, value)?;
+    let value = <Shape::RawValue as McpToolValue>::from_tool_value(field, value.into_value())?;
     Ok(Shape::wrap_value(value))
 }
 
 impl McpFilterShape for gpui_table_component::TextFilter {
-    fn input_schema(filter: McpTableFilter) -> Value {
+    fn input_schema(filter: McpTableFilter) -> McpSchema {
         default_filter_shape_input_schema::<Self>(filter)
     }
 
-    fn decode_filter(field: &'static str, value: Value) -> Result<Self::FilterValue, McpToolError> {
+    fn decode_filter(
+        field: &'static str,
+        value: McpAny,
+    ) -> Result<Self::FilterValue, McpToolError> {
         decode_raw_filter_shape::<Self>(field, value)
     }
 }
@@ -294,11 +348,11 @@ impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
 where
     T: gpui_table_core::filter::Filterable,
 {
-    fn input_schema(filter: McpTableFilter) -> Value {
+    fn input_schema(filter: McpTableFilter) -> McpSchema {
         let mut schema = default_filter_input_schema(filter);
         let options = T::options();
 
-        if let Value::Object(object) = &mut schema {
+        if let Some(object) = schema.as_object_mut() {
             if !options.is_empty()
                 && let Some(items) = object.get_mut("items").and_then(Value::as_object_mut)
             {
@@ -333,8 +387,11 @@ where
         schema
     }
 
-    fn decode_filter(field: &'static str, value: Value) -> Result<Self::FilterValue, McpToolError> {
-        let raw_values = component_shape_mcp::decode_present_field::<Vec<String>>(field, value)?;
+    fn decode_filter(
+        field: &'static str,
+        value: McpAny,
+    ) -> Result<Self::FilterValue, McpToolError> {
+        let raw_values = <Vec<String> as McpToolValue>::from_tool_value(field, value.into_value())?;
         let mut values = HashSet::new();
         for raw_value in raw_values {
             let value = T::from_filter_string(&raw_value)
@@ -347,16 +404,30 @@ where
 
 #[cfg(feature = "rust_decimal")]
 impl McpFilterShape for gpui_table_component::NumberRangeFilter {
-    fn decode_filter(field: &'static str, value: Value) -> Result<Self::FilterValue, McpToolError> {
-        let value = decode_range_filter(field, value, decode_decimal_bound)?;
+    fn input_schema(filter: McpTableFilter) -> McpSchema {
+        range_filter_input_schema::<rust_decimal::Decimal>(filter)
+    }
+
+    fn decode_filter(
+        field: &'static str,
+        value: McpAny,
+    ) -> Result<Self::FilterValue, McpToolError> {
+        let value = decode_range_filter::<rust_decimal::Decimal>(field, value)?;
         Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
     }
 }
 
 #[cfg(feature = "chrono")]
 impl McpFilterShape for gpui_table_component::DateRangeFilter {
-    fn decode_filter(field: &'static str, value: Value) -> Result<Self::FilterValue, McpToolError> {
-        let value = decode_range_filter(field, value, decode_date_bound)?;
+    fn input_schema(filter: McpTableFilter) -> McpSchema {
+        range_filter_input_schema::<chrono::NaiveDate>(filter)
+    }
+
+    fn decode_filter(
+        field: &'static str,
+        value: McpAny,
+    ) -> Result<Self::FilterValue, McpToolError> {
+        let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
         Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
     }
 }
@@ -407,107 +478,22 @@ pub mod registry {
     }
 }
 
-fn decode_range_filter<T, Decode>(
+fn range_filter_input_schema<T>(_filter: McpTableFilter) -> McpSchema
+where
+    McpRange<T>: McpToolValue,
+{
+    <McpRange<T> as McpToolValue>::tool_value_schema()
+}
+
+fn decode_range_filter<T>(
     field: &'static str,
-    value: Value,
-    mut decode_bound: Decode,
+    value: McpAny,
 ) -> Result<(Option<T>, Option<T>), McpToolError>
 where
-    Decode: FnMut(&'static str, &'static str, Value) -> Result<Option<T>, McpToolError>,
+    McpRange<T>: McpToolValue,
 {
-    if value.is_null() {
-        return Err(McpToolError::UnexpectedNull {
-            field: field.to_string(),
-        });
-    }
-
-    let mut arguments = match value {
-        Value::Object(arguments) => arguments,
-        _ => {
-            return Err(McpToolError::decode(
-                field,
-                "range filters must be JSON objects with optional `min` and `max` fields",
-            ));
-        },
-    };
-
-    let min = arguments
-        .remove("min")
-        .map(|value| decode_bound(field, "min", value))
-        .transpose()?
-        .flatten();
-    let max = arguments
-        .remove("max")
-        .map(|value| decode_bound(field, "max", value))
-        .transpose()?
-        .flatten();
-
-    if let Some(bound) = arguments.keys().next() {
-        return Err(McpToolError::UnknownField {
-            field: format!("{field}.{bound}"),
-        });
-    }
-
-    Ok((min, max))
-}
-
-#[cfg(feature = "rust_decimal")]
-fn decode_decimal_bound(
-    field: &'static str,
-    bound: &'static str,
-    value: Value,
-) -> Result<Option<rust_decimal::Decimal>, McpToolError> {
-    use std::str::FromStr as _;
-
-    let raw = match value {
-        Value::Null => return Ok(None),
-        Value::Number(value) => value.to_string(),
-        Value::String(value) => {
-            let value = value.trim().to_string();
-            if value.is_empty() {
-                return Ok(None);
-            }
-            value
-        },
-        _ => {
-            return Err(McpToolError::decode(
-                format!("{field}.{bound}"),
-                "number range bounds must be numbers, numeric strings, or null",
-            ));
-        },
-    };
-
-    rust_decimal::Decimal::from_str(&raw)
-        .map(Some)
-        .map_err(|error| McpToolError::decode(format!("{field}.{bound}"), error.to_string()))
-}
-
-#[cfg(feature = "chrono")]
-fn decode_date_bound(
-    field: &'static str,
-    bound: &'static str,
-    value: Value,
-) -> Result<Option<chrono::NaiveDate>, McpToolError> {
-    let raw = match value {
-        Value::Null => return Ok(None),
-        Value::String(value) => {
-            let value = value.trim().to_string();
-            if value.is_empty() {
-                return Ok(None);
-            }
-            value
-        },
-        _ => {
-            return Err(McpToolError::decode(
-                format!("{field}.{bound}"),
-                "date range bounds must be `YYYY-MM-DD` strings or null",
-            ));
-        },
-    };
-
-    chrono::NaiveDate::parse_from_str(&raw, "%Y-%m-%d")
-        .map(Some)
-        .map_err(|error| McpToolError::decode(format!("{field}.{bound}"), error.to_string()))
+    let range = <McpRange<T> as McpToolValue>::from_tool_value(field, value.into_value())?;
+    Ok(range.into_tuple())
 }
 
 pub const DEFAULT_SERVER_NAME: &str = "gpui-table-mcp";
@@ -543,13 +529,8 @@ where
         Table: Serialize,
         Error: fmt::Display,
     {
-        insert_executor(self.server, Table::descriptor(), move |arguments| {
-            let query = match decode_query::<Table>(arguments) {
-                Ok(query) => query,
-                Err(error) => return component_shape_mcp::tool_error_result(error.to_string()),
-            };
-
-            component_shape_mcp::serialize_handler_response(handler(query))
+        insert_executor::<Table, _>(self.server, move |input| {
+            component_shape_mcp::serialize_handler_response(handler(input.into_query()))
         })
     }
 
@@ -561,16 +542,10 @@ where
         Error: fmt::Display,
     {
         let handler = Arc::new(handler);
-        insert_executor_async(self.server, Table::descriptor(), move |arguments| {
+        insert_executor_async::<Table, _>(self.server, move |input| {
             let handler = Arc::clone(&handler);
-            async move {
-                let query = match decode_query::<Table>(arguments) {
-                    Ok(query) => query,
-                    Err(error) => return component_shape_mcp::tool_error_result(error.to_string()),
-                };
-
-                component_shape_mcp::serialize_handler_response(handler(query).await)
-            }
+            let future = handler(input.into_query());
+            Box::pin(async move { component_shape_mcp::serialize_handler_response(future.await) })
         })
     }
 
@@ -628,38 +603,27 @@ where
     }
 }
 
-fn insert_executor<Call>(
-    server: &mut McpServer,
-    descriptor: McpTableDescriptor,
-    call: Call,
-) -> Result<(), McpToolError>
+fn insert_executor<Table, Call>(server: &mut McpServer, call: Call) -> Result<(), McpToolError>
 where
-    Call: Fn(McpToolCall) -> ToolCallResult + Send + Sync + 'static,
+    Table: McpTable,
+    Call: Fn(McpTableQueryInput<Table>) -> ToolCallResult + Send + Sync + 'static,
 {
-    server.add_tool(descriptor.tool_definition()?, call)
+    server.add_typed_tool(McpTableQueryInput::<Table>::tool_definition()?, call)
 }
 
-fn insert_executor_async<Call, Fut>(
+fn insert_executor_async<Table, Call>(
     server: &mut McpServer,
-    descriptor: McpTableDescriptor,
     call: Call,
 ) -> Result<(), McpToolError>
 where
-    Call: Fn(McpToolCall) -> Fut + Send + Sync + 'static,
-    Fut: Future<Output = ToolCallResult> + Send + 'static,
+    Table: McpTable,
+    Call: Fn(McpTableQueryInput<Table>) -> ToolFuture + Send + Sync + 'static,
 {
-    server.add_tool_async(descriptor.tool_definition()?, call)
+    server.add_typed_tool_async(McpTableQueryInput::<Table>::tool_definition()?, call)
 }
 
 pub fn tool_name(source_module_path: &str, table_id: &str) -> String {
     component_shape_mcp::tool_name(source_module_path, table_id, "table_")
-}
-
-fn decode_query<Table>(call: McpToolCall) -> Result<TableQuery<Table>, McpToolError>
-where
-    Table: McpTable,
-{
-    Table::decode_query(call)
 }
 
 /// Build a server containing every inventory-discovered table query handler.
@@ -707,8 +671,8 @@ pub fn register(server: &mut McpServer) -> Result<(), McpToolError> {
     Ok(())
 }
 
-fn input_schema_for_filters(filters: &[McpTableFilter]) -> Value {
-    let mut properties = Map::new();
+fn input_schema_for_filters(filters: &[McpTableFilter]) -> McpSchema {
+    let mut properties = McpSchemaProperties::new();
 
     for filter in filters {
         properties.insert(filter.name().to_string(), schema_for_filter(*filter));
@@ -716,26 +680,26 @@ fn input_schema_for_filters(filters: &[McpTableFilter]) -> Value {
 
     properties.insert(
         "limit".to_string(),
-        json!({
+        McpSchema::new(json!({
             "type": "integer",
             "minimum": 0
-        }),
+        })),
     );
     properties.insert(
         "offset".to_string(),
-        json!({
+        McpSchema::new(json!({
             "type": "integer",
             "minimum": 0
-        }),
+        })),
     );
 
     component_shape_mcp::object_schema(properties, std::iter::empty::<&'static str>())
 }
 
-fn schema_for_filter(filter: McpTableFilter) -> Value {
+fn schema_for_filter(filter: McpTableFilter) -> McpSchema {
     let mut schema = filter.input_schema();
 
-    if let Value::Object(object) = &mut schema {
+    if let Some(object) = schema.as_object_mut() {
         object.insert(
             "x-rustType".to_string(),
             Value::String(filter.field_type().as_str().to_string()),
@@ -749,12 +713,12 @@ fn schema_for_filter(filter: McpTableFilter) -> Value {
     schema
 }
 
-fn default_filter_input_schema(filter: McpTableFilter) -> Value {
+fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {
     component_shape_mcp::schema_for_input(mcp_input_for_filter_type(filter.filter_type()))
 }
 
-fn table_query_output_schema() -> Value {
-    json!({
+fn table_query_output_schema() -> McpSchema {
+    McpSchema::new(json!({
         "type": "object",
         "properties": {
             "rows": { "type": "array", "items": {} },
@@ -769,7 +733,7 @@ fn table_query_output_schema() -> Value {
         },
         "required": ["rows", "total", "offset", "limit"],
         "additionalProperties": false
-    })
+    }))
 }
 
 fn filter_type_name(filter_type: RegistryFilterType) -> &'static str {
@@ -799,8 +763,8 @@ pub fn tool_definitions() -> Result<Vec<ToolDefinition>, McpToolError> {
 #[cfg(test)]
 mod tests {
     use super::{
-        McpInput, McpRange, McpTableDescriptor, McpTableFilter, default_filter_shape_input_schema,
-        tool_name,
+        McpInput, McpRange, McpTableDescriptor, McpTableFilter, McpTableQueryInput,
+        McpToolInput as _, default_filter_shape_input_schema, tool_name,
     };
     use gpui_table_runtime::shape::GpuiTableFilterShape;
     use gpui_table_schema::registry::{RegistryFilterType, RustPath, RustType};
@@ -883,13 +847,13 @@ mod tests {
     }
 
     impl super::McpFilterShape for RawRangeShape {
-        fn input_schema(filter: McpTableFilter) -> serde_json::Value {
+        fn input_schema(filter: McpTableFilter) -> super::McpSchema {
             default_filter_shape_input_schema::<Self>(filter)
         }
 
         fn decode_filter(
             field: &'static str,
-            value: serde_json::Value,
+            value: super::McpAny,
         ) -> Result<Self::FilterValue, super::McpToolError> {
             super::decode_raw_filter_shape::<Self>(field, value)
         }
@@ -906,5 +870,68 @@ mod tests {
 
         assert_eq!(schema["type"], "object");
         assert_eq!(schema["properties"]["min"]["anyOf"][0]["type"], "integer");
+    }
+
+    #[derive(Clone, Debug, Default, PartialEq)]
+    struct EmptyFilters;
+
+    struct TypedTable;
+
+    impl super::McpTable for TypedTable {
+        type FilterValues = EmptyFilters;
+
+        fn descriptor() -> McpTableDescriptor {
+            McpTableDescriptor::new(
+                "TypedTable",
+                "typed_table",
+                "Typed Table",
+                RustPath::from_macro_tokens_unchecked("tests"),
+                &[],
+                component_shape_mcp::McpToolMetadata::new(),
+            )
+        }
+
+        fn decode_query(
+            call: super::McpToolCall,
+        ) -> Result<super::TableQuery<Self>, super::McpToolError> {
+            let mut arguments = call.into_arguments();
+            let limit = arguments.take_present_tool_value::<usize>("limit")?;
+            let offset = arguments
+                .take_present_tool_value::<usize>("offset")?
+                .unwrap_or(0);
+            arguments.finish()?;
+
+            Ok(super::TableQuery {
+                filters: EmptyFilters,
+                limit,
+                offset,
+            })
+        }
+    }
+
+    #[test]
+    fn table_query_input_pairs_descriptor_schema_with_generated_decode() {
+        let tool = McpTableQueryInput::<TypedTable>::tool_definition().expect("tool should build");
+        fn assert_typed_tool(_tool: &super::McpTypedTool<super::McpTableQueryInput<TypedTable>>) {}
+        assert_typed_tool(&tool);
+        assert_eq!(tool.input_schema["properties"]["limit"]["type"], "integer");
+        assert_eq!(
+            tool.output_schema.as_ref().unwrap()["properties"]["rows"]["type"],
+            "array"
+        );
+
+        let input = McpTableQueryInput::<TypedTable>::from_tool_call(
+            super::McpToolCall::from_value(Some(serde_json::json!({
+                "limit": 10,
+                "offset": 5
+            })))
+            .expect("arguments should normalize"),
+        )
+        .expect("query input should decode");
+        let query = input.into_query();
+
+        assert_eq!(query.limit, Some(10));
+        assert_eq!(query.offset, 5);
+        assert_eq!(query.filters, EmptyFilters);
     }
 }

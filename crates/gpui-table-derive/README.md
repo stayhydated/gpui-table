@@ -64,14 +64,20 @@ Custom filter shapes used by MCP-enabled tables must implement
 `gpui_table::mcp::McpFilterShape`; the generated descriptor and decoder require
 that trait, so missing decoders fail at the filter field.
 For common custom filters, derive `gpui_table::McpFilterShape` on the shape and
-let the generated impl decode `RawValue` with serde and
-`McpJsonSchema`. Use `gpui_table::mcp::McpRange<T>` for range-shaped raw values
-that should decode from `{ "min": ..., "max": ... }`. App-owned named structs,
-tuple or named transparent newtypes, and fieldless enums can derive `McpJsonSchema`; enum
-schemas include serde deserialize aliases. Implement
+let the generated impl decode `RawValue` through
+`gpui_table::mcp::McpToolValue`. The blanket implementation covers
+`Deserialize` raw values that implement or derive `McpJsonSchema`. Use
+`gpui_table::mcp::McpRange<T>` for range-shaped raw values that should decode
+from `{ "min": ..., "max": ... }`. App-owned named structs,
+tuple or named transparent newtypes, and fieldless enums can derive
+`McpJsonSchema`; fixed tuples with 1 to 4 elements publish exact array schemas,
+field schemas record aliases in `x-mcpAliases`, and enum schemas include
+aliases. `McpToolInput` also implements `McpJsonSchema`, so object inputs can
+be reused as filter raw values. Implement
 `gpui_table::mcp::McpFilterShape` manually for explicit schema or decode hooks.
 Struct-level `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]`
-overrides generated MCP tool metadata.
+overrides generated MCP tool metadata. When `description` is omitted, the
+derive uses the row type's Rust doc comment.
 Use `#[gpui_table::mcp_query]` for custom query handlers and local row sources.
 The macro infers the row type from `TableQuery<Row>` and zero-argument
 `Result<Vec<Row>, E>` signatures. Local row sources are called for each MCP

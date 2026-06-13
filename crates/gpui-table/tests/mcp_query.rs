@@ -8,7 +8,7 @@ use gpui_table::{
         table, tool_definitions,
     },
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
 enum UserStatus {
@@ -16,13 +16,20 @@ enum UserStatus {
     Blocked,
 }
 
-#[derive(gpui_table::mcp::McpJsonSchema)]
+#[derive(Clone, Debug, Deserialize, gpui_table::mcp::McpJsonSchema, PartialEq)]
 #[allow(dead_code)]
-#[mcp(crate = gpui_table::mcp)]
 #[serde(rename_all = "snake_case")]
 enum ExportMode {
     Summary,
     FullDetail,
+}
+
+#[derive(Debug, Deserialize, gpui_table::mcp::McpToolInput, PartialEq)]
+#[allow(dead_code)]
+#[serde(rename_all = "camelCase")]
+struct ExportArgs {
+    #[mcp(alias = "mode")]
+    export_mode: ExportMode,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
@@ -50,6 +57,7 @@ struct UserRow {
     created_on: NaiveDate,
 }
 
+/// Query rows from inferred docs.
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "query_rows", title = "Query Rows", filters, mcp)]
 struct QueryRow {
@@ -158,6 +166,45 @@ fn facade_mcp_json_schema_derive_supports_enums() {
 }
 
 #[test]
+fn facade_mcp_json_schema_supports_fixed_tuples() {
+    let schema = <(u32, String) as gpui_table::mcp::McpJsonSchema>::json_schema();
+
+    assert_eq!(schema["type"], "array");
+    assert_eq!(schema["prefixItems"][0]["type"], "integer");
+    assert_eq!(schema["prefixItems"][1]["type"], "string");
+    assert_eq!(schema["minItems"], 2);
+    assert_eq!(schema["maxItems"], 2);
+}
+
+#[test]
+fn facade_mcp_tool_input_derive_is_reusable_schema() {
+    let schema = <ExportArgs as gpui_table::mcp::McpJsonSchema>::json_schema();
+
+    assert_eq!(schema["properties"]["exportMode"]["type"], "string");
+    assert_eq!(
+        schema["properties"]["exportMode"]["enum"],
+        json!(["summary", "full_detail"])
+    );
+    assert_eq!(
+        schema["properties"]["exportMode"]["x-mcpAliases"],
+        json!(["mode"])
+    );
+
+    let input = <ExportArgs as gpui_table::mcp::McpToolInput>::from_tool_call(
+        gpui_table::mcp::McpToolCall::from_value(Some(json!({ "mode": "summary" })))
+            .expect("tool call should normalize"),
+    )
+    .expect("facade-derived tool input should decode aliases");
+
+    assert_eq!(
+        input,
+        ExportArgs {
+            export_mode: ExportMode::Summary
+        }
+    );
+}
+
+#[test]
 fn descriptor_for_no_filter_row_includes_only_pagination_arguments() {
     let schema = NoFilterQueryRow::descriptor().input_schema();
 
@@ -179,6 +226,14 @@ fn descriptor_uses_explicit_mcp_metadata() {
     assert_eq!(
         descriptor.description(),
         "Exercise explicit table MCP metadata."
+    );
+}
+
+#[test]
+fn descriptor_infers_doc_description() {
+    assert_eq!(
+        QueryRow::descriptor().description(),
+        "Query rows from inferred docs."
     );
 }
 
@@ -305,7 +360,49 @@ fn negative_pagination_limit_is_tool_error() {
     assert_eq!(result.is_error, Some(true));
     assert!(matches!(
         result.content[0].as_text(),
-        Some(text) if text.text.contains("expected a non-negative integer")
+        Some(text) if text.text.contains("failed to decode field `limit`")
+    ));
+}
+
+#[test]
+fn null_pagination_limit_is_tool_error() {
+    let mut server = test_server();
+    table::<UserRow>(&mut server)
+        .row_source(rows)
+        .expect("tool should register");
+
+    let result = server.call_tool(
+        &UserRow::descriptor().tool_name(),
+        Some(json!({
+            "limit": null
+        })),
+    );
+
+    assert_eq!(result.is_error, Some(true));
+    assert!(matches!(
+        result.content[0].as_text(),
+        Some(text) if text.text.contains("does not accept null")
+    ));
+}
+
+#[test]
+fn range_filters_reject_unknown_bound_fields() {
+    let mut server = test_server();
+    table::<UserRow>(&mut server)
+        .row_source(rows)
+        .expect("tool should register");
+
+    let result = server.call_tool(
+        &UserRow::descriptor().tool_name(),
+        Some(json!({
+            "age": { "min": 18, "step": 2 }
+        })),
+    );
+
+    assert_eq!(result.is_error, Some(true));
+    assert!(matches!(
+        result.content[0].as_text(),
+        Some(text) if text.text.contains("unknown field")
     ));
 }
 

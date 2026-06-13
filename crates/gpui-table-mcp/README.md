@@ -49,16 +49,24 @@ publish unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
 Custom filter shapes can participate by deriving `gpui_table::McpFilterShape`
-when their raw filter value implements `serde::de::DeserializeOwned` and
-`McpJsonSchema`. The derive uses that raw value schema, decodes the raw value,
-and wraps it through `GpuiTableFilterShape::wrap_value`. Use `McpRange<T>` as
-the raw value for custom `{ "min": ..., "max": ... }` range arguments.
+when their raw filter value implements `McpToolValue`; the blanket
+implementation covers `Deserialize` raw values that implement or derive
+`McpJsonSchema`; use `McpAny` when a typed raw value or manual tool input
+intentionally accepts unconstrained JSON. The derive uses that raw value
+schema, decodes the raw value, and wraps it through
+`GpuiTableFilterShape::wrap_value`. Use `McpRange<T>` as the raw value for
+custom `{ "min": ..., "max": ... }` range arguments.
 Implement `McpFilterShape` manually when a custom shape needs richer schema or
-decoding than raw-value serde. The
+decoding than the blanket `McpToolValue` contract. The
 `McpJsonSchema` derive follows serde deserialize names, includes enum
-deserialize aliases, skips deserialization-skipped fields, rejects flattened
-fields, and treats serde-defaulted fields as not required; app-owned named
-structs, tuple or named transparent newtypes, and fieldless enums can derive it.
+aliases, records field aliases in `x-mcpAliases`, skips
+deserialization-skipped fields, rejects flattened fields, and treats
+serde-defaulted fields as not required. Fixed tuples with 1 to 4 elements
+publish exact array schemas; app-owned named structs, tuple or named
+transparent newtypes, and fieldless enums can derive it. Custom top-level MCP
+tool argument structs can also derive `gpui_table::mcp::McpToolInput` through
+the facade when composing manual typed tools; that derive also implements
+`McpJsonSchema`, so object inputs can be reused as field or filter values.
 The lower-level `McpServer` API remains available for custom server
 composition. `McpServer` is the shared `component-shape-mcp` server, so table
 query tools can be served beside form submit tools in a binary that also
@@ -85,8 +93,9 @@ composition uses
 rows.
 Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
-override the generated MCP tool name, title, or description. Registration
-reports setup errors such as duplicate tool names. Use
+override the generated MCP tool name, title, or description. When
+`description` is omitted, the derive uses the row type's Rust doc comment.
+Registration reports setup errors such as duplicate tool names. Use
 `gpui_table::mcp::server()?` for the default generated server or
 `gpui_table::mcp::server_named(name, version)?` when generated table handlers
 should advertise application-owned metadata. Use `gpui_table::mcp::builder()`

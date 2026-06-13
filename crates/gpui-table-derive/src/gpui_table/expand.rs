@@ -13,9 +13,15 @@ use heck::{ToPascalCase as _, ToTitleCase as _};
 #[cfg(feature = "inventory")]
 use quote::ToTokens as _;
 use quote::quote;
-use syn::Ident;
+use syn::{DeriveInput, Ident};
 
-pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
+pub(super) fn expand_gpui_table(
+    meta: TableMeta,
+    original_input: &DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    #[cfg(not(feature = "mcp"))]
+    let _ = original_input;
+
     let TableMeta {
         ident: struct_name,
         data,
@@ -501,7 +507,8 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             &table_title,
             &filter_fields,
             Some(mcp_options),
-        )
+            original_input,
+        )?
     } else {
         quote! {}
     };

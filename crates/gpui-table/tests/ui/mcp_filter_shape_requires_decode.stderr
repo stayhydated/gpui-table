@@ -9,7 +9,7 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
    |
 12 | struct LocalTextFilter;
    | ^^^^^^^^^^^^^^^^^^^^^^
-   = note: derive `gpui_table::McpFilterShape` when the shape raw value implements serde::de::DeserializeOwned and gpui_table::mcp::McpJsonSchema, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
+   = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
 help: the following other types implement trait `McpFilterShape`
   --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
    |
@@ -46,7 +46,7 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
    |
 12 | struct LocalTextFilter;
    | ^^^^^^^^^^^^^^^^^^^^^^
-   = note: derive `gpui_table::McpFilterShape` when the shape raw value implements serde::de::DeserializeOwned and gpui_table::mcp::McpJsonSchema, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
+   = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
 help: the following other types implement trait `McpFilterShape`
   --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
    |

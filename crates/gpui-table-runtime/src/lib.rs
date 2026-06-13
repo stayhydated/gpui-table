@@ -21,7 +21,7 @@ pub use row::{
 };
 pub use shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInput, McpInputShape,
-    McpPrimitiveKind,
+    McpPrimitiveKind, McpRangeBoundKind,
 };
 
 /// Private module for macro internals. Not part of public API.
