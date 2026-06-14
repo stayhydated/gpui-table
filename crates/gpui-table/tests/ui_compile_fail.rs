@@ -3,7 +3,7 @@ fn ui_compile_fail() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/table_cell_display_format.rs");
     #[cfg(feature = "chrono")]
-    t.pass("tests/ui/inferred_filter_shapes.rs");
+    t.pass("tests/ui/explicit_filter_shapes.rs");
     t.pass("tests/ui/faceted_option_filter.rs");
     t.pass("tests/ui/faceted_vec_filter.rs");
     t.pass("tests/ui/gpui_table_filter_shape_adapter_runtime.rs");
@@ -12,6 +12,7 @@ fn ui_compile_fail() {
     #[cfg(feature = "mcp")]
     t.pass("tests/ui/gpui_table_filter_shape_adapter.rs");
     t.compile_fail("tests/ui/duplicate_filter_shape_field.rs");
+    t.compile_fail("tests/ui/bare_filter_requires_shape.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
     #[cfg(not(feature = "mcp"))]
     t.compile_fail("tests/ui/mcp_requires_feature.rs");

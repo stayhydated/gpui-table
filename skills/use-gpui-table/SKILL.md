@@ -39,8 +39,8 @@ derives, generated types, and runtime helpers:
 2. Define row structs with `#[derive(Clone, GpuiTable)]`.
 3. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
-   context menu behavior. Prefer bare `#[gpui_table(filter)]` when a built-in
-   filter can be inferred from the field type.
+   context menu behavior. Declare filters explicitly with
+   `filter(gpui_table::runtime::shape::<Shape>)` or a custom shape path.
 4. Use `#[derive(Filterable)]` for faceted enums. Include
    `Clone + Eq + Hash + PartialEq`; add `#[filter(fluent)]` only when labels
    come from `es-fluent`.
@@ -109,13 +109,13 @@ application-owned metadata or MCP tool annotation hints. If `description` is
 omitted, the derive uses the row type's Rust doc comment. Generated table query
 tools default to read-only, non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
-Registration reports setup errors such as duplicate tool names. Bare `#[gpui_table(filter)]`
-infers the MCP filter schema and decoder through the same shape selected for
-normal generated filters. For custom filters that adapt an existing built-in
-shape, derive `gpui_table::GpuiTableFilterShape` and declare the base shape,
-raw value, field type, and raw-value conversions; with the `mcp` feature, the
-derive also emits the default `McpFilterShape` decoder when the raw value
-implements `gpui_table::mcp::McpToolValue`. For fully custom runtime filters,
+Registration reports setup errors such as duplicate tool names. MCP filter
+schemas and decoders use the same explicit filter shape declared for generated
+filter UI. For custom filters that adapt an existing built-in shape, derive
+`gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
+type, and raw-value conversions; with the `mcp` feature, the derive also emits
+the default `McpFilterShape` decoder when the raw value implements
+`gpui_table::mcp::McpToolValue`. For fully custom runtime filters,
 implement the runtime shape traits directly, then derive
 `gpui_table::McpFilterShape` when `RawValue: McpToolValue` or write a manual
 `McpFilterShape` impl when the blanket `McpToolValue` contract is not the
@@ -139,17 +139,16 @@ Generated names follow the row type:
 - `<Row>FilterEntities`
 - `<Row>FilterValues`
 
-Use built-in filters through bare field attributes when they match the
-application workflow:
+Declare built-in filters explicitly:
 
-- `filter` on strings infers text search.
-- `filter` on enum-like `T`, `Option<T>`, or `Vec<T>` fields infers
-  `FacetedFilter::<T>` when `T` derives or implements `Filterable`.
-- `filter` on numeric values infers numeric ranges.
-- `filter` on date-like values infers temporal ranges.
+- `filter(gpui_table::runtime::shape::TextFilter)` for string search.
+- `filter(gpui_table::runtime::shape::FacetedFilter::<T>)` for enum-like `T`,
+  `Option<T>`, or `Vec<T>` fields when `T` derives or implements
+  `Filterable`.
+- `filter(gpui_table::runtime::shape::NumberRangeFilter)` for numeric ranges.
+- `filter(gpui_table::runtime::shape::DateRangeFilter)` for temporal ranges.
 
-Use `filter(path::ToShape)` when a field needs a custom shape or when inference
-would choose the wrong built-in shape.
+Use the same `filter(path::ToShape)` form for custom shapes.
 
 Keep localized labels explicit. Use `#[filter(fluent)]` or the matching table
 label attributes only when the application owns an `es-fluent` localizer and the

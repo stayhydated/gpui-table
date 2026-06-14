@@ -42,10 +42,9 @@ fn main() -> gpui_table::mcp::ServeStdioResult {
 ```
 
 Built-in text, faceted, number range, and date range filters are supported.
-In normal tables, bare `#[gpui_table(filter)]` infers those shapes from field
-types before the MCP descriptor is generated; explicit `filter(path::ToShape)`
-remains available for custom filters and overrides. Faceted filter schemas
-publish unique string sets, include valid
+Declare the same explicit `#[gpui_table(filter(path::ToShape))]` shape paths
+used by generated filter UI before the MCP descriptor is generated. Faceted
+filter schemas publish unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
 For custom filters that adapt an existing built-in shape, derive

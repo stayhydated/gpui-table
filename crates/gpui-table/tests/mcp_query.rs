@@ -48,16 +48,16 @@ struct ExportArgs {
     )
 )]
 struct UserRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
     status: UserStatus,
 
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::NumberRangeFilter))]
     age: u8,
 
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::DateRangeFilter))]
     created_on: NaiveDate,
 }
 
@@ -65,14 +65,14 @@ struct UserRow {
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "query_rows", title = "Query Rows", filters, mcp)]
 struct QueryRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "direct_query_rows", title = "Direct Query Rows", filters, mcp)]
 struct DirectQueryRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
@@ -93,7 +93,7 @@ struct NoFilterQueryRow {
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "async_query_rows", title = "Async Query Rows", filters, mcp)]
 struct AsyncQueryRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
@@ -105,21 +105,21 @@ struct AsyncQueryRow {
     mcp
 )]
 struct AsyncValueQueryRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "async_source_rows", title = "Async Source Rows", filters, mcp)]
 struct AsyncSourceRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "result_source_rows", title = "Result Source Rows", filters, mcp)]
 struct ResultSourceRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
@@ -131,7 +131,7 @@ struct ResultSourceRow {
     mcp
 )]
 struct AsyncResultSourceRow {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 

@@ -173,8 +173,8 @@ pub(super) struct TableColumn {
     pub(super) resizable: Option<bool>,
     pub(super) movable: Option<bool>,
     pub(super) skip: bool,
-    /// Filter shape path, or inferred when the field uses bare `filter`.
-    /// Example: `filter` or `filter(gpui_table_component::TextFilter)`
+    /// Explicit filter shape path.
+    /// Example: `filter(gpui_table::runtime::shape::TextFilter)`
     pub(super) filter: Option<FilterShapeOptions>,
 
     /// Marks this field as the value source for generated row context-menu route/label.
@@ -366,7 +366,9 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
 
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
     if meta.input.is_empty() {
-        return Ok(FilterShapeOptions::inferred(meta.path.span()));
+        return Err(meta.error(
+            "expected explicit filter shape, e.g. `filter(gpui_table::runtime::shape::TextFilter)`",
+        ));
     }
 
     let content;

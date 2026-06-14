@@ -33,13 +33,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter)]
+    #[gpui_table(sortable, width = 160., filter(gpui_table::runtime::shape::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter)]
+    #[gpui_table(width = 80., filter(gpui_table::runtime::shape::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter)]
+    #[gpui_table(width = 120., filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -64,23 +64,23 @@ With `#[gpui_table(filters)]`, the derive generates:
 ## Built-In Filter Shapes
 
 ```rust
-#[gpui_table(filter)]
+#[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
 name: String,
 
-#[gpui_table(filter)]
+#[gpui_table(filter(gpui_table::runtime::shape::NumberRangeFilter))]
 age: u8,
 
-#[gpui_table(filter)]
+#[gpui_table(filter(gpui_table::runtime::shape::DateRangeFilter))]
 created_at: chrono::DateTime<chrono::Utc>,
 
-#[gpui_table(filter)]
+#[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
 status: UserStatus,
 ```
 
-Bare `filter` infers `TextFilter` for strings, `NumberRangeFilter` for numeric
-values, `DateRangeFilter` for date-like values, and `FacetedFilter::<T>` for
-enum-like fields. Use `filter(path::ToShape)` when a field needs a custom or
-non-inferred shape.
+Built-in filters are explicit shape paths: `TextFilter` for strings,
+`NumberRangeFilter` for numeric values, `DateRangeFilter` for date-like values,
+and `FacetedFilter::<T>` for enum-like fields. Use the same
+`filter(path::ToShape)` form for custom shapes.
 
 Use `#[derive(Filterable)]` for faceted enums:
 
@@ -114,7 +114,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```
@@ -189,7 +189,7 @@ query.
 #[derive(Clone, gpui_table::GpuiTable, serde::Serialize)]
 #[gpui_table(filters, mcp)]
 struct User {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
@@ -234,8 +234,8 @@ Register manual handlers with
 `.row_source(source)?`, or
 `.row_source_async(source)?` for local rows.
 Registration reports setup errors such as duplicate tool names.
-Bare `#[gpui_table(filter)]` infers the MCP schema and decoder through the same
-shape selected for generated filter UI.
+MCP schemas and decoders use the same explicit filter shapes selected for
+generated filter UI.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
 type, and raw-value conversions; with the `mcp` feature, the derive also emits

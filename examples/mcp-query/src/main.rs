@@ -21,16 +21,16 @@ enum IssueState {
     )
 )]
 struct IssueRow {
-    #[gpui_table(width = 80, filter)]
+    #[gpui_table(width = 80, filter(gpui_table::runtime::shape::NumberRangeFilter))]
     id: u32,
 
-    #[gpui_table(width = 220, filter)]
+    #[gpui_table(width = 220, filter(gpui_table::runtime::shape::TextFilter))]
     title: String,
 
-    #[gpui_table(width = 120, filter)]
+    #[gpui_table(width = 120, filter(gpui_table::runtime::shape::FacetedFilter::<IssueState>))]
     state: IssueState,
 
-    #[gpui_table(width = 120, filter)]
+    #[gpui_table(width = 120, filter(gpui_table::runtime::shape::DateRangeFilter))]
     updated_on: NaiveDate,
 }
 

@@ -57,13 +57,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter)]
+    #[gpui_table(sortable, width = 160., filter(gpui_table::runtime::shape::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter)]
+    #[gpui_table(width = 80., filter(gpui_table::runtime::shape::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter)]
+    #[gpui_table(width = 120., filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -83,10 +83,12 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `UserFilterValues` for typed filter state
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
-Bare `#[gpui_table(filter)]` infers common filter shapes from the field type:
-strings use `TextFilter`, numbers use `NumberRangeFilter`, date-like values use
-`DateRangeFilter`, and other enum-like values use `FacetedFilter::<T>`.
-Use `filter(path::ToShape)` when a field needs a custom or non-inferred shape.
+Field-level filters require an explicit shape path:
+`filter(gpui_table::runtime::shape::TextFilter)` for strings,
+`filter(gpui_table::runtime::shape::NumberRangeFilter)` for numeric ranges,
+`filter(gpui_table::runtime::shape::DateRangeFilter)` for date ranges, and
+`filter(gpui_table::runtime::shape::FacetedFilter::<T>)` for faceted values.
+Use the same form for custom shapes.
 
 Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
 implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
@@ -240,7 +242,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter)]
+    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```

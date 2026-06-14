@@ -4,9 +4,9 @@ This example exposes a derived `IssueRow` table as a stdio MCP server. The row
 source is registered with `#[gpui_table::mcp_query]`, which infers `IssueRow`
 from the zero-argument `Vec<IssueRow>` return type, so `main` only serves the
 inventory-backed registry. The table also declares explicit MCP tool metadata
-with `#[gpui_table(mcp(...))]` and uses bare `#[gpui_table(filter)]` fields so
-text, faceted, number-range, and date-range filter shapes are inferred from the
-row field types. Custom filters that adapt built-in shapes can use
+with `#[gpui_table(mcp(...))]` and explicit `#[gpui_table(filter(...))]`
+fields for text, faceted, number-range, and date-range filter shapes. Custom
+filters that adapt built-in shapes can use
 `#[derive(gpui_table::GpuiTableFilterShape)]`; see the `gpui-table-mcp`
 README for that adapter pattern.
 
