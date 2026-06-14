@@ -5,10 +5,11 @@
 //! optional context-menu helpers, and optional MCP query metadata. The emitted
 //! code depends on stable paths re-exported by the `gpui-table` facade.
 //!
-//! `#[derive(Filterable)]`, `#[derive(TableCell)]`, `#[derive(McpFilterShape)]`
-//! when the `mcp` feature is enabled, and `#[gpui_table_impl]` provide the
-//! supporting generated contracts used by the public README examples and UI
-//! compile-fail fixtures.
+//! `#[derive(Filterable)]`, `#[derive(TableCell)]`,
+//! `#[derive(GpuiTableFilterShape)]`, `#[derive(McpFilterShape)]` when the
+//! `mcp` feature is enabled, and `#[gpui_table_impl]` provide the supporting
+//! generated contracts used by the public README examples and UI compile-fail
+//! fixtures.
 
 mod components;
 mod filterable;
@@ -19,6 +20,7 @@ mod mcp_filter_shape;
 #[cfg(feature = "mcp")]
 mod mcp_handlers;
 mod table_cell;
+mod table_filter_shape;
 
 use proc_macro::TokenStream;
 
@@ -62,6 +64,14 @@ pub fn mcp_query(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_derive(McpFilterShape)]
 pub fn derive_mcp_filter_shape(input: TokenStream) -> TokenStream {
     match mcp_filter_shape::expand(input.into()) {
+        Ok(tokens) => tokens.into(),
+        Err(error) => error.to_compile_error().into(),
+    }
+}
+
+#[proc_macro_derive(GpuiTableFilterShape, attributes(gpui_table_filter_shape))]
+pub fn derive_gpui_table_filter_shape(input: TokenStream) -> TokenStream {
+    match table_filter_shape::expand(input.into()) {
         Ok(tokens) => tokens.into(),
         Err(error) => error.to_compile_error().into(),
     }

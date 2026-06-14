@@ -6,7 +6,9 @@ from the zero-argument `Vec<IssueRow>` return type, so `main` only serves the
 inventory-backed registry. The table also declares explicit MCP tool metadata
 with `#[gpui_table(mcp(...))]` and uses bare `#[gpui_table(filter)]` fields so
 text, faceted, number-range, and date-range filter shapes are inferred from the
-row field types.
+row field types. Custom filters that adapt built-in shapes can use
+`#[derive(gpui_table::GpuiTableFilterShape)]`; see the `gpui-table-mcp`
+README for that adapter pattern.
 
 Run it from the workspace root:
 

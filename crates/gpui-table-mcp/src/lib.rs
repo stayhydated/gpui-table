@@ -497,6 +497,7 @@ pub mod registry {
     }
 }
 
+#[cfg(any(feature = "chrono", feature = "rust_decimal"))]
 fn range_filter_input_schema<T>(_filter: McpTableFilter) -> McpSchema
 where
     McpRange<T>: McpToolValue,
@@ -504,6 +505,7 @@ where
     <McpRange<T> as McpToolValue>::tool_value_schema()
 }
 
+#[cfg(any(feature = "chrono", feature = "rust_decimal"))]
 fn decode_range_filter<T>(
     field: &'static str,
     value: McpAny,

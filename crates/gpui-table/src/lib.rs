@@ -5,7 +5,8 @@
 //! - `gpui_table::mcp` for experimental MCP table query integration
 //! - `gpui_table::runtime` for GPUI-facing traits/helpers
 //! - `gpui_table::schema` for metadata and registry types
-//! - root-level proc macros from `gpui-table-derive`
+//! - root-level proc macros from `gpui-table-derive`, including
+//!   `GpuiTableFilterShape` for adapting existing filter shapes
 //!
 //! The facade owns the stable paths that macro-generated code names. Changes to
 //! root re-exports, `runtime::generated_filters`, `registry`, `__deps`, or

@@ -111,15 +111,18 @@ tools default to read-only, non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
 Registration reports setup errors such as duplicate tool names. Bare `#[gpui_table(filter)]`
 infers the MCP filter schema and decoder through the same shape selected for
-normal generated filters. Custom filter shapes can
-derive `gpui_table::McpFilterShape` when their `RawValue` implements
-`gpui_table::mcp::McpToolValue`; the blanket implementation covers
-`Deserialize` raw values that implement or derive
-`gpui_table::mcp::McpJsonSchema`; use `gpui_table::mcp::McpAny` when a typed
-raw value or manual tool input intentionally accepts unconstrained JSON. Use
+normal generated filters. For custom filters that adapt an existing built-in
+shape, derive `gpui_table::GpuiTableFilterShape` and declare the base shape,
+raw value, field type, and raw-value conversions; with the `mcp` feature, the
+derive also emits the default `McpFilterShape` decoder when the raw value
+implements `gpui_table::mcp::McpToolValue`. For fully custom runtime filters,
+implement the runtime shape traits directly, then derive
+`gpui_table::McpFilterShape` when `RawValue: McpToolValue` or write a manual
+`McpFilterShape` impl when the blanket `McpToolValue` contract is not the
+right MCP contract. Use `gpui_table::mcp::McpAny` when a typed raw value or
+manual tool input intentionally accepts unconstrained JSON. Use
 `gpui_table::mcp::McpRange<T>` for `{ "min": ..., "max": ... }` range raw
-values and a manual `McpFilterShape` impl when the blanket `McpToolValue`
-contract is not the right MCP contract.
+values.
 Fixed tuples with 1 to 4 elements publish exact array schemas.
 App-owned named structs, tuple or named transparent newtypes, and fieldless
 enums can derive `McpJsonSchema`; the derive follows serde deserialize names,

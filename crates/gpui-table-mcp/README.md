@@ -48,16 +48,37 @@ remains available for custom filters and overrides. Faceted filter schemas
 publish unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
-Custom filter shapes can participate by deriving `gpui_table::McpFilterShape`
-when their raw filter value implements `McpToolValue`; the blanket
-implementation covers `Deserialize` raw values that implement or derive
-`McpJsonSchema`; use `McpAny` when a typed raw value or manual tool input
-intentionally accepts unconstrained JSON. The derive uses that raw value
-schema, decodes the raw value, and wraps it through
-`GpuiTableFilterShape::wrap_value`. Use `McpRange<T>` as the raw value for
-custom `{ "min": ..., "max": ... }` range arguments.
-Implement `McpFilterShape` manually when a custom shape needs richer schema or
-decoding than the blanket `McpToolValue` contract. The
+For custom filters that adapt an existing built-in shape, derive
+`gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
+type, and raw-value conversions:
+
+```rust
+#[derive(Clone, Debug, Default, PartialEq)]
+struct PrefixText(String);
+
+#[derive(gpui_table::GpuiTableFilterShape)]
+#[gpui_table_filter_shape(
+    base = gpui_table::runtime::shape::TextFilter,
+    raw_value = PrefixText,
+    field = String,
+    into_base = |value: PrefixText| value.0,
+    from_base = PrefixText
+)]
+struct PrefixTextFilter;
+```
+
+The derive generates the runtime `GpuiTableFilterShape` implementation,
+declared-shape markers, `GpuiTableFilterShapeFor<String>`, and, with the
+`mcp` feature, the default `McpFilterShape` decoder when `PrefixText`
+implements `McpToolValue`.
+For fully custom runtime filters, implement the runtime shape traits directly,
+then derive `gpui_table::McpFilterShape` when the raw filter value implements
+`McpToolValue`; the blanket implementation covers `Deserialize` raw values
+that implement or derive `McpJsonSchema`. Use `McpAny` when a typed raw value
+or manual tool input intentionally accepts unconstrained JSON. Use
+`McpRange<T>` as the raw value for custom `{ "min": ..., "max": ... }` range
+arguments. Implement `McpFilterShape` manually when a custom shape needs richer
+schema or decoding than the blanket `McpToolValue` contract. The
 `McpJsonSchema` derive follows serde deserialize names, includes enum
 aliases, records field aliases in `x-mcpAliases`, skips
 deserialization-skipped fields, rejects flattened fields, and treats

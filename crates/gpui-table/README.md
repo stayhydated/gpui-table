@@ -170,16 +170,18 @@ Manual table tools can still be registered directly:
 `.row_source(source)?` for per-query local rows, or
 `.row_source_async(source)?` for async local row sources.
 Registration reports setup errors such as duplicate tool names.
-Custom filter shapes can derive `gpui_table::McpFilterShape` when their
-`RawValue` implements `gpui_table::mcp::McpToolValue`; the blanket
-implementation covers `Deserialize` raw values that implement or derive
-`gpui_table::mcp::McpJsonSchema`; use `gpui_table::mcp::McpAny` when a typed
-raw value or manual tool input intentionally accepts unconstrained JSON. The
-derive decodes the raw value and wraps it with the table filter shape contract.
-Use `gpui_table::mcp::McpRange<T>` for custom `{ "min": ..., "max": ... }`
-range raw values. Implement
-`gpui_table::mcp::McpFilterShape` manually when a custom filter needs richer
-schema or decoding than the blanket `McpToolValue` contract. The `McpJsonSchema` derive follows
+For custom filters that adapt an existing built-in shape, derive
+`gpui_table::GpuiTableFilterShape` and declare a base shape, raw value, field
+type, and raw-value conversions. The derive generates the runtime filter shape,
+declared-shape markers, field-support impl, and, with the `mcp` feature, the
+default `McpFilterShape` decoder when the raw value implements
+`gpui_table::mcp::McpToolValue`. For fully custom runtime filters, implement
+the runtime shape traits directly, then derive `gpui_table::McpFilterShape`
+when `RawValue: McpToolValue` or implement `gpui_table::mcp::McpFilterShape`
+manually for custom schema/decoding. Use `gpui_table::mcp::McpAny` when a
+typed raw value or manual tool input intentionally accepts unconstrained JSON,
+and `gpui_table::mcp::McpRange<T>` for custom `{ "min": ..., "max": ... }`
+range raw values. The `McpJsonSchema` derive follows
 serde deserialize names, records field aliases in `x-mcpAliases`, includes enum aliases, skips
 deserialization-skipped fields, rejects flattened fields, and treats
 serde-defaulted fields as not required. Fixed tuples with 1 to 4 elements

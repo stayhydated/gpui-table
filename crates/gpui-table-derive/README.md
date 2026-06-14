@@ -90,6 +90,33 @@ registration macros resolve the facade crate path, so renamed `gpui-table`
 dependencies work for MCP handler
 registration output.
 
+### `#[derive(GpuiTableFilterShape)]`
+
+Generates a custom filter shape by adapting an existing base shape. Use this
+when a field should keep the UI, matching, and reset behavior of a built-in
+filter but expose a different raw value type to table state or MCP decoding.
+
+```rs
+#[derive(Clone, Debug, Default, PartialEq)]
+struct PrefixText(String);
+
+#[derive(gpui_table::GpuiTableFilterShape)]
+#[gpui_table_filter_shape(
+    base = gpui_table::runtime::shape::TextFilter,
+    raw_value = PrefixText,
+    field = String,
+    into_base = |value: PrefixText| value.0,
+    from_base = PrefixText
+)]
+struct PrefixTextFilter;
+```
+
+The derive emits `ComponentShapeMetadata`, declared-shape marker impls,
+`GpuiTableFilterShape`, and `GpuiTableFilterShapeFor<Field>`. When the
+`gpui-table/mcp` feature is enabled, it also emits the default
+`gpui_table::mcp::McpFilterShape` impl if the raw value implements
+`gpui_table::mcp::McpToolValue`.
+
 ### `#[derive(Filterable)]`
 
 Generates `FilterValue`, `Filterable`, and `variant_name()` for faceted-filter

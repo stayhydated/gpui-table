@@ -2,7 +2,7 @@
 
 use chrono::NaiveDate;
 use gpui_table::{
-    Filterable, GpuiTable, TableCell,
+    Filterable, GpuiTable, GpuiTableFilterShape, TableCell,
     mcp::{
         McpServer, McpTable as _, McpToolError, serde_json::json, server as generated_server,
         table, tool_definitions,
@@ -135,6 +135,50 @@ struct AsyncResultSourceRow {
     name: String,
 }
 
+#[derive(Clone, Debug, Default, PartialEq)]
+struct PrefixText(String);
+
+impl gpui_table::mcp::McpToolValue for PrefixText {
+    fn tool_value_schema() -> gpui_table::mcp::McpSchema {
+        gpui_table::mcp::McpSchema::new(json!({
+            "type": "string",
+            "x-prefixText": true
+        }))
+    }
+
+    fn from_tool_value(
+        field: &str,
+        value: gpui_table::mcp::serde_json::Value,
+    ) -> Result<Self, gpui_table::mcp::McpToolError> {
+        let raw = value
+            .as_str()
+            .ok_or_else(|| gpui_table::mcp::McpToolError::decode(field, "expected string"))?;
+        Ok(Self(raw.to_string()))
+    }
+}
+
+#[derive(GpuiTableFilterShape)]
+#[gpui_table_filter_shape(
+    base = gpui_table::runtime::shape::TextFilter,
+    raw_value = PrefixText,
+    field = String,
+    into_base = |value: PrefixText| value.0,
+    from_base = PrefixText
+)]
+struct PrefixTextFilter;
+
+#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[gpui_table(
+    id = "prefix_filter_rows",
+    title = "Prefix Filter Rows",
+    filters,
+    mcp(name = "query_prefix_filter_rows")
+)]
+struct PrefixFilterRow {
+    #[gpui_table(filter(PrefixTextFilter))]
+    name: String,
+}
+
 fn test_server() -> McpServer {
     McpServer::new("gpui-table-mcp-test", "0.0.0")
 }
@@ -248,6 +292,18 @@ fn descriptor_infers_doc_description() {
 }
 
 #[test]
+fn filter_shape_adapter_schema_uses_declared_raw_value_schema() {
+    let schema = PrefixFilterRow::descriptor().input_schema();
+
+    assert_eq!(schema["properties"]["name"]["type"], "string");
+    assert_eq!(schema["properties"]["name"]["x-prefixText"], true);
+    assert_eq!(
+        schema["properties"]["name"]["x-gpuiTableFilterType"],
+        "text"
+    );
+}
+
+#[test]
 fn inventory_exposes_generated_tool_definition() {
     let expected = UserRow::descriptor().tool_name();
     let tools = tool_definitions().expect("tool definitions should be generated");
@@ -302,6 +358,33 @@ fn local_rows_registry_filters_and_pages_rows() {
             "limit": 10,
             "offset": 0
         })),
+    );
+
+    assert_eq!(result.is_error, Some(false));
+    let content = result.structured_content.expect("structured result");
+    assert_eq!(content["total"], 1);
+    assert_eq!(content["rows"][0]["name"], "Ann");
+}
+
+#[test]
+fn filter_shape_adapter_decodes_mcp_query_and_filters_rows() {
+    let mut server = test_server();
+    table::<PrefixFilterRow>(&mut server)
+        .row_source(|| {
+            Ok::<_, String>(vec![
+                PrefixFilterRow {
+                    name: "Ann".to_string(),
+                },
+                PrefixFilterRow {
+                    name: "Bea".to_string(),
+                },
+            ])
+        })
+        .expect("tool should register");
+
+    let result = server.call_tool(
+        &PrefixFilterRow::descriptor().tool_name(),
+        Some(json!({ "name": "ann" })),
     );
 
     assert_eq!(result.is_error, Some(false));
