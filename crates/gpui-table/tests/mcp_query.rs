@@ -40,7 +40,11 @@ struct ExportArgs {
     mcp(
         name = "query_users",
         title = "Query users",
-        description = "Exercise explicit table MCP metadata."
+        description = "Exercise explicit table MCP metadata.",
+        read_only = true,
+        destructive = false,
+        idempotent = true,
+        open_world = true
     )
 )]
 struct UserRow {
@@ -227,6 +231,12 @@ fn descriptor_uses_explicit_mcp_metadata() {
         descriptor.description(),
         "Exercise explicit table MCP metadata."
     );
+    let annotations = descriptor.tool_annotations();
+    assert_eq!(annotations.title.as_deref(), Some("Query users"));
+    assert_eq!(annotations.read_only_hint, Some(true));
+    assert_eq!(annotations.destructive_hint, Some(false));
+    assert_eq!(annotations.idempotent_hint, Some(true));
+    assert_eq!(annotations.open_world_hint, Some(true));
 }
 
 #[test]
@@ -242,7 +252,18 @@ fn inventory_exposes_generated_tool_definition() {
     let expected = UserRow::descriptor().tool_name();
     let tools = tool_definitions().expect("tool definitions should be generated");
 
-    assert!(tools.iter().any(|tool| tool.name == expected));
+    let tool = tools
+        .iter()
+        .find(|tool| tool.name == expected)
+        .expect("tool definition should be generated");
+    let annotations = tool
+        .annotations
+        .as_ref()
+        .expect("table query should publish annotations");
+    assert_eq!(annotations.read_only_hint, Some(true));
+    assert_eq!(annotations.destructive_hint, Some(false));
+    assert_eq!(annotations.idempotent_hint, Some(true));
+    assert_eq!(annotations.open_world_hint, Some(true));
 }
 
 #[test]
@@ -250,7 +271,18 @@ fn inventory_exposes_pagination_only_mcp_tool_definition() {
     let expected = NoFilterQueryRow::descriptor().tool_name();
     let tools = tool_definitions().expect("tool definitions should be generated");
 
-    assert!(tools.iter().any(|tool| tool.name == expected));
+    let tool = tools
+        .iter()
+        .find(|tool| tool.name == expected)
+        .expect("tool definition should be generated");
+    let annotations = tool
+        .annotations
+        .as_ref()
+        .expect("table query should publish default annotations");
+    assert_eq!(annotations.read_only_hint, Some(true));
+    assert_eq!(annotations.destructive_hint, Some(false));
+    assert_eq!(annotations.idempotent_hint, Some(true));
+    assert_eq!(annotations.open_world_hint, None);
 }
 
 #[test]

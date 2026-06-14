@@ -103,9 +103,12 @@ with `gpui_table::mcp::table::<Row>(&mut server).query(handler)?` for
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, `.rows(rows)?`,
 `.row_source(source)?`, or
 `.row_source_async(source)?` for local rows. Use struct-level
-`#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` when
-generated MCP tools need application-owned names or descriptions. If
-`description` is omitted, the derive uses the row type's Rust doc comment.
+`#[gpui_table(mcp(...))]` with `name`, `title`, `description`, `read_only`,
+`destructive`, `idempotent`, and `open_world` when generated MCP tools need
+application-owned metadata or MCP tool annotation hints. If `description` is
+omitted, the derive uses the row type's Rust doc comment. Generated table query
+tools default to read-only, non-destructive, and idempotent annotations.
+`read_only = true` and `destructive = true` cannot be combined.
 Registration reports setup errors such as duplicate tool names. Bare `#[gpui_table(filter)]`
 infers the MCP filter schema and decoder through the same shape selected for
 normal generated filters. Custom filter shapes can

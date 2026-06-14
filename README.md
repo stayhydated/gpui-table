@@ -140,6 +140,11 @@ query. Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
 override the generated MCP tool name, title, or description. When
 `description` is omitted, the derive uses the row type's Rust doc comment.
+The same list accepts optional MCP tool annotation hints with
+`read_only = ...`, `destructive = ...`, `idempotent = ...`, and
+`open_world = ...`. Generated table query tools default to read-only,
+non-destructive, and idempotent annotations. `read_only = true` and
+`destructive = true` cannot be combined.
 The lower-level `McpServer` API remains available when an
 application wants to compose table tools with other `component-shape-mcp`
 integrations. Use `gpui_table::mcp::server_named(name, version)?` when generated

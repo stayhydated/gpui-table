@@ -78,6 +78,14 @@ pub(super) struct McpToolOptions {
     pub(super) name: Option<String>,
     pub(super) title: Option<String>,
     pub(super) description: Option<String>,
+    #[allow(dead_code)]
+    pub(super) read_only: Option<bool>,
+    #[allow(dead_code)]
+    pub(super) destructive: Option<bool>,
+    #[allow(dead_code)]
+    pub(super) idempotent: Option<bool>,
+    #[allow(dead_code)]
+    pub(super) open_world: Option<bool>,
 }
 
 #[derive(Clone, Debug, Default, darling::FromMeta)]
@@ -88,6 +96,14 @@ struct McpToolOptionsMeta {
     title: Option<String>,
     #[darling(default)]
     description: Option<String>,
+    #[darling(default)]
+    read_only: Option<bool>,
+    #[darling(default)]
+    destructive: Option<bool>,
+    #[darling(default)]
+    idempotent: Option<bool>,
+    #[darling(default)]
+    open_world: Option<bool>,
 }
 
 impl FromMeta for McpToolOptions {
@@ -110,12 +126,22 @@ impl From<McpToolOptionsMeta> for McpToolOptions {
             name: value.name,
             title: value.title,
             description: value.description,
+            read_only: value.read_only,
+            destructive: value.destructive,
+            idempotent: value.idempotent,
+            open_world: value.open_world,
         }
     }
 }
 
 impl McpToolOptions {
     pub(super) fn validate(&self, span: proc_macro2::Span) -> syn::Result<()> {
+        if self.read_only == Some(true) && self.destructive == Some(true) {
+            return Err(syn::Error::new(
+                span,
+                "MCP tool annotation hints cannot be both read-only and destructive",
+            ));
+        }
         if let Some(name) = self.name.as_deref() {
             component_shape::validate_mcp_tool_name(name)
                 .map_err(|error| syn::Error::new(span, error.to_string()))?;
@@ -361,6 +387,32 @@ mod tests {
         assert!(options.name.is_none());
         assert!(options.title.is_none());
         assert!(options.description.is_none());
+        assert!(options.read_only.is_none());
+        assert!(options.destructive.is_none());
+        assert!(options.idempotent.is_none());
+        assert!(options.open_world.is_none());
+    }
+
+    #[test]
+    fn mcp_tool_options_accept_metadata_and_annotation_hints() {
+        let options = McpToolOptions::from_list(&[
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(name = "query_users")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(title = "Query users")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(description = "Query users.")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(read_only = true)),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(destructive = false)),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(idempotent = true)),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(open_world = true)),
+        ])
+        .expect("mcp list form should parse");
+
+        assert_eq!(options.name.as_deref(), Some("query_users"));
+        assert_eq!(options.title.as_deref(), Some("Query users"));
+        assert_eq!(options.description.as_deref(), Some("Query users."));
+        assert_eq!(options.read_only, Some(true));
+        assert_eq!(options.destructive, Some(false));
+        assert_eq!(options.idempotent, Some(true));
+        assert_eq!(options.open_world, Some(true));
     }
 
     #[test]
@@ -397,6 +449,22 @@ mod tests {
             error
                 .to_string()
                 .contains("tool description cannot be empty"),
+            "unexpected error: {error}"
+        );
+    }
+
+    #[test]
+    fn mcp_tool_options_reject_conflicting_annotation_hints() {
+        let error = McpToolOptions::from_list(&[
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(read_only = true)),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(destructive = true)),
+        ])
+        .expect_err("conflicting annotation hints should fail");
+
+        assert!(
+            error
+                .to_string()
+                .contains("cannot be both read-only and destructive"),
             "unexpected error: {error}"
         );
     }

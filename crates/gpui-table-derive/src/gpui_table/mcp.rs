@@ -112,6 +112,10 @@ fn tool_metadata_tokens(
             name: options.and_then(|options| options.name.as_deref()),
             title: options.and_then(|options| options.title.as_deref()),
             description: options.and_then(|options| options.description.as_deref()),
+            read_only: options.and_then(|options| options.read_only),
+            destructive: options.and_then(|options| options.destructive),
+            idempotent: options.and_then(|options| options.idempotent),
+            open_world: options.and_then(|options| options.open_world),
         },
         original_input.ident.span(),
     )

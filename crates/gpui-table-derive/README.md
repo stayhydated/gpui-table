@@ -75,9 +75,10 @@ field schemas record aliases in `x-mcpAliases`, and enum schemas include
 aliases. `McpToolInput` also implements `McpJsonSchema`, so object inputs can
 be reused as filter raw values. Implement
 `gpui_table::mcp::McpFilterShape` manually for explicit schema or decode hooks.
-Struct-level `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]`
-overrides generated MCP tool metadata. When `description` is omitted, the
-derive uses the row type's Rust doc comment.
+Struct-level `#[gpui_table(mcp(...))]` supports `name`, `title`,
+`description`, `read_only`, `destructive`, `idempotent`, and `open_world`
+options for generated MCP tool metadata and annotations. When `description` is
+omitted, the derive uses the row type's Rust doc comment.
 Use `#[gpui_table::mcp_query]` for custom query handlers and local row sources.
 The macro infers the row type from `TableQuery<Row>` and zero-argument
 `Result<Vec<Row>, E>` signatures. Local row sources are called for each MCP

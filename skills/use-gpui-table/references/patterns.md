@@ -213,9 +213,13 @@ Custom query handlers can be synchronous or async and must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
 query.
-Use struct-level `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]`
-when generated MCP tools need application-owned names or descriptions. If
-`description` is omitted, the derive uses the row type's Rust doc comment.
+Use struct-level `#[gpui_table(mcp(...))]` with `name`, `title`,
+`description`, `read_only`, `destructive`, `idempotent`, and `open_world` when
+generated MCP tools need application-owned metadata or MCP tool annotation
+hints. If `description` is omitted, the derive uses the row type's Rust doc
+comment. Generated table query tools default to read-only, non-destructive, and
+idempotent annotations.
+`read_only = true` and `destructive = true` cannot be combined.
 Use `gpui_table::mcp::server()?` for the default generated server and
 `gpui_table::mcp::server_named(name, version)?` when application-owned server
 metadata is needed. Use `gpui_table::mcp::builder()` or

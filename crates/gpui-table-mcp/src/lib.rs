@@ -24,9 +24,9 @@ pub type FilterSchemaFn = fn(McpTableFilter) -> McpSchema;
 pub use component_shape::{McpInput, McpInputShape, McpPrimitiveKind, McpRangeBoundKind};
 pub use component_shape_mcp::{
     ContentBlock, MCP_PROTOCOL_VERSION, McpAny, McpArguments, McpJsonSchema, McpRange, McpSchema,
-    McpSchemaProperties, McpServer, McpServerBuilder, McpToolArguments, McpToolCall, McpToolError,
-    McpToolInput, McpToolMetadata, McpToolValue, McpTypedTool, ServeStdioResult, ToolCallResult,
-    ToolDefinition, object_schema, rmcp, serde, serde_json,
+    McpSchemaProperties, McpServer, McpServerBuilder, McpToolAnnotations, McpToolArguments,
+    McpToolCall, McpToolError, McpToolInput, McpToolMetadata, McpToolValue, McpTypedTool,
+    ServeStdioResult, ToolCallResult, ToolDefinition, object_schema, rmcp, serde, serde_json,
 };
 
 type ToolFuture = Pin<Box<dyn Future<Output = ToolCallResult> + Send + 'static>>;
@@ -178,13 +178,30 @@ impl McpTableDescriptor {
         table_query_output_schema()
     }
 
+    pub fn tool_annotations(self) -> McpToolAnnotations {
+        let metadata = self.tool_metadata;
+        let destructive = metadata.destructive_hint().unwrap_or(false);
+        let idempotent = metadata
+            .idempotent_hint()
+            .or_else(|| (!destructive).then_some(true));
+        McpToolAnnotations::from_raw(
+            Some(self.title()),
+            Some(metadata.read_only_hint().unwrap_or(true)),
+            Some(destructive),
+            idempotent,
+            metadata.open_world_hint(),
+        )
+    }
+
     fn tool_definition(self) -> Result<ToolDefinition, McpToolError> {
-        component_shape_mcp::tool_definition(
+        self.tool_metadata.validate()?;
+        component_shape_mcp::tool_definition_with_annotations(
             self.tool_name(),
             Some(self.title()),
             Some(self.description()),
             self.input_schema(),
             Some(self.output_schema()),
+            Some(self.tool_annotations()),
         )
     }
 }
@@ -270,11 +287,13 @@ where
 {
     pub fn tool_definition() -> Result<McpTypedTool<Self>, McpToolError> {
         let descriptor = Table::descriptor();
-        component_shape_mcp::tool_definition_for_input::<Self>(
+        descriptor.tool_metadata().validate()?;
+        component_shape_mcp::tool_definition_for_input_with_annotations::<Self>(
             descriptor.tool_name(),
             Some(descriptor.title()),
             Some(descriptor.description()),
             Some(descriptor.output_schema()),
+            Some(descriptor.tool_annotations()),
         )
     }
 
@@ -919,6 +938,15 @@ mod tests {
             tool.output_schema.as_ref().unwrap()["properties"]["rows"]["type"],
             "array"
         );
+        let annotations = tool
+            .annotations
+            .as_ref()
+            .expect("table query tool should publish annotations");
+        assert_eq!(annotations.title.as_deref(), Some("Typed Table query"));
+        assert_eq!(annotations.read_only_hint, Some(true));
+        assert_eq!(annotations.destructive_hint, Some(false));
+        assert_eq!(annotations.idempotent_hint, Some(true));
+        assert_eq!(annotations.open_world_hint, None);
 
         let input = McpTableQueryInput::<TypedTable>::from_tool_call(
             super::McpToolCall::from_value(Some(serde_json::json!({
