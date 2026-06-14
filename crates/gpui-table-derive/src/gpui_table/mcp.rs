@@ -394,7 +394,7 @@ fn validation_decode_tokens(
                         __gpui_table_filter_raw_value,
                     ) {
                         __gpui_table_validation_issues.push(
-                            #facade_crate::mcp::McpValidationIssue::for_rule(
+                            #facade_crate::mcp::McpValidationIssue::for_filter_rule(
                                 #field_name,
                                 __gpui_table_validation_rule,
                                 ::std::format!(
