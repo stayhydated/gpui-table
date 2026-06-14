@@ -41,6 +41,30 @@ pub fn expand(input: proc_macro2::TokenStream) -> syn::Result<proc_macro2::Token
                 #facade_crate::mcp::decode_raw_filter_shape::<Self>(field, value)
             }
         }
+
+        impl #impl_generics #facade_crate::mcp::McpFilterShapeValidation for #ident #ty_generics
+            #where_clause
+        {
+            fn decode_filter_with_validation<Validate>(
+                field: &'static str,
+                value: #facade_crate::mcp::McpAny,
+                validate: Validate,
+            ) -> Result<
+                <Self as #facade_crate::runtime::shape::GpuiTableFilterShape>::FilterValue,
+                #facade_crate::mcp::McpToolError,
+            >
+            where
+                Validate: FnOnce(
+                    &<Self as #facade_crate::runtime::shape::GpuiTableFilterShape>::RawValue
+                ) -> Result<(), #facade_crate::mcp::McpToolError>,
+            {
+                #facade_crate::mcp::decode_raw_filter_shape_with_validation::<Self, _>(
+                    field,
+                    value,
+                    validate,
+                )
+            }
+        }
     })
 }
 

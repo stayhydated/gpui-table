@@ -209,6 +209,12 @@ decode from unique `Filterable::to_filter_string()` string sets, and range
 filters decode from `{ "min": ..., "max": ... }` objects.
 Generated faceted filter schemas include `uniqueItems: true`, valid facet
 strings in the item `enum`, and labels in `x-gpuiTableFacetOptions`.
+Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+MCP filter argument before the query handler runs. Generated schemas attach rule
+metadata in `x-gpuiTableValidation`; literal `LenValidation`,
+`RangeValidation`, and `NonEmptyValidation` arguments are also reflected as JSON
+Schema hints when the filter argument schema is unambiguous. Add `koruma` and
+the validator crate that provides the rule to the application dependencies.
 Custom query handlers can be synchronous or async and must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
@@ -251,4 +257,6 @@ values. The `McpJsonSchema` derive supports
 named structs, tuple or named transparent newtypes, fieldless enums, and fixed
 tuples with 1 to 4 elements; it follows serde deserialize names, skips
 deserialization-skipped fields, rejects flattened fields, and treats
-serde-defaulted fields as not required.
+serde-defaulted fields as not required. Manual shapes that should support
+field-level Koruma filter validation must also implement
+`gpui_table::mcp::McpFilterShapeValidation`.

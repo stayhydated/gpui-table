@@ -2,6 +2,7 @@ use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
 use component_shape_codegen::parse_single_shape_path;
 use darling::{Error as DarlingError, FromDeriveInput, FromField, FromMeta, util::Override};
+use koruma_derive_core::{ParsedDataField, ParsedValidatorUse, ValidatorTargetSelector};
 use syn::{Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _};
 
 #[derive(FromDeriveInput)]
@@ -176,6 +177,8 @@ pub(super) struct TableColumn {
     /// Explicit filter shape path.
     /// Example: `filter(gpui_table::runtime::shape::TextFilter)`
     pub(super) filter: Option<FilterShapeOptions>,
+    /// Koruma validators applied to the decoded MCP filter argument.
+    pub(super) validation: Option<FilterValidation>,
 
     /// Marks this field as the value source for generated row context-menu route/label.
     pub(super) context_menu_id: bool,
@@ -198,6 +201,7 @@ impl FromField for TableColumn {
             movable: None,
             skip: false,
             filter: None,
+            validation: parse_filter_validation(field)?,
             context_menu_id: false,
         };
 
@@ -306,6 +310,80 @@ impl FromField for TableColumn {
         }
 
         Ok(column)
+    }
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(not(feature = "mcp"), allow(dead_code))]
+pub(super) struct FilterValidation {
+    validators: Vec<ParsedValidatorUse>,
+}
+
+#[cfg_attr(not(feature = "mcp"), allow(dead_code))]
+impl FilterValidation {
+    pub(super) fn new(validators: Vec<ParsedValidatorUse>) -> Self {
+        Self { validators }
+    }
+
+    pub(super) fn validators(&self) -> &[ParsedValidatorUse] {
+        &self.validators
+    }
+
+    pub(super) fn is_empty(&self) -> bool {
+        self.validators.is_empty()
+    }
+}
+
+fn parse_filter_validation(field: &syn::Field) -> darling::Result<Option<FilterValidation>> {
+    match koruma_derive_core::parse_field(field, 0).map_err(DarlingError::from)? {
+        ParsedDataField::Participating(info) => {
+            if info.is_nested() {
+                let span = info.marker_span().unwrap_or_else(|| field.span());
+                return Err(DarlingError::from(syn::Error::new(
+                    span,
+                    "`#[koruma(nested)]` is not supported on table MCP filters; validate filter raw values with direct validators",
+                )));
+            }
+            if info.is_newtype() {
+                let span = info.marker_span().unwrap_or_else(|| field.span());
+                return Err(DarlingError::from(syn::Error::new(
+                    span,
+                    "`#[koruma(newtype)]` is not supported on table MCP filters; validate filter raw values with direct validators",
+                )));
+            }
+            if !info.element_validators().is_empty() {
+                let span = info
+                    .element_validators()
+                    .first()
+                    .map(ParsedValidatorUse::source_span)
+                    .unwrap_or_else(|| field.span());
+                return Err(DarlingError::from(syn::Error::new(
+                    span,
+                    "`#[koruma(each(...))]` is not supported on table MCP filters; attach a collection validator to the filter raw value instead",
+                )));
+            }
+
+            let mut validators = Vec::new();
+            for validator in info.field_validators() {
+                if matches!(
+                    validator.target(),
+                    ValidatorTargetSelector::Unwrapped { .. }
+                ) {
+                    return Err(DarlingError::from(syn::Error::new(
+                        validator.source_span(),
+                        "`#[koruma(unwrapped(...))]` is not supported on table MCP filters; validators run against the decoded filter raw value",
+                    )));
+                }
+                validators.push(validator.clone());
+            }
+
+            if validators.is_empty() {
+                Ok(None)
+            } else {
+                Ok(Some(FilterValidation::new(validators)))
+            }
+        },
+        ParsedDataField::Unannotated(_) | ParsedDataField::Skipped { .. } => Ok(None),
     }
 }
 
@@ -479,4 +557,7 @@ pub(super) struct FilterFieldMeta {
     pub(super) field_ident: Ident,
     /// The resolved filter shape configuration.
     pub(super) filter_config: ResolvedFilterShape,
+    /// Koruma validators applied to decoded MCP filter arguments.
+    #[cfg_attr(not(feature = "mcp"), allow(dead_code))]
+    pub(super) validation: Option<FilterValidation>,
 }

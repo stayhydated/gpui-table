@@ -54,6 +54,8 @@ serde = { features = [ "derive" ], workspace = true }
 chrono = { workspace = true }
 gpui-table-component = { workspace = true }
 insta = { features = [ "yaml" ], workspace = true }
+koruma = { workspace = true }
+koruma-collection = { workspace = true }
 serde_json = { workspace = true }
 spacetimedb-lib = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }

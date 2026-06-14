@@ -8,6 +8,7 @@ use gpui_table::{
         table, tool_definitions,
     },
 };
+use koruma_collection::collection::LenValidation;
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
@@ -179,6 +180,19 @@ struct PrefixFilterRow {
     name: String,
 }
 
+#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[gpui_table(
+    id = "validated_filter_rows",
+    title = "Validated Filter Rows",
+    filters,
+    mcp(name = "query_validated_filter_rows")
+)]
+struct ValidatedFilterRow {
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    #[koruma(LenValidation::<_>::min(2).max(5))]
+    name: String,
+}
+
 fn test_server() -> McpServer {
     McpServer::new("gpui-table-mcp-test", "0.0.0")
 }
@@ -304,6 +318,25 @@ fn filter_shape_adapter_schema_uses_declared_raw_value_schema() {
 }
 
 #[test]
+fn koruma_filter_validation_schema_attaches_rules_and_hints() {
+    let schema = ValidatedFilterRow::descriptor().input_schema();
+    let name = &schema["properties"]["name"];
+
+    assert_eq!(name["type"], "string");
+    assert_eq!(name["minLength"], 2);
+    assert_eq!(name["maxLength"], 5);
+    assert_eq!(name["x-gpuiTableValidation"][0]["scope"], "filter");
+    assert_eq!(
+        name["x-gpuiTableValidation"][0]["validator"],
+        "LenValidation"
+    );
+    assert_eq!(name["x-gpuiTableValidation"][0]["params"][0]["name"], "min");
+    assert_eq!(name["x-gpuiTableValidation"][0]["params"][0]["value"], "2");
+    assert_eq!(name["x-gpuiTableValidation"][0]["params"][1]["name"], "max");
+    assert_eq!(name["x-gpuiTableValidation"][0]["params"][1]["value"], "5");
+}
+
+#[test]
 fn inventory_exposes_generated_tool_definition() {
     let expected = UserRow::descriptor().tool_name();
     let tools = tool_definitions().expect("tool definitions should be generated");
@@ -391,6 +424,45 @@ fn filter_shape_adapter_decodes_mcp_query_and_filters_rows() {
     let content = result.structured_content.expect("structured result");
     assert_eq!(content["total"], 1);
     assert_eq!(content["rows"][0]["name"], "Ann");
+}
+
+#[test]
+fn koruma_filter_validation_runs_before_query_handler() {
+    let mut server = test_server();
+    table::<ValidatedFilterRow>(&mut server)
+        .row_source(|| {
+            Ok::<_, String>(vec![ValidatedFilterRow {
+                name: "Ann".to_string(),
+            }])
+        })
+        .expect("tool should register");
+
+    let result = server.call_tool(
+        &ValidatedFilterRow::descriptor().tool_name(),
+        Some(json!({ "name": "a" })),
+    );
+
+    assert_eq!(result.is_error, Some(true));
+    let error = result
+        .structured_content
+        .as_ref()
+        .expect("validation should be structured")
+        .get("error")
+        .expect("structured validation error");
+    assert_eq!(error["kind"], json!("validation"));
+    let details = error["details"]
+        .as_array()
+        .expect("validation details should be an array");
+    assert_eq!(details.len(), 1);
+    assert_eq!(details[0]["scope"], json!("filter"));
+    assert_eq!(details[0]["filter"], json!("name"));
+    assert_eq!(details[0]["validator"], json!("LenValidation"));
+    assert_eq!(details[0]["path"], json!("LenValidation"));
+    assert!(
+        result.content[0]
+            .as_text()
+            .is_some_and(|text| text.text.contains("validation failed"))
+    );
 }
 
 #[test]

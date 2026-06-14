@@ -14,6 +14,7 @@ fn ui_compile_fail() {
     t.compile_fail("tests/ui/duplicate_filter_shape_field.rs");
     t.compile_fail("tests/ui/bare_filter_requires_shape.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
+    t.compile_fail("tests/ui/koruma_filter_requires_mcp.rs");
     #[cfg(not(feature = "mcp"))]
     t.compile_fail("tests/ui/mcp_requires_feature.rs");
     #[cfg(all(feature = "mcp", feature = "chrono", feature = "rust_decimal"))]

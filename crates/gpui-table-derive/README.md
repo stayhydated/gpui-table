@@ -58,6 +58,14 @@ into the generated `XxxFilterValues` type before an application-owned query
 handler runs. Tables without filters accept only pagination arguments.
 Faceted filter schemas include valid `Filterable::to_filter_string()` values
 and labels for MCP clients.
+Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+MCP filter argument before the query handler runs. Generated schemas attach the
+rules in `x-gpuiTableValidation`; literal `LenValidation`, `RangeValidation`,
+and `NonEmptyValidation` arguments are also reflected as JSON Schema hints when
+the filter argument schema is unambiguous. The validators apply to the filter
+shape's raw value, not directly to the row field type. Application crates using
+these validators should depend on `koruma` and the validator crate that provides
+the rule.
 Custom filter shapes used by MCP-enabled tables must implement
 `gpui_table::mcp::McpFilterShape`; the generated descriptor and decoder require
 that trait, so missing decoders fail at the filter field.
@@ -73,6 +81,8 @@ field schemas record aliases in `x-mcpAliases`, and enum schemas include
 aliases. `McpToolInput` also implements `McpJsonSchema`, so object inputs can
 be reused as filter raw values. Implement
 `gpui_table::mcp::McpFilterShape` manually for explicit schema or decode hooks.
+Manual shapes that should support field-level Koruma filter validation must also
+implement `gpui_table::mcp::McpFilterShapeValidation`.
 Struct-level `#[gpui_table(mcp(...))]` supports `name`, `title`,
 `description`, `read_only`, `destructive`, `idempotent`, and `open_world`
 options for generated MCP tool metadata and annotations. When `description` is

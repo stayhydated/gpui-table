@@ -77,7 +77,7 @@ pub fn derive_gpui_table_filter_shape(input: TokenStream) -> TokenStream {
     }
 }
 
-#[proc_macro_derive(GpuiTable, attributes(gpui_table))]
+#[proc_macro_derive(GpuiTable, attributes(gpui_table, koruma))]
 pub fn derive_gpui_table(input: TokenStream) -> TokenStream {
     gpui_table::derive_gpui_table(input)
 }

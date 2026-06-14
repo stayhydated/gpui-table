@@ -17,7 +17,7 @@ pub use gpui_table_runtime::shape::ComponentShapeMetadata;
 use gpui_table_runtime::shape::GpuiTableFilterShape;
 use gpui_table_schema::registry::{RegistryFilterType, RustPath, RustType};
 pub use serde::Serialize;
-use serde_json::{Value, json};
+use serde_json::{Map, Value, json};
 
 pub type FilterSchemaFn = fn(McpTableFilter) -> McpSchema;
 
@@ -37,6 +37,7 @@ pub struct McpTableFilter {
     field_type: RustType,
     filter_type: RegistryFilterType,
     input_schema: FilterSchemaFn,
+    validation_rules: &'static [McpValidationRule],
 }
 
 impl McpTableFilter {
@@ -50,6 +51,7 @@ impl McpTableFilter {
             field_type,
             filter_type,
             input_schema: default_filter_input_schema,
+            validation_rules: &[],
         }
     }
 
@@ -62,7 +64,16 @@ impl McpTableFilter {
             field_type,
             filter_type: Shape::FILTER_TYPE,
             input_schema: Shape::input_schema,
+            validation_rules: &[],
         }
+    }
+
+    pub const fn with_validation_rules(
+        mut self,
+        validation_rules: &'static [McpValidationRule],
+    ) -> Self {
+        self.validation_rules = validation_rules;
+        self
     }
 
     pub const fn name(self) -> &'static str {
@@ -80,6 +91,247 @@ impl McpTableFilter {
     pub fn input_schema(self) -> McpSchema {
         (self.input_schema)(self)
     }
+
+    pub const fn validation_rules(self) -> &'static [McpValidationRule] {
+        self.validation_rules
+    }
+}
+
+/// Where a generated table MCP validation issue applies.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum McpValidationScope {
+    Filter,
+}
+
+impl McpValidationScope {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Filter => "filter",
+        }
+    }
+}
+
+/// Type argument syntax used by the source Koruma validator.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum McpValidationTypeArgMode {
+    None,
+    Infer,
+    Explicit,
+}
+
+impl McpValidationTypeArgMode {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::None => "none",
+            Self::Infer => "infer",
+            Self::Explicit => "explicit",
+        }
+    }
+}
+
+/// One builder argument captured from a Koruma validator chain.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct McpValidationParam {
+    name: &'static str,
+    literal: Option<&'static str>,
+    expr: Option<&'static str>,
+}
+
+impl McpValidationParam {
+    pub const fn literal(name: &'static str, literal: &'static str) -> Self {
+        Self {
+            name,
+            literal: Some(literal),
+            expr: None,
+        }
+    }
+
+    pub const fn expr(name: &'static str, expr: &'static str) -> Self {
+        Self {
+            name,
+            literal: None,
+            expr: Some(expr),
+        }
+    }
+
+    pub const fn name(self) -> &'static str {
+        self.name
+    }
+
+    pub const fn literal_value(self) -> Option<&'static str> {
+        self.literal
+    }
+
+    pub const fn expr_value(self) -> Option<&'static str> {
+        self.expr
+    }
+
+    fn to_value(self) -> Value {
+        let mut object = Map::new();
+        object.insert("name".to_string(), Value::String(self.name.to_string()));
+        if let Some(literal) = self.literal {
+            object.insert("value".to_string(), Value::String(literal.to_string()));
+        }
+        if let Some(expr) = self.expr {
+            object.insert("expr".to_string(), Value::String(expr.to_string()));
+        }
+        Value::Object(object)
+    }
+}
+
+pub const MCP_VALIDATION_PARAMS_NONE: &[McpValidationParam] = &[];
+
+/// Static Koruma validator metadata attached to an MCP-visible table filter.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct McpValidationRule {
+    scope: McpValidationScope,
+    validator: &'static str,
+    path: &'static str,
+    label: Option<&'static str>,
+    type_arg_mode: McpValidationTypeArgMode,
+    params: &'static [McpValidationParam],
+}
+
+impl McpValidationRule {
+    pub const fn new(
+        scope: McpValidationScope,
+        validator: &'static str,
+        path: &'static str,
+        label: Option<&'static str>,
+        type_arg_mode: McpValidationTypeArgMode,
+        params: &'static [McpValidationParam],
+    ) -> Self {
+        Self {
+            scope,
+            validator,
+            path,
+            label,
+            type_arg_mode,
+            params,
+        }
+    }
+
+    pub const fn scope(self) -> McpValidationScope {
+        self.scope
+    }
+
+    pub const fn validator(self) -> &'static str {
+        self.validator
+    }
+
+    pub const fn path(self) -> &'static str {
+        self.path
+    }
+
+    pub const fn label(self) -> Option<&'static str> {
+        self.label
+    }
+
+    pub const fn type_arg_mode(self) -> McpValidationTypeArgMode {
+        self.type_arg_mode
+    }
+
+    pub const fn params(self) -> &'static [McpValidationParam] {
+        self.params
+    }
+
+    fn to_value(self) -> Value {
+        let mut object = Map::new();
+        object.insert(
+            "scope".to_string(),
+            Value::String(self.scope.as_str().to_string()),
+        );
+        object.insert(
+            "validator".to_string(),
+            Value::String(self.validator.to_string()),
+        );
+        object.insert("path".to_string(), Value::String(self.path.to_string()));
+        if let Some(label) = self.label {
+            object.insert("label".to_string(), Value::String(label.to_string()));
+        }
+        object.insert(
+            "type_arg_mode".to_string(),
+            Value::String(self.type_arg_mode.as_str().to_string()),
+        );
+        if !self.params.is_empty() {
+            object.insert(
+                "params".to_string(),
+                Value::Array(self.params.iter().map(|param| param.to_value()).collect()),
+            );
+        }
+        Value::Object(object)
+    }
+}
+
+/// Structured validation failure returned in MCP table-query errors.
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct McpValidationIssue {
+    filter: String,
+    scope: McpValidationScope,
+    validator: String,
+    path: String,
+    label: Option<String>,
+    message: String,
+    params: Vec<McpValidationParam>,
+}
+
+impl McpValidationIssue {
+    pub fn for_rule(
+        filter: impl Into<String>,
+        rule: McpValidationRule,
+        message: impl Into<String>,
+    ) -> Self {
+        Self {
+            filter: filter.into(),
+            scope: rule.scope(),
+            validator: rule.validator().to_string(),
+            path: rule.path().to_string(),
+            label: rule.label().map(str::to_string),
+            message: message.into(),
+            params: rule.params().to_vec(),
+        }
+    }
+
+    pub fn message(&self) -> &str {
+        &self.message
+    }
+
+    pub fn to_value(&self) -> Value {
+        let mut object = Map::new();
+        object.insert(
+            "scope".to_string(),
+            Value::String(self.scope.as_str().to_string()),
+        );
+        object.insert("filter".to_string(), Value::String(self.filter.clone()));
+        object.insert(
+            "validator".to_string(),
+            Value::String(self.validator.clone()),
+        );
+        object.insert("path".to_string(), Value::String(self.path.clone()));
+        if let Some(label) = &self.label {
+            object.insert("label".to_string(), Value::String(label.clone()));
+        }
+        object.insert("message".to_string(), Value::String(self.message.clone()));
+        if !self.params.is_empty() {
+            object.insert(
+                "params".to_string(),
+                Value::Array(self.params.iter().map(|param| param.to_value()).collect()),
+            );
+        }
+        Value::Object(object)
+    }
+}
+
+pub fn validation_issues_error(issues: Vec<McpValidationIssue>) -> McpToolError {
+    let message = issues
+        .iter()
+        .map(McpValidationIssue::message)
+        .collect::<Vec<_>>()
+        .join("; ");
+    McpToolError::validation_structured_details(
+        message,
+        issues.into_iter().map(|issue| issue.to_value()),
+    )
 }
 
 const fn mcp_input_for_filter_type(filter_type: RegistryFilterType) -> McpInput {
@@ -330,6 +582,20 @@ pub trait McpFilterShape: GpuiTableFilterShape {
     -> Result<Self::FilterValue, McpToolError>;
 }
 
+#[diagnostic::on_unimplemented(
+    message = "table filter shape `{Self}` cannot run Koruma validation on MCP filter arguments",
+    note = "use a built-in shape, derive `gpui_table::McpFilterShape` for a shape whose raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShapeValidation` manually"
+)]
+pub trait McpFilterShapeValidation: McpFilterShape {
+    fn decode_filter_with_validation<Validate>(
+        field: &'static str,
+        value: McpAny,
+        validate: Validate,
+    ) -> Result<Self::FilterValue, McpToolError>
+    where
+        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>;
+}
+
 pub fn default_filter_shape_input_schema<Shape>(_filter: McpTableFilter) -> McpSchema
 where
     Shape: GpuiTableFilterShape,
@@ -350,6 +616,21 @@ where
     Ok(Shape::wrap_value(value))
 }
 
+pub fn decode_raw_filter_shape_with_validation<Shape, Validate>(
+    field: &'static str,
+    value: McpAny,
+    validate: Validate,
+) -> Result<Shape::FilterValue, McpToolError>
+where
+    Shape: GpuiTableFilterShape,
+    Shape::RawValue: McpToolValue,
+    Validate: FnOnce(&Shape::RawValue) -> Result<(), McpToolError>,
+{
+    let value = <Shape::RawValue as McpToolValue>::from_tool_value(field, value.into_value())?;
+    validate(&value)?;
+    Ok(Shape::wrap_value(value))
+}
+
 impl McpFilterShape for gpui_table_component::TextFilter {
     fn input_schema(filter: McpTableFilter) -> McpSchema {
         default_filter_shape_input_schema::<Self>(filter)
@@ -360,6 +641,19 @@ impl McpFilterShape for gpui_table_component::TextFilter {
         value: McpAny,
     ) -> Result<Self::FilterValue, McpToolError> {
         decode_raw_filter_shape::<Self>(field, value)
+    }
+}
+
+impl McpFilterShapeValidation for gpui_table_component::TextFilter {
+    fn decode_filter_with_validation<Validate>(
+        field: &'static str,
+        value: McpAny,
+        validate: Validate,
+    ) -> Result<Self::FilterValue, McpToolError>
+    where
+        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
+    {
+        decode_raw_filter_shape_with_validation::<Self, _>(field, value, validate)
     }
 }
 
@@ -421,6 +715,30 @@ where
     }
 }
 
+impl<T> McpFilterShapeValidation for gpui_table_component::FacetedFilter<T>
+where
+    T: gpui_table_core::filter::Filterable,
+{
+    fn decode_filter_with_validation<Validate>(
+        field: &'static str,
+        value: McpAny,
+        validate: Validate,
+    ) -> Result<Self::FilterValue, McpToolError>
+    where
+        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
+    {
+        let raw_values = <Vec<String> as McpToolValue>::from_tool_value(field, value.into_value())?;
+        let mut values = HashSet::new();
+        for raw_value in raw_values {
+            let value = T::from_filter_string(&raw_value)
+                .ok_or_else(|| McpToolError::invalid_field_value(field, raw_value))?;
+            values.insert(value);
+        }
+        validate(&values)?;
+        Ok(<Self as GpuiTableFilterShape>::wrap_value(values))
+    }
+}
+
 #[cfg(feature = "rust_decimal")]
 impl McpFilterShape for gpui_table_component::NumberRangeFilter {
     fn input_schema(filter: McpTableFilter) -> McpSchema {
@@ -436,6 +754,22 @@ impl McpFilterShape for gpui_table_component::NumberRangeFilter {
     }
 }
 
+#[cfg(feature = "rust_decimal")]
+impl McpFilterShapeValidation for gpui_table_component::NumberRangeFilter {
+    fn decode_filter_with_validation<Validate>(
+        field: &'static str,
+        value: McpAny,
+        validate: Validate,
+    ) -> Result<Self::FilterValue, McpToolError>
+    where
+        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
+    {
+        let value = decode_range_filter::<rust_decimal::Decimal>(field, value)?;
+        validate(&value)?;
+        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
+    }
+}
+
 #[cfg(feature = "chrono")]
 impl McpFilterShape for gpui_table_component::DateRangeFilter {
     fn input_schema(filter: McpTableFilter) -> McpSchema {
@@ -447,6 +781,22 @@ impl McpFilterShape for gpui_table_component::DateRangeFilter {
         value: McpAny,
     ) -> Result<Self::FilterValue, McpToolError> {
         let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
+        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl McpFilterShapeValidation for gpui_table_component::DateRangeFilter {
+    fn decode_filter_with_validation<Validate>(
+        field: &'static str,
+        value: McpAny,
+        validate: Validate,
+    ) -> Result<Self::FilterValue, McpToolError>
+    where
+        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
+    {
+        let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
+        validate(&value)?;
         Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
     }
 }
@@ -729,9 +1079,174 @@ fn schema_for_filter(filter: McpTableFilter) -> McpSchema {
             "x-gpuiTableFilterType".to_string(),
             Value::String(filter_type_name(filter.filter_type()).to_string()),
         );
+        if !filter.validation_rules().is_empty() {
+            object.insert(
+                "x-gpuiTableValidation".to_string(),
+                Value::Array(
+                    filter
+                        .validation_rules()
+                        .iter()
+                        .map(|rule| rule.to_value())
+                        .collect(),
+                ),
+            );
+        }
+        apply_validation_schema_hints(filter, object);
     }
 
     schema
+}
+
+fn apply_validation_schema_hints(filter: McpTableFilter, object: &mut Map<String, Value>) {
+    for rule in filter.validation_rules() {
+        match rule.validator() {
+            "LenValidation" => apply_len_validation_schema_hint(*rule, object),
+            "RangeValidation" => apply_range_validation_schema_hint(*rule, object),
+            "NonEmptyValidation" => apply_non_empty_validation_schema_hint(object),
+            _ => {},
+        }
+    }
+}
+
+fn apply_len_validation_schema_hint(rule: McpValidationRule, object: &mut Map<String, Value>) {
+    let Some(schema_type) = primary_schema_type(object) else {
+        return;
+    };
+    let (min_keyword, max_keyword) = match schema_type {
+        "string" => ("minLength", "maxLength"),
+        "array" => ("minItems", "maxItems"),
+        _ => return,
+    };
+    if let Some(min) = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "min")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_u64)
+    {
+        object.insert(min_keyword.to_string(), Value::Number(min.into()));
+    }
+    if let Some(max) = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "max")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_u64)
+    {
+        object.insert(max_keyword.to_string(), Value::Number(max.into()));
+    }
+}
+
+fn apply_range_validation_schema_hint(rule: McpValidationRule, object: &mut Map<String, Value>) {
+    if !matches!(primary_schema_type(object), Some("integer" | "number")) {
+        return;
+    }
+    let exclusive_min = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "exclusive_min")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_bool)
+        .unwrap_or(false);
+    let exclusive_max = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "exclusive_max")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_bool)
+        .unwrap_or(false);
+    if let Some(min) = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "min")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_number_value)
+    {
+        object.insert(
+            if exclusive_min {
+                "exclusiveMinimum"
+            } else {
+                "minimum"
+            }
+            .to_string(),
+            min,
+        );
+    }
+    if let Some(max) = rule
+        .params()
+        .iter()
+        .find(|param| param.name() == "max")
+        .and_then(|param| param.literal_value())
+        .and_then(literal_to_number_value)
+    {
+        object.insert(
+            if exclusive_max {
+                "exclusiveMaximum"
+            } else {
+                "maximum"
+            }
+            .to_string(),
+            max,
+        );
+    }
+}
+
+fn apply_non_empty_validation_schema_hint(object: &mut Map<String, Value>) {
+    match primary_schema_type(object) {
+        Some("string") => {
+            object
+                .entry("minLength")
+                .or_insert(Value::Number(1_u64.into()));
+        },
+        Some("array") => {
+            object
+                .entry("minItems")
+                .or_insert(Value::Number(1_u64.into()));
+        },
+        _ => {},
+    }
+}
+
+fn primary_schema_type(object: &Map<String, Value>) -> Option<&str> {
+    object.get("type").and_then(Value::as_str).or_else(|| {
+        object
+            .get("anyOf")
+            .and_then(Value::as_array)
+            .and_then(|schemas| schemas.iter().find_map(schema_type_from_value))
+    })
+}
+
+fn schema_type_from_value(value: &Value) -> Option<&str> {
+    match value {
+        Value::Object(object) => object.get("type").and_then(Value::as_str),
+        _ => None,
+    }
+}
+
+fn literal_to_u64(literal: &str) -> Option<u64> {
+    literal.parse::<u64>().ok()
+}
+
+fn literal_to_bool(literal: &str) -> Option<bool> {
+    match literal {
+        "true" => Some(true),
+        "false" => Some(false),
+        _ => None,
+    }
+}
+
+fn literal_to_number_value(literal: &str) -> Option<Value> {
+    if let Ok(value) = literal.parse::<i64>() {
+        return Some(Value::Number(value.into()));
+    }
+    if let Ok(value) = literal.parse::<u64>() {
+        return Some(Value::Number(value.into()));
+    }
+    literal
+        .parse::<f64>()
+        .ok()
+        .and_then(serde_json::Number::from_f64)
+        .map(Value::Number)
 }
 
 fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {

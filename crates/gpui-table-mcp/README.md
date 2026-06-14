@@ -47,6 +47,13 @@ used by generated filter UI before the MCP descriptor is generated. Faceted
 filter schemas publish unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
+Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+MCP filter argument before the query handler runs. Generated schemas attach
+rule metadata in `x-gpuiTableValidation`; literal `LenValidation`,
+`RangeValidation`, and `NonEmptyValidation` arguments are reflected as JSON
+Schema hints when the filter argument schema is unambiguous. Application crates
+using these validators should depend on `koruma` and the validator crate that
+provides the rule.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
 type, and raw-value conversions:
@@ -77,7 +84,9 @@ that implement or derive `McpJsonSchema`. Use `McpAny` when a typed raw value
 or manual tool input intentionally accepts unconstrained JSON. Use
 `McpRange<T>` as the raw value for custom `{ "min": ..., "max": ... }` range
 arguments. Implement `McpFilterShape` manually when a custom shape needs richer
-schema or decoding than the blanket `McpToolValue` contract. The
+schema or decoding than the blanket `McpToolValue` contract. Manual shapes that
+should support field-level Koruma filter validation must also implement
+`gpui_table::mcp::McpFilterShapeValidation`. The
 `McpJsonSchema` derive follows serde deserialize names, includes enum
 aliases, records field aliases in `x-mcpAliases`, skips
 deserialization-skipped fields, rejects flattened fields, and treats

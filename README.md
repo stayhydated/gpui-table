@@ -127,6 +127,25 @@ Generated schemas publish faceted arguments as unique string sets, include
 valid facet values under the filter's item `enum`, and preserve labels in
 `x-gpuiTableFacetOptions`, so MCP clients can discover valid facet strings from
 `tools/list`.
+Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+MCP filter argument before the query handler runs. Generated schemas attach the
+rules in `x-gpuiTableValidation`; literal `LenValidation`, `RangeValidation`,
+and `NonEmptyValidation` arguments are also reflected as JSON Schema hints when
+the filter argument schema is unambiguous. Application crates using these
+validators should depend on `koruma` and the validator crate that provides the
+rule.
+
+```rs
+use koruma_collection::collection::LenValidation;
+
+#[derive(Clone, Debug, gpui_table::GpuiTable, serde::Serialize)]
+#[gpui_table(filters, mcp)]
+struct User {
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    #[koruma(LenValidation::<_>::min(2).max(64))]
+    name: String,
+}
+```
 
 Use `#[gpui_table::mcp_query]` for both application-owned backend functions
 that accept `gpui_table::mcp::TableQuery<User>` and local row sources that
@@ -186,7 +205,9 @@ and `gpui_table::mcp::McpRange<T>` for custom `{ "min": ..., "max": ... }`
 range raw values. The `McpJsonSchema` derive follows
 serde deserialize names, records field aliases in `x-mcpAliases`, includes enum aliases, skips
 deserialization-skipped fields, rejects flattened fields, and treats
-serde-defaulted fields as not required. Fixed tuples with 1 to 4 elements
+serde-defaulted fields as not required. Manual shapes that should support
+field-level Koruma filter validation must also implement
+`gpui_table::mcp::McpFilterShapeValidation`. Fixed tuples with 1 to 4 elements
 publish exact array schemas; app-owned named structs, transparent newtypes, and
 fieldless enums can derive it. Custom top-level MCP tool argument structs can
 also derive `gpui_table::mcp::McpToolInput` through the facade when composing

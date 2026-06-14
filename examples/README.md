@@ -47,7 +47,9 @@ This starts a stdio MCP server that exposes a derived table as a query tool.
 The tool accepts JSON filters, `limit`, and `offset`, decodes them into the
 generated typed filter values, and returns matching in-memory rows. The table
 declares explicit MCP tool metadata with `#[gpui_table(mcp(...))]` and uses
-inferred built-in filters. Custom filters that adapt built-in shapes can use
+inferred built-in filters. Filtered fields can use `#[koruma(...)]` to validate
+decoded MCP filter arguments before the query handler runs. Custom filters that
+adapt built-in shapes can use
 `#[derive(gpui_table::GpuiTableFilterShape)]`; see the `gpui-table-mcp`
 README for the adapter pattern.
 

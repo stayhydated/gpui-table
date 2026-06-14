@@ -3532,6 +3532,8 @@ dependencies = [
  "gpui-table-runtime",
  "gpui-table-schema",
  "insta",
+ "koruma",
+ "koruma-collection",
  "rust_decimal",
  "serde",
  "serde_json",
@@ -3586,6 +3588,7 @@ dependencies = [
  "component-shape-codegen",
  "darling 0.23.0",
  "heck 0.5.0",
+ "koruma-derive-core",
  "proc-macro-crate 3.5.0",
  "proc-macro2",
  "quote",
@@ -5107,6 +5110,49 @@ name = "khronos_api"
 version = "3.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
+
+[[package]]
+name = "koruma"
+version = "0.9.0"
+dependencies = [
+ "koruma-core",
+ "koruma-derive",
+]
+
+[[package]]
+name = "koruma-collection"
+version = "0.9.0"
+dependencies = [
+ "es-fluent-build",
+ "koruma",
+]
+
+[[package]]
+name = "koruma-core"
+version = "0.9.0"
+
+[[package]]
+name = "koruma-derive"
+version = "0.9.0"
+dependencies = [
+ "heck 0.5.0",
+ "koruma-derive-core",
+ "proc-macro-crate 3.5.0",
+ "proc-macro-error2",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "koruma-derive-core"
+version = "0.9.0"
+dependencies = [
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
 
 [[package]]
 name = "kqueue"

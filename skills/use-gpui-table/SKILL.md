@@ -86,8 +86,14 @@ retrieve rows. Add `#[gpui_table(mcp)]` to each exposed row type. The generated
 tool accepts filter field names directly, with `limit` and `offset` reserved for
 pagination; filter arguments decode into the generated `<Row>FilterValues`
 type. Tables without generated filters accept only pagination arguments. Faceted
-filter schemas publish valid facet strings and labels for MCP clients. Custom
-query handlers can be synchronous or async and must return
+filter schemas publish valid facet strings and labels for MCP clients. Add
+field-level `#[koruma(...)]` validators to filtered fields when MCP filter
+arguments should be validated before the query handler runs; generated schemas
+attach rule metadata in `x-gpuiTableValidation` and literal length, range, or
+non-empty constraints as JSON Schema hints when the argument schema is
+unambiguous. Add `koruma` and the validator crate that provides the rule to the
+application dependencies. Custom query handlers can be synchronous or async and
+must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
 query. Use `McpServer` directly only when a custom server composition is
@@ -122,7 +128,8 @@ implement the runtime shape traits directly, then derive
 right MCP contract. Use `gpui_table::mcp::McpAny` when a typed raw value or
 manual tool input intentionally accepts unconstrained JSON. Use
 `gpui_table::mcp::McpRange<T>` for `{ "min": ..., "max": ... }` range raw
-values.
+values. Manual shapes that should support field-level Koruma filter validation
+must also implement `gpui_table::mcp::McpFilterShapeValidation`.
 Fixed tuples with 1 to 4 elements publish exact array schemas.
 App-owned named structs, tuple or named transparent newtypes, and fieldless
 enums can derive `McpJsonSchema`; the derive follows serde deserialize names,
