@@ -9,6 +9,7 @@ use gpui_table::{
         tool_definitions,
     },
 };
+use koruma::NewtypeTryFromInner as _;
 use koruma_collection::collection::LenValidation;
 use serde::{Deserialize, Serialize};
 
@@ -192,6 +193,44 @@ struct PrefixFilterRow {
     name: String,
 }
 
+#[derive(
+    Clone,
+    Debug,
+    Default,
+    Deserialize,
+    Eq,
+    gpui_table::mcp::McpJsonSchema,
+    koruma::Koruma,
+    PartialEq,
+    Serialize,
+    TableCell,
+)]
+#[serde(transparent)]
+#[mcp(crate = gpui_table::mcp, transparent)]
+#[koruma(try_new, newtype)]
+struct ValidatedPrefixText(#[koruma(LenValidation::<_>::min(2).max(64))] String);
+
+#[derive(GpuiTableFilterShape)]
+#[gpui_table_filter_shape(
+    base = gpui_table::runtime::shape::TextFilter,
+    field = ValidatedPrefixText,
+    koruma_newtype
+)]
+struct NewtypePrefixTextFilter;
+
+#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[gpui_table(
+    id = "newtype_validated_filter_rows",
+    title = "Newtype Validated Filter Rows",
+    filters,
+    mcp(name = "query_newtype_validated_filter_rows")
+)]
+struct NewtypeValidatedFilterRow {
+    #[gpui_table(filter(NewtypePrefixTextFilter))]
+    #[koruma(newtype)]
+    name: ValidatedPrefixText,
+}
+
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(
     id = "validated_filter_rows",
@@ -357,6 +396,20 @@ fn koruma_filter_validation_schema_attaches_rules_and_hints() {
     assert_eq!(name["x-gpuiTableValidation"][0]["params"][0]["value"], "2");
     assert_eq!(name["x-gpuiTableValidation"][0]["params"][1]["name"], "max");
     assert_eq!(name["x-gpuiTableValidation"][0]["params"][1]["value"], "5");
+}
+
+#[test]
+fn newtype_filter_validation_schema_attaches_rule() {
+    let schema = NewtypeValidatedFilterRow::descriptor().input_schema();
+    let name = &schema["properties"]["name"];
+
+    assert_eq!(name["type"], "string");
+    assert_eq!(name["x-gpuiTableValidation"][0]["scope"], "filter");
+    assert_eq!(name["x-gpuiTableValidation"][0]["validator"], "newtype");
+    assert_eq!(
+        name["x-gpuiTableValidation"][0]["path"],
+        "ValidatedPrefixText"
+    );
 }
 
 #[test]
@@ -542,6 +595,41 @@ fn koruma_filter_validation_runs_before_query_handler() {
             .as_text()
             .is_some_and(|text| text.text.contains("validation failed"))
     );
+}
+
+#[test]
+fn koruma_newtype_filter_validation_runs_before_query_handler() {
+    let mut server = test_server();
+    table::<NewtypeValidatedFilterRow>(&mut server)
+        .row_source(|| {
+            Ok::<_, String>(vec![NewtypeValidatedFilterRow {
+                name: ValidatedPrefixText::try_from_inner("Ann".to_string())
+                    .expect("fixture should be valid"),
+            }])
+        })
+        .expect("tool should register");
+
+    let result = server.call_tool(
+        &NewtypeValidatedFilterRow::descriptor().tool_name(),
+        Some(json!({ "name": "a" })),
+    );
+
+    assert_eq!(result.is_error, Some(true));
+    let error = result
+        .structured_content
+        .as_ref()
+        .expect("validation should be structured")
+        .get("error")
+        .expect("structured validation error");
+    assert_eq!(error["kind"], json!("validation"));
+    let details = error["details"]
+        .as_array()
+        .expect("validation details should be an array");
+    assert_eq!(details.len(), 1);
+    assert_eq!(details[0]["scope"], json!("filter"));
+    assert_eq!(details[0]["filter"], json!("name"));
+    assert_eq!(details[0]["validator"], json!("newtype"));
+    assert_eq!(details[0]["path"], json!("ValidatedPrefixText"));
 }
 
 #[test]

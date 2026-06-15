@@ -247,6 +247,24 @@ fn validation_rules_tokens(
         }
         rules.push(plan.rule);
     }
+    if validation.is_newtype() {
+        let field_type = field
+            .filter_config
+            .field_type()
+            .to_token_stream()
+            .to_string();
+        let field_type = LitStr::new(&field_type, field.field_ident.span());
+        rules.push(quote! {
+            #facade_crate::mcp::McpValidationRule::new(
+                #facade_crate::mcp::McpValidationScope::Filter,
+                "newtype",
+                #field_type,
+                None,
+                #facade_crate::mcp::McpValidationTypeArgMode::None,
+                #facade_crate::mcp::MCP_VALIDATION_PARAMS_NONE,
+            )
+        });
+    }
 
     constants.push(quote! {
         #[doc(hidden)]
@@ -371,7 +389,10 @@ fn validation_decode_tokens(
     }
 
     let field_name = field.field_ident.to_string();
+    let field_type = field.filter_config.field_type();
+    let shape = field.filter_config.shape();
     let rules_const_ident = filter_validation_rules_const_ident(struct_name, field_index);
+    let newtype_rule_index = validation.validators().len();
     let checks = validation
         .validators()
         .iter()
@@ -408,10 +429,29 @@ fn validation_decode_tokens(
             }
         })
         .collect::<Vec<_>>();
+    let newtype_check = validation.is_newtype().then(|| {
+        quote! {
+            {
+                let __gpui_table_validation_rule = #rules_const_ident[#newtype_rule_index];
+                if !<#shape as #facade_crate::mcp::McpKorumaNewtypeFilterValidation<
+                    #field_type
+                >>::validate_koruma_newtype_filter(__gpui_table_filter_raw_value) {
+                    __gpui_table_validation_issues.push(
+                        #facade_crate::mcp::McpValidationIssue::for_filter_rule(
+                            #field_name,
+                            __gpui_table_validation_rule,
+                            "newtype validation failed",
+                        )
+                    );
+                }
+            }
+        }
+    });
 
     Some(quote! {
         let mut __gpui_table_validation_issues = ::std::vec::Vec::new();
         #(#checks)*
+        #newtype_check
         if __gpui_table_validation_issues.is_empty() {
             Ok(())
         } else {

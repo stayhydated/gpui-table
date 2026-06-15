@@ -134,7 +134,14 @@ rules in `x-gpuiTableValidation`; literal `LenValidation`, `RangeValidation`,
 and `NonEmptyValidation` arguments are also reflected as JSON Schema hints when
 the filter argument schema is unambiguous. Application crates using these
 validators should depend on `koruma` and the validator crate that provides the
-rule.
+rule. For a field whose source type is a Koruma newtype but whose filter
+argument should use the inner raw value, derive an adapter shape with
+`#[gpui_table_filter_shape(..., field = MyNewtype, koruma_newtype)]`; generated
+matching delegates through `NewtypeValue::as_inner`, and MCP validation checks
+the decoded raw value with `MyNewtype::validate_inner`. Manual shapes that
+support this pattern must implement
+`gpui_table::mcp::McpKorumaNewtypeFilterValidation<Field>`. Koruma annotations
+on non-filter columns are ignored by table MCP generation.
 
 ```rs
 use koruma_collection::collection::LenValidation;
@@ -207,7 +214,8 @@ For custom filters that adapt an existing built-in shape, derive
 type, and raw-value conversions. The derive generates the runtime filter shape,
 declared-shape markers, field-support impl, and, with the `mcp` feature, the
 default `McpFilterShape` decoder when the raw value implements
-`gpui_table::mcp::McpToolValue`. For fully custom runtime filters, implement
+`gpui_table::mcp::McpToolValue`. Add `koruma_newtype` when the shape adapts a
+base filter over a Koruma newtype field's inner value. For fully custom runtime filters, implement
 the runtime shape traits directly, then derive `gpui_table::McpFilterShape`
 when `RawValue: McpToolValue` or implement `gpui_table::mcp::McpFilterShape`
 manually for custom schema/decoding. Use `gpui_table::mcp::McpAny` when a

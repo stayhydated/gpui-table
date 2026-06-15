@@ -13,6 +13,7 @@ mod kw {
     syn::custom_keyword!(fields);
     syn::custom_keyword!(from_base);
     syn::custom_keyword!(into_base);
+    syn::custom_keyword!(koruma_newtype);
     syn::custom_keyword!(raw_value);
 }
 
@@ -30,6 +31,7 @@ struct TableFilterShapeDerive {
     fields: Vec<Type>,
     into_base: Expr,
     from_base: Expr,
+    koruma_newtype: bool,
 }
 
 impl TableFilterShapeDerive {
@@ -86,6 +88,7 @@ impl TableFilterShapeDerive {
             from_base: options
                 .from_base
                 .unwrap_or_else(|| parse_quote!(::core::convert::identity)),
+            koruma_newtype: options.koruma_newtype,
         })
     }
 
@@ -98,6 +101,7 @@ impl TableFilterShapeDerive {
             fields,
             into_base,
             from_base,
+            koruma_newtype,
         } = self;
 
         let facade_crate = resolve_crate_path("gpui-table", "::gpui_table");
@@ -108,10 +112,27 @@ impl TableFilterShapeDerive {
                     <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::RawValue
                 }
             });
-        let field_support_impls = fields
-            .iter()
-            .map(|field| field_support_impl_tokens(&facade_crate, &ident, &generics, &base, field));
+        let field_support_impls = fields.iter().map(|field| {
+            field_support_impl_tokens(
+                &facade_crate,
+                &ident,
+                &generics,
+                &base,
+                field,
+                koruma_newtype,
+            )
+        });
         let mcp_impl = mcp_impl_tokens(&facade_crate, &ident, &generics);
+        let mcp_koruma_newtype_impls = if koruma_newtype {
+            fields
+                .iter()
+                .map(|field| {
+                    mcp_koruma_newtype_impl_tokens(&facade_crate, &ident, &generics, field)
+                })
+                .collect::<Vec<_>>()
+        } else {
+            Vec::new()
+        };
         let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
         quote! {
@@ -198,6 +219,8 @@ impl TableFilterShapeDerive {
             #(#field_support_impls)*
 
             #mcp_impl
+
+            #(#mcp_koruma_newtype_impls)*
         }
     }
 }
@@ -208,11 +231,30 @@ fn field_support_impl_tokens(
     generics: &Generics,
     base: &Type,
     field: &Type,
+    koruma_newtype: bool,
 ) -> TokenStream {
     let mut generics = generics.clone();
-    generics.make_where_clause().predicates.push(parse_quote! {
-        #base: #facade_crate::runtime::shape::GpuiTableFilterShapeFor<#field>
-    });
+    let matched_field = if koruma_newtype {
+        generics.make_where_clause().predicates.push(parse_quote! {
+            #field: ::koruma::NewtypeValue
+        });
+        generics.make_where_clause().predicates.push(parse_quote! {
+            #base: #facade_crate::runtime::shape::GpuiTableFilterShapeFor<
+                <#field as ::koruma::NewtypeValue>::Inner
+            >
+        });
+        quote! { <#field as ::koruma::NewtypeValue>::as_inner(field) }
+    } else {
+        generics.make_where_clause().predicates.push(parse_quote! {
+            #base: #facade_crate::runtime::shape::GpuiTableFilterShapeFor<#field>
+        });
+        quote! { field }
+    };
+    let delegated_field = if koruma_newtype {
+        quote! { <#field as ::koruma::NewtypeValue>::Inner }
+    } else {
+        quote! { #field }
+    };
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     quote! {
@@ -221,14 +263,54 @@ fn field_support_impl_tokens(
             #where_clause
         {
             fn filter_type() -> #facade_crate::core::filter::FilterType {
-                <#base as #facade_crate::runtime::shape::GpuiTableFilterShapeFor<#field>>::filter_type()
+                <#base as #facade_crate::runtime::shape::GpuiTableFilterShapeFor<
+                    #delegated_field
+                >>::filter_type()
             }
 
             fn matches_field(field: &#field, value: &Self::FilterValue) -> bool {
-                <#base as #facade_crate::runtime::shape::GpuiTableFilterShapeFor<#field>>::matches_field(
-                    field,
+                <#base as #facade_crate::runtime::shape::GpuiTableFilterShapeFor<
+                    #delegated_field
+                >>::matches_field(
+                    #matched_field,
                     value,
                 )
+            }
+        }
+    }
+}
+
+fn mcp_koruma_newtype_impl_tokens(
+    facade_crate: &Path,
+    ident: &Ident,
+    generics: &Generics,
+    field: &Type,
+) -> TokenStream {
+    if !cfg!(feature = "mcp") {
+        return quote! {};
+    }
+
+    let mut generics = generics.clone();
+    let self_type = {
+        let (_, ty_generics, _) = generics.split_for_impl();
+        quote! { #ident #ty_generics }
+    };
+    generics.make_where_clause().predicates.push(parse_quote! {
+        #field: ::koruma::NewtypeValue<
+            Inner = <#self_type as #facade_crate::runtime::shape::GpuiTableFilterShape>::RawValue
+        >
+    });
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    quote! {
+        impl #impl_generics #facade_crate::mcp::McpKorumaNewtypeFilterValidation<#field>
+            for #ident #ty_generics
+            #where_clause
+        {
+            fn validate_koruma_newtype_filter(
+                value: &<Self as #facade_crate::runtime::shape::GpuiTableFilterShape>::RawValue
+            ) -> bool {
+                <#field as ::koruma::NewtypeValue>::validate_inner(value).is_ok()
             }
         }
     }
@@ -304,6 +386,7 @@ struct TableFilterShapeOptions {
     fields: Vec<Type>,
     into_base: Option<Expr>,
     from_base: Option<Expr>,
+    koruma_newtype: bool,
 }
 
 impl TableFilterShapeOptions {
@@ -341,9 +424,18 @@ impl TableFilterShapeOptions {
                 let key = input.parse::<kw::from_base>()?;
                 input.parse::<Token![=]>()?;
                 set_once(&mut self.from_base, input.parse()?, key, "from_base")?;
+            } else if input.peek(kw::koruma_newtype) {
+                let key = input.parse::<kw::koruma_newtype>()?;
+                if self.koruma_newtype {
+                    return Err(syn::Error::new_spanned(
+                        key,
+                        "duplicate `koruma_newtype` option",
+                    ));
+                }
+                self.koruma_newtype = true;
             } else {
                 return Err(input.error(
-                    "expected `base = ...`, `raw_value = ...`, `field = ...`, `fields(...)`, `into_base = ...`, or `from_base = ...`",
+                    "expected `base = ...`, `raw_value = ...`, `field = ...`, `fields(...)`, `into_base = ...`, `from_base = ...`, or `koruma_newtype`",
                 ));
             }
 
@@ -425,6 +517,27 @@ mod tests {
         assert!(expanded.contains("GpuiTableFilterShapeFor < Option < String > >"));
         assert!(expanded.contains("TextFilter"));
         assert!(expanded.contains("PrefixText"));
+    }
+
+    #[test]
+    fn derive_emits_koruma_newtype_field_support() {
+        let input: DeriveInput = parse_quote! {
+            #[gpui_table_filter_shape(
+                base = gpui_table::runtime::shape::TextFilter,
+                field = Email,
+                koruma_newtype
+            )]
+            struct EmailTextFilter;
+        };
+
+        let expanded = TableFilterShapeDerive::from_input(input)
+            .expect("derive input should parse")
+            .expand()
+            .to_string();
+
+        assert!(expanded.contains("Email : :: koruma :: NewtypeValue"));
+        assert!(expanded.contains("< Email as :: koruma :: NewtypeValue > :: Inner"));
+        assert!(expanded.contains("validate_inner"));
     }
 
     #[test]

@@ -465,6 +465,14 @@ pub trait McpFilterShapeValidation: McpFilterShape {
         Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>;
 }
 
+#[diagnostic::on_unimplemented(
+    message = "table filter shape `{Self}` cannot validate Koruma newtype field `{Field}` from its decoded MCP raw value",
+    note = "derive the shape with `#[gpui_table_filter_shape(..., koruma_newtype)]`, or implement `gpui_table::mcp::McpKorumaNewtypeFilterValidation` manually"
+)]
+pub trait McpKorumaNewtypeFilterValidation<Field>: GpuiTableFilterShape {
+    fn validate_koruma_newtype_filter(value: &Self::RawValue) -> bool;
+}
+
 pub fn default_filter_shape_input_schema<Shape>(_filter: McpTableFilter) -> McpSchema
 where
     Shape: GpuiTableFilterShape,

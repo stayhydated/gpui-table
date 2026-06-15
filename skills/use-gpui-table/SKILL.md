@@ -93,9 +93,13 @@ field-level `#[koruma(...)]` validators to filtered fields when MCP filter
 arguments should be validated before the query handler runs; generated schemas
 attach rule metadata in `x-gpuiTableValidation` and literal length, range, or
 non-empty constraints as JSON Schema hints when the argument schema is
-unambiguous. Add `koruma` and the validator crate that provides the rule to the
-application dependencies. Custom query handlers can be synchronous or async and
-must return
+unambiguous. For Koruma newtype fields filtered by their inner raw value, derive
+the adapter shape with `#[gpui_table_filter_shape(..., koruma_newtype)]`;
+manual shapes must implement
+`gpui_table::mcp::McpKorumaNewtypeFilterValidation<Field>`. Koruma annotations
+on non-filter columns are ignored by table MCP generation. Add
+`koruma` and the validator crate that provides the rule to the application
+dependencies. Custom query handlers can be synchronous or async and must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
 query. Use `McpServer` directly only when a custom server composition is
@@ -135,7 +139,9 @@ right MCP contract. Use `gpui_table::mcp::McpAny` when a typed raw value or
 manual tool input intentionally accepts unconstrained JSON. Use
 `gpui_table::mcp::McpRange<T>` for `{ "min": ..., "max": ... }` range raw
 values. Manual shapes that should support field-level Koruma filter validation
-must also implement `gpui_table::mcp::McpFilterShapeValidation`.
+must also implement `gpui_table::mcp::McpFilterShapeValidation`. Manual shapes
+that support Koruma newtype inner-value filters must also implement
+`gpui_table::mcp::McpKorumaNewtypeFilterValidation<Field>`.
 Fixed tuples with 1 to 4 elements publish exact array schemas.
 App-owned named structs, tuple or named transparent newtypes, and fieldless
 enums can derive `McpJsonSchema`; the derive follows serde deserialize names,

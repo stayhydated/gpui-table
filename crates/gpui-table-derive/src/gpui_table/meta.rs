@@ -201,7 +201,7 @@ impl FromField for TableColumn {
             movable: None,
             skip: false,
             filter: None,
-            validation: parse_filter_validation(field)?,
+            validation: None,
             context_menu_id: false,
         };
 
@@ -309,6 +309,10 @@ impl FromField for TableColumn {
             .map_err(DarlingError::from)?;
         }
 
+        if column.filter.is_some() {
+            column.validation = parse_filter_validation(field)?;
+        }
+
         Ok(column)
     }
 }
@@ -317,20 +321,28 @@ impl FromField for TableColumn {
 #[cfg_attr(not(feature = "mcp"), allow(dead_code))]
 pub(super) struct FilterValidation {
     validators: Vec<ParsedValidatorUse>,
+    newtype: bool,
 }
 
 #[cfg_attr(not(feature = "mcp"), allow(dead_code))]
 impl FilterValidation {
-    pub(super) fn new(validators: Vec<ParsedValidatorUse>) -> Self {
-        Self { validators }
+    pub(super) fn new(validators: Vec<ParsedValidatorUse>, newtype: bool) -> Self {
+        Self {
+            validators,
+            newtype,
+        }
     }
 
     pub(super) fn validators(&self) -> &[ParsedValidatorUse] {
         &self.validators
     }
 
+    pub(super) fn is_newtype(&self) -> bool {
+        self.newtype
+    }
+
     pub(super) fn is_empty(&self) -> bool {
-        self.validators.is_empty()
+        self.validators.is_empty() && !self.newtype
     }
 }
 
@@ -342,13 +354,6 @@ fn parse_filter_validation(field: &syn::Field) -> darling::Result<Option<FilterV
                 return Err(DarlingError::from(syn::Error::new(
                     span,
                     "`#[koruma(nested)]` is not supported on table MCP filters; validate filter raw values with direct validators",
-                )));
-            }
-            if info.is_newtype() {
-                let span = info.marker_span().unwrap_or_else(|| field.span());
-                return Err(DarlingError::from(syn::Error::new(
-                    span,
-                    "`#[koruma(newtype)]` is not supported on table MCP filters; validate filter raw values with direct validators",
                 )));
             }
             if !info.element_validators().is_empty() {
@@ -377,10 +382,11 @@ fn parse_filter_validation(field: &syn::Field) -> darling::Result<Option<FilterV
                 validators.push(validator.clone());
             }
 
-            if validators.is_empty() {
+            let newtype = info.is_newtype();
+            if validators.is_empty() && !newtype {
                 Ok(None)
             } else {
-                Ok(Some(FilterValidation::new(validators)))
+                Ok(Some(FilterValidation::new(validators, newtype)))
             }
         },
         ParsedDataField::Unannotated(_) | ParsedDataField::Skipped { .. } => Ok(None),
