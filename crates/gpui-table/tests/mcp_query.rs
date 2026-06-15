@@ -239,6 +239,17 @@ fn facade_mcp_json_schema_supports_fixed_tuples() {
 }
 
 #[test]
+fn facade_mcp_json_schema_supports_feature_gated_types() {
+    let date_schema = <chrono::NaiveDate as gpui_table::mcp::McpJsonSchema>::json_schema();
+    assert_eq!(date_schema["type"], "string");
+    assert_eq!(date_schema["format"], "date");
+
+    let decimal_schema = <rust_decimal::Decimal as gpui_table::mcp::McpJsonSchema>::json_schema();
+    assert_eq!(decimal_schema["anyOf"][0]["type"], "number");
+    assert_eq!(decimal_schema["anyOf"][1]["type"], "string");
+}
+
+#[test]
 fn facade_mcp_tool_input_derive_is_reusable_schema() {
     let schema = <ExportArgs as gpui_table::mcp::McpJsonSchema>::json_schema();
 
