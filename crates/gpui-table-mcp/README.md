@@ -120,6 +120,12 @@ rules, and per-filter schemas. Use
 `register_inventory_table_resources(&mut server)?` when a custom server should
 expose resources for all inventory-discovered tables without registering query
 handlers, or `register_table_resources::<Row>(&mut server)?` for one table.
+Prompt templates are opt-in. Call
+`gpui_table::mcp::register_prompt_templates(&mut server)?` after inventory
+registration, or `register_table_prompt_templates::<Row>(&mut server)?` when
+manually exposing one table. The generated prompt name is
+`query_{tool_name}_table`; it directs clients to the descriptor and schema
+resources before drafting filter and pagination arguments for the query tool.
 
 Attribute handlers infer the row type from a `TableQuery<Row>` first parameter,
 a zero-argument `Result<Vec<Row>, E>` or `Vec<Row>` source. Local sources are

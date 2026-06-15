@@ -190,6 +190,12 @@ metadata such as scalar, set, or range, validation rules, and per-filter
 schemas. Use `gpui_table::mcp::register_inventory_table_resources(&mut server)?`
 when a composed server should publish inventory-discovered table resources
 without registering their query handlers.
+Prompt templates are opt-in. Call
+`gpui_table::mcp::register_prompt_templates(&mut server)?` after generated
+table registration, or `register_table_prompt_templates::<User>(&mut server)?`
+when manually exposing one table. The generated prompt name is
+`query_{tool_name}_table`; it points clients at the descriptor and schema
+resources before drafting query tool arguments.
 
 For a composed server, such as a binary that also depends on `gpui-form`, use
 the shared builder:
