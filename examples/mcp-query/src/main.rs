@@ -13,7 +13,6 @@ enum IssueState {
 #[gpui_table(
     id = "issues",
     title = "Issues",
-    filters,
     mcp(
         name = "mcp_query_issues",
         title = "Query issues",
@@ -39,8 +38,8 @@ fn main() -> gpui_table::mcp::ServeStdioResult {
 }
 
 #[gpui_table::mcp_query]
-fn rows() -> Result<Vec<IssueRow>, String> {
-    Ok(vec![
+fn rows() -> Vec<IssueRow> {
+    vec![
         IssueRow {
             id: 101,
             title: "Add table MCP query bridge".to_string(),
@@ -59,7 +58,7 @@ fn rows() -> Result<Vec<IssueRow>, String> {
             state: IssueState::Closed,
             updated_on: date(2026, 5, 30),
         },
-    ])
+    ]
 }
 
 fn date(year: i32, month: u32, day: u32) -> NaiveDate {

@@ -110,8 +110,8 @@ type and lets an application-owned handler return rows.
 
 ```rs
 #[gpui_table::mcp_query]
-fn rows() -> Result<Vec<User>, String> {
-    Ok(vec![/* rows */])
+fn rows() -> Vec<User> {
+    vec![/* rows */]
 }
 
 fn main() -> gpui_table::mcp::ServeStdioResult {
@@ -139,7 +139,7 @@ rule.
 use koruma_collection::collection::LenValidation;
 
 #[derive(Clone, Debug, gpui_table::GpuiTable, serde::Serialize)]
-#[gpui_table(filters, mcp)]
+#[gpui_table(mcp)]
 struct User {
     #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     #[koruma(LenValidation::<_>::min(2).max(64))]
@@ -149,10 +149,11 @@ struct User {
 
 Use `#[gpui_table::mcp_query]` for both application-owned backend functions
 that accept `gpui_table::mcp::TableQuery<User>` and local row sources that
-return `Result<Vec<User>, E>`. The row type must opt in with
-`#[gpui_table(mcp)]`. The handler signature chooses the mode, and local
-sources are called for each MCP query. The custom query parameter and return
-value must use the same row type, so custom backends must return
+return `Result<Vec<User>, E>` or `Vec<User>`. The row type must opt in with
+`#[gpui_table(mcp)]`; for MCP-only tables, field-level filter attributes do not
+also need struct-level `filters`. The handler signature chooses the mode, and
+local sources are called for each MCP query. The custom query parameter and
+return value must use the same row type, so custom backends must return
 `Result<gpui_table::mcp::TableQueryResult<User>, E>`, and `User` must implement
 `serde::Serialize`. Custom query handlers can be synchronous or async.
 Use
@@ -173,7 +174,15 @@ table handlers should advertise application-owned metadata, then call
 `.serve_stdio().await` or `.serve_stdio_blocking()`. Use
 `gpui_table::mcp::builder()` or `builder_named(name, version)` when deferred
 setup is useful. Use `gpui_table::mcp::serve_stdio_blocking()` for the default
-stdio server.
+stdio server. Generated registration also exposes JSON resources for each
+`#[gpui_table(mcp)]` table at
+`gpui-table://tables/{tool_name}/descriptor` and
+`gpui-table://tables/{tool_name}/schema`. The descriptor resource includes
+table metadata, filter field types, normalized component-shape MCP input
+metadata such as scalar, set, or range, validation rules, and per-filter
+schemas. Use `gpui_table::mcp::register_inventory_table_resources(&mut server)?`
+when a composed server should publish inventory-discovered table resources
+without registering their query handlers.
 
 For a composed server, such as a binary that also depends on `gpui-form`, use
 the shared builder:
@@ -190,7 +199,8 @@ Manual table tools can still be registered directly:
 `Result<gpui_table::mcp::TableQueryResult<User>, E>` handlers with
 `User: serde::Serialize`, `.rows(rows)?` for fixed row vectors,
 `.row_source(source)?` or `.row_source_async(source)?` for per-query local rows.
-Registration reports setup errors such as duplicate tool names.
+Manual table tool registration also publishes that table's descriptor and schema
+resources. Registration reports setup errors such as duplicate tool names.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare a base shape, raw value, field
 type, and raw-value conversions. The derive generates the runtime filter shape,

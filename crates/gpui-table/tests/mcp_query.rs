@@ -4,8 +4,9 @@ use chrono::NaiveDate;
 use gpui_table::{
     Filterable, GpuiTable, GpuiTableFilterShape, TableCell,
     mcp::{
-        McpServer, McpTable as _, McpToolError, serde_json::json, server as generated_server,
-        table, tool_definitions,
+        McpServer, McpTable as _, McpToolError, register_table_resources, resource_definitions,
+        serde_json::json, server as generated_server, table, table_resource_uris_for,
+        tool_definitions,
     },
 };
 use koruma_collection::collection::LenValidation;
@@ -132,6 +133,17 @@ struct ResultSourceRow {
     mcp
 )]
 struct AsyncResultSourceRow {
+    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    name: String,
+}
+
+#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[gpui_table(
+    id = "mcp_only_filter_rows",
+    title = "MCP Only Filter Rows",
+    mcp(name = "query_mcp_only_filter_rows")
+)]
+struct McpOnlyFilterRow {
     #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
@@ -383,6 +395,62 @@ fn inventory_exposes_pagination_only_mcp_tool_definition() {
     assert_eq!(annotations.destructive_hint, Some(false));
     assert_eq!(annotations.idempotent_hint, Some(true));
     assert_eq!(annotations.open_world_hint, None);
+}
+
+#[test]
+fn generated_server_exposes_table_descriptor_resources() {
+    let server = generated_server().expect("generated tools should register");
+    let uris = table_resource_uris_for::<UserRow>();
+
+    for uri in uris.all() {
+        assert!(server.contains_resource(uri));
+    }
+}
+
+#[test]
+fn inventory_exposes_generated_resource_definitions() {
+    let uris = table_resource_uris_for::<UserRow>();
+    let resources = resource_definitions().expect("resource definitions should be generated");
+
+    assert!(
+        resources
+            .iter()
+            .any(|resource| resource.raw.uri == uris.descriptor)
+    );
+    assert!(
+        resources
+            .iter()
+            .any(|resource| resource.raw.uri == uris.schema)
+    );
+}
+
+#[test]
+fn manual_table_registration_exposes_table_descriptor_resources() {
+    let mut server = test_server();
+    table::<UserRow>(&mut server)
+        .row_source(rows)
+        .expect("tool should register");
+    let uris = table_resource_uris_for::<UserRow>();
+
+    for uri in uris.all() {
+        assert!(server.contains_resource(uri));
+    }
+}
+
+#[test]
+fn manual_table_registration_reuses_existing_table_resources() {
+    let mut server = test_server();
+    register_table_resources::<UserRow>(&mut server).expect("table resources should register");
+
+    table::<UserRow>(&mut server)
+        .row_source(rows)
+        .expect("tool should register after resources");
+    let result = server.call_tool(
+        &UserRow::descriptor().tool_name(),
+        Some(json!({ "status": ["Active"] })),
+    );
+
+    assert_eq!(result.is_error, Some(false));
 }
 
 #[test]
@@ -730,6 +798,18 @@ fn attribute_query_handler_registers_with_inventory_registry() {
     let content = result.structured_content.expect("structured result");
     assert_eq!(content["total"], 1);
     assert_eq!(content["rows"][0]["name"], "async result source row");
+
+    let result = server.call_tool(
+        &McpOnlyFilterRow::descriptor().tool_name(),
+        Some(json!({
+            "name": "mcp"
+        })),
+    );
+
+    assert_eq!(result.is_error, Some(false));
+    let content = result.structured_content.expect("structured result");
+    assert_eq!(content["total"], 1);
+    assert_eq!(content["rows"][0]["name"], "mcp-only filter row");
 }
 
 #[gpui_table::mcp_query]
@@ -838,6 +918,18 @@ async fn async_result_source_rows() -> Result<Vec<AsyncResultSourceRow>, String>
     Ok(vec![AsyncResultSourceRow {
         name: "async result source row".to_string(),
     }])
+}
+
+#[gpui_table::mcp_query]
+fn mcp_only_filter_rows() -> Vec<McpOnlyFilterRow> {
+    vec![
+        McpOnlyFilterRow {
+            name: "mcp-only filter row".to_string(),
+        },
+        McpOnlyFilterRow {
+            name: "other row".to_string(),
+        },
+    ]
 }
 
 fn date(year: i32, month: u32, day: u32) -> NaiveDate {

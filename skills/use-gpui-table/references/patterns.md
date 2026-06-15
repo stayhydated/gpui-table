@@ -181,21 +181,23 @@ let status = TableStatusBar::new(rows.len(), loading, eof).row_label("Rows");
 Enable `gpui-table/mcp` when an MCP client should control generated filters and
 retrieve rows. Add `#[gpui_table(mcp)]` to each exposed row type and register a
 handler with `#[gpui_table::mcp_query]`. A `TableQuery<Row>` first parameter
-selects an application-owned backend, while a zero-argument `Result<Vec<Row>, E>`
-return type selects a local row source. Local row sources are called for each MCP
-query.
+selects an application-owned backend, while a zero-argument
+`Result<Vec<Row>, E>` or `Vec<Row>` return type selects a local row source.
+Local row sources are called for each MCP query. For MCP-only filtered tables,
+`#[gpui_table(mcp)]` is enough; field-level filter attributes do not also need
+struct-level `filters`.
 
 ```rust
 #[derive(Clone, gpui_table::GpuiTable, serde::Serialize)]
-#[gpui_table(filters, mcp)]
+#[gpui_table(mcp)]
 struct User {
     #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
     name: String,
 }
 
 #[gpui_table::mcp_query]
-fn rows() -> Result<Vec<User>, String> {
-    Ok(vec![/* rows */])
+fn rows() -> Vec<User> {
+    vec![/* rows */]
 }
 
 fn main() -> gpui_table::mcp::ServeStdioResult {
@@ -238,7 +240,11 @@ Register manual handlers with
 `gpui_table::mcp::table::<Row>(&mut server).query(handler)?` for
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, `.rows(rows)?`,
 `.row_source(source)?`, or
-`.row_source_async(source)?` for local rows.
+`.row_source_async(source)?` for local rows. Manual table tool registration
+also publishes that table's descriptor and schema resources. Use
+`gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
+composed server should publish inventory-discovered table resources without
+their query handlers.
 Registration reports setup errors such as duplicate tool names.
 MCP schemas and decoders use the same explicit filter shapes selected for
 generated filter UI.

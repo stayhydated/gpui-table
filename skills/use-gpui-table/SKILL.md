@@ -60,8 +60,10 @@ derives, generated types, and runtime helpers:
 10. For MCP query integrations, register the generated row type with
     `#[gpui_table(mcp)]` on the row type and `#[gpui_table::mcp_query]` on the
     handler. A `TableQuery<Row>` first parameter selects a custom backend, while
-    a zero-argument `Result<Vec<Row>, E>` return type selects a local row
-    source. Keep query execution in application-owned code rather than GPUI
+    a zero-argument `Result<Vec<Row>, E>` or `Vec<Row>` return type selects a
+    local row source. For MCP-only filtered tables, `#[gpui_table(mcp)]` is
+    enough; field-level filter attributes do not also need struct-level
+    `filters`. Keep query execution in application-owned code rather than GPUI
     widgets. Custom query handlers can be synchronous or async and must return
     `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 
@@ -108,7 +110,11 @@ MCP integrations, and add generated handlers with
 with `gpui_table::mcp::table::<Row>(&mut server).query(handler)?` for
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, `.rows(rows)?`,
 `.row_source(source)?`, or
-`.row_source_async(source)?` for local rows. Use struct-level
+`.row_source_async(source)?` for local rows; manual table tool registration
+also publishes that table's descriptor and schema resources. Use
+`gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
+composed server should publish inventory-discovered table resources without
+their query handlers. Use struct-level
 `#[gpui_table(mcp(...))]` with `name`, `title`, `description`, `read_only`,
 `destructive`, `idempotent`, and `open_world` when generated MCP tools need
 application-owned metadata or MCP tool annotation hints. If `description` is

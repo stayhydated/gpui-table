@@ -5,9 +5,10 @@ source is registered with `#[gpui_table::mcp_query]`, which infers `IssueRow`
 from the zero-argument `Vec<IssueRow>` return type, so `main` only serves the
 inventory-backed registry. The table also declares explicit MCP tool metadata
 with `#[gpui_table(mcp(...))]` and explicit `#[gpui_table(filter(...))]`
-fields for text, faceted, number-range, and date-range filter shapes. Filtered
-fields can use `#[koruma(...)]` to validate decoded MCP filter arguments before
-the query handler runs. Custom filters that adapt built-in shapes can use
+fields for text, faceted, number-range, and date-range filter shapes. Because
+this is an MCP-only table, it does not need to spell struct-level `filters`.
+Filtered fields can use `#[koruma(...)]` to validate decoded MCP filter
+arguments before the query handler runs. Custom filters that adapt built-in shapes can use
 `#[derive(gpui_table::GpuiTableFilterShape)]`; see the `gpui-table-mcp`
 README for that adapter pattern.
 

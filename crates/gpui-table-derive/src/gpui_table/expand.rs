@@ -53,6 +53,7 @@ pub(super) fn expand_gpui_table(
             "`#[gpui_table(mcp)]` requires the `gpui-table/mcp` feature",
         ));
     }
+    let filters_effective = filters_enabled || mcp_enabled;
 
     let table_id = id.unwrap_or_else(|| struct_name.to_string());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
@@ -218,10 +219,10 @@ pub(super) fn expand_gpui_table(
                 "`ascending` and `descending` cannot both be set",
             ));
         }
-        if !filters_enabled && field.filter.is_some() {
+        if !filters_effective && field.filter.is_some() {
             return Err(syn::Error::new(
                 ident.span(),
-                "field-level `filter` or `filter(...)` requires struct-level `#[gpui_table(filters)]`",
+                "field-level `filter` or `filter(...)` requires struct-level `#[gpui_table(filters)]` or `#[gpui_table(mcp)]`",
             ));
         }
         if let Some(fixed) = field.fixed.as_deref()
@@ -296,7 +297,7 @@ pub(super) fn expand_gpui_table(
             ));
         }
 
-        if filters_enabled && let Some(ref filter_options) = field.filter {
+        if filters_effective && let Some(ref filter_options) = field.filter {
             let filter_config = filter_options.resolve(ident.to_string(), field.ty.clone());
             filter_config.validate_feature_gate()?;
             filter_shape_type_checks.push(filter_config.type_check_tokens());

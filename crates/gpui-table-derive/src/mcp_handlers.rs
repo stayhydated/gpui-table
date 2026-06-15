@@ -10,6 +10,7 @@ use syn::{
 enum HandlerKind {
     Query,
     RowSource,
+    InfallibleRowSource,
 }
 
 pub fn expand_query(attr: TokenStream, item: TokenStream) -> syn::Result<TokenStream> {
@@ -27,7 +28,7 @@ pub fn expand_query(attr: TokenStream, item: TokenStream) -> syn::Result<TokenSt
     let facade_crate = resolve_crate_path("gpui-table", "::gpui_table");
     let register_ident = match handler_kind {
         HandlerKind::Query => format_ident!("__gpui_table_mcp_register_query_{fn_ident}"),
-        HandlerKind::RowSource => {
+        HandlerKind::RowSource | HandlerKind::InfallibleRowSource => {
             format_ident!("__gpui_table_mcp_register_row_source_{fn_ident}")
         },
     };
@@ -42,7 +43,7 @@ pub fn expand_query(attr: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             fn __gpui_table_mcp_assert_serialize<T: #facade_crate::mcp::Serialize>() {}
             __gpui_table_mcp_assert_serialize::<#expected_response_type>();
         },
-        HandlerKind::RowSource => quote! {
+        HandlerKind::RowSource | HandlerKind::InfallibleRowSource => quote! {
             fn __gpui_table_mcp_assert_serialize<T: #facade_crate::mcp::Serialize>() {}
             __gpui_table_mcp_assert_serialize::<#table_type>();
         },
@@ -75,6 +76,22 @@ pub fn expand_query(attr: TokenStream, item: TokenStream) -> syn::Result<TokenSt
             quote! {
                 #facade_crate::mcp::table::<#table_type>(server)
                     .row_source_async(#fn_ident)
+            }
+        },
+        (HandlerKind::InfallibleRowSource, false) => {
+            quote! {
+                #facade_crate::mcp::table::<#table_type>(server)
+                    .row_source(move || -> Result<Vec<#table_type>, #error_type> {
+                        Ok(#fn_ident())
+                    })
+            }
+        },
+        (HandlerKind::InfallibleRowSource, true) => {
+            quote! {
+                #facade_crate::mcp::table::<#table_type>(server)
+                    .row_source_async(move || async move {
+                        Ok::<Vec<#table_type>, #error_type>(#fn_ident().await)
+                    })
             }
         },
     };
@@ -195,22 +212,36 @@ fn infer_handler(item_fn: &ItemFn) -> syn::Result<(HandlerKind, Type, Type)> {
 
         return Err(syn::Error::new(
             first_arg.ty.span(),
-            "mcp_query requires a `TableQuery<Row>` first parameter for custom backends, or no parameters and `Result<Vec<Row>, E>` for local row sources",
+            "mcp_query requires a `TableQuery<Row>` first parameter for custom backends, or no parameters and `Result<Vec<Row>, E>` or `Vec<Row>` for local row sources",
         ));
     }
 
     let ReturnType::Type(_, return_type) = &item_fn.sig.output else {
         return Err(syn::Error::new(
             item_fn.sig.ident.span(),
-            "mcp_query requires either a `TableQuery<Row>` first parameter or a zero-argument `Result<Vec<Row>, E>` return type",
+            "mcp_query requires either a `TableQuery<Row>` first parameter or a zero-argument `Result<Vec<Row>, E>` or `Vec<Row>` return type",
         ));
     };
 
-    let (response_type, error_type) = parse_result_return_type(&item_fn.sig.output)?;
+    if let Some(row_type) = vec_inner_type(return_type.as_ref()) {
+        return Ok((
+            HandlerKind::InfallibleRowSource,
+            row_type,
+            syn::parse_quote!(::std::string::String),
+        ));
+    }
+
+    let (response_type, error_type) =
+        parse_result_return_type(&item_fn.sig.output).map_err(|_| {
+            syn::Error::new(
+                return_type.span(),
+                "mcp_query local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`",
+            )
+        })?;
     let row_type = vec_inner_type(&response_type).ok_or_else(|| {
         syn::Error::new(
             return_type.span(),
-            "mcp_query local row sources must return `Result<Vec<Row>, E>`",
+            "mcp_query local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`",
         )
     })?;
 
@@ -355,13 +386,17 @@ mod tests {
     #[test]
     fn rejects_non_result_return_type() {
         let error = expand_error("fn rows() -> String { String::new() }");
-        assert!(error.contains("must return Result<T, E>"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 
     #[test]
     fn rejects_result_with_wrong_number_of_type_arguments() {
         let error = expand_error("fn rows() -> Result<String> { Ok(String::new()) }");
-        assert!(error.contains("must return Result<T, E>"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 
     #[test]
@@ -411,17 +446,54 @@ mod tests {
     }
 
     #[test]
+    fn accepts_infallible_row_sources() {
+        let item: ItemFn = parse2(
+            "fn rows() -> Vec<String> { vec![String::from(\"ann\")] }"
+                .parse()
+                .expect("valid function"),
+        )
+        .expect("parse item");
+        let expanded = expand_query(quote! {}, quote! { #item })
+            .expect("mcp_query should accept infallible row sources");
+        let expanded = expanded.to_string();
+
+        assert!(expanded.contains("row_source"));
+        assert!(expanded.contains("Ok"));
+        assert!(expanded.contains("std :: string :: String"));
+    }
+
+    #[test]
+    fn accepts_async_infallible_row_sources() {
+        let item: ItemFn = parse2(
+            "async fn rows() -> Vec<String> { vec![String::from(\"ann\")] }"
+                .parse()
+                .expect("valid function"),
+        )
+        .expect("parse item");
+        let expanded = expand_query(quote! {}, quote! { #item })
+            .expect("mcp_query should accept async infallible row sources");
+        let expanded = expanded.to_string();
+
+        assert!(expanded.contains("row_source_async"));
+        assert!(expanded.contains("Ok"));
+    }
+
+    #[test]
     fn rejects_result_with_extra_type_arguments() {
         let error =
             expand_error("fn rows() -> Result<String, String, usize> { Ok(String::new()) }");
-        assert!(error.contains("must return Result<T, E>"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 
     #[test]
     fn rejects_result_with_non_type_generic_arguments() {
         let error =
             expand_error("fn rows() -> Result<String, 'static> { Ok(String::from(\"x\")) }");
-        assert!(error.contains("must return Result<T, E>"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 
     #[test]
@@ -454,13 +526,15 @@ mod tests {
     fn rejects_row_source_with_argument() {
         let error =
             expand_error("fn rows(query: usize) -> Result<Vec<String>, String> { Ok(vec![]) }");
-        assert!(error.contains("requires a `TableQuery<Row>` first parameter for custom backends, or no parameters and `Result<Vec<Row>, E>` for local row sources"));
+        assert!(error.contains("requires a `TableQuery<Row>` first parameter for custom backends, or no parameters and `Result<Vec<Row>, E>` or `Vec<Row>` for local row sources"));
     }
 
     #[test]
     fn rejects_local_row_source_with_non_vec_result() {
         let error = expand_error("fn rows() -> Result<String, String> { Ok(String::new()) }");
-        assert!(error.contains("local row sources must return `Result<Vec<Row>, E>`"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 
     #[test]
@@ -468,6 +542,8 @@ mod tests {
         let error = expand_error(
             "fn rows() -> gpui_table::Result<Vec<String>, String> { Ok(vec![String::from(\"x\")]) }",
         );
-        assert!(error.contains("must return Result<T, E>"));
+        assert!(
+            error.contains("local row sources must return `Result<Vec<Row>, E>` or `Vec<Row>`")
+        );
     }
 }

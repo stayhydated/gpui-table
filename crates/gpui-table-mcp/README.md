@@ -32,8 +32,8 @@ signatures:
 
 ```rs
 #[gpui_table::mcp_query]
-fn rows() -> Result<Vec<UserRow>, String> {
-    Ok(vec![/* rows */])
+fn rows() -> Vec<UserRow> {
+    vec![/* rows */]
 }
 
 fn main() -> gpui_table::mcp::ServeStdioResult {
@@ -108,9 +108,24 @@ let server = gpui_table::mcp::McpServer::builder("my-app", env!("CARGO_PKG_VERSI
     .build()?;
 ```
 
+Generated registration also exposes JSON resources for every
+`#[gpui_table(mcp)]` table:
+
+- `gpui-table://tables/{tool_name}/descriptor`
+- `gpui-table://tables/{tool_name}/schema`
+
+The descriptor resource includes table metadata, filter field types, normalized
+component-shape MCP input metadata such as scalar, set, or range, validation
+rules, and per-filter schemas. Use
+`register_inventory_table_resources(&mut server)?` when a custom server should
+expose resources for all inventory-discovered tables without registering query
+handlers, or `register_table_resources::<Row>(&mut server)?` for one table.
+
 Attribute handlers infer the row type from a `TableQuery<Row>` first parameter,
-a zero-argument `Result<Vec<Row>, E>` source. Local sources are called for each
-MCP query. Custom query handlers can be synchronous or async and return
+a zero-argument `Result<Vec<Row>, E>` or `Vec<Row>` source. Local sources are
+called for each MCP query. `#[gpui_table(mcp)]` is enough for MCP-only filtered
+tables; field-level filter attributes do not also need struct-level `filters`.
+Custom query handlers can be synchronous or async and return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` where `Row: serde::Serialize`.
 Use
 `query.result(rows, total)` for backend-owned totals or
@@ -119,7 +134,8 @@ composition uses
 `table::<Row>(&mut server).query(handler)?` for
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, plus
 `.rows(rows)?`, `.row_source(source)?`, or `.row_source_async(source)?` for local
-rows.
+rows. Manual table tool registration also publishes that table's descriptor and
+schema resources.
 Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
 override the generated MCP tool name, title, or description. When
