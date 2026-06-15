@@ -169,6 +169,10 @@ Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
 override the generated MCP tool name, title, or description. When
 `description` is omitted, the derive uses the row type's Rust doc comment.
+Add `row_schema` in the same list when the row type also implements
+`gpui_table::mcp::McpJsonSchema`; the generated tool output schema then
+publishes the exact row object under `rows.items` instead of the default
+unconstrained item schema.
 The same list accepts optional MCP tool annotation hints with
 `read_only = ...`, `destructive = ...`, `idempotent = ...`, and
 `open_world = ...`. Generated table query tools default to read-only,
@@ -186,8 +190,8 @@ stdio server. Generated registration also exposes JSON resources for each
 `gpui-table://tables/{tool_name}/descriptor` and
 `gpui-table://tables/{tool_name}/schema`. The descriptor resource includes
 table metadata, filter field types, normalized component-shape MCP input
-metadata such as scalar, set, or range, validation rules, and per-filter
-schemas. Use `gpui_table::mcp::register_inventory_table_resources(&mut server)?`
+metadata such as scalar, set, or range, validation rules, per-filter schemas,
+and the table query output schema. Use `gpui_table::mcp::register_inventory_table_resources(&mut server)?`
 when a composed server should publish inventory-discovered table resources
 without registering their query handlers.
 
@@ -208,7 +212,9 @@ Manual table tools can still be registered directly:
 `.row_source(source)?` for per-query local rows, or
 `.row_source_async(source)?` for async local row sources.
 Manual table tool registration also publishes that table's descriptor and schema
-resources. Registration reports setup errors such as duplicate tool names.
+resources. Manual `McpTable` implementations can call
+`McpTableDescriptor::with_row_schema(...)` to publish precise row output
+schemas. Registration reports setup errors such as duplicate tool names.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare a base shape, raw value, field
 type, and raw-value conversions. The derive generates the runtime filter shape,

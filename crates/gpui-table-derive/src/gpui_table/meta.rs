@@ -80,6 +80,8 @@ pub(super) struct McpToolOptions {
     pub(super) title: Option<String>,
     pub(super) description: Option<String>,
     #[allow(dead_code)]
+    pub(super) row_schema: bool,
+    #[allow(dead_code)]
     pub(super) read_only: Option<bool>,
     #[allow(dead_code)]
     pub(super) destructive: Option<bool>,
@@ -97,6 +99,8 @@ struct McpToolOptionsMeta {
     title: Option<String>,
     #[darling(default)]
     description: Option<String>,
+    #[darling(default)]
+    row_schema: bool,
     #[darling(default)]
     read_only: Option<bool>,
     #[darling(default)]
@@ -127,6 +131,7 @@ impl From<McpToolOptionsMeta> for McpToolOptions {
             name: value.name,
             title: value.title,
             description: value.description,
+            row_schema: value.row_schema,
             read_only: value.read_only,
             destructive: value.destructive,
             idempotent: value.idempotent,
@@ -473,6 +478,7 @@ mod tests {
         assert!(options.name.is_none());
         assert!(options.title.is_none());
         assert!(options.description.is_none());
+        assert!(!options.row_schema);
         assert!(options.read_only.is_none());
         assert!(options.destructive.is_none());
         assert!(options.idempotent.is_none());
@@ -485,6 +491,7 @@ mod tests {
             darling::ast::NestedMeta::Meta(syn::parse_quote!(name = "query_users")),
             darling::ast::NestedMeta::Meta(syn::parse_quote!(title = "Query users")),
             darling::ast::NestedMeta::Meta(syn::parse_quote!(description = "Query users.")),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(row_schema)),
             darling::ast::NestedMeta::Meta(syn::parse_quote!(read_only = true)),
             darling::ast::NestedMeta::Meta(syn::parse_quote!(destructive = false)),
             darling::ast::NestedMeta::Meta(syn::parse_quote!(idempotent = true)),
@@ -495,10 +502,35 @@ mod tests {
         assert_eq!(options.name.as_deref(), Some("query_users"));
         assert_eq!(options.title.as_deref(), Some("Query users"));
         assert_eq!(options.description.as_deref(), Some("Query users."));
+        assert!(options.row_schema);
         assert_eq!(options.read_only, Some(true));
         assert_eq!(options.destructive, Some(false));
         assert_eq!(options.idempotent, Some(true));
         assert_eq!(options.open_world, Some(true));
+    }
+
+    #[test]
+    fn mcp_tool_options_parses_row_schema() {
+        let options = McpToolOptions::from_list(&[darling::ast::NestedMeta::Meta(
+            syn::parse_quote!(row_schema),
+        )])
+        .expect("row_schema option should parse");
+
+        assert!(options.row_schema);
+    }
+
+    #[test]
+    fn mcp_tool_options_rejects_duplicate_row_schema() {
+        let error = McpToolOptions::from_list(&[
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(row_schema)),
+            darling::ast::NestedMeta::Meta(syn::parse_quote!(row_schema)),
+        ])
+        .expect_err("duplicate row_schema option should fail");
+
+        assert!(
+            error.to_string().contains("row_schema"),
+            "unexpected error: {error}"
+        );
     }
 
     #[test]

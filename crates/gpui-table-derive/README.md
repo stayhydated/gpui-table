@@ -84,9 +84,12 @@ be reused as filter raw values. Implement
 Manual shapes that should support field-level Koruma filter validation must also
 implement `gpui_table::mcp::McpFilterShapeValidation`.
 Struct-level `#[gpui_table(mcp(...))]` supports `name`, `title`,
-`description`, `read_only`, `destructive`, `idempotent`, and `open_world`
-options for generated MCP tool metadata and annotations. When `description` is
-omitted, the derive uses the row type's Rust doc comment.
+`description`, `row_schema`, `read_only`, `destructive`, `idempotent`, and
+`open_world` options for generated MCP tool metadata, row output schemas, and
+annotations. Use `row_schema` only when the row type implements
+`gpui_table::mcp::McpJsonSchema`; opted-in tables publish that schema under the
+standard query output `rows.items`. When `description` is omitted, the derive
+uses the row type's Rust doc comment.
 Use `#[gpui_table::mcp_query]` for custom query handlers and local row sources.
 The macro infers the row type from `TableQuery<Row>` and zero-argument
 `Result<Vec<Row>, E>` signatures. Local row sources are called for each MCP

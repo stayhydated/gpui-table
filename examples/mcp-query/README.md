@@ -7,6 +7,9 @@ inventory-backed registry. The table also declares explicit MCP tool metadata
 with `#[gpui_table(mcp(...))]` and explicit `#[gpui_table(filter(...))]`
 fields for text, faceted, number-range, and date-range filter shapes. Because
 this is an MCP-only table, it does not need to spell struct-level `filters`.
+`IssueRow` and `IssueState` derive `McpJsonSchema`, and the table uses
+`#[gpui_table(mcp(row_schema, ...))]` so `tools/list` and descriptor resources
+publish the returned row shape under the standard output schema's `rows.items`.
 Filtered fields can use `#[koruma(...)]` to validate decoded MCP filter
 arguments before the query handler runs. Custom filters that adapt built-in shapes can use
 `#[derive(gpui_table::GpuiTableFilterShape)]`; see the `gpui-table-mcp`

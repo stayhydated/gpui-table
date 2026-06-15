@@ -537,6 +537,7 @@ mod tests {
 
         assert!(expanded.contains("Email : :: koruma :: NewtypeValue"));
         assert!(expanded.contains("< Email as :: koruma :: NewtypeValue > :: Inner"));
+        #[cfg(feature = "mcp")]
         assert!(expanded.contains("validate_inner"));
     }
 

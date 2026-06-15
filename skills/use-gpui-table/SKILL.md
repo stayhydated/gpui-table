@@ -65,7 +65,10 @@ derives, generated types, and runtime helpers:
     enough; field-level filter attributes do not also need struct-level
     `filters`. Keep query execution in application-owned code rather than GPUI
     widgets. Custom query handlers can be synchronous or async and must return
-    `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
+    `Result<gpui_table::mcp::TableQueryResult<Row>, E>`. Add
+    `row_schema` to `mcp(...)` and derive or implement
+    `gpui_table::mcp::McpJsonSchema` on the row type when MCP clients should
+    discover precise returned row fields.
 
 ## Reference Selection
 
@@ -89,6 +92,10 @@ tool accepts filter field names directly, with `limit` and `offset` reserved for
 pagination; filter arguments decode into the generated `<Row>FilterValues`
 type. Tables without generated filters accept only pagination arguments. Faceted
 filter schemas publish valid facet strings and labels for MCP clients. Add
+`row_schema` to `#[gpui_table(mcp(...))]` when the row type implements
+`McpJsonSchema` and clients should discover the standard output schema's
+`rows.items` object; otherwise row items remain unconstrained for serialized
+rows. Add
 field-level `#[koruma(...)]` validators to filtered fields when MCP filter
 arguments should be validated before the query handler runs; generated schemas
 attach rule metadata in `x-gpuiTableValidation` and literal length, range, or
@@ -119,11 +126,12 @@ also publishes that table's descriptor and schema resources. Use
 `gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
 composed server should publish inventory-discovered table resources without
 their query handlers. Use struct-level
-`#[gpui_table(mcp(...))]` with `name`, `title`, `description`, `read_only`,
-`destructive`, `idempotent`, and `open_world` when generated MCP tools need
-application-owned metadata or MCP tool annotation hints. If `description` is
-omitted, the derive uses the row type's Rust doc comment. Generated table query
-tools default to read-only, non-destructive, and idempotent annotations.
+`#[gpui_table(mcp(...))]` with `name`, `title`, `description`, `row_schema`,
+`read_only`, `destructive`, `idempotent`, and `open_world` when generated MCP
+tools need application-owned metadata, precise row output schemas, or MCP tool
+annotation hints. If `description` is omitted, the derive uses the row type's
+Rust doc comment. Generated table query tools default to read-only,
+non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
 Registration reports setup errors such as duplicate tool names. MCP filter
 schemas and decoders use the same explicit filter shape declared for generated

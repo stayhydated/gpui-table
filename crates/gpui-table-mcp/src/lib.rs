@@ -20,6 +20,7 @@ pub use serde::Serialize;
 use serde_json::{Map, Value, json};
 
 pub type FilterSchemaFn = fn(McpTableFilter) -> McpSchema;
+pub type McpTableRowSchemaFn = fn() -> McpSchema;
 
 pub use component_shape::{McpInput, McpInputShape, McpPrimitiveKind, McpRangeBoundKind};
 pub use component_shape_mcp::{
@@ -121,6 +122,7 @@ pub struct McpTableDescriptor {
     source_module_path: RustPath,
     filters: &'static [McpTableFilter],
     tool_metadata: McpToolMetadata,
+    row_schema: Option<McpTableRowSchemaFn>,
 }
 
 impl McpTableDescriptor {
@@ -139,7 +141,21 @@ impl McpTableDescriptor {
             source_module_path,
             filters,
             tool_metadata,
+            row_schema: None,
         }
+    }
+
+    pub const fn with_row_schema(mut self, schema: McpTableRowSchemaFn) -> Self {
+        self.row_schema = Some(schema);
+        self
+    }
+
+    pub const fn has_row_schema(self) -> bool {
+        self.row_schema.is_some()
+    }
+
+    pub fn row_schema(self) -> Option<McpSchema> {
+        self.row_schema.map(|schema| schema())
     }
 
     pub const fn table_name(self) -> &'static str {
@@ -197,7 +213,7 @@ impl McpTableDescriptor {
     }
 
     pub fn output_schema(self) -> McpSchema {
-        table_query_output_schema()
+        table_query_output_schema(self.row_schema())
     }
 
     pub fn tool_annotations(self) -> McpToolAnnotations {
@@ -271,6 +287,9 @@ where
 /// schemas.
 pub fn table_descriptor_resource_value(descriptor: McpTableDescriptor) -> Value {
     let resources = table_resource_uris(descriptor);
+    let row_schema = descriptor.row_schema();
+    let output_schema = table_query_output_schema(row_schema.clone()).into_value();
+    let row_schema = row_schema.map(McpSchema::into_value).unwrap_or(Value::Null);
     json!({
         "table_name": descriptor.table_name(),
         "table_id": descriptor.table_id(),
@@ -283,6 +302,8 @@ pub fn table_descriptor_resource_value(descriptor: McpTableDescriptor) -> Value 
             "descriptor": resources.descriptor,
             "schema": resources.schema,
         },
+        "output_schema": output_schema,
+        "row_schema": row_schema,
         "filters": descriptor
             .filters()
             .iter()
@@ -1283,11 +1304,15 @@ fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {
     component_shape_mcp::schema_for_input(mcp_input_for_filter_type(filter.filter_type()))
 }
 
-fn table_query_output_schema() -> McpSchema {
+pub fn table_query_output_schema(row_schema: Option<McpSchema>) -> McpSchema {
+    let row_items = row_schema
+        .map(McpSchema::into_value)
+        .unwrap_or_else(|| json!({}));
+
     McpSchema::new(json!({
         "type": "object",
         "properties": {
-            "rows": { "type": "array", "items": {} },
+            "rows": { "type": "array", "items": row_items },
             "total": { "type": "integer", "minimum": 0 },
             "offset": { "type": "integer", "minimum": 0 },
             "limit": {
@@ -1300,6 +1325,13 @@ fn table_query_output_schema() -> McpSchema {
         "required": ["rows", "total", "offset", "limit"],
         "additionalProperties": false
     }))
+}
+
+pub fn table_query_output_schema_for_row<Row>() -> McpSchema
+where
+    Row: McpJsonSchema,
+{
+    table_query_output_schema(Some(Row::json_schema()))
 }
 
 /// Return MCP table tool definitions, failing if duplicate tool names exist.
@@ -1324,10 +1356,30 @@ mod tests {
         McpToolInput as _, default_filter_shape_input_schema,
         register_table_prompt_templates_for_descriptor, register_table_resources_for_descriptor,
         table_descriptor_resource_value, table_prompt_names, table_prompt_text,
-        table_resource_uris, tool_name,
+        table_query_output_schema, table_query_output_schema_for_row, table_resource_uris,
+        tool_name,
     };
     use gpui_table_runtime::shape::GpuiTableFilterShape;
     use gpui_table_schema::registry::{RegistryFilterType, RustPath, RustType};
+
+    struct SchemaRow;
+
+    impl super::McpJsonSchema for SchemaRow {
+        fn json_schema() -> super::McpSchema {
+            super::McpSchema::new(serde_json::json!({
+                "type": "object",
+                "properties": {
+                    "name": { "type": "string" }
+                },
+                "required": ["name"],
+                "additionalProperties": false
+            }))
+        }
+    }
+
+    fn schema_row_schema() -> super::McpSchema {
+        <SchemaRow as super::McpJsonSchema>::json_schema()
+    }
 
     #[test]
     fn tool_names_are_stable_and_mcp_friendly() {
@@ -1366,6 +1418,30 @@ mod tests {
         assert_eq!(schema["properties"]["name"]["type"], "string");
         assert_eq!(schema["properties"]["status"]["type"], "array");
         assert_eq!(schema["properties"]["limit"]["type"], "integer");
+    }
+
+    #[test]
+    fn table_query_output_schema_uses_generic_row_items_by_default() {
+        let schema = table_query_output_schema(None);
+
+        assert_eq!(schema["type"], "object");
+        assert_eq!(schema["properties"]["rows"]["type"], "array");
+        assert_eq!(schema["properties"]["rows"]["items"], serde_json::json!({}));
+    }
+
+    #[test]
+    fn table_query_output_schema_uses_row_schema_when_available() {
+        let schema = table_query_output_schema_for_row::<SchemaRow>();
+
+        assert_eq!(schema["type"], "object");
+        assert_eq!(
+            schema["properties"]["rows"]["items"]["properties"]["name"]["type"],
+            "string"
+        );
+        assert_eq!(
+            schema["properties"]["rows"]["items"]["additionalProperties"],
+            false
+        );
     }
 
     #[test]
@@ -1424,6 +1500,31 @@ mod tests {
             })
         );
         assert_eq!(value["filters"][1]["schema"]["uniqueItems"], true);
+    }
+
+    #[test]
+    fn table_descriptor_resource_value_publishes_output_schema() {
+        let descriptor = McpTableDescriptor::new(
+            "UserRow",
+            "users",
+            "Users",
+            RustPath::from_macro_tokens_unchecked("example::tables"),
+            &[],
+            component_shape_mcp::McpToolMetadata::new(),
+        )
+        .with_row_schema(schema_row_schema);
+
+        let value = table_descriptor_resource_value(descriptor);
+
+        assert_eq!(
+            value["row_schema"]["properties"]["name"]["type"],
+            serde_json::json!("string")
+        );
+        assert_eq!(
+            value["output_schema"]["properties"]["rows"]["items"]["properties"]["name"]["type"],
+            serde_json::json!("string")
+        );
+        assert_eq!(value["output_schema"]["type"], serde_json::json!("object"));
     }
 
     #[test]
@@ -1603,6 +1704,7 @@ mod tests {
                 &[],
                 component_shape_mcp::McpToolMetadata::new(),
             )
+            .with_row_schema(schema_row_schema)
         }
 
         fn decode_query(
@@ -1624,7 +1726,7 @@ mod tests {
     }
 
     #[test]
-    fn table_query_input_pairs_descriptor_schema_with_generated_decode() {
+    fn table_query_input_pairs_typed_row_output_schema_with_tool_definition() {
         let tool = McpTableQueryInput::<TypedTable>::tool_definition().expect("tool should build");
         fn assert_typed_tool(_tool: &super::McpTypedTool<super::McpTableQueryInput<TypedTable>>) {}
         assert_typed_tool(&tool);
@@ -1632,6 +1734,11 @@ mod tests {
         assert_eq!(
             tool.output_schema.as_ref().unwrap()["properties"]["rows"]["type"],
             "array"
+        );
+        assert_eq!(
+            tool.output_schema.as_ref().unwrap()["properties"]["rows"]["items"]["properties"]["name"]
+                ["type"],
+            "string"
         );
         let annotations = tool
             .annotations

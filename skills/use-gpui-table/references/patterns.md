@@ -205,6 +205,27 @@ fn main() -> gpui_table::mcp::ServeStdioResult {
 }
 ```
 
+Add `row_schema` to `mcp(...)` when the row type also implements
+`gpui_table::mcp::McpJsonSchema` and MCP clients should discover precise
+returned row fields:
+
+```rust
+#[derive(
+    Clone,
+    gpui_table::GpuiTable,
+    gpui_table::mcp::McpJsonSchema,
+    serde::Serialize,
+)]
+#[gpui_table(mcp(row_schema))]
+struct User {
+    name: String,
+}
+```
+
+With that opt-in, generated query tools publish the row object schema under the
+standard output schema's `rows.items`; otherwise row items remain unconstrained
+for compatibility with existing serialized row handlers.
+
 Tool arguments use filter field names directly, with `limit` and `offset`
 reserved for pagination. Text filters decode from a string, faceted filters
 decode from unique `Filterable::to_filter_string()` string sets, and range
@@ -229,11 +250,11 @@ Custom query handlers can be synchronous or async and must return
 Use `query.result(rows, total)` to build the standard response from a decoded
 query.
 Use struct-level `#[gpui_table(mcp(...))]` with `name`, `title`,
-`description`, `read_only`, `destructive`, `idempotent`, and `open_world` when
-generated MCP tools need application-owned metadata or MCP tool annotation
-hints. If `description` is omitted, the derive uses the row type's Rust doc
-comment. Generated table query tools default to read-only, non-destructive, and
-idempotent annotations.
+`description`, `row_schema`, `read_only`, `destructive`, `idempotent`, and
+`open_world` when generated MCP tools need application-owned metadata, precise
+row output schemas, or MCP tool annotation hints. If `description` is omitted,
+the derive uses the row type's Rust doc comment. Generated table query tools
+default to read-only, non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
 Use `gpui_table::mcp::server()?` for the default generated server and
 `gpui_table::mcp::server_named(name, version)?` when application-owned server
@@ -248,7 +269,9 @@ Register manual handlers with
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, `.rows(rows)?`,
 `.row_source(source)?`, or
 `.row_source_async(source)?` for local rows. Manual table tool registration
-also publishes that table's descriptor and schema resources. Use
+also publishes that table's descriptor and schema resources. Manual `McpTable`
+implementations can call `McpTableDescriptor::with_row_schema(...)` to publish
+precise row output schemas. Use
 `gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
 composed server should publish inventory-discovered table resources without
 their query handlers.

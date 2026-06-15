@@ -104,7 +104,7 @@ app language enum with `#[es_fluent_language]`. The storybook binary imports
 - `examples/some-lib-tables/src/tables/user.rs`
   How generated filters are composed into a screen with `DataTable`.
 - `examples/mcp-query/src/main.rs`
-  How `#[gpui_table::mcp_query]` exposes generated filters as MCP tool arguments.
+  How `#[gpui_table::mcp_query]` exposes generated filters as MCP tool arguments and row output schemas.
 - `examples/prototyping/src/main.rs`
   A complete generator built on `TableShapeAdapter`, `TableLayout`, and `TableParts`.
 

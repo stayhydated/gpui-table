@@ -41,8 +41,22 @@ pub(super) fn generate_mcp_impl(
     let filter_values_type = quote! { #filter_values_name };
     let filters_const_ident = format_ident!("__{}GpuiTableMcpFilters", struct_name);
     let descriptor_fn_ident = format_ident!("__{}_gpui_table_mcp_descriptor", struct_name);
+    let row_schema_fn_ident = format_ident!("__{}_gpui_table_mcp_row_schema", struct_name);
     let facade_crate = resolve_crate_path("gpui-table", "::gpui_table");
     let tool_metadata = tool_metadata_tokens(&facade_crate, mcp_tool_options, original_input)?;
+    let row_schema_enabled = mcp_tool_options.is_some_and(|options| options.row_schema);
+    let row_schema_fn = row_schema_enabled.then(|| {
+        quote! {
+            #[doc(hidden)]
+            #[allow(non_snake_case)]
+            fn #row_schema_fn_ident() -> #facade_crate::mcp::McpSchema {
+                <#struct_name as #facade_crate::mcp::McpJsonSchema>::json_schema()
+            }
+        }
+    });
+    let row_schema_descriptor_chain = row_schema_enabled
+        .then(|| quote! { .with_row_schema(#row_schema_fn_ident) })
+        .unwrap_or_else(|| quote! {});
 
     let filter_descriptor_tokens = filter_fields
         .iter()
@@ -76,6 +90,8 @@ pub(super) fn generate_mcp_impl(
             #(#filter_descriptors),*
         ];
 
+        #row_schema_fn
+
         impl #facade_crate::mcp::McpTable for #struct_name {
             type FilterValues = #filter_values_type;
 
@@ -90,6 +106,7 @@ pub(super) fn generate_mcp_impl(
                     #filters_const_ident,
                     #tool_metadata,
                 )
+                #row_schema_descriptor_chain
             }
 
             fn decode_query(
@@ -541,5 +558,49 @@ fn literal_string(lit: &Lit) -> Option<String> {
         Lit::Bool(lit) => Some(lit.value.to_string()),
         Lit::Str(lit) => Some(lit.value()),
         _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn expand_with_options(options: Option<McpToolOptions>) -> String {
+        let input: DeriveInput = syn::parse_quote! {
+            struct IssueRow {
+                id: u32,
+            }
+        };
+        let expanded = generate_mcp_impl(
+            &input.ident,
+            "issues",
+            "Issues",
+            &[],
+            options.as_ref(),
+            &input,
+        )
+        .expect("MCP impl should generate");
+
+        expanded.to_string()
+    }
+
+    #[test]
+    fn mcp_row_schema_option_generates_descriptor_row_schema() {
+        let expanded = expand_with_options(Some(McpToolOptions {
+            row_schema: true,
+            ..McpToolOptions::default()
+        }));
+
+        assert!(expanded.contains("__IssueRow_gpui_table_mcp_row_schema"));
+        assert!(expanded.contains("McpJsonSchema"));
+        assert!(expanded.contains("with_row_schema"));
+    }
+
+    #[test]
+    fn mcp_row_schema_helper_is_only_generated_when_opted_in() {
+        let expanded = expand_with_options(Some(McpToolOptions::default()));
+
+        assert!(!expanded.contains("__IssueRow_gpui_table_mcp_row_schema"));
+        assert!(!expanded.contains("with_row_schema"));
     }
 }

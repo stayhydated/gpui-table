@@ -1,19 +1,20 @@
 use chrono::NaiveDate;
-use gpui_table::{Filterable, GpuiTable, TableCell};
+use gpui_table::{Filterable, GpuiTable, TableCell, mcp::McpJsonSchema};
 use serde::Serialize;
 
-#[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
+#[derive(Clone, Debug, Eq, Filterable, Hash, McpJsonSchema, PartialEq, Serialize, TableCell)]
 enum IssueState {
     Open,
     InReview,
     Closed,
 }
 
-#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[derive(Clone, Debug, GpuiTable, McpJsonSchema, Serialize)]
 #[gpui_table(
     id = "issues",
     title = "Issues",
     mcp(
+        row_schema,
         name = "mcp_query_issues",
         title = "Query issues",
         description = "Query in-memory issues with generated table filters."

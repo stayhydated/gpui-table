@@ -1,0 +1,21 @@
+error[E0277]: the trait bound `Row: McpJsonSchema` is not satisfied
+ --> tests/ui/mcp_row_schema_requires_json_schema.rs:6:8
+  |
+6 | struct Row {
+  |        ^^^ unsatisfied trait bound
+  |
+help: the trait `McpJsonSchema` is not implemented for `Row`
+ --> tests/ui/mcp_row_schema_requires_json_schema.rs:6:1
+  |
+6 | struct Row {
+  | ^^^^^^^^^^
+  = help: the following other types implement trait `McpJsonSchema`:
+            &T
+            ()
+            (A, B)
+            (A, B, C)
+            (A, B, C, D)
+            (A,)
+            BTreeMap<std::string::String, T>
+            BTreeSet<T>
+          and $N others

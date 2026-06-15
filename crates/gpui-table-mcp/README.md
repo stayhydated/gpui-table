@@ -41,6 +41,23 @@ fn main() -> gpui_table::mcp::ServeStdioResult {
 }
 ```
 
+Query tools keep `Row: serde::Serialize` as the baseline. Add `row_schema`
+when the row type also implements `McpJsonSchema` and clients should discover
+the exact shape of returned rows from `tools/list` and descriptor resources:
+
+```rs
+#[derive(gpui_table::GpuiTable, gpui_table::mcp::McpJsonSchema, serde::Serialize)]
+#[gpui_table(mcp(row_schema))]
+struct UserRow {
+    name: String,
+}
+```
+
+With that opt-in, the standard table query output schema remains an object and
+publishes the row schema under `properties.rows.items`; without it,
+`rows.items` stays `{}` for compatibility with existing serialized row
+handlers.
+
 Built-in text, faceted, number range, and date range filters are supported.
 Declare the same explicit `#[gpui_table(filter(path::ToShape))]` shape paths
 used by generated filter UI before the MCP descriptor is generated. Faceted
@@ -116,7 +133,8 @@ Generated registration also exposes JSON resources for every
 
 The descriptor resource includes table metadata, filter field types, normalized
 component-shape MCP input metadata such as scalar, set, or range, validation
-rules, and per-filter schemas. Use
+rules, per-filter schemas, the table query output schema, and the row schema
+when one is configured. Use
 `register_inventory_table_resources(&mut server)?` when a custom server should
 expose resources for all inventory-discovered tables without registering query
 handlers, or `register_table_resources::<Row>(&mut server)?` for one table.
@@ -141,7 +159,9 @@ composition uses
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>` handlers, plus
 `.rows(rows)?`, `.row_source(source)?`, or `.row_source_async(source)?` for local
 rows. Manual table tool registration also publishes that table's descriptor and
-schema resources.
+schema resources. Manual `McpTable` implementations can call
+`McpTableDescriptor::with_row_schema(...)` to publish precise row output
+schemas.
 Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
 override the generated MCP tool name, title, or description. When

@@ -13,7 +13,17 @@ use koruma::NewtypeTryFromInner as _;
 use koruma_collection::collection::LenValidation;
 use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, Serialize, TableCell)]
+#[derive(
+    Clone,
+    Debug,
+    Eq,
+    Filterable,
+    Hash,
+    gpui_table::mcp::McpJsonSchema,
+    PartialEq,
+    Serialize,
+    TableCell,
+)]
 enum UserStatus {
     Active,
     Blocked,
@@ -35,12 +45,13 @@ struct ExportArgs {
     export_mode: ExportMode,
 }
 
-#[derive(Clone, Debug, GpuiTable, Serialize)]
+#[derive(Clone, Debug, GpuiTable, gpui_table::mcp::McpJsonSchema, Serialize)]
 #[gpui_table(
     id = "users",
     title = "Users",
     filters,
     mcp(
+        row_schema,
         name = "query_users",
         title = "Query users",
         description = "Exercise explicit table MCP metadata.",
@@ -346,10 +357,20 @@ fn descriptor_uses_explicit_mcp_metadata() {
     let descriptor = UserRow::descriptor();
 
     assert_eq!(descriptor.tool_name(), "query_users");
+    assert!(descriptor.has_row_schema());
     assert_eq!(descriptor.title(), "Query users");
     assert_eq!(
         descriptor.description(),
         "Exercise explicit table MCP metadata."
+    );
+    let output_schema = descriptor.output_schema();
+    assert_eq!(
+        output_schema["properties"]["rows"]["items"]["properties"]["name"]["type"],
+        "string"
+    );
+    assert_eq!(
+        output_schema["properties"]["rows"]["items"]["properties"]["status"]["enum"],
+        json!(["Active", "Blocked"])
     );
     let annotations = descriptor.tool_annotations();
     assert_eq!(annotations.title.as_deref(), Some("Query users"));
@@ -429,6 +450,18 @@ fn inventory_exposes_generated_tool_definition() {
     assert_eq!(annotations.destructive_hint, Some(false));
     assert_eq!(annotations.idempotent_hint, Some(true));
     assert_eq!(annotations.open_world_hint, Some(true));
+    let output_schema = tool
+        .output_schema
+        .as_ref()
+        .expect("table query should publish output schema");
+    assert_eq!(
+        output_schema["properties"]["rows"]["items"]["properties"]["name"]["type"],
+        "string"
+    );
+    assert_eq!(
+        output_schema["properties"]["rows"]["items"]["properties"]["status"]["enum"],
+        json!(["Active", "Blocked"])
+    );
 }
 
 #[test]
@@ -448,6 +481,14 @@ fn inventory_exposes_pagination_only_mcp_tool_definition() {
     assert_eq!(annotations.destructive_hint, Some(false));
     assert_eq!(annotations.idempotent_hint, Some(true));
     assert_eq!(annotations.open_world_hint, None);
+    let output_schema = tool
+        .output_schema
+        .as_ref()
+        .expect("table query should publish output schema");
+    assert_eq!(
+        output_schema["properties"]["rows"]["items"],
+        serde_json::json!({})
+    );
 }
 
 #[test]

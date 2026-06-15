@@ -11,6 +11,8 @@ fn ui_compile_fail() {
     t.pass("tests/ui/mcp_filter_shape_derive.rs");
     #[cfg(feature = "mcp")]
     t.pass("tests/ui/gpui_table_filter_shape_adapter.rs");
+    #[cfg(feature = "mcp")]
+    t.compile_fail("tests/ui/mcp_row_schema_requires_json_schema.rs");
     t.compile_fail("tests/ui/duplicate_filter_shape_field.rs");
     t.compile_fail("tests/ui/bare_filter_requires_shape.rs");
     t.compile_fail("tests/ui/filter_without_struct_filters.rs");
@@ -33,9 +35,18 @@ fn ui_compile_fail() {
     t.compile_fail("tests/ui/invalid_context_menu_route_and_route_fn.rs");
     t.compile_fail("tests/ui/invalid_context_menu_multiple_id_fields.rs");
     t.compile_fail("tests/ui/invalid_filter_shape_path.rs");
+    #[cfg(not(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_text_filter_type.rs");
+    #[cfg(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb"))]
+    t.compile_fail("tests/ui/invalid_text_filter_type_all_features.rs");
+    #[cfg(not(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_faceted_filter_type.rs");
+    #[cfg(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb"))]
+    t.compile_fail("tests/ui/invalid_faceted_filter_type_all_features.rs");
+    #[cfg(not(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_faceted_option_type.rs");
+    #[cfg(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb"))]
+    t.compile_fail("tests/ui/invalid_faceted_option_type_all_features.rs");
     #[cfg(not(feature = "chrono"))]
     t.compile_fail("tests/ui/date_range_requires_chrono.rs");
 
