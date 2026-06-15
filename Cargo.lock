@@ -1413,6 +1413,7 @@ name = "component-shape"
 version = "0.1.0"
 dependencies = [
  "heck 0.5.0",
+ "strum 0.28.0",
  "syn 2.0.117",
  "thiserror 2.0.18",
 ]
@@ -1438,6 +1439,7 @@ dependencies = [
  "rust_decimal",
  "serde",
  "serde_json",
+ "strum 0.28.0",
  "thiserror 2.0.18",
  "tokio",
 ]

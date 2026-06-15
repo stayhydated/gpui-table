@@ -68,12 +68,19 @@ impl FilterVariant {
 }
 
 /// Type of filter for registry (metadata only).
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, IntoStaticStr, PartialEq)]
+#[strum(serialize_all = "snake_case", const_into_str)]
 pub enum RegistryFilterType {
     Faceted,
     DateRange,
     NumberRange,
     Text,
+}
+
+impl RegistryFilterType {
+    pub const fn as_str(self) -> &'static str {
+        self.into_str()
+    }
 }
 
 /// Metadata for a single column in a table.
@@ -158,5 +165,13 @@ mod tests {
             variant.shape_use.field_type().map(RustType::as_str),
             Some("crate::Status")
         );
+    }
+
+    #[test]
+    fn registry_filter_type_names_are_stable_schema_metadata() {
+        assert_eq!(RegistryFilterType::Faceted.as_str(), "faceted");
+        assert_eq!(RegistryFilterType::DateRange.as_str(), "date_range");
+        assert_eq!(RegistryFilterType::NumberRange.as_str(), "number_range");
+        assert_eq!(RegistryFilterType::Text.as_str(), "text");
     }
 }

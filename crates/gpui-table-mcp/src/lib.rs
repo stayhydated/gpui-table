@@ -842,7 +842,7 @@ fn schema_for_filter(filter: McpTableFilter) -> McpSchema {
         );
         object.insert(
             "x-gpuiTableFilterType".to_string(),
-            Value::String(filter_type_name(filter.filter_type()).to_string()),
+            Value::String(filter.filter_type().as_str().to_string()),
         );
         component_shape_mcp::apply_validation_schema_metadata(
             object,
@@ -875,15 +875,6 @@ fn table_query_output_schema() -> McpSchema {
         "required": ["rows", "total", "offset", "limit"],
         "additionalProperties": false
     }))
-}
-
-fn filter_type_name(filter_type: RegistryFilterType) -> &'static str {
-    match filter_type {
-        RegistryFilterType::Faceted => "faceted",
-        RegistryFilterType::DateRange => "date_range",
-        RegistryFilterType::NumberRange => "number_range",
-        RegistryFilterType::Text => "text",
-    }
 }
 
 /// Return MCP table tool definitions, failing if duplicate tool names exist.
