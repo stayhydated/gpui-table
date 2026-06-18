@@ -75,7 +75,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
                                 quote! {
-                                    gpui_table::runtime::generated_filters::localize_message(cx, self)
+                                    gpui_table::component::i18n::localize_message(cx, self)
                                         .into_any_element()
                                 }
                             } else if use_display_for_unit_variants {

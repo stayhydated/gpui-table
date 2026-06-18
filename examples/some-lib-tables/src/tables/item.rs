@@ -14,7 +14,7 @@ pub struct ItemTableStory {
 }
 impl gpui_storybook::Story for ItemTableStory {
     fn title(cx: &gpui::App) -> String {
-        gpui_table::runtime::generated_filters::localize_label::<Item>(cx)
+        gpui_table::component::i18n::localize_label::<Item>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

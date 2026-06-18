@@ -180,7 +180,7 @@ pub(super) struct TableColumn {
     pub(super) movable: Option<bool>,
     pub(super) skip: bool,
     /// Explicit filter shape path.
-    /// Example: `filter(gpui_table::runtime::shape::TextFilter)`
+    /// Example: `filter(gpui_table_component::TextFilter)`
     pub(super) filter: Option<FilterShapeOptions>,
     /// Koruma validators applied to the decoded MCP filter argument.
     pub(super) validation: Option<FilterValidation>,
@@ -456,7 +456,7 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
     if meta.input.is_empty() {
         return Err(meta.error(
-            "expected explicit filter shape, e.g. `filter(gpui_table::runtime::shape::TextFilter)`",
+            "expected explicit filter shape, e.g. `filter(gpui_table_component::TextFilter)`",
         ));
     }
 

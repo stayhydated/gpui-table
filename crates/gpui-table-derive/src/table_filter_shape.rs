@@ -497,7 +497,7 @@ mod tests {
     fn derive_emits_runtime_shape_and_field_support() {
         let input: DeriveInput = parse_quote! {
             #[gpui_table_filter_shape(
-                base = gpui_table::runtime::shape::TextFilter,
+                base = gpui_table_component::TextFilter,
                 raw_value = PrefixText,
                 fields(String, Option<String>),
                 into_base = |value: PrefixText| value.0,
@@ -523,7 +523,7 @@ mod tests {
     fn derive_emits_koruma_newtype_field_support() {
         let input: DeriveInput = parse_quote! {
             #[gpui_table_filter_shape(
-                base = gpui_table::runtime::shape::TextFilter,
+                base = gpui_table_component::TextFilter,
                 field = Email,
                 koruma_newtype
             )]
@@ -564,7 +564,7 @@ mod tests {
     fn fields_requires_values() {
         let input: DeriveInput = parse_quote! {
             #[gpui_table_filter_shape(
-                base = gpui_table::runtime::shape::TextFilter,
+                base = gpui_table_component::TextFilter,
                 fields()
             )]
             struct PrefixTextFilter;
@@ -586,7 +586,7 @@ mod tests {
     fn duplicate_fields_are_rejected() {
         let input: DeriveInput = parse_quote! {
             #[gpui_table_filter_shape(
-                base = gpui_table::runtime::shape::TextFilter,
+                base = gpui_table_component::TextFilter,
                 field = String,
                 fields(String)
             )]

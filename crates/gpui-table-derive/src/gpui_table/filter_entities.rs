@@ -156,13 +156,13 @@ pub(super) fn generate_filter_entities(
         "Build filters and wire them directly into a generated table delegate for client-side filtering.\n\nOn each filter change this reads `{filter_values_name}`, calls `table.delegate_mut().set_filter_values(...)`, and notifies the table so generated `Matchable` logic re-runs against the in-memory rows."
     );
     let build_for_table_loader_doc = format!(
-        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports it."
+        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table::component::QueryFilterValue::to_query_string()` when the wrapped type supports it."
     );
     let build_for_table_loader_with_doc = format!(
         "Same as `build_for_table_loader(...)`, but lets callers customize delegate state just before each `load_data(...)` call.\n\nThe optional `before_reload` hook runs before every reload, including the initial one. This is useful when `{filter_values_name}` changes should also clear cached rows, paging cursors, or other delegate-owned request state."
     );
     let read_values_doc = format!(
-        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
+        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table::component::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
     );
     let filter_values_doc = format!(
         "Typed filter state produced by `{filter_entities_name}`.\n\nEach field uses a wrapper from `gpui_table::core::filter` (`TextValue`, `RangeValue<_>`, `FacetedValue<_>`, or `SingleValue<_>`), which is the shape consumed by generated client-side matching and stored on generated delegates for loader-based tables."
@@ -340,9 +340,9 @@ pub(super) fn generate_filter_entities(
             }
 
             /// Build a localized reset button bound to these filter entities.
-            pub fn reset_button(&self) -> gpui_table::runtime::generated_filters::reset_filters::ResetFilters {
+            pub fn reset_button(&self) -> gpui_table::component::reset_filters::ResetFilters {
                 let filters = self.clone();
-                gpui_table::runtime::generated_filters::reset_filters::ResetFilters::new(move |window, cx| {
+                gpui_table::component::reset_filters::ResetFilters::new(move |window, cx| {
                     filters.reset_filters(window, cx);
                 })
                 .button_id(format!("{}-reset-filters", stringify!(#struct_name)))
@@ -441,7 +441,7 @@ fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
 }
 
 fn filter_value_query_doc(_field: &FilterFieldMeta) -> String {
-    "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string()
+    "This wrapper can be serialized with `gpui_table::component::QueryFilterValue` for loader-style query building.".to_string()
 }
 
 fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
@@ -484,7 +484,7 @@ fn determine_filter_title_expr(
         let fluent_variant_ident = Ident::new(&field_name, field_ident.span());
 
         quote! {
-            gpui_table::runtime::generated_filters::localize_message(
+            gpui_table::component::i18n::localize_message(
                 cx,
                 &#fluent_enum_ident::#fluent_variant_ident
             )

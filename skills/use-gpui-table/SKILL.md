@@ -39,8 +39,9 @@ derives, generated types, and runtime helpers:
 2. Define row structs with `#[derive(Clone, GpuiTable)]`.
 3. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
-   context menu behavior. Declare filters explicitly with
-   `filter(gpui_table::runtime::shape::<Shape>)` or a custom shape path.
+   context menu behavior. Declare built-in filters explicitly with
+   `filter(gpui_table_component::<Shape>)`; use the same shape-path form for
+   custom filters.
 4. Use `#[derive(Filterable)]` for faceted enums. Include
    `Clone + Eq + Hash + PartialEq`; add `#[filter(fluent)]` only when labels
    come from `es-fluent`.
@@ -168,12 +169,12 @@ Generated names follow the row type:
 
 Declare built-in filters explicitly:
 
-- `filter(gpui_table::runtime::shape::TextFilter)` for string search.
-- `filter(gpui_table::runtime::shape::FacetedFilter::<T>)` for enum-like `T`,
+- `filter(gpui_table_component::TextFilter)` for string search.
+- `filter(gpui_table_component::FacetedFilter::<T>)` for enum-like `T`,
   `Option<T>`, or `Vec<T>` fields when `T` derives or implements
   `Filterable`.
-- `filter(gpui_table::runtime::shape::NumberRangeFilter)` for numeric ranges.
-- `filter(gpui_table::runtime::shape::DateRangeFilter)` for temporal ranges.
+- `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges.
+- `filter(gpui_table_component::DateRangeFilter)` for temporal ranges.
 
 Use the same `filter(path::ToShape)` form for custom shapes.
 

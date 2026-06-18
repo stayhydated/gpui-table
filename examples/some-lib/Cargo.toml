@@ -18,6 +18,7 @@ client = [
   "dep:gpui",
   "dep:gpui-component",
   "dep:gpui-table",
+  "dep:gpui-table-component",
   "dep:rust_decimal",
   "dep:serde",
   "dep:strum",
@@ -47,6 +48,7 @@ gpui-table = { features = [
   "rust_decimal",
   "chrono",
 ], optional = true, workspace = true }
+gpui-table-component = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
 strum = { optional = true, workspace = true }

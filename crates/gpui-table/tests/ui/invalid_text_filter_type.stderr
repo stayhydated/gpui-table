@@ -6,13 +6,13 @@ error[E0277]: table filter shape `TextFilter` does not support field value `bool
   |
   = note: implement `GpuiTableFilterShapeFor<bool>` for `TextFilter`, or choose a filter shape that supports the field type
 help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-runtime/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
   |
-  | impl GpuiTableFilterShapeFor<String> for gpui_table_component::TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
+  | impl GpuiTableFilterShapeFor<String> for TextFilter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
 ...
-  | impl GpuiTableFilterShapeFor<Option<String>> for gpui_table_component::TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::option::Option<std::string::String>>`
+  | impl GpuiTableFilterShapeFor<Option<String>> for TextFilter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<Option<std::string::String>>`
 note: required by a bound in `__gpui_table_assert_active_filter_shape_field_support`
  --> tests/ui/invalid_text_filter_type.rs:6:25
   |
@@ -27,10 +27,10 @@ error[E0277]: table filter shape `TextFilter` does not support field value `bool
   |
   = note: implement `GpuiTableFilterShapeFor<bool>` for `TextFilter`, or choose a filter shape that supports the field type
 help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-runtime/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
   |
-  | impl GpuiTableFilterShapeFor<String> for gpui_table_component::TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
+  | impl GpuiTableFilterShapeFor<String> for TextFilter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
 ...
-  | impl GpuiTableFilterShapeFor<Option<String>> for gpui_table_component::TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::option::Option<std::string::String>>`
+  | impl GpuiTableFilterShapeFor<Option<String>> for TextFilter {
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<Option<std::string::String>>`

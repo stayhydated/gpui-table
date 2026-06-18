@@ -2,6 +2,7 @@
 //!
 //! Public API is namespaced by responsibility:
 //! - `gpui_table::core` for pure filter semantics
+//! - `gpui_table::component` for built-in GPUI filter widgets and shape impls
 //! - `gpui_table::mcp` for experimental MCP table query integration
 //! - `gpui_table::runtime` for GPUI-facing traits/helpers
 //! - `gpui_table::schema` for metadata and registry types
@@ -37,6 +38,7 @@
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
 
+pub use gpui_table_component as component;
 pub use gpui_table_core as core;
 pub use gpui_table_core::filter;
 #[cfg(feature = "mcp")]

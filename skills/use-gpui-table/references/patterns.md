@@ -7,6 +7,7 @@ Load this reference when implementing user-facing application tables, filters, l
 ```toml
 [dependencies]
 gpui-table = { version = "*", features = ["fluent", "rust_decimal"] }
+gpui-table-component = { version = "*" }
 ```
 
 - `derive` and `chrono` are default features.
@@ -33,13 +34,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(gpui_table::runtime::shape::TextFilter))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(gpui_table::runtime::shape::NumberRangeFilter))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -64,16 +65,16 @@ With `#[gpui_table(filters)]`, the derive generates:
 ## Built-In Filter Shapes
 
 ```rust
-#[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+#[gpui_table(filter(gpui_table_component::TextFilter))]
 name: String,
 
-#[gpui_table(filter(gpui_table::runtime::shape::NumberRangeFilter))]
+#[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
 age: u8,
 
-#[gpui_table(filter(gpui_table::runtime::shape::DateRangeFilter))]
+#[gpui_table(filter(gpui_table_component::DateRangeFilter))]
 created_at: chrono::DateTime<chrono::Utc>,
 
-#[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
+#[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
 status: UserStatus,
 ```
 
@@ -114,7 +115,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```
@@ -191,7 +192,7 @@ struct-level `filters`.
 #[derive(Clone, gpui_table::GpuiTable, serde::Serialize)]
 #[gpui_table(mcp)]
 struct User {
-    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    #[gpui_table(filter(gpui_table_component::TextFilter))]
     name: String,
 }
 

@@ -400,7 +400,7 @@ pub(super) fn expand_gpui_table(
         Some(Override::Explicit(_)) | Some(Override::Inherit) => {
             quote! {
                 fn table_title() -> String {
-                    gpui_table::runtime::generated_filters::fallback_label::<Self>()
+                    gpui_table::component::i18n::fallback_label::<Self>()
                 }
             }
         },
@@ -630,7 +630,7 @@ fn determine_title_expr(
         let fluent_variant_ident = Ident::new(&field_name, ident.span());
 
         quote! {
-            gpui_table::runtime::generated_filters::fallback_message(
+            gpui_table::component::i18n::fallback_message(
                 &#fluent_enum_ident::#fluent_variant_ident
             )
         }

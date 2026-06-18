@@ -5,10 +5,11 @@
 //! when applications need direct widget composition; most derive-based tables
 //! should reach it through `gpui-table`.
 //!
-//! Generated filter entities do not construct widgets through ad hoc paths.
-//! They target `gpui_table::runtime::generated_filters` and the runtime shape
-//! contract. Manual filter collections can use [`TableFilterComponent`] and
-//! [`QueryFilterValue`] directly.
+//! Built-in filter types also implement the runtime table filter shape
+//! contract, so they can be used directly in
+//! `#[gpui_table(filter(gpui_table_component::TextFilter))]`. Manual filter
+//! collections can use [`TableFilterComponent`] and [`QueryFilterValue`]
+//! directly.
 
 #[cfg(feature = "chrono")]
 pub mod date_range_filter;
@@ -17,6 +18,7 @@ pub mod i18n;
 #[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
+mod shape;
 #[cfg(feature = "story")]
 mod stories;
 pub mod table_status_bar;
@@ -224,6 +226,9 @@ where
 mod tests {
     use super::{FacetedFilter, QueryFilterValue, TextFilter};
     use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
+    use gpui_table_runtime::shape::{
+        DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeFor,
+    };
     use std::collections::HashSet;
 
     #[derive(Clone, Eq, Hash, PartialEq)]
@@ -301,17 +306,29 @@ mod tests {
     {
     }
 
+    fn assert_table_filter_shape<Shape, Value>()
+    where
+        Shape: DeclaredGpuiTableFilterShape + GpuiTableFilterShape + GpuiTableFilterShapeFor<Value>,
+    {
+    }
+
     #[test]
     fn built_in_filters_publish_neutral_shape_markers() {
         assert_declared::<TextFilter>();
         assert_shape_for::<TextFilter, String>();
         assert_shape_for::<TextFilter, Option<String>>();
+        assert_table_filter_shape::<TextFilter, String>();
+        assert_table_filter_shape::<TextFilter, Option<String>>();
 
         assert_declared::<FacetedFilter<bool>>();
         assert_shape_for::<FacetedFilter<bool>, bool>();
         assert_shape_for::<FacetedFilter<bool>, Option<bool>>();
         assert_shape_for::<FacetedFilter<bool>, Vec<bool>>();
         assert_shape_for::<FacetedFilter<bool>, Option<Vec<bool>>>();
+        assert_table_filter_shape::<FacetedFilter<bool>, bool>();
+        assert_table_filter_shape::<FacetedFilter<bool>, Option<bool>>();
+        assert_table_filter_shape::<FacetedFilter<bool>, Vec<bool>>();
+        assert_table_filter_shape::<FacetedFilter<bool>, Option<Vec<bool>>>();
 
         #[cfg(feature = "rust_decimal")]
         {
@@ -321,6 +338,9 @@ mod tests {
             assert_shape_for::<NumberRangeFilter, i64>();
             assert_shape_for::<NumberRangeFilter, Option<i64>>();
             assert_shape_for::<NumberRangeFilter, rust_decimal::Decimal>();
+            assert_table_filter_shape::<NumberRangeFilter, i64>();
+            assert_table_filter_shape::<NumberRangeFilter, Option<i64>>();
+            assert_table_filter_shape::<NumberRangeFilter, rust_decimal::Decimal>();
         }
 
         #[cfg(feature = "chrono")]
@@ -331,6 +351,9 @@ mod tests {
             assert_shape_for::<DateRangeFilter, chrono::NaiveDate>();
             assert_shape_for::<DateRangeFilter, Option<chrono::NaiveDate>>();
             assert_shape_for::<DateRangeFilter, chrono::NaiveDateTime>();
+            assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDate>();
+            assert_table_filter_shape::<DateRangeFilter, Option<chrono::NaiveDate>>();
+            assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDateTime>();
         }
     }
 }

@@ -2,7 +2,7 @@ use gpui_table::{GpuiTable, GpuiTableFilterShape};
 
 #[derive(GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
-    base = gpui_table::runtime::shape::TextFilter,
+    base = gpui_table_component::TextFilter,
     field = String
 )]
 struct RuntimeTextFilter;

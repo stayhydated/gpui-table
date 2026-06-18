@@ -1,4 +1,4 @@
-error: expected explicit filter shape, e.g. `filter(gpui_table::runtime::shape::TextFilter)`
+error: expected explicit filter shape, e.g. `filter(gpui_table_component::TextFilter)`
  --> tests/ui/bare_filter_requires_shape.rs:6:18
   |
 6 |     #[gpui_table(filter)]

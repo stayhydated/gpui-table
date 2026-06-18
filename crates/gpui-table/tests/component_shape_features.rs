@@ -13,10 +13,10 @@ where
 
 #[test]
 fn facade_runtime_accepts_builtin_text_filter_shape() {
-    assert_filter_shape::<gpui_table::runtime::shape::TextFilter, String>();
+    assert_filter_shape::<gpui_table_component::TextFilter, String>();
 
     assert_eq!(
-        <gpui_table::runtime::shape::TextFilter as ComponentShapeMetadata>::MCP_INPUT.input_shape(),
+        <gpui_table_component::TextFilter as ComponentShapeMetadata>::MCP_INPUT.input_shape(),
         McpInputShape::Scalar(McpPrimitiveKind::String)
     );
 }
@@ -24,11 +24,10 @@ fn facade_runtime_accepts_builtin_text_filter_shape() {
 #[cfg(feature = "chrono")]
 #[test]
 fn facade_runtime_accepts_builtin_date_range_filter_shape_when_enabled() {
-    assert_filter_shape::<gpui_table::runtime::shape::DateRangeFilter, chrono::NaiveDate>();
+    assert_filter_shape::<gpui_table_component::DateRangeFilter, chrono::NaiveDate>();
 
     assert_eq!(
-        <gpui_table::runtime::shape::DateRangeFilter as ComponentShapeMetadata>::MCP_INPUT
-            .input_shape(),
+        <gpui_table_component::DateRangeFilter as ComponentShapeMetadata>::MCP_INPUT.input_shape(),
         McpInputShape::Range(McpRangeBoundKind::Date)
     );
 }
@@ -36,10 +35,10 @@ fn facade_runtime_accepts_builtin_date_range_filter_shape_when_enabled() {
 #[cfg(feature = "rust_decimal")]
 #[test]
 fn facade_runtime_accepts_builtin_number_range_filter_shape_when_enabled() {
-    assert_filter_shape::<gpui_table::runtime::shape::NumberRangeFilter, rust_decimal::Decimal>();
+    assert_filter_shape::<gpui_table_component::NumberRangeFilter, rust_decimal::Decimal>();
 
     assert_eq!(
-        <gpui_table::runtime::shape::NumberRangeFilter as ComponentShapeMetadata>::MCP_INPUT
+        <gpui_table_component::NumberRangeFilter as ComponentShapeMetadata>::MCP_INPUT
             .input_shape(),
         McpInputShape::Range(McpRangeBoundKind::Decimal)
     );

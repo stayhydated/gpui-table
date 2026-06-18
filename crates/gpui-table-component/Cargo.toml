@@ -15,10 +15,25 @@ path = "src/bin/story.rs"
 required-features = [ "story" ]
 
 [features]
-chrono = [ "dep:chrono", "dep:icu", "dep:jiff" ]
+chrono = [
+  "dep:chrono",
+  "dep:icu",
+  "dep:jiff",
+  "gpui-table-core/chrono",
+  "gpui-table-runtime/chrono",
+]
 default = [ "chrono", "rust_decimal" ]
-rust_decimal = [ "dep:rust_decimal" ]
-spacetimedb = [ "chrono", "dep:spacetimedb-lib" ]
+rust_decimal = [
+  "dep:rust_decimal",
+  "gpui-table-core/rust_decimal",
+  "gpui-table-runtime/rust_decimal",
+]
+spacetimedb = [
+  "chrono",
+  "dep:spacetimedb-lib",
+  "gpui-table-core/spacetimedb",
+  "gpui-table-runtime/spacetimedb",
+]
 story = [
   "chrono",
   "rust_decimal",
@@ -39,6 +54,7 @@ gpui-component = { workspace = true }
 gpui-es-fluent = { features = [ "component" ], workspace = true }
 gpui-storybook = { optional = true, workspace = true }
 gpui-table-core = { default-features = false, features = [ "fluent" ], workspace = true }
+gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 gpui_platform = { optional = true, workspace = true }
 icu = { optional = true, workspace = true }

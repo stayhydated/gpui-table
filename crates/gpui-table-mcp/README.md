@@ -81,7 +81,7 @@ struct PrefixText(String);
 
 #[derive(gpui_table::GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
-    base = gpui_table::runtime::shape::TextFilter,
+    base = gpui_table_component::TextFilter,
     raw_value = PrefixText,
     field = String,
     into_base = |value: PrefixText| value.0,

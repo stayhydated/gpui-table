@@ -19,6 +19,7 @@ The project is organized around three priorities:
 ```toml
 [dependencies]
 gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"] }
+gpui-table-component = { version = "*" }
 ```
 
 ## Dependency Matrix
@@ -40,7 +41,9 @@ gpui-table = { version = "*", features = ["fluent", "inventory", "rust_decimal"]
 
 ## Quick Start
 
-`gpui_table_component::NumberRangeFilter` requires the `rust_decimal` feature.
+Built-in filters are declared through the component crate. For example,
+`gpui_table_component::NumberRangeFilter` requires the `gpui-table`
+`rust_decimal` feature.
 
 ```rs
 use gpui::{Context, Window};
@@ -57,13 +60,13 @@ pub enum UserStatus {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(gpui_table::runtime::shape::TextFilter))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(gpui_table::runtime::shape::NumberRangeFilter))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 
@@ -84,10 +87,10 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
 Field-level filters require an explicit shape path:
-`filter(gpui_table::runtime::shape::TextFilter)` for strings,
-`filter(gpui_table::runtime::shape::NumberRangeFilter)` for numeric ranges,
-`filter(gpui_table::runtime::shape::DateRangeFilter)` for date ranges, and
-`filter(gpui_table::runtime::shape::FacetedFilter::<T>)` for faceted values.
+`filter(gpui_table_component::TextFilter)` for strings,
+`filter(gpui_table_component::NumberRangeFilter)` for numeric ranges,
+`filter(gpui_table_component::DateRangeFilter)` for date ranges, and
+`filter(gpui_table_component::FacetedFilter::<T>)` for faceted values.
 Use the same form for custom shapes.
 
 Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
@@ -148,7 +151,7 @@ use koruma_collection::collection::LenValidation;
 #[derive(Clone, Debug, gpui_table::GpuiTable, serde::Serialize)]
 #[gpui_table(mcp)]
 struct User {
-    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    #[gpui_table(filter(gpui_table_component::TextFilter))]
     #[koruma(LenValidation::<_>::min(2).max(64))]
     name: String,
 }
@@ -293,7 +296,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<UserStatus>))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
     pub status: UserStatus,
 }
 ```

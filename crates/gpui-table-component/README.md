@@ -45,7 +45,12 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `TableStatusBar`
 
 The filter component types are also the built-in `#[gpui_table(filter(...))]`
-shape types consumed through `gpui-table-runtime`.
+shape types:
+
+```rs
+#[gpui_table(filter(gpui_table_component::TextFilter))]
+name: String,
+```
 
 All filter widgets expose chainable extension-trait setters for styling or
 behavior tweaks.
@@ -62,14 +67,15 @@ gpui_table_component::i18n::set_locale(cx, "en")?;
 ```
 
 Generated filter flows call the same localization helpers through
-`gpui_table::runtime::generated_filters`. Runtime widget text reads the
+`gpui_table::component::i18n`. Runtime widget text reads the
 `EmbeddedI18n` handle from GPUI global state; context-free metadata such as
 storybook titles uses explicit fallback helpers.
 
 ## Interop With Generated Tables
 
-The derive-generated filter code targets this crate through
-`gpui_table::runtime::generated_filters`.
+The derive-generated filter code constructs filter widgets through
+`gpui_table::runtime::shape::GpuiTableFilterShape`; this crate supplies those
+impls for the built-in filter widgets.
 
 That means you can:
 

@@ -6,24 +6,24 @@ error[E0277]: table filter shape `FacetedFilter<bool>` does not support field va
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
 help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-runtime/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
   |
-  | / impl<T> GpuiTableFilterShapeFor<T> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<T>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<T>>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<Vec<T>>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<Vec<T>>>`
@@ -41,24 +41,24 @@ error[E0277]: table filter shape `FacetedFilter<bool>` does not support field va
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
 help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-runtime/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
   |
-  | / impl<T> GpuiTableFilterShapeFor<T> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<T>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<T>>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<Vec<T>>`
 ...
-  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for gpui_table_component::FacetedFilter<T>
+  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
   | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<Vec<T>>>`

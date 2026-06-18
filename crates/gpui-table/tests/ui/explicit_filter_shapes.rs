@@ -10,16 +10,16 @@ enum Status {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct User {
-    #[gpui_table(filter(gpui_table::runtime::shape::TextFilter))]
+    #[gpui_table(filter(gpui_table_component::TextFilter))]
     name: String,
 
-    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<Status>))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>))]
     status: Status,
 
-    #[gpui_table(filter(gpui_table::runtime::shape::FacetedFilter::<Status>))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>))]
     status_history: Vec<Status>,
 
-    #[gpui_table(filter(gpui_table::runtime::shape::DateRangeFilter))]
+    #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
     created_on: NaiveDate,
 }
 
