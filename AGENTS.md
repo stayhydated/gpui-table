@@ -32,14 +32,16 @@ Before editing, classify the change:
 1. **Find the surface in the workspace map.** Use its audience label to decide
    how much public explanation the change needs.
 2. **Place documentation by content, not by crate audience.** README files,
-   `examples/README.md`, and `skills/use-gpui-table` are user-facing. Internal
+   `examples/README.md`, `skills/use-gpui-table`, and
+   `skills/use-gpui-table-component-shapes` are user-facing. Internal
    contracts belong next to code in rustdoc, tests, snapshots, or this routing
    guide.
 3. **Sync public workflow changes.** If derive syntax, generated filter
    behavior, registry metadata shape, feature flags, generated output,
    localization, or recommended usage changes, update the relevant README,
-   example, rustdoc, generated surface, and `skills/use-gpui-table` guidance in
-   the same change when applicable.
+   example, rustdoc, generated surface, `skills/use-gpui-table`, and
+   `skills/use-gpui-table-component-shapes` guidance in the same change when
+   applicable.
 4. **Validate narrowly.** Run the smallest command that proves the edited
    behavior or documentation surface is still sound.
 
@@ -61,7 +63,8 @@ Treat these surfaces as user-facing:
 - crate-level `README.md` files,
 - `examples/some-lib` and `examples/some-lib-tables`,
 - `examples/mcp-query`,
-- `skills/use-gpui-table`.
+- `skills/use-gpui-table`,
+- `skills/use-gpui-table-component-shapes`.
 
 Even README files for public-integration crates should explain:
 
@@ -85,13 +88,14 @@ recreate long design notes here.
 
 ### Skill Guidance
 
-`skills/use-gpui-table` is public application-developer guidance, not repo-local
-maintenance guidance. Keep maintainer-only details in this guide, source
-rustdocs, tests, or generated fixtures.
+`skills/use-gpui-table` and `skills/use-gpui-table-component-shapes` are public
+application-developer guidance, not repo-local maintenance guidance. Keep
+maintainer-only details in this guide, source rustdocs, tests, or generated
+fixtures.
 
-Update it when user-facing workflows, derive syntax, generated filter behavior,
-registry metadata, generated output, localization patterns, feature flags, or
-recommended usage change.
+Update them when user-facing workflows, derive syntax, generated filter
+behavior, registry metadata, generated output, localization patterns, feature
+flags, or recommended usage change.
 
 ## Synchronization Rules
 
@@ -102,7 +106,8 @@ user-visible API shape:
 1. Update the root `README.md`.
 2. Update the affected crate `README.md` files.
 3. Update `examples/README.md` and the relevant example crates when behavior is demonstrated there.
-4. Update `skills/use-gpui-table` when public usage guidance changes.
+4. Update `skills/use-gpui-table` and `skills/use-gpui-table-component-shapes`
+   when public usage guidance changes.
 5. Keep these surfaces aligned in the same change unless there is a documented reason not to.
 
 `examples/some-lib` and `examples/some-lib-tables` are the canonical
@@ -214,7 +219,7 @@ crate-level or module rustdocs when they describe the affected contract.
   when the detail changes contributor routing.
 - Prefer examples over prose-only explanations.
 - Sync the root `README.md`, affected crate `README.md` files,
-  `examples/README.md`, and `skills/use-gpui-table` when public behavior
+  `examples/README.md`, and relevant `skills/*` guidance when public behavior
   changes.
 - If the change affects runnable flows, update the relevant example crates too.
 
