@@ -1262,17 +1262,11 @@ fn input_schema_for_filters(filters: &[McpTableFilter]) -> McpSchema {
 
     properties.insert(
         "limit".to_string(),
-        McpSchema::new(json!({
-            "type": "integer",
-            "minimum": 0
-        })),
+        McpSchema::integer().with_minimum(0_u64),
     );
     properties.insert(
         "offset".to_string(),
-        McpSchema::new(json!({
-            "type": "integer",
-            "minimum": 0
-        })),
+        McpSchema::integer().with_minimum(0_u64),
     );
 
     component_shape_mcp::object_schema(properties, std::iter::empty::<&'static str>())
@@ -1305,26 +1299,23 @@ fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {
 }
 
 pub fn table_query_output_schema(row_schema: Option<McpSchema>) -> McpSchema {
-    let row_items = row_schema
-        .map(McpSchema::into_value)
-        .unwrap_or_else(|| json!({}));
+    let row_items = row_schema.unwrap_or_else(McpSchema::any);
+    let mut properties = McpSchemaProperties::new();
+    properties.insert("rows".to_string(), McpSchema::array(row_items));
+    properties.insert(
+        "total".to_string(),
+        McpSchema::integer().with_minimum(0_u64),
+    );
+    properties.insert(
+        "offset".to_string(),
+        McpSchema::integer().with_minimum(0_u64),
+    );
+    properties.insert(
+        "limit".to_string(),
+        McpSchema::any_of([McpSchema::integer().with_minimum(0_u64), McpSchema::null()]),
+    );
 
-    McpSchema::new(json!({
-        "type": "object",
-        "properties": {
-            "rows": { "type": "array", "items": row_items },
-            "total": { "type": "integer", "minimum": 0 },
-            "offset": { "type": "integer", "minimum": 0 },
-            "limit": {
-                "anyOf": [
-                    { "type": "integer", "minimum": 0 },
-                    { "type": "null" }
-                ]
-            }
-        },
-        "required": ["rows", "total", "offset", "limit"],
-        "additionalProperties": false
-    }))
+    component_shape_mcp::object_schema(properties, ["rows", "total", "offset", "limit"])
 }
 
 pub fn table_query_output_schema_for_row<Row>() -> McpSchema
@@ -1366,14 +1357,9 @@ mod tests {
 
     impl super::McpJsonSchema for SchemaRow {
         fn json_schema() -> super::McpSchema {
-            super::McpSchema::new(serde_json::json!({
-                "type": "object",
-                "properties": {
-                    "name": { "type": "string" }
-                },
-                "required": ["name"],
-                "additionalProperties": false
-            }))
+            let mut properties = super::McpSchemaProperties::new();
+            properties.insert("name".to_string(), super::McpSchema::string());
+            super::object_schema(properties, ["name"])
         }
     }
 

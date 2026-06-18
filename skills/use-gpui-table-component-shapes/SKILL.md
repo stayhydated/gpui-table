@@ -88,9 +88,7 @@ pub struct PrefixText(String);
 
 impl gpui_table::mcp::McpToolValue for PrefixText {
     fn tool_value_schema() -> gpui_table::mcp::McpSchema {
-        gpui_table::mcp::McpSchema::new(gpui_table::mcp::serde_json::json!({
-            "type": "string"
-        }))
+        gpui_table::mcp::McpSchema::string()
     }
 
     fn from_tool_value(
