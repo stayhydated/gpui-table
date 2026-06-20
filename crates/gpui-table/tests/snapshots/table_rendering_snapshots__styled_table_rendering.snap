@@ -4,6 +4,7 @@ assertion_line: 93
 expression: "table_snapshot::<StyledRow>()"
 ---
 table_id: custom-row
+typed_table_id: custom-row
 title: Custom Row Table
 columns:
   - key: name

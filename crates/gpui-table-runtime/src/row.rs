@@ -1,6 +1,6 @@
 use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
 use gpui_component::{menu::PopupMenu, table::Column};
-use gpui_table_schema::filter::FilterConfig;
+use gpui_table_schema::{filter::FilterConfig, registry::TableId};
 
 use crate::TableCell;
 
@@ -16,6 +16,11 @@ pub trait TableRowMeta {
     /// for example from localization libraries.
     fn table_title() -> String {
         Self::TABLE_TITLE.to_string()
+    }
+
+    /// Returns the typed table identifier.
+    fn table_id() -> TableId<'static> {
+        TableId::new(Self::TABLE_ID)
     }
 
     /// Returns the column definitions for this row type.

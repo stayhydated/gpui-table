@@ -86,6 +86,13 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `UserFilterValues` for typed filter state
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
+The generated `TableRowMeta::TABLE_ID` defaults to the row type name converted to
+snake_case, such as `user` for `User` and `purchase_order` for
+`PurchaseOrder`. Use `#[gpui_table(id = "...")]` when a table needs a stable
+external identifier that does not follow the snake_case Rust type name. Use
+`TableRowMeta::table_id()` when callers need the typed `TableId` wrapper instead
+of the raw string constant.
+
 Field-level filters require an explicit shape path:
 `filter(gpui_table_component::TextFilter)` for strings,
 `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges,

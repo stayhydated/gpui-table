@@ -452,14 +452,14 @@ impl TableShape for TableShapeAdapter<'_> {
 mod tests {
     use super::*;
     use gpui_table_schema::registry::{
-        ComponentShapeUse, FilterVariant, RegistryFilterType, RustPath,
+        ComponentFieldName, ComponentShapeUse, FilterVariant, RegistryFilterType, RustPath,
     };
 
     #[test]
     fn try_parts_rejects_invalid_manual_filter_field_identifiers() {
         static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
             ComponentShapeUse::new(
-                "invalid field",
+                ComponentFieldName::new("invalid field"),
                 RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
             ),
             RegistryFilterType::Text,

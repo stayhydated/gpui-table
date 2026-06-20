@@ -15,6 +15,8 @@ integrating with the proc-macro layer directly.
 Generates the typed table delegate, column enum, row metadata, optional filter
 entities/values, optional inventory registration, and optional MCP table query
 registration for a row struct.
+Unless `#[gpui_table(id = "...")]` is set, generated `TableRowMeta::TABLE_ID`
+uses the row type name in snake_case.
 
 ```rs
 use gpui_table::GpuiTable;

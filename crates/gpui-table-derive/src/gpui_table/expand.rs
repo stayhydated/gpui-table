@@ -9,7 +9,7 @@ use crate::gpui_table::mcp::generate_mcp_impl;
 use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
 
 use darling::util::Override;
-use heck::{ToPascalCase as _, ToTitleCase as _};
+use heck::{ToPascalCase as _, ToSnakeCase as _, ToTitleCase as _};
 #[cfg(feature = "inventory")]
 use quote::ToTokens as _;
 use quote::quote;
@@ -55,7 +55,7 @@ pub(super) fn expand_gpui_table(
     }
     let filters_effective = filters_enabled || mcp_enabled;
 
-    let table_id = id.unwrap_or_else(|| struct_name.to_string());
+    let table_id = id.unwrap_or_else(|| struct_name.to_string().to_snake_case());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
 
     let custom_style = match custom_style {
@@ -327,7 +327,7 @@ pub(super) fn expand_gpui_table(
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::schema::registry::FilterVariant::new(
-                        gpui_table::schema::registry::ComponentShapeUse::new(
+                        gpui_table::schema::registry::ComponentShapeUse::for_field(
                             #field_name_str,
                             #shape_path,
                         )

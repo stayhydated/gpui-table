@@ -104,30 +104,38 @@ pub(super) fn generate_delegate(
     };
 
     let columns_init_expr = quote! { <#struct_name as gpui_table::TableRowMeta>::table_columns() };
-    let precompute_rows_len = if has_filters {
-        quote! { let rows_len = rows.len(); }
-    } else {
-        quote! {}
-    };
+    let precompute_rows_len = quote! { let rows_len = rows.len(); };
     let filter_delegate_fields = if has_filters {
         quote! {
             filtered_row_indices: std::cell::RefCell<Vec<usize>>,
+            row_scope: std::cell::RefCell<Option<std::rc::Rc<dyn Fn(&#struct_name) -> bool + 'static>>>,
             active_filters: std::cell::RefCell<Option<#filter_values_name>>,
             filter_cache_rows_len: std::cell::Cell<usize>,
             filter_cache_dirty: std::cell::Cell<bool>,
         }
     } else {
-        quote! {}
+        quote! {
+            filtered_row_indices: std::cell::RefCell<Vec<usize>>,
+            row_scope: std::cell::RefCell<Option<std::rc::Rc<dyn Fn(&#struct_name) -> bool + 'static>>>,
+            filter_cache_rows_len: std::cell::Cell<usize>,
+            filter_cache_dirty: std::cell::Cell<bool>,
+        }
     };
     let filter_delegate_init = if has_filters {
         quote! {
             filtered_row_indices: std::cell::RefCell::new((0..rows_len).collect()),
+            row_scope: std::cell::RefCell::new(None),
             active_filters: std::cell::RefCell::new(None),
             filter_cache_rows_len: std::cell::Cell::new(rows_len),
             filter_cache_dirty: std::cell::Cell::new(false),
         }
     } else {
-        quote! {}
+        quote! {
+            filtered_row_indices: std::cell::RefCell::new((0..rows_len).collect()),
+            row_scope: std::cell::RefCell::new(None),
+            filter_cache_rows_len: std::cell::Cell::new(rows_len),
+            filter_cache_dirty: std::cell::Cell::new(false),
+        }
     };
     let filter_delegate_methods = if has_filters {
         quote! {
@@ -139,17 +147,21 @@ pub(super) fn generate_delegate(
                 }
 
                 let active_filters = self.active_filters.borrow().clone();
+                let row_scope = self.row_scope.borrow();
                 let mut indices = self.filtered_row_indices.borrow_mut();
                 indices.clear();
 
                 match active_filters {
                     Some(filters) if filters.has_active_filters() => {
                         indices.extend(self.rows.iter().enumerate().filter_map(|(row_ix, row)| {
-                            row.matches_filters(&filters).then_some(row_ix)
+                            let in_scope = row_scope.as_ref().map_or(true, |scope| scope(row));
+                            (in_scope && row.matches_filters(&filters)).then_some(row_ix)
                         }));
                     }
                     _ => {
-                        indices.extend(0..self.rows.len());
+                        indices.extend(self.rows.iter().enumerate().filter_map(|(row_ix, row)| {
+                            row_scope.as_ref().map_or(true, |scope| scope(row)).then_some(row_ix)
+                        }));
                     }
                 }
 
@@ -176,48 +188,97 @@ pub(super) fn generate_delegate(
                 self.filter_cache_dirty.set(true);
             }
 
+            pub fn set_row_scope(&mut self, scope: impl Fn(&#struct_name) -> bool + 'static) {
+                *self.row_scope.get_mut() = Some(std::rc::Rc::new(scope));
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn clear_row_scope(&mut self) {
+                *self.row_scope.get_mut() = None;
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn has_row_scope(&self) -> bool {
+                self.row_scope.borrow().is_some()
+            }
+
+            pub fn visible_row_indices(&self) -> Vec<usize> {
+                self.ensure_filter_cache();
+                self.filtered_row_indices.borrow().clone()
+            }
+
             pub fn refresh_filtered_rows(&self) {
                 self.filter_cache_dirty.set(true);
                 self.ensure_filter_cache();
             }
         }
     } else {
-        quote! {}
-    };
-    let rows_count_impl = if has_filters {
         quote! {
-            fn rows_count(&self, _: &gpui::App) -> usize {
+            fn ensure_filter_cache(&self) {
+                if !self.filter_cache_dirty.get() && self.filter_cache_rows_len.get() == self.rows.len() {
+                    return;
+                }
+
+                let row_scope = self.row_scope.borrow();
+                let mut indices = self.filtered_row_indices.borrow_mut();
+                indices.clear();
+
+                indices.extend(self.rows.iter().enumerate().filter_map(|(row_ix, row)| {
+                    row_scope.as_ref().map_or(true, |scope| scope(row)).then_some(row_ix)
+                }));
+
+                self.filter_cache_rows_len.set(self.rows.len());
+                self.filter_cache_dirty.set(false);
+            }
+
+            fn map_row_index(&self, row_ix: usize) -> usize {
                 self.ensure_filter_cache();
-                self.filtered_row_indices.borrow().len()
+                self.filtered_row_indices
+                    .borrow()
+                    .get(row_ix)
+                    .copied()
+                    .expect("invalid filtered row index")
+            }
+
+            pub fn set_row_scope(&mut self, scope: impl Fn(&#struct_name) -> bool + 'static) {
+                *self.row_scope.get_mut() = Some(std::rc::Rc::new(scope));
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn clear_row_scope(&mut self) {
+                *self.row_scope.get_mut() = None;
+                self.filter_cache_dirty.set(true);
+            }
+
+            pub fn has_row_scope(&self) -> bool {
+                self.row_scope.borrow().is_some()
+            }
+
+            pub fn visible_row_indices(&self) -> Vec<usize> {
+                self.ensure_filter_cache();
+                self.filtered_row_indices.borrow().clone()
+            }
+
+            pub fn refresh_filtered_rows(&self) {
+                self.filter_cache_dirty.set(true);
+                self.ensure_filter_cache();
             }
         }
-    } else {
-        quote! {
-            fn rows_count(&self, _: &gpui::App) -> usize {
-                self.rows.len()
-            }
+    };
+    let rows_count_impl = quote! {
+        fn rows_count(&self, _: &gpui::App) -> usize {
+            self.ensure_filter_cache();
+            self.filtered_row_indices.borrow().len()
         }
     };
-    let render_row_index_map = if has_filters {
-        quote! {
-            let row_ix = self.map_row_index(row_ix);
-        }
-    } else {
-        quote! {}
+    let render_row_index_map = quote! {
+        let row_ix = self.map_row_index(row_ix);
     };
-    let context_menu_row_index_map = if has_filters {
-        quote! {
-            let row_ix = self.map_row_index(row_ix);
-        }
-    } else {
-        quote! {}
+    let context_menu_row_index_map = quote! {
+        let row_ix = self.map_row_index(row_ix);
     };
-    let sort_filter_refresh = if has_filters {
-        quote! {
-            self.filter_cache_dirty.set(true);
-        }
-    } else {
-        quote! {}
+    let sort_filter_refresh = quote! {
+        self.filter_cache_dirty.set(true);
     };
 
     quote! {

@@ -199,6 +199,7 @@ struct ColumnSnapshot {
 #[derive(Serialize)]
 struct TableSnapshot {
     table_id: &'static str,
+    typed_table_id: String,
     title: String,
     columns: Vec<ColumnSnapshot>,
 }
@@ -232,9 +233,20 @@ fn to_column_snapshot(column: &Column) -> ColumnSnapshot {
 fn table_snapshot<T: TableRowMeta>() -> TableSnapshot {
     TableSnapshot {
         table_id: T::TABLE_ID,
+        typed_table_id: T::table_id().to_string(),
         title: T::table_title(),
         columns: T::table_columns().iter().map(to_column_snapshot).collect(),
     }
+}
+
+#[test]
+fn table_row_meta_exposes_typed_table_id() {
+    let table_id = BasicRow::table_id();
+
+    assert_eq!(table_id.as_str(), BasicRow::TABLE_ID);
+    assert_eq!(table_id.to_string(), "basic_row");
+    assert_eq!(String::from(table_id), "basic_row");
+    assert!(!table_id.is_empty());
 }
 
 #[test]

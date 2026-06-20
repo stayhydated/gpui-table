@@ -45,7 +45,7 @@ pub use gpui_table_core::filter;
 pub use gpui_table_mcp as mcp;
 pub use gpui_table_runtime as runtime;
 pub use gpui_table_runtime::{
-    FilterEntitiesExt, TableCell, TableDataLoader, TableLoader, TableRowContextMenu,
+    FilterEntitiesExt, TableCell, TableDataLoader, TableId, TableLoader, TableRowContextMenu,
     TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
 };
 pub use gpui_table_schema as schema;

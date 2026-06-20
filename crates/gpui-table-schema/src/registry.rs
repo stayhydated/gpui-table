@@ -1,8 +1,44 @@
+use std::fmt;
 use strum::{Display, EnumString, IntoStaticStr};
 
 inventory::collect!(GpuiTableShape);
 
-pub use component_shape::{ComponentShapeUse, RustPath, RustType};
+pub use component_shape::{ComponentFieldName, ComponentShapeUse, RustPath, RustType};
+
+/// Stable borrowed identifier for a table row or registry entry.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+pub struct TableId<'a> {
+    value: &'a str,
+}
+
+impl<'a> TableId<'a> {
+    /// Creates a table id wrapper from a borrowed identifier.
+    pub const fn new(value: &'a str) -> Self {
+        Self { value }
+    }
+
+    /// Returns the table id string.
+    pub const fn as_str(&self) -> &'a str {
+        self.value
+    }
+
+    /// Returns whether the table id is empty.
+    pub const fn is_empty(&self) -> bool {
+        self.value.is_empty()
+    }
+}
+
+impl fmt::Display for TableId<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.value)
+    }
+}
+
+impl From<TableId<'_>> for String {
+    fn from(table_id: TableId<'_>) -> Self {
+        table_id.to_string()
+    }
+}
 
 /// Metadata for a table row type, collected via inventory.
 #[derive(Debug)]
@@ -42,6 +78,10 @@ impl GpuiTableShape {
             load_more,
             source_path,
         }
+    }
+
+    pub const fn table_id(&self) -> TableId<'static> {
+        TableId::new(self.table_id)
     }
 }
 
@@ -128,20 +168,50 @@ pub use inventory;
 
 #[cfg(test)]
 mod tests {
-    use super::{ComponentShapeUse, FilterVariant, RegistryFilterType, RustPath, RustType};
+    use super::{
+        ComponentFieldName, ComponentShapeUse, FilterVariant, GpuiTableShape, RegistryFilterType,
+        RustPath, RustType, TableId,
+    };
+
+    #[test]
+    fn table_id_wrapper_exposes_borrowed_identifier() {
+        let table_id = TableId::new("purchase_order");
+
+        assert_eq!(table_id.as_str(), "purchase_order");
+        assert_eq!(table_id.to_string(), "purchase_order");
+        assert_eq!(String::from(table_id), "purchase_order");
+        assert!(!table_id.is_empty());
+        assert!(TableId::new("").is_empty());
+    }
+
+    #[test]
+    fn table_shape_exposes_typed_table_id() {
+        let shape = GpuiTableShape::new(
+            "PurchaseOrder",
+            "purchase_order",
+            "Purchase Orders",
+            false,
+            &[],
+            &[],
+            false,
+            "src/purchase_order.rs",
+        );
+
+        assert_eq!(shape.table_id().as_str(), "purchase_order");
+    }
 
     #[test]
     fn filter_variant_records_neutral_shape_use_metadata() {
         let variant = FilterVariant::new(
             ComponentShapeUse::new(
-                "status",
+                ComponentFieldName::new("status"),
                 RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
             ),
             RegistryFilterType::Faceted,
             RustPath::from_macro_tokens_unchecked("crate::StatusFilter"),
         );
 
-        assert_eq!(variant.shape_use.field_name(), "status");
+        assert_eq!(variant.shape_use.field_name().as_str(), "status");
         assert_eq!(
             variant.shape_use.shape_path().as_str(),
             "crate::StatusFilterShape"
@@ -153,7 +223,7 @@ mod tests {
     fn filter_variant_records_field_type_in_neutral_shape_use() {
         let variant = FilterVariant::new(
             ComponentShapeUse::new(
-                "status",
+                ComponentFieldName::new("status"),
                 RustPath::from_macro_tokens_unchecked("crate::StatusFilterShape"),
             )
             .with_field_type(RustType::from_macro_tokens_unchecked("crate::Status")),

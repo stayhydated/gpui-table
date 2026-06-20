@@ -13,6 +13,7 @@ pub mod shape;
 
 pub use cell::{DisplayCell, FormattedCell, TableCell};
 pub use generated_filters::FilterEntitiesExt;
+pub use gpui_table_schema::registry::TableId;
 pub use load::{TableDataLoader, TableLoader};
 pub use row::{
     TableRowContextMenu, TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,

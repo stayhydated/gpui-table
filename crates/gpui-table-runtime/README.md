@@ -42,6 +42,8 @@ impl TableRowStyle for Item {
 
 - `TableCell` and the built-in cell renderers for common scalar/date/time values
 - `DisplayCell` and `FormattedCell` wrappers for generic value-object rendering
+- `TableId` and the `TableRowMeta::table_id()` helper for passing stable table
+  identifiers as typed values instead of bare strings.
 - `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
 - `TableLoader` and `TableDataLoader`
 - `shape`, the table filter shape contract used by generated filter entities,

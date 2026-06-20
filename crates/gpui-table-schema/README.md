@@ -34,7 +34,7 @@ In normal application code, those registrations are produced by
 ## What It Provides
 
 - `FilterConfig`, `FilterType`, `FacetedFilterOption`, and `FacetedFilterIcon`
-- `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
+- `TableId`, `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
 - `ComponentShapeUse`, `RustPath`, and `RustType` for field-to-filter-shape and Rust syntax metadata captured from macro-generated schema registrations
 - the `inventory` re-export for collecting and iterating registered shapes
 
