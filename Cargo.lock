@@ -3437,28 +3437,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "gpui-router"
-version = "0.3.0"
-source = "git+https://github.com/stayhydated/gpui-router?branch=git#5d0a0e444a113a5c63f0739a061654f24678b5ff"
-dependencies = [
- "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=b077f41a9f26ae5ed7fadfea55a501d34afb25de)",
- "gpui-router-macros",
- "hashbrown 0.16.1",
- "matchit",
- "smallvec",
-]
-
-[[package]]
-name = "gpui-router-macros"
-version = "0.3.0"
-source = "git+https://github.com/stayhydated/gpui-router?branch=git#5d0a0e444a113a5c63f0739a061654f24678b5ff"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn 2.0.117",
-]
-
-[[package]]
 name = "gpui-storybook"
 version = "0.5.0"
 dependencies = [
@@ -5485,12 +5463,6 @@ dependencies = [
  "tendril",
  "xml5ever",
 ]
-
-[[package]]
-name = "matchit"
-version = "0.8.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2f926ade0c4e170215ae43342bf13b9310a437609c81f29f86c5df6657582ef9"
 
 [[package]]
 name = "maybe-rayon"
@@ -8085,7 +8057,6 @@ dependencies = [
  "fake",
  "gpui 0.2.2 (git+https://github.com/zed-industries/zed?rev=b077f41a9f26ae5ed7fadfea55a501d34afb25de)",
  "gpui-component",
- "gpui-router",
  "gpui-storybook",
  "gpui-table",
  "gpui-table-component",

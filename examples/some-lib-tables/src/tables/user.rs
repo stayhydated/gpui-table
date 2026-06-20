@@ -1,3 +1,5 @@
+#[cfg(feature = "router")]
+use crate::route::{self, ExampleRoute, ExampleRouterState};
 use fake::{Fake, Faker};
 #[cfg(feature = "router")]
 use gpui::InteractiveElement as _;
@@ -53,11 +55,11 @@ impl UserTableStory {
         _window: &mut Window,
         cx: &mut Context<Self>,
     ) {
-        if !cx.has_global::<gpui_router::RouterState>() {
-            gpui_router::init(cx);
+        if !cx.has_global::<ExampleRouterState>() {
+            route::init(cx);
         }
 
-        gpui_router::RouterState::global_mut(cx).with_path(action.0.clone());
+        ExampleRouterState::global_mut(cx).set_route(ExampleRoute::User(action.0.clone()));
         cx.notify();
     }
 }
@@ -90,7 +92,7 @@ impl Render for UserTableStory {
         let root = root.on_action(cx.listener(Self::on_open_user_route)).child(
             gpui::div().text_sm().child(format!(
                 "Router location: {}",
-                gpui_router::use_location(cx).pathname
+                ExampleRouterState::global(cx).route()
             )),
         );
 

@@ -19,7 +19,7 @@ fn main() {
         gpui_storybook::change_locale(app_cx, Languages::default()).unwrap();
 
         #[cfg(feature = "router")]
-        gpui_router::init(app_cx);
+        some_lib_tables::route::init(app_cx);
 
         gpui_tokio::init(app_cx);
 
