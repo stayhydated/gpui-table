@@ -9,32 +9,22 @@ This crate is for deeper integration work. Most application code should use
 
 ## Use This Crate When
 
-- you are customizing row rendering with `TableRowStyle`
+- you need generic code over generated row metadata or rendering traits
 - you are implementing manual load-more or loader-driven flows
 - you need generic code over generated filter entities
 
 ## Example
 
 ```rs
-use gpui::{AnyElement, App, IntoElement, Window, div};
-use gpui_table_runtime::{TableRowStyle, default_render_cell};
+use gpui_table_runtime::{TableRowMeta, default_render_cell};
 
-impl TableRowStyle for Item {
-    type ColumnId = ItemTableColumn;
-
-    fn render_table_cell(
-        &self,
-        column: Self::ColumnId,
-        window: &mut Window,
-        cx: &mut App,
-    ) -> AnyElement {
-        match column {
-            ItemTableColumn::Weight => div()
-                .child(format!("{} kg", self.weight))
-                .into_any_element(),
-            _ => default_render_cell(self, column.into(), window, cx).into_any_element(),
-        }
-    }
+fn render_default_cell<R: TableRowMeta>(
+    row: &R,
+    column_index: usize,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement + '_ {
+    default_render_cell(row, column_index, window, cx)
 }
 ```
 
@@ -44,7 +34,9 @@ impl TableRowStyle for Item {
 - `DisplayCell` and `FormattedCell` wrappers for generic value-object rendering
 - `TableId` and the `TableRowMeta::table_id()` helper for passing stable table
   identifiers as typed values instead of bare strings.
-- `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and `TableRowGeneratedContextMenu`
+- `TableRowMeta`, `TableRowStyle`, `TableRowContextMenu`, and
+  `TableRowGeneratedContextMenu`, which are the row contracts targeted by
+  derive-generated code
 - `TableLoader` and `TableDataLoader`
 - `shape`, the table filter shape contract used by generated filter entities,
   plus facade re-exports for `ComponentShapeMetadata`, `DeclaredComponentShape`,

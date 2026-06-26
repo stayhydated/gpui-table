@@ -1,6 +1,7 @@
 #[test]
 fn ui_compile_fail() {
     let t = trybuild::TestCases::new();
+    t.pass("tests/ui/field_style_cell.rs");
     t.pass("tests/ui/table_cell_display_format.rs");
     #[cfg(feature = "chrono")]
     t.pass("tests/ui/explicit_filter_shapes.rs");
@@ -28,6 +29,8 @@ fn ui_compile_fail() {
     ))]
     t.compile_fail("tests/ui/mcp_filter_shape_requires_decode_minimal.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
+    t.compile_fail("tests/ui/invalid_duplicate_style.rs");
+    t.compile_fail("tests/ui/invalid_skip_style.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_arguments.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_target.rs");
     t.compile_fail("tests/ui/invalid_context_menu_route_without_row_id.rs");

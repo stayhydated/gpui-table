@@ -21,7 +21,7 @@ Use it to see:
 - generated built-in filters wired with `UserFilterEntities::build_for_table(...)`
 - `TableStatusBar` and filter layout composition
 - typed `es-fluent` titles, descriptions, and faceted labels
-- custom row rendering and load-more behavior
+- field-level custom cell rendering and load-more behavior
 - optional row-context-menu routing when `some-lib-tables` is run with `--features router`
 
 ### Regenerate prototyping output
@@ -100,7 +100,7 @@ app language enum with `#[es_fluent_language]`. The storybook binary imports
 - `examples/some-lib/src/structs/user.rs`
   Generated filters, localized titles, faceted enums, and custom context-menu composition.
 - `examples/some-lib/src/structs/item.rs`
-  Load-more wiring via `#[gpui_table_impl]` plus custom `TableRowStyle`.
+  Load-more wiring via `#[gpui_table_impl]` plus field-level cell style functions.
 - `examples/some-lib-tables/src/tables/user.rs`
   How generated filters are composed into a screen with `DataTable`.
 - `examples/mcp-query/src/main.rs`

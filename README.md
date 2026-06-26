@@ -109,6 +109,41 @@ If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
 type, and shape path through `ComponentShapeUse`.
 
+### Custom cell rendering
+
+Use field-level `style = path::to_fn` when a column needs custom GPUI
+rendering. The function receives the row, the field value, the GPUI window, and
+the app context. It owns the complete cell element for that field; other fields
+continue to use the generated default renderer.
+
+```rs
+#[derive(Clone, gpui_table::GpuiTable)]
+pub struct Item {
+    pub name: String,
+
+    #[gpui_table(width = 120., style = render_weight_cell)]
+    pub weight: u8,
+}
+
+fn render_weight_cell(
+    row: &Item,
+    value: &u8,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::{ParentElement as _, Styled as _};
+
+    let _ = (row, window, cx);
+    gpui::div()
+        .child(format!("{value} kg"))
+        .px_2()
+        .py_0p5()
+        .rounded_md()
+        .bg(gpui::rgb(0xeab308))
+        .text_color(gpui::white())
+}
+```
+
 ### MCP query tools
 
 With the `mcp` feature, tables that opt in with `#[gpui_table(mcp)]` get a
@@ -332,7 +367,7 @@ The canonical end-to-end examples live under [`examples/`](examples/README.md).
 The main walkthrough files are:
 
 - `examples/some-lib/src/structs/user.rs` for derived filters, localized titles, and context menus
-- `examples/some-lib/src/structs/item.rs` for load-more and custom row rendering
+- `examples/some-lib/src/structs/item.rs` for load-more and custom cell rendering
 - `examples/mcp-query/src/main.rs` for MCP tools that control generated filters and return rows
 - `../gpui-form/examples/mcp-form-table/src/main.rs` for a composed
   `gpui-form` plus `gpui-table` MCP server with custom shapes

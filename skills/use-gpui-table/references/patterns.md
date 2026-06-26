@@ -1,6 +1,6 @@
 # gpui-table Application Patterns
 
-Load this reference when implementing user-facing application tables, filters, load-more behavior, custom row rendering, row context menus, localization, or direct filter widgets.
+Load this reference when implementing user-facing application tables, filters, load-more behavior, custom cell rendering, row context menus, localization, or direct filter widgets.
 
 ## Feature Flags
 
@@ -122,31 +122,34 @@ pub struct User {
 
 Use the application's existing Fluent resource layout and locale-selection pattern. Keep generated table labels and faceted enum labels in the same localization system as the rest of the app.
 
-## Custom Rendering
+## Custom Cell Rendering
 
-Use `#[gpui_table(custom_style)]`, implement `TableRowStyle`, and fall back to `default_render_cell` for standard columns.
+Use field-level `style = path::to_fn` when a column needs custom GPUI cell
+rendering. The derive keeps generating the table renderer, and fields without a
+style hook use the default cell renderer.
 
 ```rust
-impl gpui_table::runtime::TableRowStyle for Item {
-    type ColumnId = ItemTableColumn;
+#[derive(gpui_table::GpuiTable)]
+pub struct Item {
+    pub name: String,
 
-    fn render_table_cell(
-        &self,
-        col: Self::ColumnId,
-        window: &mut gpui::Window,
-        cx: &mut gpui::App,
-    ) -> gpui::AnyElement {
-        use gpui::IntoElement as _;
+    #[gpui_table(width = 120., style = render_weight_cell)]
+    pub weight: u8,
+}
 
-        match col {
-            ItemTableColumn::Weight => {
-                use gpui::{ParentElement, div};
-                div().child(format!("{} kg", self.weight)).into_any_element()
-            },
-            _ => gpui_table::runtime::default_render_cell(self, col.into(), window, cx)
-                .into_any_element(),
-        }
-    }
+fn render_weight_cell(
+    row: &Item,
+    value: &u8,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::{ParentElement as _, Styled as _};
+
+    let _ = (row, window, cx);
+    gpui::div()
+        .child(format!("{value} kg"))
+        .px_2()
+        .py_0p5()
 }
 ```
 

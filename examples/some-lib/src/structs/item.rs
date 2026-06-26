@@ -9,7 +9,7 @@ use gpui_table::runtime::TableLoader;
 use std::time::Duration;
 
 #[derive(fake::Dummy, EsFluentLabel, EsFluentVariants, GpuiTable)]
-#[gpui_table(fluent, custom_style, load_more)]
+#[gpui_table(fluent, load_more)]
 pub struct Item {
     #[gpui_table(skip)]
     #[dummy(faker = "UUIDv4")]
@@ -20,17 +20,81 @@ pub struct Item {
     #[dummy(faker = "Word()")]
     name: String,
 
-    #[gpui_table(width = 80., resizable = false)]
+    #[gpui_table(width = 80., resizable = false, style = render_color_cell)]
     #[dummy(faker = "HexColor()")]
     color: String,
 
-    #[gpui_table(width = 120., movable = false, ascending)]
+    #[gpui_table(width = 120., movable = false, ascending, style = render_weight_cell)]
     #[dummy(faker = "1..67")]
     weight: u8,
 
     #[gpui_table(width = 250.)]
     #[dummy(faker = "DateTime()")]
     acquired_on: chrono::DateTime<chrono::Utc>,
+}
+
+fn render_color_cell(
+    row: &Item,
+    value: &String,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::Styled as _;
+
+    let _ = (row, window, cx);
+    let color_hex = value.trim_start_matches('#');
+    let color_u32 = u32::from_str_radix(color_hex, 16).unwrap_or(0xFFFFFF);
+
+    gpui::div().bg(gpui::rgb(color_u32)).px_2().py_0p5()
+}
+
+fn render_weight_cell(
+    row: &Item,
+    value: &u8,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::{ParentElement as _, Styled as _};
+
+    let _ = (row, window, cx);
+    let weight_ratio = (*value as f32) / 67.0;
+    let weight_ratio = weight_ratio.min(1.0);
+
+    let green = (255.0 * (1.0 - weight_ratio)) as u32;
+    let blue = (255.0 * (1.0 - weight_ratio)) as u32;
+    let hex_color = 0xFF0000 | (green << 8) | blue;
+    let bg_color = gpui::rgb(hex_color);
+
+    let (tag_label, tag_bg_color, tag_text_color) = if *value < 30 {
+        ("light", gpui::rgb(0x22c55e), gpui::white())
+    } else if *value < 50 {
+        ("medium", gpui::rgb(0xeab308), gpui::white())
+    } else {
+        ("heavy", gpui::rgb(0xef4444), gpui::white())
+    };
+
+    gpui::div()
+        .flex()
+        .items_center()
+        .gap_2()
+        .child(
+            gpui::div()
+                .child(format!("{value} kg"))
+                .text_color(gpui::black())
+                .bg(bg_color)
+                .px_1()
+                .rounded_md(),
+        )
+        .child(
+            gpui::div()
+                .child(tag_label)
+                .text_xs()
+                .px_2()
+                .py_0p5()
+                .rounded_md()
+                .bg(tag_bg_color)
+                .text_color(tag_text_color),
+        )
 }
 
 /// Implement the TableLoader trait to define loading behavior.
@@ -74,75 +138,5 @@ impl TableLoader for ItemTableDelegate {
             });
         })
         .detach();
-    }
-}
-
-impl gpui_table::runtime::TableRowStyle for Item {
-    type ColumnId = ItemTableColumn;
-
-    fn render_table_cell(
-        &self,
-        col: Self::ColumnId,
-        window: &mut gpui::Window,
-        cx: &mut gpui::App,
-    ) -> gpui::AnyElement {
-        use gpui::{IntoElement, ParentElement, Styled, div};
-
-        match col {
-            ItemTableColumn::Color => {
-                let color_hex = self.color.trim_start_matches('#');
-                let color_u32 = u32::from_str_radix(color_hex, 16).unwrap_or(0xFFFFFF);
-
-                return div()
-                    .bg(gpui::rgb(color_u32))
-                    .px_2()
-                    .py_0p5()
-                    .into_any_element();
-            },
-            ItemTableColumn::Weight => {
-                let weight_ratio = (self.weight as f32) / 67.0;
-                let weight_ratio = weight_ratio.min(1.0);
-
-                let green = (255.0 * (1.0 - weight_ratio)) as u32;
-                let blue = (255.0 * (1.0 - weight_ratio)) as u32;
-                let hex_color = 0xFF0000 | (green << 8) | blue;
-                let bg_color = gpui::rgb(hex_color);
-
-                let (tag_label, tag_bg_color, tag_text_color) = if self.weight < 30 {
-                    ("light", gpui::rgb(0x22c55e), gpui::white())
-                } else if self.weight < 50 {
-                    ("medium", gpui::rgb(0xeab308), gpui::white())
-                } else {
-                    ("heavy", gpui::rgb(0xef4444), gpui::white())
-                };
-
-                return div()
-                    .flex()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        div()
-                            .child(format!("{} kg", self.weight))
-                            .text_color(gpui::black())
-                            .bg(bg_color)
-                            .px_1()
-                            .rounded_md(),
-                    )
-                    .child(
-                        div()
-                            .child(tag_label)
-                            .text_xs()
-                            .px_2()
-                            .py_0p5()
-                            .rounded_md()
-                            .bg(tag_bg_color)
-                            .text_color(tag_text_color),
-                    )
-                    .into_any_element();
-            },
-            _ => {},
-        }
-
-        gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
     }
 }

@@ -5,7 +5,7 @@ description: >-
   when application code needs #[derive(GpuiTable)], #[derive(Filterable)],
   #[derive(TableCell)], #[gpui_table_impl], generated table delegates, columns,
   filter entities, and filter values, built-in filters such as text, faceted,
-  number_range, or date_range, TableStatusBar, load-more behavior, custom row
+  number_range, or date_range, TableStatusBar, load-more behavior, custom cell
   rendering, row context menus, localized labels with fluent, MCP query tools,
   or feature flags such as mcp, rust_decimal, chrono, or spacetimedb.
 ---
@@ -16,7 +16,7 @@ description: >-
 
 Use this skill for user-facing application workflows with `gpui-table`:
 deriving typed tables, generated delegates and filters, built-in filter widgets,
-`TableStatusBar`, load-more behavior, custom row rendering, row context menus,
+`TableStatusBar`, load-more behavior, custom cell rendering, row context menus,
 localization, and feature selection.
 Use `gpui-table/mcp` only when row data should be exposed to MCP clients as
 query tools; generated filters become typed arguments when present, and
@@ -52,9 +52,9 @@ derives, generated types, and runtime helpers:
    state are needed.
 7. Add `#[gpui_table(load_more)]` plus `#[gpui_table::gpui_table_impl] impl
    TableLoader for <Row>TableDelegate` for infinite-loading tables.
-8. Add `#[gpui_table(custom_style)]` and implement `TableRowStyle` when a column
-   needs custom rendering. Delegate unchanged columns to
-   `gpui_table::runtime::default_render_cell`.
+8. Add field-level `style = path::to_fn` when a column needs custom cell
+   rendering. The function receives the row, field value, GPUI window, and app
+   context, and returns `impl gpui::IntoElement`.
 9. Compose generated tables with `gpui_component::table::DataTable` and
    generated filter helpers, or use `gpui-table-component` directly when manual
    filter UI composition is a better fit.

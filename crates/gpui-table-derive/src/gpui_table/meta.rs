@@ -20,9 +20,6 @@ pub(super) struct TableMeta {
     pub(super) delegate: bool,
 
     #[darling(default)]
-    pub(super) custom_style: Option<Override<bool>>,
-
-    #[darling(default)]
     pub(super) custom_context_menu: Option<Override<bool>>,
 
     /// Generates a default context-menu link entry using this field as row id.
@@ -178,6 +175,7 @@ pub(super) struct TableColumn {
     pub(super) text_right: bool,
     pub(super) resizable: Option<bool>,
     pub(super) movable: Option<bool>,
+    pub(super) style: Option<syn::Path>,
     pub(super) skip: bool,
     /// Explicit filter shape path.
     /// Example: `filter(gpui_table_component::TextFilter)`
@@ -204,6 +202,7 @@ impl FromField for TableColumn {
             text_right: false,
             resizable: None,
             movable: None,
+            style: None,
             skip: false,
             filter: None,
             validation: None,
@@ -286,6 +285,13 @@ impl FromField for TableColumn {
                         "movable",
                         meta.path.span(),
                     )
+                } else if meta.path.is_ident("style") {
+                    set_option(
+                        &mut column.style,
+                        parse_path_value(&meta)?,
+                        "style",
+                        meta.path.span(),
+                    )
                 } else if meta.path.is_ident("skip") {
                     set_flag(
                         &mut column.skip,
@@ -312,6 +318,15 @@ impl FromField for TableColumn {
                 }
             })
             .map_err(DarlingError::from)?;
+        }
+
+        if column.skip
+            && let Some(style) = column.style.as_ref()
+        {
+            return Err(DarlingError::from(syn::Error::new(
+                style.span(),
+                "`style` cannot be combined with `skip` because skipped fields do not generate table columns",
+            )));
         }
 
         if column.filter.is_some() {
@@ -451,6 +466,10 @@ fn parse_bool_flag_or_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Resul
     } else {
         Ok(true)
     }
+}
+
+fn parse_path_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<syn::Path> {
+    meta.value()?.parse()
 }
 
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {

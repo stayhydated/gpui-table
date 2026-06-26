@@ -28,7 +28,6 @@ pub(super) fn expand_gpui_table(
         id,
         title,
         delegate,
-        custom_style,
         custom_context_menu,
         context_menu_row_id,
         context_menu_route,
@@ -58,11 +57,6 @@ pub(super) fn expand_gpui_table(
     let table_id = id.unwrap_or_else(|| struct_name.to_string().to_snake_case());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
 
-    let custom_style = match custom_style {
-        Some(Override::Explicit(val)) => val,
-        Some(Override::Inherit) => true,
-        None => false,
-    };
     let custom_context_menu = match custom_context_menu {
         Some(Override::Explicit(val)) => val,
         Some(Override::Inherit) => true,
@@ -195,6 +189,7 @@ pub(super) fn expand_gpui_table(
     let mut column_variants = Vec::new();
     let mut from_usize_arms = Vec::new();
     let mut into_usize_arms = Vec::new();
+    let mut style_match_arms = Vec::new();
     let mut filters_init = Vec::new();
     let mut filter_fields: Vec<FilterFieldMeta> = Vec::new();
     let mut filter_shape_type_checks = Vec::new();
@@ -210,6 +205,7 @@ pub(super) fn expand_gpui_table(
 
     for (i, field) in active_fields {
         let ident = field.ident.as_ref().unwrap();
+        let style = field.style.clone();
         let key = field.col.unwrap_or_else(|| ident.to_string());
         let width = field.width.unwrap_or(100.0);
 
@@ -369,6 +365,14 @@ pub(super) fn expand_gpui_table(
         from_usize_arms.push(quote! { #i => #column_enum_name::#variant_ident, });
         into_usize_arms.push(quote! { #column_enum_name::#variant_ident => #i, });
 
+        if let Some(style) = style {
+            style_match_arms.push(quote! {
+                #column_enum_name::#variant_ident => {
+                    (#style)(self, &self.#ident, window, cx).into_any_element()
+                },
+            });
+        }
+
         #[cfg(feature = "inventory")]
         {
             let field_name_str = ident.to_string();
@@ -431,7 +435,7 @@ pub(super) fn expand_gpui_table(
         }
     };
 
-    let style_impl = if !custom_style {
+    let style_impl = if style_match_arms.is_empty() {
         quote! {
             impl gpui_table::runtime::TableRowStyle for #struct_name {
                 type ColumnId = #column_enum_name;
@@ -442,13 +446,32 @@ pub(super) fn expand_gpui_table(
                     window: &mut ::gpui::Window,
                     cx: &mut ::gpui::App,
                 ) -> ::gpui::AnyElement {
-                    use ::gpui::IntoElement;
+                    use ::gpui::IntoElement as _;
                     gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }
         }
     } else {
-        quote! {}
+        quote! {
+            impl gpui_table::runtime::TableRowStyle for #struct_name {
+                type ColumnId = #column_enum_name;
+
+                fn render_table_cell(
+                    &self,
+                    col: Self::ColumnId,
+                    window: &mut ::gpui::Window,
+                    cx: &mut ::gpui::App,
+                ) -> ::gpui::AnyElement {
+                    use ::gpui::IntoElement as _;
+
+                    match col {
+                        #(#style_match_arms)*
+                        _ => gpui_table::runtime::default_render_cell(self, col.into(), window, cx)
+                            .into_any_element(),
+                    }
+                }
+            }
+        }
     };
 
     let generated_context_menu_impl =

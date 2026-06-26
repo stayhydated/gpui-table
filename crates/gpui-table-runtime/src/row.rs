@@ -35,7 +35,7 @@ pub trait TableRowMeta {
     }
 }
 
-/// Styling hooks for a table row.
+/// Rendering contract for a table row.
 pub trait TableRowStyle: TableRowMeta {
     /// The type representing the columns of the table.
     type ColumnId: Into<usize> + From<usize>;

@@ -47,6 +47,35 @@ filter state uses `T` in all cases, so optional and vector fields can facet over
 present values without requiring `Option<T>` or `Vec<T>` itself to implement
 `Filterable`.
 
+Use field-level `style = path::to_fn` for custom cell rendering. The style
+function receives `&Row`, `&FieldType`, `&mut gpui::Window`, and
+`&mut gpui::App`, and returns any `impl gpui::IntoElement`.
+
+```rs
+#[derive(gpui_table::GpuiTable)]
+pub struct Item {
+    pub name: String,
+
+    #[gpui_table(width = 120., style = render_weight_cell)]
+    pub weight: u8,
+}
+
+fn render_weight_cell(
+    row: &Item,
+    value: &u8,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::{ParentElement as _, Styled as _};
+
+    let _ = (row, window, cx);
+    gpui::div()
+        .child(format!("{value} kg"))
+        .px_2()
+        .py_0p5()
+}
+```
+
 Feature requirements are validated during macro expansion:
 
 - `gpui_table_component::NumberRangeFilter` requires `gpui-table/rust_decimal`
