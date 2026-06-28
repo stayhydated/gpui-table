@@ -16,7 +16,6 @@ keywords = [ "gpui", "gpui-component", "table", "mcp" ]
 chrono = [
   "dep:chrono",
   "component-shape-mcp/chrono",
-  "gpui-table-component/chrono",
   "gpui-table-core/chrono",
   "gpui-table-runtime/chrono",
 ]
@@ -24,13 +23,11 @@ default = [ "chrono" ]
 rust_decimal = [
   "dep:rust_decimal",
   "component-shape-mcp/rust_decimal",
-  "gpui-table-component/rust_decimal",
   "gpui-table-core/rust_decimal",
   "gpui-table-runtime/rust_decimal",
 ]
 spacetimedb = [
   "chrono",
-  "gpui-table-component/spacetimedb",
   "gpui-table-core/spacetimedb",
   "gpui-table-runtime/spacetimedb",
 ]
@@ -39,7 +36,6 @@ spacetimedb = [
 chrono = { optional = true, workspace = true }
 component-shape = { workspace = true }
 component-shape-mcp = { workspace = true }
-gpui-table-component = { default-features = false, workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
 gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }

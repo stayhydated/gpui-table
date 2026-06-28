@@ -136,10 +136,13 @@ non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
 Registration reports setup errors such as duplicate tool names. MCP filter
 schemas and decoders use the same explicit filter shape declared for generated
-filter UI. For custom filters that adapt an existing built-in shape, derive
-`gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
-type, and raw-value conversions; with the `mcp` feature, the derive also emits
-the default `McpFilterShape` decoder when the raw value implements
+filter UI. For transparent or domain-specific field types that should reuse a
+built-in raw value and MCP schema, prefer `TextFilterAdapter`,
+`NumberRangeFilterAdapter`, or `DateRangeFilterAdapter` and implement the
+matching field trait. For custom filters that adapt an existing built-in shape,
+derive `gpui_table::GpuiTableFilterShape` and declare the base shape, raw
+value, field type, and raw-value conversions; with the `mcp` feature, the
+derive also emits the default `McpFilterShape` decoder when the raw value implements
 `gpui_table::mcp::McpToolValue`. For fully custom runtime filters,
 implement the runtime shape traits directly, then derive
 `gpui_table::McpFilterShape` when `RawValue: McpToolValue` or write a manual

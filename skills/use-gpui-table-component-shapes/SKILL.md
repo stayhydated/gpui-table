@@ -36,6 +36,11 @@ First decide whether the table can use an existing filter shape:
 - Existing built-in shape: prefer `gpui_table_component::TextFilter`,
   `FacetedFilter::<T>`, `NumberRangeFilter`, or `DateRangeFilter` when they
   already model the widget, raw value, field matching, and MCP input.
+- Built-in adapter shape: prefer `TextFilterAdapter`,
+  `NumberRangeFilterAdapter`, or `DateRangeFilterAdapter` when the widget and
+  raw value are built in but the field is an application-owned transparent or
+  domain value type. Implement the matching field trait in the application
+  crate; the adapter supports both `T` and `Option<T>`.
 - Adapter shape: derive `gpui_table::GpuiTableFilterShape` when an existing
   base shape should keep its UI, reset behavior, and field matching but expose a
   custom raw value to table state or MCP decoding.
@@ -68,17 +73,42 @@ behavior and generated `Matchable<<Row>FilterValues>` semantics.
 Built-in field support is intentionally narrow:
 
 - `TextFilter`: `String` and `Option<String>`.
+- `TextFilterAdapter`: `T` and `Option<T>` where `T: TextFilterField`.
 - `FacetedFilter<T>`: `T`, `Option<T>`, `Vec<T>`, and `Option<Vec<T>>` where
   `T: Filterable`.
 - `NumberRangeFilter`: supported numeric types and `Option<T>` variants when
   the relevant feature flags are enabled.
+- `NumberRangeFilterAdapter`: `T` and `Option<T>` where
+  `T: NumberRangeFilterField`.
 - `DateRangeFilter`: supported date-like types and `Option<T>` variants when
   the relevant feature flags are enabled.
+- `DateRangeFilterAdapter`: `T` and `Option<T>` where
+  `T: DateRangeFilterField`.
 
 Use `#[gpui_table(filters)]` for UI-generated filter entities, or
 `#[gpui_table(mcp)]` when the filters are MCP-only query arguments.
 
 ## Adapter Shapes
+
+Use built-in adapter shapes for value-object fields that should keep built-in
+raw values and MCP schemas:
+
+```rust
+pub struct AccountCode(String);
+
+impl gpui_table_component::TextFilterField for AccountCode {
+    fn to_filter_text(&self) -> String {
+        self.0.clone()
+    }
+}
+
+#[derive(Clone, gpui_table::GpuiTable)]
+#[gpui_table(filters)]
+pub struct Account {
+    #[gpui_table(filter(gpui_table_component::TextFilterAdapter))]
+    pub code: AccountCode,
+}
+```
 
 Prefer the derive when adapting an existing base shape:
 

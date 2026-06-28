@@ -20,7 +20,7 @@ pub struct UserTableStory {
 }
 impl gpui_storybook::Story for UserTableStory {
     fn title(cx: &gpui::App) -> String {
-        gpui_table::component::i18n::localize_label::<User>(cx)
+        gpui_table_component::i18n::localize_label::<User>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
         Self::view(window, cx)

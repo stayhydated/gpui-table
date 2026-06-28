@@ -31,7 +31,7 @@ gpui-table-component = { version = "*" }
 
 `derive` and `chrono` are enabled by default. Add:
 
-- `rust_decimal` for numeric range filters
+- `rust_decimal` for generated numeric range filter values
 - `inventory` for `GpuiTableShape` registration and prototyping/codegen
   metadata, including `ComponentShapeUse` filter metadata
 - `mcp` for experimental MCP query tools backed by generated typed filter
@@ -41,9 +41,11 @@ gpui-table-component = { version = "*" }
 
 ## Quick Start
 
-Built-in filters are declared through the component crate. For example,
-`gpui_table_component::NumberRangeFilter` requires the `gpui-table`
-`rust_decimal` feature.
+Built-in filters are declared through the component crate, which is a direct
+dependency of applications that render the widgets. For example,
+`gpui_table_component::NumberRangeFilter` requires generated tables to enable
+the `gpui-table` `rust_decimal` feature and the component crate's
+`rust_decimal` feature, enabled by default.
 
 ```rs
 use gpui::{Context, Window};
@@ -260,6 +262,12 @@ Manual table tool registration also publishes that table's descriptor and schema
 resources. Manual `McpTable` implementations can call
 `McpTableDescriptor::with_row_schema(...)` to publish precise row output
 schemas. Registration reports setup errors such as duplicate tool names.
+For transparent or domain-specific field types that should reuse a built-in
+filter widget, prefer the adapter shapes:
+`gpui_table_component::TextFilterAdapter`,
+`NumberRangeFilterAdapter`, and `DateRangeFilterAdapter`. Implement the
+matching field trait, such as `TextFilterField`, and the adapter supports both
+`T` and `Option<T>` fields while reusing the built-in raw value and MCP schema.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare a base shape, raw value, field
 type, and raw-value conversions. The derive generates the runtime filter shape,
@@ -371,11 +379,13 @@ The main walkthrough files are:
 ## Feature Flags
 
 - `derive` (default): re-exports `GpuiTable`, `Filterable`, `TableCell`, and `gpui_table_impl`
-- `chrono` (default): date cell rendering and `gpui_table_component::DateRangeFilter`
+- `chrono` (default): date cell rendering and generated date-range filter values
 - `fluent`: localized titles and faceted labels through `es-fluent`
 - `inventory`: inventory-backed `GpuiTableShape` registration for tooling,
   including `ComponentShapeUse` filter metadata
 - `mcp`: experimental stdio MCP query integration through generated
   `McpTable` implementations; implies `inventory`
+- Built-in filter MCP decoding lives behind `gpui-table-component`'s `mcp`
+  feature, keeping this facade contract-only.
 - `rust_decimal`: numeric range filtering and decimal-backed helpers
 - `spacetimedb`: SpacetimeDB temporal range filtering support

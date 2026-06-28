@@ -322,7 +322,7 @@ impl<'a> TableShapeAdapter<'a> {
 
         Ok(quote! {
             #filter_views
-            .child(gpui_table::component::TableStatusBar::new(
+            .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,
@@ -339,7 +339,7 @@ impl<'a> TableShapeAdapter<'a> {
         if self.identities.uses_fluent_labels() {
             let struct_name_ident = self.identities.struct_name_ident();
             quote! {
-                gpui_table::component::i18n::localize_label::<#struct_name_ident>(cx)
+                gpui_table_component::i18n::localize_label::<#struct_name_ident>(cx)
             }
         } else {
             let title = self.identities.table_title();

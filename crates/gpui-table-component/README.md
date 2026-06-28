@@ -52,6 +52,27 @@ shape types:
 name: String,
 ```
 
+When a field is an application-owned value type but should reuse a built-in
+filter widget, use an adapter shape and implement its field trait:
+
+```rs
+pub struct AccountCode(String);
+
+impl gpui_table_component::TextFilterField for AccountCode {
+    fn to_filter_text(&self) -> String {
+        self.0.clone()
+    }
+}
+
+#[gpui_table(filter(gpui_table_component::TextFilterAdapter))]
+code: AccountCode,
+```
+
+`TextFilterAdapter`, `NumberRangeFilterAdapter`, and `DateRangeFilterAdapter`
+reuse the built-in UI, raw value, reset behavior, and MCP schema while adding
+support for both `T` and `Option<T>` fields that implement the matching field
+trait.
+
 All filter widgets expose chainable extension-trait setters for styling or
 behavior tweaks.
 
@@ -67,7 +88,7 @@ gpui_table_component::i18n::set_locale(cx, "en")?;
 ```
 
 Generated filter flows call the same localization helpers through
-`gpui_table::component::i18n`. Runtime widget text reads the
+`gpui_table_component::i18n`. Runtime widget text reads the
 `EmbeddedI18n` handle from GPUI global state; context-free metadata such as
 storybook titles uses explicit fallback helpers.
 
@@ -92,6 +113,8 @@ a `GpuiTableFilterShape` implementation before a component can be used in
 
 - `chrono` (default): enables `DateRangeFilter`
 - `rust_decimal` (default): enables `NumberRangeFilter`
+- `mcp`: implements `gpui_table::mcp::McpFilterShape` for the built-in filters
+  and adapters
 - `story`: enables the storybook binary and pulls in the built-in filter stories
 
 ## Storybook

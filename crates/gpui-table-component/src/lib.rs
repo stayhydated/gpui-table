@@ -2,19 +2,25 @@
 //!
 //! This crate owns the concrete UI for text, faceted, number-range, and
 //! date-range filters plus `ResetFilters` and `TableStatusBar`. It is useful
-//! when applications need direct widget composition; most derive-based tables
-//! should reach it through `gpui-table`.
+//! when applications need direct widget composition or built-in filter shapes
+//! for `#[derive(gpui_table::GpuiTable)]`.
 //!
 //! Built-in filter types also implement the runtime table filter shape
 //! contract, so they can be used directly in
 //! `#[gpui_table(filter(gpui_table_component::TextFilter))]`. Manual filter
 //! collections can use [`TableFilterComponent`] and [`QueryFilterValue`]
 //! directly.
+//!
+//! Adapter shapes such as [`TextFilterAdapter`], [`NumberRangeFilterAdapter`],
+//! and [`DateRangeFilterAdapter`] reuse the built-in widgets and MCP schemas
+//! for application-owned value types that implement the matching field trait.
 
 #[cfg(feature = "chrono")]
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
+#[cfg(feature = "mcp")]
+mod mcp;
 #[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
@@ -31,6 +37,11 @@ pub use faceted_filter::{FacetedFilter, FacetedFilterExt};
 #[cfg(feature = "rust_decimal")]
 pub use number_range_filter::{NumberRangeFilter, NumberRangeFilterExt};
 pub use reset_filters::ResetFilters;
+#[cfg(feature = "chrono")]
+pub use shape::{DateRangeFilterAdapter, DateRangeFilterField};
+#[cfg(feature = "rust_decimal")]
+pub use shape::{NumberRangeFilterAdapter, NumberRangeFilterField};
+pub use shape::{TextFilterAdapter, TextFilterField};
 pub use table_status_bar::TableStatusBar;
 pub use text_filter::{TextFilter, TextFilterExt};
 
@@ -224,7 +235,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{FacetedFilter, QueryFilterValue, TextFilter};
+    use super::{FacetedFilter, QueryFilterValue, TextFilter, TextFilterAdapter, TextFilterField};
     use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
     use gpui_table_runtime::shape::{
         DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeFor,
@@ -252,6 +263,34 @@ mod tests {
                 "pending" => Some(Self::Pending),
                 _ => None,
             }
+        }
+    }
+
+    struct AccountCode(String);
+
+    impl TextFilterField for AccountCode {
+        fn to_filter_text(&self) -> String {
+            self.0.clone()
+        }
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    struct Amount(rust_decimal::Decimal);
+
+    #[cfg(feature = "rust_decimal")]
+    impl super::NumberRangeFilterField for Amount {
+        fn to_filter_decimal(&self) -> rust_decimal::Decimal {
+            self.0
+        }
+    }
+
+    #[cfg(feature = "chrono")]
+    struct BusinessDate(chrono::NaiveDate);
+
+    #[cfg(feature = "chrono")]
+    impl super::DateRangeFilterField for BusinessDate {
+        fn to_filter_naive_date(&self) -> chrono::NaiveDate {
+            self.0
         }
     }
 
@@ -319,6 +358,11 @@ mod tests {
         assert_shape_for::<TextFilter, Option<String>>();
         assert_table_filter_shape::<TextFilter, String>();
         assert_table_filter_shape::<TextFilter, Option<String>>();
+        assert_declared::<TextFilterAdapter>();
+        assert_shape_for::<TextFilterAdapter, AccountCode>();
+        assert_shape_for::<TextFilterAdapter, Option<AccountCode>>();
+        assert_table_filter_shape::<TextFilterAdapter, AccountCode>();
+        assert_table_filter_shape::<TextFilterAdapter, Option<AccountCode>>();
 
         assert_declared::<FacetedFilter<bool>>();
         assert_shape_for::<FacetedFilter<bool>, bool>();
@@ -332,7 +376,7 @@ mod tests {
 
         #[cfg(feature = "rust_decimal")]
         {
-            use super::NumberRangeFilter;
+            use super::{NumberRangeFilter, NumberRangeFilterAdapter};
 
             assert_declared::<NumberRangeFilter>();
             assert_shape_for::<NumberRangeFilter, i64>();
@@ -341,11 +385,16 @@ mod tests {
             assert_table_filter_shape::<NumberRangeFilter, i64>();
             assert_table_filter_shape::<NumberRangeFilter, Option<i64>>();
             assert_table_filter_shape::<NumberRangeFilter, rust_decimal::Decimal>();
+            assert_declared::<NumberRangeFilterAdapter>();
+            assert_shape_for::<NumberRangeFilterAdapter, Amount>();
+            assert_shape_for::<NumberRangeFilterAdapter, Option<Amount>>();
+            assert_table_filter_shape::<NumberRangeFilterAdapter, Amount>();
+            assert_table_filter_shape::<NumberRangeFilterAdapter, Option<Amount>>();
         }
 
         #[cfg(feature = "chrono")]
         {
-            use super::DateRangeFilter;
+            use super::{DateRangeFilter, DateRangeFilterAdapter};
 
             assert_declared::<DateRangeFilter>();
             assert_shape_for::<DateRangeFilter, chrono::NaiveDate>();
@@ -354,6 +403,99 @@ mod tests {
             assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDate>();
             assert_table_filter_shape::<DateRangeFilter, Option<chrono::NaiveDate>>();
             assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDateTime>();
+            assert_declared::<DateRangeFilterAdapter>();
+            assert_shape_for::<DateRangeFilterAdapter, BusinessDate>();
+            assert_shape_for::<DateRangeFilterAdapter, Option<BusinessDate>>();
+            assert_table_filter_shape::<DateRangeFilterAdapter, BusinessDate>();
+            assert_table_filter_shape::<DateRangeFilterAdapter, Option<BusinessDate>>();
         }
+    }
+
+    #[test]
+    fn text_filter_adapter_matches_custom_fields_and_options() {
+        let active = TextValue::from("ACCT");
+        let inactive = TextValue::default();
+
+        assert!(<TextFilterAdapter as GpuiTableFilterShapeFor<
+            AccountCode,
+        >>::matches_field(
+            &AccountCode("sales-acct".to_string()), &active,
+        ));
+        assert!(<TextFilterAdapter as GpuiTableFilterShapeFor<
+            Option<AccountCode>,
+        >>::matches_field(
+            &Some(AccountCode("tax-acct".to_string())),
+            &active,
+        ));
+        assert!(!<TextFilterAdapter as GpuiTableFilterShapeFor<
+            Option<AccountCode>,
+        >>::matches_field(&None, &active,));
+        assert!(<TextFilterAdapter as GpuiTableFilterShapeFor<
+            Option<AccountCode>,
+        >>::matches_field(&None, &inactive,));
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    #[test]
+    fn number_range_filter_adapter_matches_custom_fields_and_options() {
+        use super::NumberRangeFilterAdapter;
+        use rust_decimal::Decimal;
+
+        let active = RangeValue::from((Some(Decimal::new(10, 0)), Some(Decimal::new(20, 0))));
+        let inactive = RangeValue::default();
+
+        assert!(<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Amount,
+        >>::matches_field(
+            &Amount(Decimal::new(15, 0)), &active,
+        ));
+        assert!(!<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Amount,
+        >>::matches_field(
+            &Amount(Decimal::new(25, 0)), &active,
+        ));
+        assert!(<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Amount>,
+        >>::matches_field(
+            &Some(Amount(Decimal::new(15, 0))), &active,
+        ));
+        assert!(!<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Amount>,
+        >>::matches_field(&None, &active,));
+        assert!(<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Amount>,
+        >>::matches_field(&None, &inactive,));
+    }
+
+    #[cfg(feature = "chrono")]
+    #[test]
+    fn date_range_filter_adapter_matches_custom_fields_and_options() {
+        use super::DateRangeFilterAdapter;
+        use chrono::NaiveDate;
+
+        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let inside = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
+        let outside = NaiveDate::from_ymd_opt(2026, 2, 1).unwrap();
+        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let active = RangeValue::from((Some(start), Some(end)));
+        let inactive = RangeValue::default();
+
+        assert!(<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            BusinessDate,
+        >>::matches_field(&BusinessDate(inside), &active,));
+        assert!(!<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            BusinessDate,
+        >>::matches_field(&BusinessDate(outside), &active,));
+        assert!(<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<BusinessDate>,
+        >>::matches_field(
+            &Some(BusinessDate(inside)), &active,
+        ));
+        assert!(!<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<BusinessDate>,
+        >>::matches_field(&None, &active,));
+        assert!(<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<BusinessDate>,
+        >>::matches_field(&None, &inactive,));
     }
 }

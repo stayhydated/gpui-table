@@ -282,6 +282,9 @@ their query handlers.
 Registration reports setup errors such as duplicate tool names.
 MCP schemas and decoders use the same explicit filter shapes selected for
 generated filter UI.
+For transparent or domain-specific field types that should reuse a built-in raw
+value and MCP schema, prefer `TextFilterAdapter`, `NumberRangeFilterAdapter`,
+or `DateRangeFilterAdapter` and implement the matching field trait.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
 type, and raw-value conversions; with the `mcp` feature, the derive also emits

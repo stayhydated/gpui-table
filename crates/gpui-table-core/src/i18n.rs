@@ -1,5 +1,5 @@
 use es_fluent::{
-    FluentArgs, FluentLocalizer, FluentLocalizerExt as _, FluentMessage,
+    FluentArgs, FluentLabel, FluentLocalizer, FluentLocalizerExt as _, FluentMessage,
     registry::{StaticFluentDomain, StaticFluentEntryId},
 };
 use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError};
@@ -91,4 +91,12 @@ where
         Ok(i18n) => i18n.localize_message(message),
         Err(_) => FallbackLocalizer.localize_message(message),
     }
+}
+
+/// Render a type label without consulting GPUI component state.
+pub fn fallback_label<T>() -> String
+where
+    T: FluentLabel,
+{
+    es_fluent::fallback_label::<T>()
 }

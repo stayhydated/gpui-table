@@ -2,12 +2,15 @@
 //!
 //! Public API is namespaced by responsibility:
 //! - `gpui_table::core` for pure filter semantics
-//! - `gpui_table::component` for built-in GPUI filter widgets and shape impls
 //! - `gpui_table::mcp` for experimental MCP table query integration
 //! - `gpui_table::runtime` for GPUI-facing traits/helpers
 //! - `gpui_table::schema` for metadata and registry types
 //! - root-level proc macros from `gpui-table-derive`, including
 //!   `GpuiTableFilterShape` for adapting existing filter shapes
+//!
+//! Concrete filter widgets and component-owned helpers live in
+//! `gpui-table-component` and are intentionally not re-exported from this
+//! facade.
 //!
 //! The facade owns the stable paths that macro-generated code names. Changes to
 //! root re-exports, `runtime::generated_filters`, `registry`, `__deps`, or
@@ -38,7 +41,6 @@
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
 
-pub use gpui_table_component as component;
 pub use gpui_table_core as core;
 pub use gpui_table_core::filter;
 #[cfg(feature = "mcp")]

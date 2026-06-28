@@ -10,22 +10,14 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
 12 | struct LocalTextFilter;
    | ^^^^^^^^^^^^^^^^^^^^^^
    = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
-help: the following other types implement trait `McpFilterShape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
-   |
-   |   impl McpFilterShape for gpui_table_component::TextFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
-...
-   | / impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
-   | | where
-   | |     T: gpui_table_core::filter::Filterable,
-   | |___________________________________________^ `FacetedFilter<T>`
-...
-   |   impl McpFilterShape for gpui_table_component::NumberRangeFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `NumberRangeFilter`
-...
-   |   impl McpFilterShape for gpui_table_component::DateRangeFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `DateRangeFilter`
+   = help: the following other types implement trait `McpFilterShape`:
+             DateRangeFilter
+             DateRangeFilterAdapter
+             FacetedFilter<T>
+             NumberRangeFilter
+             NumberRangeFilterAdapter
+             TextFilter
+             TextFilterAdapter
 note: required by a bound in `McpTableFilter::for_shape`
   --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
    |
@@ -47,19 +39,11 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
 12 | struct LocalTextFilter;
    | ^^^^^^^^^^^^^^^^^^^^^^
    = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
-help: the following other types implement trait `McpFilterShape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
-   |
-   |   impl McpFilterShape for gpui_table_component::TextFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
-...
-   | / impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
-   | | where
-   | |     T: gpui_table_core::filter::Filterable,
-   | |___________________________________________^ `FacetedFilter<T>`
-...
-   |   impl McpFilterShape for gpui_table_component::NumberRangeFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `NumberRangeFilter`
-...
-   |   impl McpFilterShape for gpui_table_component::DateRangeFilter {
-   |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `DateRangeFilter`
+   = help: the following other types implement trait `McpFilterShape`:
+             DateRangeFilter
+             DateRangeFilterAdapter
+             FacetedFilter<T>
+             NumberRangeFilter
+             NumberRangeFilterAdapter
+             TextFilter
+             TextFilterAdapter

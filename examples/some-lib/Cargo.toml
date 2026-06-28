@@ -48,7 +48,10 @@ gpui-table = { features = [
   "rust_decimal",
   "chrono",
 ], optional = true, workspace = true }
-gpui-table-component = { optional = true, workspace = true }
+gpui-table-component = { features = [
+  "chrono",
+  "rust_decimal",
+], optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
 strum = { optional = true, workspace = true }

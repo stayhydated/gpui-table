@@ -4,14 +4,7 @@
 //! owns table-specific filter decoding and query contracts while delegating
 //! shared MCP server and stdio serving mechanics to `component-shape-mcp`.
 
-use std::{
-    collections::{BTreeSet, HashSet},
-    fmt,
-    future::Future,
-    marker::PhantomData,
-    pin::Pin,
-    sync::Arc,
-};
+use std::{collections::BTreeSet, fmt, future::Future, marker::PhantomData, pin::Pin, sync::Arc};
 
 pub use gpui_table_runtime::shape::ComponentShapeMetadata;
 use gpui_table_runtime::shape::GpuiTableFilterShape;
@@ -567,176 +560,6 @@ where
     Ok(Shape::wrap_value(value))
 }
 
-impl McpFilterShape for gpui_table_component::TextFilter {
-    fn input_schema(filter: McpTableFilter) -> McpSchema {
-        default_filter_shape_input_schema::<Self>(filter)
-    }
-
-    fn decode_filter(
-        field: &'static str,
-        value: McpAny,
-    ) -> Result<Self::FilterValue, McpToolError> {
-        decode_raw_filter_shape::<Self>(field, value)
-    }
-}
-
-impl McpFilterShapeValidation for gpui_table_component::TextFilter {
-    fn decode_filter_with_validation<Validate>(
-        field: &'static str,
-        value: McpAny,
-        validate: Validate,
-    ) -> Result<Self::FilterValue, McpToolError>
-    where
-        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
-    {
-        decode_raw_filter_shape_with_validation::<Self, _>(field, value, validate)
-    }
-}
-
-impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
-where
-    T: gpui_table_core::filter::Filterable,
-{
-    fn input_schema(filter: McpTableFilter) -> McpSchema {
-        let mut schema = default_filter_input_schema(filter);
-        let options = T::options();
-
-        if let Some(object) = schema.as_object_mut() {
-            if !options.is_empty()
-                && let Some(items) = object.get_mut("items").and_then(Value::as_object_mut)
-            {
-                items.insert(
-                    "enum".to_string(),
-                    Value::Array(
-                        options
-                            .iter()
-                            .map(|option| Value::String(option.value.clone()))
-                            .collect(),
-                    ),
-                );
-            }
-            object.insert(
-                "x-gpuiTableFacetOptions".to_string(),
-                Value::Array(
-                    options
-                        .into_iter()
-                        .map(|option| {
-                            json!({
-                                "value": option.value,
-                                "label": option.label,
-                                "group": option.group,
-                                "count": option.count,
-                            })
-                        })
-                        .collect(),
-                ),
-            );
-        }
-
-        schema
-    }
-
-    fn decode_filter(
-        field: &'static str,
-        value: McpAny,
-    ) -> Result<Self::FilterValue, McpToolError> {
-        let raw_values = <Vec<String> as McpToolValue>::from_tool_value(field, value.into_value())?;
-        let mut values = HashSet::new();
-        for raw_value in raw_values {
-            let value = T::from_filter_string(&raw_value)
-                .ok_or_else(|| McpToolError::invalid_field_value(field, raw_value))?;
-            values.insert(value);
-        }
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(values))
-    }
-}
-
-impl<T> McpFilterShapeValidation for gpui_table_component::FacetedFilter<T>
-where
-    T: gpui_table_core::filter::Filterable,
-{
-    fn decode_filter_with_validation<Validate>(
-        field: &'static str,
-        value: McpAny,
-        validate: Validate,
-    ) -> Result<Self::FilterValue, McpToolError>
-    where
-        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
-    {
-        let raw_values = <Vec<String> as McpToolValue>::from_tool_value(field, value.into_value())?;
-        let mut values = HashSet::new();
-        for raw_value in raw_values {
-            let value = T::from_filter_string(&raw_value)
-                .ok_or_else(|| McpToolError::invalid_field_value(field, raw_value))?;
-            values.insert(value);
-        }
-        validate(&values)?;
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(values))
-    }
-}
-
-#[cfg(feature = "rust_decimal")]
-impl McpFilterShape for gpui_table_component::NumberRangeFilter {
-    fn input_schema(filter: McpTableFilter) -> McpSchema {
-        range_filter_input_schema::<rust_decimal::Decimal>(filter)
-    }
-
-    fn decode_filter(
-        field: &'static str,
-        value: McpAny,
-    ) -> Result<Self::FilterValue, McpToolError> {
-        let value = decode_range_filter::<rust_decimal::Decimal>(field, value)?;
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
-    }
-}
-
-#[cfg(feature = "rust_decimal")]
-impl McpFilterShapeValidation for gpui_table_component::NumberRangeFilter {
-    fn decode_filter_with_validation<Validate>(
-        field: &'static str,
-        value: McpAny,
-        validate: Validate,
-    ) -> Result<Self::FilterValue, McpToolError>
-    where
-        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
-    {
-        let value = decode_range_filter::<rust_decimal::Decimal>(field, value)?;
-        validate(&value)?;
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
-    }
-}
-
-#[cfg(feature = "chrono")]
-impl McpFilterShape for gpui_table_component::DateRangeFilter {
-    fn input_schema(filter: McpTableFilter) -> McpSchema {
-        range_filter_input_schema::<chrono::NaiveDate>(filter)
-    }
-
-    fn decode_filter(
-        field: &'static str,
-        value: McpAny,
-    ) -> Result<Self::FilterValue, McpToolError> {
-        let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
-    }
-}
-
-#[cfg(feature = "chrono")]
-impl McpFilterShapeValidation for gpui_table_component::DateRangeFilter {
-    fn decode_filter_with_validation<Validate>(
-        field: &'static str,
-        value: McpAny,
-        validate: Validate,
-    ) -> Result<Self::FilterValue, McpToolError>
-    where
-        Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
-    {
-        let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
-        validate(&value)?;
-        Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
-    }
-}
-
 pub mod registry {
     use super::{McpServer, McpTableDescriptor, McpToolError};
 
@@ -784,7 +607,7 @@ pub mod registry {
 }
 
 #[cfg(any(feature = "chrono", feature = "rust_decimal"))]
-fn range_filter_input_schema<T>(_filter: McpTableFilter) -> McpSchema
+pub fn range_filter_input_schema<T>(_filter: McpTableFilter) -> McpSchema
 where
     McpRange<T>: McpToolValue,
 {
@@ -792,7 +615,7 @@ where
 }
 
 #[cfg(any(feature = "chrono", feature = "rust_decimal"))]
-fn decode_range_filter<T>(
+pub fn decode_range_filter<T>(
     field: &'static str,
     value: McpAny,
 ) -> Result<(Option<T>, Option<T>), McpToolError>
@@ -1294,7 +1117,7 @@ fn schema_for_filter(filter: McpTableFilter) -> McpSchema {
     schema
 }
 
-fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {
+pub fn default_filter_input_schema(filter: McpTableFilter) -> McpSchema {
     component_shape_mcp::schema_for_input(mcp_input_for_filter_type(filter.filter_type()))
 }
 

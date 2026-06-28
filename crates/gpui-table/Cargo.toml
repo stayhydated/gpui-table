@@ -14,7 +14,6 @@ readme = "README.md"
 [features]
 chrono = [
   "dep:chrono",
-  "gpui-table-component/chrono",
   "gpui-table-core/chrono",
   "gpui-table-derive/chrono",
   "gpui-table-mcp?/chrono",
@@ -27,14 +26,12 @@ inventory = [ "gpui-table-derive/inventory" ]
 mcp = [ "dep:gpui-table-mcp", "inventory", "gpui-table-derive?/mcp" ]
 rust_decimal = [
   "dep:rust_decimal",
-  "gpui-table-component/rust_decimal",
   "gpui-table-core/rust_decimal",
   "gpui-table-derive/rust_decimal",
   "gpui-table-mcp?/rust_decimal",
   "gpui-table-runtime/rust_decimal",
 ]
 spacetimedb = [
-  "gpui-table-component/spacetimedb",
   "gpui-table-core/spacetimedb",
   "gpui-table-derive/spacetimedb",
   "gpui-table-mcp?/spacetimedb",
@@ -43,9 +40,6 @@ spacetimedb = [
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-gpui = { workspace = true }
-gpui-component = { workspace = true }
-gpui-table-component = { default-features = false, workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
 gpui-table-mcp = { default-features = false, optional = true, workspace = true }
@@ -56,6 +50,9 @@ serde = { features = [ "derive" ], workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true }
+gpui = { workspace = true }
+gpui-component = { workspace = true }
+gpui-table-component = { features = [ "mcp", "rust_decimal", "spacetimedb" ], workspace = true }
 insta = { features = [ "yaml" ], workspace = true }
 koruma = { workspace = true }
 koruma-collection = { workspace = true }

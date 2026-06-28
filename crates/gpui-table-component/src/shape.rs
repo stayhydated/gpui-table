@@ -6,10 +6,279 @@ use crate::{FacetedFilter, TextFilter};
 use gpui::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterType, TextValue};
 use gpui_table_runtime::shape::{
+    ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape,
     DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeFor,
 };
 use gpui_table_schema::registry::RegistryFilterType;
 use std::collections::HashSet;
+
+/// Adapter shape for text filters over application-owned field types.
+///
+/// Use this when a table field is a transparent or domain-specific value type
+/// that should be matched by its text representation while reusing the built-in
+/// [`TextFilter`] component and MCP schema.
+pub struct TextFilterAdapter;
+
+/// Field conversion contract used by [`TextFilterAdapter`].
+pub trait TextFilterField {
+    /// Converts the field value into the text matched by [`TextFilter`].
+    fn to_filter_text(&self) -> String;
+}
+
+impl TextFilterField for String {
+    fn to_filter_text(&self) -> String {
+        self.clone()
+    }
+}
+
+#[cfg(feature = "rust_decimal")]
+/// Adapter shape for decimal range filters over application-owned field types.
+///
+/// Use this when a table field is a transparent or domain-specific value type
+/// that should be matched by a decimal value while reusing the built-in
+/// [`NumberRangeFilter`] component and MCP schema.
+pub struct NumberRangeFilterAdapter;
+
+#[cfg(feature = "rust_decimal")]
+/// Field conversion contract used by [`NumberRangeFilterAdapter`].
+pub trait NumberRangeFilterField {
+    /// Converts the field value into the decimal matched by [`NumberRangeFilter`].
+    fn to_filter_decimal(&self) -> rust_decimal::Decimal;
+}
+
+#[cfg(feature = "rust_decimal")]
+macro_rules! impl_number_range_filter_field {
+    ($($ty:ty),* $(,)?) => {
+        $(
+            impl NumberRangeFilterField for $ty {
+                fn to_filter_decimal(&self) -> rust_decimal::Decimal {
+                    gpui_table_core::filter::ToDecimal::to_decimal(self)
+                }
+            }
+        )*
+    };
+}
+
+#[cfg(feature = "rust_decimal")]
+impl_number_range_filter_field!(
+    f32,
+    f64,
+    i8,
+    i16,
+    i32,
+    i64,
+    isize,
+    rust_decimal::Decimal,
+    u8,
+    u16,
+    u32,
+    u64,
+    usize,
+);
+
+#[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
+impl_number_range_filter_field!(spacetimedb_lib::Timestamp, spacetimedb_lib::TimeDuration);
+
+#[cfg(feature = "chrono")]
+/// Adapter shape for date range filters over application-owned field types.
+///
+/// Use this when a table field is a transparent or domain-specific value type
+/// that should be matched by a date value while reusing the built-in
+/// [`DateRangeFilter`] component and MCP schema.
+pub struct DateRangeFilterAdapter;
+
+#[cfg(feature = "chrono")]
+/// Field conversion contract used by [`DateRangeFilterAdapter`].
+pub trait DateRangeFilterField {
+    /// Converts the field value into the date matched by [`DateRangeFilter`].
+    fn to_filter_naive_date(&self) -> chrono::NaiveDate;
+}
+
+#[cfg(feature = "chrono")]
+macro_rules! impl_date_range_filter_field {
+    ($($ty:ty),* $(,)?) => {
+        $(
+            impl DateRangeFilterField for $ty {
+                fn to_filter_naive_date(&self) -> chrono::NaiveDate {
+                    gpui_table_core::filter::ToNaiveDate::to_naive_date(self)
+                }
+            }
+        )*
+    };
+}
+
+#[cfg(feature = "chrono")]
+impl_date_range_filter_field!(chrono::NaiveDate, chrono::NaiveDateTime);
+
+#[cfg(feature = "chrono")]
+impl<Tz> DateRangeFilterField for chrono::DateTime<Tz>
+where
+    Tz: chrono::TimeZone,
+{
+    fn to_filter_naive_date(&self) -> chrono::NaiveDate {
+        self.date_naive()
+    }
+}
+
+#[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+impl_date_range_filter_field!(spacetimedb_lib::Timestamp);
+
+macro_rules! delegate_filter_shape {
+    ($shape:ty, $base:ty) => {
+        impl ComponentShapeMetadata for $shape {
+            const MCP_INPUT: gpui_table_runtime::shape::McpInput =
+                <$base as ComponentShapeMetadata>::MCP_INPUT;
+        }
+
+        impl DeclaredComponentShape for $shape {}
+
+        impl GpuiTableFilterShape for $shape {
+            type Component = <$base as GpuiTableFilterShape>::Component;
+            type FilterValue = <$base as GpuiTableFilterShape>::FilterValue;
+            type RawValue = <$base as GpuiTableFilterShape>::RawValue;
+
+            const FILTER_TYPE: RegistryFilterType = <$base as GpuiTableFilterShape>::FILTER_TYPE;
+
+            fn new_for(
+                title: impl Fn(&App) -> String + 'static,
+                value: Self::RawValue,
+                on_change: impl Fn(Self::RawValue, &mut Window, &mut App) + 'static,
+                cx: &mut App,
+            ) -> Entity<Self::Component> {
+                <$base as GpuiTableFilterShape>::new_for(title, value, on_change, cx)
+            }
+
+            fn read_value(entity: &Entity<Self::Component>, cx: &App) -> Self::RawValue {
+                <$base as GpuiTableFilterShape>::read_value(entity, cx)
+            }
+
+            fn wrap_value(value: Self::RawValue) -> Self::FilterValue {
+                <$base as GpuiTableFilterShape>::wrap_value(value)
+            }
+
+            fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {
+                <$base as GpuiTableFilterShape>::reset_silent(entity, window, cx);
+            }
+        }
+
+        impl DeclaredGpuiTableFilterShape for $shape {}
+    };
+}
+
+delegate_filter_shape!(TextFilterAdapter, TextFilter);
+
+impl<T> ComponentShapeFor<T> for TextFilterAdapter where T: TextFilterField {}
+
+impl<T> ComponentShapeFor<Option<T>> for TextFilterAdapter where T: TextFilterField {}
+
+impl<T> GpuiTableFilterShapeFor<T> for TextFilterAdapter
+where
+    T: TextFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::Text
+    }
+
+    fn matches_field(field: &T, value: &Self::FilterValue) -> bool {
+        value.matches(&field.to_filter_text())
+    }
+}
+
+impl<T> GpuiTableFilterShapeFor<Option<T>> for TextFilterAdapter
+where
+    T: TextFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::Text
+    }
+
+    fn matches_field(field: &Option<T>, value: &Self::FilterValue) -> bool {
+        !value.is_active()
+            || field
+                .as_ref()
+                .is_some_and(|field| value.matches(&field.to_filter_text()))
+    }
+}
+
+#[cfg(feature = "rust_decimal")]
+delegate_filter_shape!(NumberRangeFilterAdapter, NumberRangeFilter);
+
+#[cfg(feature = "rust_decimal")]
+impl<T> ComponentShapeFor<T> for NumberRangeFilterAdapter where T: NumberRangeFilterField {}
+
+#[cfg(feature = "rust_decimal")]
+impl<T> ComponentShapeFor<Option<T>> for NumberRangeFilterAdapter where T: NumberRangeFilterField {}
+
+#[cfg(feature = "rust_decimal")]
+impl<T> GpuiTableFilterShapeFor<T> for NumberRangeFilterAdapter
+where
+    T: NumberRangeFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::NumberRange
+    }
+
+    fn matches_field(field: &T, value: &Self::FilterValue) -> bool {
+        value.matches(&field.to_filter_decimal())
+    }
+}
+
+#[cfg(feature = "rust_decimal")]
+impl<T> GpuiTableFilterShapeFor<Option<T>> for NumberRangeFilterAdapter
+where
+    T: NumberRangeFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::NumberRange
+    }
+
+    fn matches_field(field: &Option<T>, value: &Self::FilterValue) -> bool {
+        !value.is_active()
+            || field
+                .as_ref()
+                .is_some_and(|field| value.matches(&field.to_filter_decimal()))
+    }
+}
+
+#[cfg(feature = "chrono")]
+delegate_filter_shape!(DateRangeFilterAdapter, DateRangeFilter);
+
+#[cfg(feature = "chrono")]
+impl<T> ComponentShapeFor<T> for DateRangeFilterAdapter where T: DateRangeFilterField {}
+
+#[cfg(feature = "chrono")]
+impl<T> ComponentShapeFor<Option<T>> for DateRangeFilterAdapter where T: DateRangeFilterField {}
+
+#[cfg(feature = "chrono")]
+impl<T> GpuiTableFilterShapeFor<T> for DateRangeFilterAdapter
+where
+    T: DateRangeFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::DateRange
+    }
+
+    fn matches_field(field: &T, value: &Self::FilterValue) -> bool {
+        value.matches(&field.to_filter_naive_date())
+    }
+}
+
+#[cfg(feature = "chrono")]
+impl<T> GpuiTableFilterShapeFor<Option<T>> for DateRangeFilterAdapter
+where
+    T: DateRangeFilterField,
+{
+    fn filter_type() -> FilterType {
+        FilterType::DateRange
+    }
+
+    fn matches_field(field: &Option<T>, value: &Self::FilterValue) -> bool {
+        !value.is_active()
+            || field
+                .as_ref()
+                .is_some_and(|field| value.matches(&field.to_filter_naive_date()))
+    }
+}
 
 impl GpuiTableFilterShape for TextFilter {
     type Component = TextFilter;

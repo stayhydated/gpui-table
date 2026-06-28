@@ -9,6 +9,7 @@ through the facade when you want a stdio MCP server or custom MCP tool server:
 ```toml
 [dependencies]
 gpui-table = { version = "*", features = ["mcp"] }
+gpui-table-component = { version = "*", features = ["mcp"] } # for built-in filters
 ```
 
 The derive macro emits a `gpui_table::mcp::McpTable` implementation for tables
@@ -58,10 +59,11 @@ publishes the row schema under `properties.rows.items`; without it,
 `rows.items` stays `{}` for compatibility with existing serialized row
 handlers.
 
-Built-in text, faceted, number range, and date range filters are supported.
-Declare the same explicit `#[gpui_table(filter(path::ToShape))]` shape paths
-used by generated filter UI before the MCP descriptor is generated. Faceted
-filter schemas publish unique string sets, include valid
+Built-in text, faceted, number range, and date range filters are supported by
+`gpui-table-component` when its `mcp` feature is enabled. Declare the same
+explicit `#[gpui_table(filter(path::ToShape))]` shape paths used by generated
+filter UI before the MCP descriptor is generated. Faceted filter schemas publish
+unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
 Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
@@ -71,6 +73,10 @@ rule metadata in `x-gpuiTableValidation`; literal `LenValidation`,
 Schema hints when the filter argument schema is unambiguous. Application crates
 using these validators should depend on `koruma` and the validator crate that
 provides the rule.
+For transparent or domain-specific field types that should keep a built-in
+filter raw value and MCP schema, use `TextFilterAdapter`,
+`NumberRangeFilterAdapter`, or `DateRangeFilterAdapter` and implement the
+matching field trait.
 For custom filters that adapt an existing built-in shape, derive
 `gpui_table::GpuiTableFilterShape` and declare the base shape, raw value, field
 type, and raw-value conversions:
