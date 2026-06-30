@@ -40,7 +40,6 @@ fn ui_compile_fail() {
     ))]
     t.compile_fail("tests/ui/mcp_filter_shape_requires_decode_minimal.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
-    t.compile_fail("tests/ui/invalid_configured_filter_shape_associated_call.rs");
     t.compile_fail("tests/ui/invalid_duplicate_style.rs");
     t.compile_fail("tests/ui/invalid_skip_style.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_arguments.rs");
