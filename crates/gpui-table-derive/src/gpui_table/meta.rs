@@ -1,6 +1,5 @@
 use crate::components::{FilterShapeOptions, ResolvedFilterShape};
 
-use component_shape_codegen::parse_single_shape_path;
 use darling::{Error as DarlingError, FromDeriveInput, FromField, FromMeta, util::Override};
 use koruma_derive_core::{ParsedDataField, ParsedValidatorUse, ValidatorTargetSelector};
 use syn::{Ident, LitBool, LitFloat, LitInt, LitStr, Token, parenthesized, spanned::Spanned as _};
@@ -177,8 +176,8 @@ pub(super) struct TableColumn {
     pub(super) movable: Option<bool>,
     pub(super) style: Option<syn::Path>,
     pub(super) skip: bool,
-    /// Explicit filter shape path.
-    /// Example: `filter(gpui_table_component::TextFilter)`
+    /// Explicit filter shape path or configured filter shape expression.
+    /// Example: `filter(gpui_table_component::TextFilter.numeric_only())`
     pub(super) filter: Option<FilterShapeOptions>,
     /// Koruma validators applied to the decoded MCP filter argument.
     pub(super) validation: Option<FilterValidation>,
@@ -475,15 +474,18 @@ fn parse_path_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<syn::P
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
     if meta.input.is_empty() {
         return Err(meta.error(
-            "expected explicit filter shape, e.g. `filter(gpui_table_component::TextFilter)`",
+            "expected explicit filter shape, e.g. `filter(gpui_table_component::TextFilter)` or `filter(gpui_table_component::TextFilter.numeric_only())`",
         ));
     }
 
     let content;
     parenthesized!(content in meta.input);
-    let shape = parse_single_shape_path(&content, "expected exactly one filter shape path")?;
-    let span = shape.span();
-    Ok(FilterShapeOptions::from_shape_with_span(shape, span))
+    let expr: syn::Expr = content.parse()?;
+    if !content.is_empty() {
+        return Err(content.error("expected exactly one filter shape expression"));
+    }
+    let span = expr.span();
+    FilterShapeOptions::from_constructor_expr_with_span(expr, span)
 }
 
 #[cfg(test)]

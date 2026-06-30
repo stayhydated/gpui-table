@@ -1,8 +1,19 @@
 #[test]
+fn configured_filter_shape_expressions() {
+    let t = trybuild::TestCases::new();
+    t.pass("tests/ui/configured_filter_shapes.rs");
+    #[cfg(feature = "rust_decimal")]
+    t.pass("tests/ui/configured_number_range_filter_shapes.rs");
+}
+
+#[test]
 fn ui_compile_fail() {
     let t = trybuild::TestCases::new();
     t.pass("tests/ui/field_style_cell.rs");
     t.pass("tests/ui/table_cell_display_format.rs");
+    t.pass("tests/ui/configured_filter_shapes.rs");
+    #[cfg(feature = "rust_decimal")]
+    t.pass("tests/ui/configured_number_range_filter_shapes.rs");
     #[cfg(feature = "chrono")]
     t.pass("tests/ui/explicit_filter_shapes.rs");
     t.pass("tests/ui/faceted_option_filter.rs");
@@ -29,6 +40,7 @@ fn ui_compile_fail() {
     ))]
     t.compile_fail("tests/ui/mcp_filter_shape_requires_decode_minimal.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
+    t.compile_fail("tests/ui/invalid_configured_filter_shape_associated_call.rs");
     t.compile_fail("tests/ui/invalid_duplicate_style.rs");
     t.compile_fail("tests/ui/invalid_skip_style.rs");
     t.compile_fail("tests/ui/invalid_gpui_table_impl_arguments.rs");

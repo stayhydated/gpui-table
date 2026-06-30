@@ -40,7 +40,11 @@ fn render_default_cell<R: TableRowMeta>(
 - `TableLoader` and `TableDataLoader`
 - `shape`, the table filter shape contract used by generated filter entities,
   plus facade re-exports for `ComponentShapeMetadata`, `DeclaredComponentShape`,
-  `ComponentShapeFor`, and `McpInput` when implementing custom filters
+  `ComponentShapeFor`, and `McpInput` when implementing custom filters.
+  `GpuiTableFilterShapeBuilder` and `build_filter_shape` support configured
+  field-level filter expressions such as
+  `FacetedFilter::<Status>.searchable(true)` and
+  `NumberRangeFilter.range(min, max).step(step)`.
 - `generated_filters`, which provides generic filter-entity helpers such as
   `FilterEntitiesExt`
 

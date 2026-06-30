@@ -1,0 +1,5 @@
+error: expected a filter shape path or configured filter shape expression
+ --> tests/ui/invalid_configured_filter_shape_associated_call.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::TextFilter::numeric_only()))]
+  |                         ^^^^^^^^^^^^^^^^^^^^

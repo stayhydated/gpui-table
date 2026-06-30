@@ -88,6 +88,15 @@ Built-in field support is intentionally narrow:
 Use `#[gpui_table(filters)]` for UI-generated filter entities, or
 `#[gpui_table(mcp)]` when the filters are MCP-only query arguments.
 
+Field-level `filter(...)` accepts either a plain shape path or a configured
+shape expression. Built-ins include `TextFilter.numeric_only()`,
+`TextFilter.alphanumeric_only()`, `TextFilter.matching_regex("[A-Z0-9-]*")`,
+`NumberRangeFilter.range(min, max).step(step)`, and
+`FacetedFilter::<T>.searchable(true)`. Custom configured expressions must
+produce a value that implements
+`gpui_table::runtime::shape::GpuiTableFilterShapeBuilder<Shape>` for the same
+base shape.
+
 ## Adapter Shapes
 
 Use built-in adapter shapes for value-object fields that should keep built-in

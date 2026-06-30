@@ -50,7 +50,30 @@ shape types:
 ```rs
 #[gpui_table(filter(gpui_table_component::TextFilter))]
 name: String,
+
+#[gpui_table(filter(gpui_table_component::TextFilter.numeric_only()))]
+numeric_code: String,
+
+#[gpui_table(filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*")))]
+external_ref: String,
+
+#[gpui_table(filter(
+    gpui_table_component::NumberRangeFilter
+        .range(rust_decimal::Decimal::new(0, 0), rust_decimal::Decimal::new(100, 0))
+        .step(rust_decimal::Decimal::new(10, 0))
+))]
+score: rust_decimal::Decimal,
+
+#[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>.searchable(true)))]
+status: Status,
 ```
+
+Configured built-in filter expressions construct the same shape type while
+applying its `GpuiTableFilterShapeBuilder`: `TextFilter.numeric_only()`,
+`TextFilter.alphanumeric_only()`, and `TextFilter.matching_regex("...")`
+enable text validators, `NumberRangeFilter.range(...).step(...)` sets numeric
+slider bounds and step size, and
+`FacetedFilter::<T>.searchable(true)` shows the faceted search input.
 
 When a field is an application-owned value type but should reuse a built-in
 filter widget, use an adapter shape and implement its field trait:

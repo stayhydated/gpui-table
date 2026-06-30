@@ -585,6 +585,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "attribute-dsl"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.5.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1333,6 +1342,7 @@ dependencies = [
 name = "component-shape-codegen"
 version = "0.1.0"
 dependencies = [
+ "attribute-dsl",
  "component-shape",
  "proc-macro2",
  "quote",
@@ -2255,7 +2265,7 @@ dependencies = [
  "derive_more 2.1.1",
  "fluent-syntax",
  "heck 0.5.0",
- "icu",
+ "icu_locale",
  "proc-macro2",
  "quote",
  "serde",
@@ -3385,6 +3395,7 @@ dependencies = [
  "gpui_platform",
  "icu",
  "jiff",
+ "regex",
  "rust_decimal",
  "spacetimedb-lib",
  "strum 0.28.0",
@@ -4957,6 +4968,7 @@ dependencies = [
 name = "koruma-derive-core"
 version = "0.9.0"
 dependencies = [
+ "attribute-dsl",
  "heck 0.5.0",
  "proc-macro2",
  "quote",

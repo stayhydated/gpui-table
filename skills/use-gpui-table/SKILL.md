@@ -40,8 +40,14 @@ derives, generated types, and runtime helpers:
 3. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
    context menu behavior. Declare built-in filters explicitly with
-   `filter(gpui_table_component::<Shape>)`; use the same shape-path form for
-   custom filters.
+   `filter(gpui_table_component::<Shape>)`, or use configured shape
+   expressions such as `TextFilter.numeric_only()`,
+   `TextFilter.matching_regex("[A-Z0-9-]*")`, and
+   `FacetedFilter::<T>.searchable(true)` when generated filter entities should
+   construct configured filter widgets. Use
+   `NumberRangeFilter.range(min, max).step(step)` to configure generated
+   numeric range widgets. Use the same shape-path or configured expression form
+   for custom filters.
 4. Use `#[derive(Filterable)]` for faceted enums. Include
    `Clone + Eq + Hash + PartialEq`; add `#[filter(fluent)]` only when labels
    come from `es-fluent`.
@@ -173,13 +179,24 @@ Generated names follow the row type:
 Declare built-in filters explicitly:
 
 - `filter(gpui_table_component::TextFilter)` for string search.
+- `filter(gpui_table_component::TextFilter.numeric_only())` or
+  `filter(gpui_table_component::TextFilter.alphanumeric_only())` for
+  configured text filters.
+- `filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*"))`
+  for a text filter that accepts only values matched by a full-value regex.
 - `filter(gpui_table_component::FacetedFilter::<T>)` for enum-like `T`,
   `Option<T>`, or `Vec<T>` fields when `T` derives or implements
   `Filterable`.
+- `filter(gpui_table_component::FacetedFilter::<T>.searchable(true))` for a
+  generated faceted filter with a search input.
 - `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges.
+- `filter(gpui_table_component::NumberRangeFilter.range(min, max).step(step))`
+  for generated numeric range filters with explicit slider bounds or step size.
 - `filter(gpui_table_component::DateRangeFilter)` for temporal ranges.
 
-Use the same `filter(path::ToShape)` form for custom shapes.
+Use the same `filter(path::ToShape)` or configured expression form for custom
+shapes whose configuration value implements
+`gpui_table::runtime::shape::GpuiTableFilterShapeBuilder<Shape>`.
 
 Keep localized labels explicit. Use `#[filter(fluent)]` or the matching table
 label attributes only when the application owns an `es-fluent` localizer and the

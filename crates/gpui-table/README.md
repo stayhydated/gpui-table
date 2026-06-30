@@ -68,7 +68,7 @@ pub struct User {
     #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>.searchable(true)))]
     pub status: UserStatus,
 }
 
@@ -95,12 +95,20 @@ external identifier that does not follow the snake_case Rust type name. Use
 `TableRowMeta::table_id()` when callers need the typed `TableId` wrapper instead
 of the raw string constant.
 
-Field-level filters require an explicit shape path:
+Field-level filters require an explicit shape path or configured shape
+expression:
 `filter(gpui_table_component::TextFilter)` for strings,
 `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges,
 `filter(gpui_table_component::DateRangeFilter)` for date ranges, and
 `filter(gpui_table_component::FacetedFilter::<T>)` for faceted values.
-Use the same form for custom shapes.
+Use `TextFilter.numeric_only()`, `TextFilter.alphanumeric_only()`,
+`TextFilter.matching_regex("[A-Z0-9-]*")`, or
+`FacetedFilter::<T>.searchable(true)` when the generated filter entity should
+construct a configured built-in filter. Use
+`NumberRangeFilter.range(min, max).step(step)` to configure generated numeric
+range widgets with explicit slider bounds or step size. Use the same forms for
+custom shapes whose configured expression implements
+`gpui_table::runtime::shape::GpuiTableFilterShapeBuilder<Shape>`.
 
 Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
 implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
@@ -109,7 +117,9 @@ active, rows with `None` or no matching vector element do not match that facet.
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
-type, and shape path through `ComponentShapeUse`.
+type, and resolved base shape path through `ComponentShapeUse`; configured
+filter expressions affect generated UI construction but do not change the
+registered shape path.
 
 ### Custom cell rendering
 
@@ -197,7 +207,7 @@ use koruma_collection::collection::LenValidation;
 #[gpui_table(mcp)]
 struct User {
     #[gpui_table(filter(gpui_table_component::TextFilter))]
-    #[koruma(LenValidation::<_>::min(2).max(64))]
+    #[koruma(LenValidation::<_>.min(2).max(64))]
     name: String,
 }
 ```
@@ -341,7 +351,7 @@ pub enum UserStatus {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 pub struct User {
-    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>.searchable(true)))]
     pub status: UserStatus,
 }
 ```

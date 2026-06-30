@@ -19,6 +19,7 @@ Use it to see:
 
 - derived columns rendered in `gpui_component::table::DataTable`
 - generated built-in filters wired with `UserFilterEntities::build_for_table(...)`
+- configured field-level filter expressions such as searchable faceted filters
 - `TableStatusBar` and filter layout composition
 - typed `es-fluent` titles, descriptions, and faceted labels
 - field-level custom cell rendering and load-more behavior

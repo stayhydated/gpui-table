@@ -6,7 +6,7 @@ use component_shape_codegen::{
 };
 use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens as _, quote};
-use syn::Path;
+use syn::Expr;
 
 #[derive(Clone, Debug)]
 pub(crate) struct FilterShapeOptions {
@@ -14,10 +14,14 @@ pub(crate) struct FilterShapeOptions {
 }
 
 impl FilterShapeOptions {
-    pub(crate) fn from_shape_with_span(shape: Path, span: Span) -> Self {
-        Self {
-            inner: SharedShapeOptions::from_shape_with_span(shape, span),
-        }
+    pub(crate) fn from_constructor_expr_with_span(expr: Expr, span: Span) -> syn::Result<Self> {
+        Ok(Self {
+            inner: SharedShapeOptions::from_constructor_expr_with_span(
+                expr,
+                span,
+                "expected a filter shape path or configured filter shape expression",
+            )?,
+        })
     }
 
     pub(crate) fn resolve(&self, field_name: String, field_type: syn::Type) -> ResolvedFilterShape {
@@ -35,6 +39,10 @@ pub(crate) struct ResolvedFilterShape {
 impl ResolvedFilterShape {
     pub(crate) fn shape(&self) -> &syn::Path {
         self.inner.shape()
+    }
+
+    pub(crate) fn constructor_expr(&self) -> Option<&syn::Expr> {
+        self.inner.constructor_expr()
     }
 
     pub(crate) fn field_type(&self) -> &syn::Type {

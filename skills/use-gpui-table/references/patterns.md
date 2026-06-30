@@ -40,7 +40,7 @@ pub struct User {
     #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(width = 120., filter(gpui_table_component::FacetedFilter::<UserStatus>.searchable(true)))]
     pub status: UserStatus,
 }
 
@@ -76,12 +76,22 @@ created_at: chrono::DateTime<chrono::Utc>,
 
 #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
 status: UserStatus,
+
+#[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>.searchable(true)))]
+searchable_status: UserStatus,
 ```
 
-Built-in filters are explicit shape paths: `TextFilter` for strings,
+Built-in filters are explicit shape paths or configured shape expressions:
+`TextFilter` for strings,
 `NumberRangeFilter` for numeric values, `DateRangeFilter` for date-like values,
-and `FacetedFilter::<T>` for enum-like fields. Use the same
-`filter(path::ToShape)` form for custom shapes.
+and `FacetedFilter::<T>` for enum-like fields. Use
+`TextFilter.numeric_only()`, `TextFilter.alphanumeric_only()`,
+`TextFilter.matching_regex("[A-Z0-9-]*")`, or
+`FacetedFilter::<T>.searchable(true)` when generated filter entities should
+construct configured built-in filters. Use
+`NumberRangeFilter.range(min, max).step(step)` for generated numeric range
+filters with explicit slider bounds or step size. Use the same
+`filter(path::ToShape)` or configured expression form for custom shapes.
 
 Use `#[derive(Filterable)]` for faceted enums:
 

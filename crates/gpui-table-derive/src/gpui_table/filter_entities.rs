@@ -410,24 +410,54 @@ fn generate_filter_builder_tokens(
     let field_ident = &field.field_ident;
     let title_expr = determine_filter_title_expr(field_ident, fluent_config, struct_name);
     let shape = field.filter_config.shape();
+    let constructor = field.filter_config.constructor_expr();
+    let constructor_tokens =
+        filter_constructor_tokens(shape, constructor, quote! { |cx| #title_expr });
 
     quote! {
         let #field_ident = {
             let on_filter_change = on_filter_change.clone();
-            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::new_for(
-                |cx| #title_expr,
-                Default::default(),
-                move |_value, window, cx| {
-                    if let Some(ref on_change) = on_filter_change {
-                        let on_change = on_change.clone();
-                        window.defer(cx, move |window, cx| {
-                            on_change(window, cx);
-                        });
-                    }
-                },
+            #constructor_tokens
+        };
+    }
+}
+
+fn filter_constructor_tokens(
+    shape: &syn::Path,
+    constructor: Option<&syn::Expr>,
+    title: proc_macro2::TokenStream,
+) -> proc_macro2::TokenStream {
+    let value = quote! { Default::default() };
+    let on_change = quote! {
+        move |_value, window, cx| {
+            if let Some(ref on_change) = on_filter_change {
+                let on_change = on_change.clone();
+                window.defer(cx, move |window, cx| {
+                    on_change(window, cx);
+                });
+            }
+        }
+    };
+
+    if let Some(constructor) = constructor {
+        quote! {
+            gpui_table::runtime::shape::build_filter_shape::<#shape, _>(
+                #constructor,
+                #title,
+                #value,
+                #on_change,
                 cx,
             )
-        };
+        }
+    } else {
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::new_for(
+                #title,
+                #value,
+                #on_change,
+                cx,
+            )
+        }
     }
 }
 

@@ -61,9 +61,10 @@ handlers.
 
 Built-in text, faceted, number range, and date range filters are supported by
 `gpui-table-component` when its `mcp` feature is enabled. Declare the same
-explicit `#[gpui_table(filter(path::ToShape))]` shape paths used by generated
-filter UI before the MCP descriptor is generated. Faceted filter schemas publish
-unique string sets, include valid
+explicit `#[gpui_table(filter(path::ToShape))]` shape paths or configured shape
+expressions used by generated filter UI before the MCP descriptor is generated.
+Configuration affects generated UI construction; MCP descriptors still publish
+the base shape path. Faceted filter schemas publish unique string sets, include valid
 `Filterable::to_filter_string()` values in the item `enum`, and labels in
 `x-gpuiTableFacetOptions`.
 Field-level `#[koruma(...)]` validators on filtered fields validate the decoded

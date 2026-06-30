@@ -31,6 +31,47 @@ pub trait GpuiTableFilterShape: ComponentShapeMetadata {
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App);
 }
 
+/// Configured builder for a table filter shape.
+///
+/// Generated code uses this contract when a field selects a filter shape with a
+/// configuration expression, such as `FacetedFilter::<Status>.searchable(true)`.
+pub trait GpuiTableFilterShapeBuilder<Shape: GpuiTableFilterShape> {
+    /// Build the configured filter entity.
+    fn build(
+        self,
+        title: impl Fn(&App) -> String + 'static,
+        value: Shape::RawValue,
+        on_change: impl Fn(Shape::RawValue, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Shape::Component>;
+}
+
+/// Default builder for a shape's normal [`GpuiTableFilterShape::new_for`]
+/// behavior.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct DefaultGpuiTableFilterShapeBuilder<Shape>(PhantomData<fn() -> Shape>);
+
+impl<Shape> DefaultGpuiTableFilterShapeBuilder<Shape> {
+    pub const fn new() -> Self {
+        Self(PhantomData)
+    }
+}
+
+impl<Shape> GpuiTableFilterShapeBuilder<Shape> for DefaultGpuiTableFilterShapeBuilder<Shape>
+where
+    Shape: GpuiTableFilterShape,
+{
+    fn build(
+        self,
+        title: impl Fn(&App) -> String + 'static,
+        value: Shape::RawValue,
+        on_change: impl Fn(Shape::RawValue, &mut Window, &mut App) + 'static,
+        cx: &mut App,
+    ) -> Entity<Shape::Component> {
+        Shape::new_for(title, value, on_change, cx)
+    }
+}
+
 /// Marker for filter shapes declared by a component crate or user crate.
 #[diagnostic::on_unimplemented(
     message = "table filter shape `{Self}` must implement `DeclaredGpuiTableFilterShape`",
@@ -47,6 +88,21 @@ pub trait GpuiTableFilterShapeFor<Field>: GpuiTableFilterShape {
     fn filter_type() -> FilterType;
 
     fn matches_field(field: &Field, value: &Self::FilterValue) -> bool;
+}
+
+/// Build a filter entity from a configured filter-shape builder.
+pub fn build_filter_shape<Shape, Builder>(
+    builder: Builder,
+    title: impl Fn(&App) -> String + 'static,
+    value: Shape::RawValue,
+    on_change: impl Fn(Shape::RawValue, &mut Window, &mut App) + 'static,
+    cx: &mut App,
+) -> Entity<Shape::Component>
+where
+    Shape: GpuiTableFilterShape,
+    Builder: GpuiTableFilterShapeBuilder<Shape>,
+{
+    builder.build(title, value, on_change, cx)
 }
 
 pub type GpuiTableFilterComponentOf<Shape> = <Shape as GpuiTableFilterShape>::Component;

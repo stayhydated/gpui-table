@@ -30,17 +30,27 @@ pub struct User {
     #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 90., filter(gpui_table_component::FacetedFilter::<bool>))]
+    #[gpui_table(width = 90., filter(gpui_table_component::FacetedFilter::<bool>.searchable(true)))]
     pub active: bool,
 }
 ```
 
-Field-level filters require explicit built-in or custom shape paths:
+Field-level filters require explicit built-in or custom shape paths, or a
+configured shape expression for the same base shape:
 
 - strings use `filter(gpui_table_component::TextFilter)`
+- text filters can be configured with
+  `filter(gpui_table_component::TextFilter.numeric_only())` or
+  `filter(gpui_table_component::TextFilter.alphanumeric_only())`, or with
+  a full-value regex using
+  `filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*"))`
 - numbers use `filter(gpui_table_component::NumberRangeFilter)`
+- number range filters can be configured with
+  `filter(gpui_table_component::NumberRangeFilter.range(min, max).step(step))`
 - date-like values use `filter(gpui_table_component::DateRangeFilter)`
 - enum-like or `Filterable` values use `filter(gpui_table_component::FacetedFilter::<T>)`
+- faceted filters can enable the search input with
+  `filter(gpui_table_component::FacetedFilter::<T>.searchable(true))`
 
 Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
 filter state uses `T` in all cases, so optional and vector fields can facet over

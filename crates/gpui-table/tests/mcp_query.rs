@@ -216,7 +216,7 @@ struct PrefixFilterRow {
 #[serde(transparent)]
 #[mcp(crate = gpui_table::mcp, transparent)]
 #[koruma(try_new, newtype)]
-struct ValidatedPrefixText(#[koruma(LenValidation::<_>::min(2).max(64))] String);
+struct ValidatedPrefixText(#[koruma(LenValidation::<_>.min(2).max(64))] String);
 
 #[derive(GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
@@ -248,7 +248,7 @@ struct NewtypeValidatedFilterRow {
 )]
 struct ValidatedFilterRow {
     #[gpui_table(filter(gpui_table_component::TextFilter))]
-    #[koruma(LenValidation::<_>::min(2).max(5))]
+    #[koruma(LenValidation::<_>.min(2).max(5))]
     name: String,
 }
 

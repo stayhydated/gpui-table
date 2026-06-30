@@ -1,16 +1,18 @@
 #[cfg(feature = "chrono")]
 use crate::DateRangeFilter;
+use crate::{FacetedFilter, FacetedFilterExt, TextFilter, TextFilterExt};
 #[cfg(feature = "rust_decimal")]
-use crate::NumberRangeFilter;
-use crate::{FacetedFilter, TextFilter};
+use crate::{NumberRangeFilter, NumberRangeFilterExt};
 use gpui::{App, Entity, Window};
-use gpui_table_core::filter::{FacetedValue, FilterType, TextValue};
+use gpui_table_core::filter::{FacetedValue, FilterType, Filterable, TextValue};
 use gpui_table_runtime::shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape,
-    DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeFor,
+    DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeBuilder,
+    GpuiTableFilterShapeFor,
 };
 use gpui_table_schema::registry::RegistryFilterType;
 use std::collections::HashSet;
+use std::marker::PhantomData;
 
 /// Adapter shape for text filters over application-owned field types.
 ///
@@ -28,6 +30,74 @@ pub trait TextFilterField {
 impl TextFilterField for String {
     fn to_filter_text(&self) -> String {
         self.clone()
+    }
+}
+
+/// Configured construction options for [`TextFilter`].
+///
+/// Use `TextFilter.matching_regex(...)`, `TextFilter.numeric_only()`,
+/// `TextFilter.alphabetic_only()`, or `TextFilter.alphanumeric_only()` in
+/// `#[gpui_table(filter(...))]` when a generated table field should build the
+/// text filter with the matching input validator enabled. Regex patterns are
+/// matched against the complete candidate input value.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct TextFilterArgs {
+    validation: TextFilterValidation,
+}
+
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+enum TextFilterValidation {
+    #[default]
+    None,
+    Alphabetic,
+    Numeric,
+    Alphanumeric,
+    MatchingRegex(&'static str),
+}
+
+impl TextFilter {
+    pub const fn matching_regex(pattern: &'static str) -> TextFilterArgs {
+        TextFilterArgs {
+            validation: TextFilterValidation::MatchingRegex(pattern),
+        }
+    }
+
+    pub const fn alphabetic_only() -> TextFilterArgs {
+        TextFilterArgs {
+            validation: TextFilterValidation::Alphabetic,
+        }
+    }
+
+    pub const fn numeric_only() -> TextFilterArgs {
+        TextFilterArgs {
+            validation: TextFilterValidation::Numeric,
+        }
+    }
+
+    pub const fn alphanumeric_only() -> TextFilterArgs {
+        TextFilterArgs {
+            validation: TextFilterValidation::Alphanumeric,
+        }
+    }
+}
+
+impl GpuiTableFilterShapeBuilder<TextFilter> for TextFilterArgs {
+    fn build(
+        self,
+        title: impl Fn(&App) -> String + 'static,
+        value: <TextFilter as GpuiTableFilterShape>::RawValue,
+        on_change: impl Fn(<TextFilter as GpuiTableFilterShape>::RawValue, &mut Window, &mut App)
+        + 'static,
+        cx: &mut App,
+    ) -> Entity<<TextFilter as GpuiTableFilterShape>::Component> {
+        let entity = TextFilter::new_for(title, value, on_change, cx);
+        match self.validation {
+            TextFilterValidation::None => entity,
+            TextFilterValidation::Alphabetic => entity.alphabetic_only(cx),
+            TextFilterValidation::Numeric => entity.numeric_only(cx),
+            TextFilterValidation::Alphanumeric => entity.alphanumeric_only(cx),
+            TextFilterValidation::MatchingRegex(pattern) => entity.matching_regex(pattern, cx),
+        }
     }
 }
 
@@ -78,6 +148,64 @@ impl_number_range_filter_field!(
 
 #[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
 impl_number_range_filter_field!(spacetimedb_lib::Timestamp, spacetimedb_lib::TimeDuration);
+
+#[cfg(feature = "rust_decimal")]
+/// Configured construction options for [`NumberRangeFilter`].
+///
+/// Use `NumberRangeFilter.range(...)`, `NumberRangeFilter.step(...)`, or a
+/// chained expression such as `NumberRangeFilter.range(...).step(...)` in
+/// `#[gpui_table(filter(...))]` when a generated table field should build the
+/// number range filter with explicit slider bounds or step size.
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+pub struct NumberRangeFilterArgs {
+    range: Option<(rust_decimal::Decimal, rust_decimal::Decimal)>,
+    step: Option<rust_decimal::Decimal>,
+}
+
+#[cfg(feature = "rust_decimal")]
+impl NumberRangeFilterArgs {
+    pub fn range(mut self, min: rust_decimal::Decimal, max: rust_decimal::Decimal) -> Self {
+        self.range = Some((min, max));
+        self
+    }
+
+    pub fn step(mut self, step: rust_decimal::Decimal) -> Self {
+        self.step = Some(step);
+        self
+    }
+}
+
+#[cfg(feature = "rust_decimal")]
+impl NumberRangeFilter {
+    pub fn range(min: rust_decimal::Decimal, max: rust_decimal::Decimal) -> NumberRangeFilterArgs {
+        NumberRangeFilterArgs::default().range(min, max)
+    }
+
+    pub fn step(step: rust_decimal::Decimal) -> NumberRangeFilterArgs {
+        NumberRangeFilterArgs::default().step(step)
+    }
+}
+
+#[cfg(feature = "rust_decimal")]
+impl GpuiTableFilterShapeBuilder<NumberRangeFilter> for NumberRangeFilterArgs {
+    fn build(
+        self,
+        title: impl Fn(&App) -> String + 'static,
+        value: <NumberRangeFilter as GpuiTableFilterShape>::RawValue,
+        on_change: impl Fn(<NumberRangeFilter as GpuiTableFilterShape>::RawValue, &mut Window, &mut App)
+        + 'static,
+        cx: &mut App,
+    ) -> Entity<<NumberRangeFilter as GpuiTableFilterShape>::Component> {
+        let mut entity = NumberRangeFilter::new_for(title, value, on_change, cx);
+        if let Some((min, max)) = self.range {
+            entity = entity.range(min, max, cx);
+        }
+        if let Some(step) = self.step {
+            entity = entity.step(step, cx);
+        }
+        entity
+    }
+}
 
 #[cfg(feature = "chrono")]
 /// Adapter shape for date range filters over application-owned field types.
@@ -334,9 +462,65 @@ impl GpuiTableFilterShapeFor<Option<String>> for TextFilter {
     }
 }
 
+/// Configured construction options for [`FacetedFilter`].
+///
+/// Use `FacetedFilter::<T>.searchable(true)` in
+/// `#[gpui_table(filter(...))]` when a generated table field should build the
+/// faceted filter with its search input visible.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct FacetedFilterArgs<T> {
+    searchable: bool,
+    _marker: PhantomData<fn() -> T>,
+}
+
+impl<T> FacetedFilterArgs<T> {
+    pub const fn searchable(searchable: bool) -> Self {
+        Self {
+            searchable,
+            _marker: PhantomData,
+        }
+    }
+}
+
+impl<T> Default for FacetedFilterArgs<T> {
+    fn default() -> Self {
+        Self::searchable(false)
+    }
+}
+
+impl<T> FacetedFilter<T>
+where
+    T: gpui_table_core::filter::FilterValue,
+{
+    pub const fn searchable(searchable: bool) -> FacetedFilterArgs<T> {
+        FacetedFilterArgs::searchable(searchable)
+    }
+}
+
+impl<T> GpuiTableFilterShapeBuilder<FacetedFilter<T>> for FacetedFilterArgs<T>
+where
+    T: Filterable,
+{
+    fn build(
+        self,
+        title: impl Fn(&App) -> String + 'static,
+        value: <FacetedFilter<T> as GpuiTableFilterShape>::RawValue,
+        on_change: impl Fn(<FacetedFilter<T> as GpuiTableFilterShape>::RawValue, &mut Window, &mut App)
+        + 'static,
+        cx: &mut App,
+    ) -> Entity<<FacetedFilter<T> as GpuiTableFilterShape>::Component> {
+        let entity = FacetedFilter::<T>::new_for(title, value, on_change, cx);
+        if self.searchable {
+            entity.searchable(cx)
+        } else {
+            entity
+        }
+    }
+}
+
 impl<T> GpuiTableFilterShape for FacetedFilter<T>
 where
-    T: gpui_table_core::filter::Filterable,
+    T: Filterable,
 {
     type Component = FacetedFilter<T>;
     type RawValue = HashSet<T>;

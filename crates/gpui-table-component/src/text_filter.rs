@@ -16,9 +16,12 @@ const DEBOUNCE_MS: u64 = 300;
 
 /// Text validation function type
 pub type TextValidator = Rc<dyn Fn(&str) -> String>;
+type TextInputValidator = Rc<dyn Fn(&str, &str) -> String>;
 
 /// Built-in validators for common text filtering patterns
 pub mod validators {
+    use regex::Regex;
+
     /// Only allow alphabetic characters.
     pub fn alphabetic_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphabetic()).collect()
@@ -37,6 +40,32 @@ pub mod validators {
     /// Only allow alphanumeric characters
     pub fn alphanumeric_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphanumeric()).collect()
+    }
+
+    /// Compile a regex that must match the complete candidate value.
+    ///
+    /// The pattern is wrapped with `\A(?:...)\z`; include partial quantifiers
+    /// when normal typing should accept incomplete values.
+    pub fn full_match_regex(pattern: &str) -> Result<Regex, regex::Error> {
+        Regex::new(&format!(r"\A(?:{pattern})\z"))
+    }
+
+    /// Accept regex-matching candidate values and otherwise keep the previous value.
+    pub fn matching_regex(regex: Regex) -> impl Fn(&str, &str) -> String {
+        move |candidate, previous| {
+            if regex.is_match(candidate) {
+                candidate.to_string()
+            } else {
+                previous.to_string()
+            }
+        }
+    }
+
+    /// Build a validator from a regex pattern that must match the full value.
+    pub fn matching_regex_pattern(
+        pattern: &str,
+    ) -> Result<impl Fn(&str, &str) -> String + 'static, regex::Error> {
+        full_match_regex(pattern).map(matching_regex)
     }
 }
 
@@ -57,7 +86,7 @@ pub struct TextFilter {
     /// Current debounce task - dropping it cancels the pending apply
     _debounce_task: Option<Task<()>>,
     /// Optional validator function to filter input
-    validator: Option<TextValidator>,
+    validator: Option<TextInputValidator>,
     /// Pending validated value to apply to input during render
     pending_validated_value: Option<String>,
     /// Last placeholder applied to the input state.
@@ -79,8 +108,25 @@ pub trait TextFilterExt: Sized {
     fn numeric_only(self, cx: &mut App) -> Self;
     /// Only allow alphanumeric characters in the input.
     fn alphanumeric_only(self, cx: &mut App) -> Self;
+    /// Accept only candidate values that fully match the regex pattern.
+    ///
+    /// Include partial quantifiers when normal typing should accept incomplete
+    /// values, such as `[A-Z0-9-]*` for an uppercase identifier in progress.
+    fn matching_regex(self, pattern: impl AsRef<str>, cx: &mut App) -> Self;
+    /// Try to configure a full-value regex validator.
+    fn try_matching_regex(
+        self,
+        pattern: impl AsRef<str>,
+        cx: &mut App,
+    ) -> Result<Self, regex::Error>;
     /// Set a custom validation function.
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self;
+    /// Set a custom validation function that can keep the previous accepted value.
+    fn validate_with_previous(
+        self,
+        validator: impl Fn(&str, &str) -> String + 'static,
+        cx: &mut App,
+    ) -> Self;
     /// Set style refinement for the filter container.
     fn container_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
         self
@@ -104,7 +150,30 @@ impl TextFilterExt for Entity<TextFilter> {
         self.validate(validators::alphanumeric_only, cx)
     }
 
+    fn matching_regex(self, pattern: impl AsRef<str>, cx: &mut App) -> Self {
+        let pattern = pattern.as_ref();
+        self.try_matching_regex(pattern, cx)
+            .unwrap_or_else(|error| panic!("invalid TextFilter regex `{pattern}`: {error}"))
+    }
+
+    fn try_matching_regex(
+        self,
+        pattern: impl AsRef<str>,
+        cx: &mut App,
+    ) -> Result<Self, regex::Error> {
+        let validator = validators::matching_regex_pattern(pattern.as_ref())?;
+        Ok(self.validate_with_previous(validator, cx))
+    }
+
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
+        self.validate_with_previous(move |value, _previous| validator(value), cx)
+    }
+
+    fn validate_with_previous(
+        self,
+        validator: impl Fn(&str, &str) -> String + 'static,
+        cx: &mut App,
+    ) -> Self {
         self.update(cx, |this, _| {
             this.validator = Some(Rc::new(validator));
         });
@@ -215,7 +284,8 @@ impl TextFilter {
 
                         // Apply validator if set
                         let new_value = if let Some(ref validator) = this.validator {
-                            let validated = validator(&raw_value);
+                            let previous_value = this.value.clone();
+                            let validated = validator(&raw_value, &previous_value);
                             // If validation changed the value, schedule update for next render
                             if validated != raw_value {
                                 this.pending_validated_value = Some(validated.clone());
@@ -295,6 +365,29 @@ impl TextFilter {
     /// Get the current filter value.
     pub fn value(&self) -> &str {
         &self.value
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validators;
+
+    #[test]
+    fn matching_regex_accepts_complete_matches() {
+        let validator = validators::matching_regex_pattern(r"[A-Z]{0,3}-?[0-9]{0,3}")
+            .expect("regex should compile");
+
+        assert_eq!(validator("ABC-123", "ABC-12"), "ABC-123");
+        assert_eq!(validator("ABC-123x", "ABC-123"), "ABC-123");
+    }
+
+    #[test]
+    fn matching_regex_rejects_substring_only_matches() {
+        let validator =
+            validators::matching_regex_pattern(r"[0-9]*").expect("regex should compile");
+
+        assert_eq!(validator("123", ""), "123");
+        assert_eq!(validator("abc123", "123"), "123");
     }
 }
 

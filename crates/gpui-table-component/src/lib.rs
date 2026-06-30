@@ -39,9 +39,9 @@ pub use number_range_filter::{NumberRangeFilter, NumberRangeFilterExt};
 pub use reset_filters::ResetFilters;
 #[cfg(feature = "chrono")]
 pub use shape::{DateRangeFilterAdapter, DateRangeFilterField};
+pub use shape::{FacetedFilterArgs, TextFilterAdapter, TextFilterArgs, TextFilterField};
 #[cfg(feature = "rust_decimal")]
-pub use shape::{NumberRangeFilterAdapter, NumberRangeFilterField};
-pub use shape::{TextFilterAdapter, TextFilterField};
+pub use shape::{NumberRangeFilterAdapter, NumberRangeFilterArgs, NumberRangeFilterField};
 pub use table_status_bar::TableStatusBar;
 pub use text_filter::{TextFilter, TextFilterExt};
 

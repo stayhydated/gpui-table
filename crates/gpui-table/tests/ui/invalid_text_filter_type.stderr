@@ -12,7 +12,7 @@ help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
 ...
   | impl GpuiTableFilterShapeFor<Option<String>> for TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::option::Option<std::string::String>>`
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<Option<std::string::String>>`
 note: required by a bound in `__gpui_table_assert_active_filter_shape_field_support`
  --> tests/ui/invalid_text_filter_type.rs:6:25
   |
@@ -33,4 +33,4 @@ help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
 ...
   | impl GpuiTableFilterShapeFor<Option<String>> for TextFilter {
-  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::option::Option<std::string::String>>`
+  | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<Option<std::string::String>>`

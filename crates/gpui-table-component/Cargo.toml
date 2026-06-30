@@ -64,6 +64,7 @@ gpui-table-schema = { workspace = true }
 gpui_platform = { optional = true, workspace = true }
 icu = { optional = true, workspace = true }
 jiff = { optional = true, workspace = true }
+regex = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
 spacetimedb-lib = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
