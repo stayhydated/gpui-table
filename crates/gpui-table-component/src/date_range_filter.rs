@@ -256,18 +256,6 @@ fn format_date(date: NaiveDate) -> String {
     date_display::format_date(date)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::format_date;
-    use chrono::NaiveDate;
-
-    #[test]
-    fn formats_dates_with_icu4x() {
-        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
-        assert_eq!(format_date(date), "Jan 31, 2026");
-    }
-}
-
 impl Render for DateRangeFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure calendar exists
@@ -400,5 +388,17 @@ impl DateRangeFilterExt for Entity<DateRangeFilter> {
             this.clear_button_style = style;
         });
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::format_date;
+    use chrono::NaiveDate;
+
+    #[test]
+    fn formats_dates_with_icu4x() {
+        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
+        assert_eq!(format_date(date), "Jan 31, 2026");
     }
 }

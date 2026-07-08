@@ -35,7 +35,7 @@ pub struct Item {
 
 fn render_color_cell(
     row: &Item,
-    value: &String,
+    value: &str,
     window: &mut gpui::Window,
     cx: &mut gpui::App,
 ) -> impl gpui::IntoElement {

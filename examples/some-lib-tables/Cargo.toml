@@ -21,4 +21,6 @@ gpui_platform = { workspace = true }
 gpui_tokio = { workspace = true }
 reqwest_client = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
-strum = { workspace = true }
+
+[lints]
+workspace = true

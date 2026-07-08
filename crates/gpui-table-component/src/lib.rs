@@ -235,7 +235,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::{FacetedFilter, QueryFilterValue, TextFilter, TextFilterAdapter, TextFilterField};
+    use super::{
+        FacetedFilter, QueryFilterValue as _, TextFilter, TextFilterAdapter, TextFilterField,
+    };
     use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
     use gpui_table_runtime::shape::{
         DeclaredGpuiTableFilterShape, GpuiTableFilterShape, GpuiTableFilterShapeFor,

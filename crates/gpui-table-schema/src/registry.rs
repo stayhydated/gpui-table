@@ -156,7 +156,7 @@ impl ColumnVariant {
 
 /// Column fixed position.
 #[derive(Clone, Copy, Debug, Default, Display, EnumString, Eq, IntoStaticStr, PartialEq)]
-#[strum(serialize_all = "snake_case")]
+#[strum(serialize_all = "snake_case", const_into_str)]
 pub enum ColumnFixed {
     #[default]
     None,

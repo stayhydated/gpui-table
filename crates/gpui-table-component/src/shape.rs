@@ -1,8 +1,8 @@
 #[cfg(feature = "chrono")]
 use crate::DateRangeFilter;
-use crate::{FacetedFilter, FacetedFilterExt, TextFilter, TextFilterExt};
+use crate::{FacetedFilter, FacetedFilterExt as _, TextFilter, TextFilterExt as _};
 #[cfg(feature = "rust_decimal")]
-use crate::{NumberRangeFilter, NumberRangeFilterExt};
+use crate::{NumberRangeFilter, NumberRangeFilterExt as _};
 use gpui::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterType, Filterable, TextValue};
 use gpui_table_runtime::shape::{

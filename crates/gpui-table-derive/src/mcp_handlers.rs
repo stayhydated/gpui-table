@@ -1,9 +1,9 @@
 use proc_macro_crate::{FoundCrate, crate_name};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, format_ident, quote};
+use quote::{ToTokens as _, format_ident, quote};
 use syn::{
     AngleBracketedGenericArguments, FnArg, GenericArgument, ItemFn, PathArguments, ReturnType,
-    Type, TypePath, spanned::Spanned,
+    Type, TypePath, spanned::Spanned as _,
 };
 
 #[derive(Clone, Copy, Eq, PartialEq)]

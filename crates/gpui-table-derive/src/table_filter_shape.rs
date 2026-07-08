@@ -1,6 +1,6 @@
 use proc_macro_crate::{FoundCrate, crate_name};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{ToTokens as _, quote};
 use std::collections::HashSet;
 use syn::{
     Data, DeriveInput, Expr, Generics, Ident, Path, Result, Token, Type, parse::ParseStream,

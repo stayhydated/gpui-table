@@ -54,9 +54,11 @@ pub(super) fn generate_mcp_impl(
             }
         }
     });
-    let row_schema_descriptor_chain = row_schema_enabled
-        .then(|| quote! { .with_row_schema(#row_schema_fn_ident) })
-        .unwrap_or_else(|| quote! {});
+    let row_schema_descriptor_chain = if row_schema_enabled {
+        quote! { .with_row_schema(#row_schema_fn_ident) }
+    } else {
+        quote! {}
+    };
 
     let filter_descriptor_tokens = filter_fields
         .iter()

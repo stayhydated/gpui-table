@@ -50,8 +50,9 @@ pub fn set_locale(cx: &mut App, locale: impl AsRef<str>) -> Result<(), EmbeddedI
 
 /// Synchronize table component localization with the active `gpui-component` locale.
 pub fn sync_locale(cx: &impl Borrow<App>) {
-    let language = gpui_es_fluent::sync_component_locale(cx, fallback_language());
-    sync_core_locale(&language);
+    if let Ok(language) = gpui_es_fluent::sync_component_locale(cx, fallback_language()) {
+        sync_core_locale(&language);
+    }
 }
 
 /// Localize a typed Fluent message through the component embedded i18n context.

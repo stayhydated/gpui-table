@@ -10,9 +10,11 @@ chrono = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-table = { features = [ "mcp", "rust_decimal" ], workspace = true }
-gpui-table-component = { features = [
-  "chrono",
-  "mcp",
-  "rust_decimal",
-], workspace = true }
+gpui-table-component = { features = [ "chrono", "mcp", "rust_decimal" ], workspace = true }
 serde = { features = [ "derive" ], workspace = true }
+
+[package.metadata.cargo-machete]
+ignored = [ "gpui", "gpui-component" ]
+
+[lints]
+workspace = true

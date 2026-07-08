@@ -15,3 +15,6 @@ prettyplease = { workspace = true }
 quote = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
 syn = { features = [ "full", "parsing" ], workspace = true }
+
+[lints]
+workspace = true

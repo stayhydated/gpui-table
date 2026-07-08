@@ -368,29 +368,6 @@ impl TextFilter {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::validators;
-
-    #[test]
-    fn matching_regex_accepts_complete_matches() {
-        let validator = validators::matching_regex_pattern(r"[A-Z]{0,3}-?[0-9]{0,3}")
-            .expect("regex should compile");
-
-        assert_eq!(validator("ABC-123", "ABC-12"), "ABC-123");
-        assert_eq!(validator("ABC-123x", "ABC-123"), "ABC-123");
-    }
-
-    #[test]
-    fn matching_regex_rejects_substring_only_matches() {
-        let validator =
-            validators::matching_regex_pattern(r"[0-9]*").expect("regex should compile");
-
-        assert_eq!(validator("123", ""), "123");
-        assert_eq!(validator("abc123", "123"), "123");
-    }
-}
-
 impl Render for TextFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure input state exists
@@ -443,5 +420,28 @@ impl Render for TextFilter {
                     .refine_style(&self.input_style),
             )
             .into_any_element()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::validators;
+
+    #[test]
+    fn matching_regex_accepts_complete_matches() {
+        let validator = validators::matching_regex_pattern(r"[A-Z]{0,3}-?[0-9]{0,3}")
+            .expect("regex should compile");
+
+        assert_eq!(validator("ABC-123", "ABC-12"), "ABC-123");
+        assert_eq!(validator("ABC-123x", "ABC-123"), "ABC-123");
+    }
+
+    #[test]
+    fn matching_regex_rejects_substring_only_matches() {
+        let validator =
+            validators::matching_regex_pattern(r"[0-9]*").expect("regex should compile");
+
+        assert_eq!(validator("123", ""), "123");
+        assert_eq!(validator("abc123", "123"), "123");
     }
 }
