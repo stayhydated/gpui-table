@@ -39,7 +39,7 @@ es-fluent-build = "0.18"
 es-fluent-lang = "0.18"
 es-fluent-manager-embedded = "0.18"
 fake = "4.4"
-gpui = { git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
+gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
 gpui-storybook = { path = "../gpui-storybook/crates/gpui-storybook", version = "0.5.0" }
@@ -51,13 +51,13 @@ gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", ver
 gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
 gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.5.0" }
 gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.5.0" }
-gpui_platform = { features = [
+gpui_platform = { branch = "linux-headless-renderer", features = [
   "font-kit",
   "x11",
   "wayland",
   "runtime_shaders",
-], git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
-gpui_tokio = { git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
+], git = "https://github.com/stayhydated/zed" }
+gpui_tokio = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
 heck = "0.5.0"
 icu = "2.1"
 insta = "1.46"
@@ -73,7 +73,7 @@ proc-macro-crate = "3.2"
 proc-macro2 = "1.0"
 quote = "1.0"
 reqwest = "0.13"
-reqwest_client = { git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
+reqwest_client = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
 regex = "1.12"
 rust_decimal = "1.40"
 serde = "1.0"
@@ -89,9 +89,9 @@ unicode-segmentation = "1.12"
 urlencoding = "2.1"
 uuid = "1.21"
 
-[replace]
-"https://github.com/zed-industries/zed#gpui@0.2.2" = { git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
-"https://github.com/zed-industries/zed#gpui_macros@0.1.0" = { git = "https://github.com/zed-industries/zed", rev = "c545fb67d0ce13e335bff76f7c08986000333f2c" }
+[patch."https://github.com/zed-industries/zed"]
+gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "=0.2.2" }
+gpui_macros = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.1.0" }
 
 [profile.dev]
 codegen-units = 16
