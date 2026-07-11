@@ -1,7 +1,7 @@
 use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
-use fake::{Fake, Faker};
+use fake::{Fake as _, Faker};
 use gpui::{Context, Window};
 use gpui_component::table::TableState;
 use gpui_table::GpuiTable;

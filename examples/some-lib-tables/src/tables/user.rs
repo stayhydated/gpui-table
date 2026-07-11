@@ -1,6 +1,6 @@
 #[cfg(feature = "router")]
 use crate::route::{self, ExampleRoute, ExampleRouterState};
-use fake::{Fake, Faker};
+use fake::{Fake as _, Faker};
 #[cfg(feature = "router")]
 use gpui::InteractiveElement as _;
 use gpui::{
