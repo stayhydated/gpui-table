@@ -506,13 +506,9 @@ fn inventory_exposes_generated_resource_definitions() {
     assert!(
         resources
             .iter()
-            .any(|resource| resource.raw.uri == uris.descriptor)
+            .any(|resource| resource.uri == uris.descriptor)
     );
-    assert!(
-        resources
-            .iter()
-            .any(|resource| resource.raw.uri == uris.schema)
-    );
+    assert!(resources.iter().any(|resource| resource.uri == uris.schema));
 }
 
 #[test]

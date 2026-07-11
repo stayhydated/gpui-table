@@ -29,6 +29,7 @@ gpui-table-core = { default-features = false, workspace = true }
 gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 inventory = { workspace = true }
+rmcp = { workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 

@@ -23,8 +23,9 @@ pub use component_shape_mcp::{
     McpToolInput, McpToolMetadata, McpToolValue, McpTypedTool, McpValidationIssue,
     McpValidationParam, McpValidationRule, McpValidationScope, McpValidationTypeArgMode,
     PromptDefinition, ResourceDefinition, ServeStdioResult, ToolCallResult, ToolDefinition,
-    object_schema, rmcp, serde, serde_json, validation_issues_error,
+    object_schema, serde, serde_json, validation_issues_error,
 };
+pub use rmcp;
 
 type ToolFuture = Pin<Box<dyn Future<Output = ToolCallResult> + Send + 'static>>;
 
