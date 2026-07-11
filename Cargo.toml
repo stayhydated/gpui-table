@@ -28,9 +28,9 @@ version = "0.5.0"
 [workspace.dependencies]
 anyhow = "1.0"
 chrono = "0.4"
-component-shape = { path = "../component-shape/crates/component-shape", version = "0.1.0" }
-component-shape-codegen = { path = "../component-shape/crates/component-shape-codegen", version = "0.1.0" }
-component-shape-mcp = { path = "../component-shape/crates/component-shape-mcp", version = "0.1.0" }
+component-shape = { git = "https://github.com/stayhydated/component-shape" }
+component-shape-codegen = { git = "https://github.com/stayhydated/component-shape" }
+component-shape-mcp = { git = "https://github.com/stayhydated/component-shape" }
 darling = "0.23"
 derive_more = "2.1"
 env_logger = "0.11"
@@ -42,7 +42,7 @@ fake = "4.4"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
-gpui-storybook = { path = "../gpui-storybook/crates/gpui-storybook", version = "0.5.0" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
@@ -59,8 +59,8 @@ gpui_platform = { branch = "linux-headless-renderer", features = [
 ], git = "https://github.com/stayhydated/zed" }
 gpui_tokio = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
 heck = "0.5.0"
-icu = "2.1"
-insta = "1.46"
+icu = "2.2"
+insta = "1.48"
 inventory = "0.3"
 itertools = "0.14"
 jiff = "0.2"
@@ -69,25 +69,25 @@ koruma-collection = "0.10"
 koruma-derive-core = "0.10"
 log = "0.4"
 prettyplease = "0.2"
-proc-macro-crate = "3.2"
+proc-macro-crate = "3.5"
 proc-macro2 = "1.0"
 quote = "1.0"
+regex = "1.13"
 reqwest = "0.13"
 reqwest_client = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
-regex = "1.12"
-rust_decimal = "1.40"
+rust_decimal = "1.42"
 serde = "1.0"
 serde_json = "1.0"
-spacetimedb-lib = "2.0"
+spacetimedb-lib = "2.6"
 strum = "0.28"
 syn = "2.0"
 thiserror = "2.0"
-tokio = "1.49"
+tokio = "1.52"
 tracing-subscriber = "0.3"
 trybuild = "1.0"
-unicode-segmentation = "1.12"
+unicode-segmentation = "1.13"
 urlencoding = "2.1"
-uuid = "1.21"
+uuid = "1.23"
 
 [patch."https://github.com/zed-industries/zed"]
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "=0.2.2" }
@@ -110,7 +110,7 @@ opt-level = 3
 [workspace.lints.rust]
 future_incompatible = "deny"
 nonstandard_style = "deny"
-unexpected_cfgs = { level = "deny", check-cfg = ["cfg(coverage)"] }
+unexpected_cfgs = { check-cfg = [ "cfg(coverage)" ], level = "deny" }
 unsafe_op_in_unsafe_fn = "deny"
 unused_must_use = "deny"
 
