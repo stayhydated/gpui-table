@@ -169,8 +169,8 @@ pub use inventory;
 #[cfg(test)]
 mod tests {
     use super::{
-        ComponentFieldName, ComponentShapeUse, FilterVariant, GpuiTableShape, RegistryFilterType,
-        RustPath, RustType, TableId,
+        ColumnFixed, ColumnVariant, ComponentFieldName, ComponentShapeUse, FilterVariant,
+        GpuiTableShape, RegistryFilterType, RustPath, RustType, TableId,
     };
 
     #[test]
@@ -243,5 +243,33 @@ mod tests {
         assert_eq!(RegistryFilterType::DateRange.as_str(), "date_range");
         assert_eq!(RegistryFilterType::NumberRange.as_str(), "number_range");
         assert_eq!(RegistryFilterType::Text.as_str(), "text");
+    }
+
+    #[test]
+    fn column_metadata_and_fixed_position_names_are_stable() {
+        let column = ColumnVariant::new(
+            "name",
+            RustType::from_macro_tokens_unchecked("String"),
+            "Name",
+            160.0,
+            true,
+            ColumnFixed::Left,
+        );
+
+        assert_eq!(column.field_name, "name");
+        assert_eq!(column.field_type.as_str(), "String");
+        assert_eq!(column.title, "Name");
+        assert_eq!(column.width, 160.0);
+        assert!(column.sortable);
+        assert_eq!(column.fixed, ColumnFixed::Left);
+
+        assert_eq!(ColumnFixed::default(), ColumnFixed::None);
+        assert_eq!(ColumnFixed::None.to_string(), "none");
+        assert_eq!(ColumnFixed::Left.to_string(), "left");
+        assert_eq!(ColumnFixed::Right.to_string(), "right");
+        assert_eq!("none".parse(), Ok(ColumnFixed::None));
+        assert_eq!("left".parse(), Ok(ColumnFixed::Left));
+        assert_eq!("right".parse(), Ok(ColumnFixed::Right));
+        assert!("center".parse::<ColumnFixed>().is_err());
     }
 }

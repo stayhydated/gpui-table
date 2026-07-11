@@ -25,3 +25,22 @@ pub trait FilterEntitiesExt {
 pub fn icon_from_name(name: impl gpui_component::IconNamed) -> FacetedFilterIcon {
     FacetedFilterIcon::from_path(name.path().to_string())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::icon_from_name;
+    use gpui::SharedString;
+
+    struct TestIcon;
+
+    impl gpui_component::IconNamed for TestIcon {
+        fn path(self) -> SharedString {
+            "icons/test.svg".into()
+        }
+    }
+
+    #[test]
+    fn icon_names_convert_to_ui_neutral_metadata() {
+        assert_eq!(icon_from_name(TestIcon).path(), "icons/test.svg");
+    }
+}

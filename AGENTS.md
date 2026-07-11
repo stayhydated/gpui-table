@@ -179,12 +179,16 @@ builds. Update the file that owns the changed build requirement.
 - `just check` and `just clippy` exclude `some-lib` and `some-lib-tables`; use
   direct `cargo` commands or example runs when those examples are the edited
   surface.
+- `just cov` measures all targets and features for the eight publishable
+  library crates, the MCP query example, and the shared example library. It
+  excludes the `prototyping` generator and the `some-lib-tables` GUI demo so
+  the report centers on testable library and integration contracts.
 - Match CI explicitly when needed: `.github/workflows/ci.yml` runs
   `cargo fmt --check`, `cargo clippy --workspace --all-features`,
   `cargo test --workspace --all-features`,
   `cargo doc --workspace --all-features --no-deps --locked`,
-  `cargo package --workspace --list`, the es-fluent FTL action, and the
-  `bnjbvr/cargo-machete` action.
+  `cargo package --workspace --list`, `cargo llvm-cov` with Cobertura output,
+  the es-fluent FTL action, and the `bnjbvr/cargo-machete` action.
 - For dependency changes, keep shared versions in the workspace root
   `Cargo.toml`; member crates use `workspace = true` for workspace-managed
   dependencies.

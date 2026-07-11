@@ -285,3 +285,223 @@ mod date_range {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use gpui_table_mcp::serde_json::json;
+    use gpui_table_schema::registry::RustType;
+
+    fn table_filter<Shape: McpFilterShape>(name: &'static str) -> McpTableFilter {
+        McpTableFilter::for_shape::<Shape>(name, RustType::from_macro_tokens_unchecked("String"))
+    }
+
+    #[test]
+    fn text_filter_and_adapter_publish_schema_decode_and_validation_contracts() {
+        let filter = table_filter::<TextFilter>("name");
+        let schema = <TextFilter as McpFilterShape>::input_schema(filter);
+        assert_eq!(schema["type"], "string");
+
+        let decoded =
+            <TextFilter as McpFilterShape>::decode_filter("name", McpAny::from(json!("Alice")))
+                .unwrap();
+        assert_eq!(decoded.as_ref(), "Alice");
+        assert!(
+            <TextFilter as McpFilterShape>::decode_filter("name", McpAny::from(json!(42)),)
+                .is_err()
+        );
+
+        let validated = <TextFilter as McpFilterShapeValidation>::decode_filter_with_validation(
+            "name",
+            McpAny::from(json!("Alice")),
+            |value| {
+                assert_eq!(value, "Alice");
+                Ok(())
+            },
+        )
+        .unwrap();
+        assert_eq!(validated.as_ref(), "Alice");
+        assert!(
+            <TextFilter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "name",
+                McpAny::from(json!("blocked")),
+                |_| Err(McpToolError::invalid_field_value("name", "blocked")),
+            )
+            .is_err()
+        );
+
+        assert_eq!(
+            <TextFilterAdapter as McpFilterShape>::input_schema(filter),
+            schema
+        );
+        assert_eq!(
+            <TextFilterAdapter as McpFilterShape>::decode_filter(
+                "name",
+                McpAny::from(json!("Bob")),
+            )
+            .unwrap()
+            .as_ref(),
+            "Bob"
+        );
+        assert_eq!(
+            <TextFilterAdapter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "name",
+                McpAny::from(json!("Bob")),
+                |_| Ok(()),
+            )
+            .unwrap()
+            .as_ref(),
+            "Bob"
+        );
+    }
+
+    #[test]
+    fn faceted_filter_schema_lists_options_and_decodes_typed_sets() {
+        let filter = table_filter::<FacetedFilter<bool>>("enabled");
+        let schema = <FacetedFilter<bool> as McpFilterShape>::input_schema(filter);
+
+        assert_eq!(schema["type"], "array");
+        assert_eq!(schema["items"]["enum"], json!(["true", "false"]));
+        assert_eq!(schema["x-gpuiTableFacetOptions"][0]["value"], "true");
+        assert_eq!(schema["x-gpuiTableFacetOptions"][1]["value"], "false");
+
+        let decoded = <FacetedFilter<bool> as McpFilterShape>::decode_filter(
+            "enabled",
+            McpAny::from(json!(["true", "true"])),
+        )
+        .unwrap();
+        assert_eq!(decoded.0, HashSet::from([true]));
+        assert!(
+            <FacetedFilter<bool> as McpFilterShape>::decode_filter(
+                "enabled",
+                McpAny::from(json!(["unknown"])),
+            )
+            .is_err()
+        );
+
+        let validated =
+            <FacetedFilter<bool> as McpFilterShapeValidation>::decode_filter_with_validation(
+                "enabled",
+                McpAny::from(json!(["false"])),
+                |values| {
+                    assert_eq!(values, &HashSet::from([false]));
+                    Ok(())
+                },
+            )
+            .unwrap();
+        assert_eq!(validated.0, HashSet::from([false]));
+        assert!(
+            <FacetedFilter<bool> as McpFilterShapeValidation>::decode_filter_with_validation(
+                "enabled",
+                McpAny::from(json!(["true"])),
+                |_| Err(McpToolError::invalid_field_value("enabled", "true")),
+            )
+            .is_err()
+        );
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    #[test]
+    fn number_range_filter_and_adapter_decode_bounds_and_validation() {
+        use crate::{NumberRangeFilter, NumberRangeFilterAdapter};
+        use rust_decimal::Decimal;
+
+        let filter = table_filter::<NumberRangeFilter>("amount");
+        let schema = <NumberRangeFilter as McpFilterShape>::input_schema(filter);
+        assert_eq!(schema["type"], "object");
+
+        let decoded = <NumberRangeFilter as McpFilterShape>::decode_filter(
+            "amount",
+            McpAny::from(json!({ "min": "1.5", "max": 3 })),
+        )
+        .unwrap();
+        assert_eq!(decoded.min(), Some(&Decimal::new(15, 1)));
+        assert_eq!(decoded.max(), Some(&Decimal::from(3)));
+
+        let validated =
+            <NumberRangeFilter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "amount",
+                McpAny::from(json!({ "min": 1 })),
+                |bounds| {
+                    assert_eq!(bounds.0, Some(Decimal::ONE));
+                    Ok(())
+                },
+            )
+            .unwrap();
+        assert_eq!(validated.min(), Some(&Decimal::ONE));
+
+        assert_eq!(
+            <NumberRangeFilterAdapter as McpFilterShape>::input_schema(filter),
+            schema
+        );
+        assert!(
+            <NumberRangeFilterAdapter as McpFilterShape>::decode_filter(
+                "amount",
+                McpAny::from(json!({ "max": 10 })),
+            )
+            .unwrap()
+            .matches(&Decimal::from(5))
+        );
+        assert!(
+            <NumberRangeFilterAdapter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "amount",
+                McpAny::from(json!({ "max": 10 })),
+                |_| Ok(()),
+            )
+            .is_ok()
+        );
+    }
+
+    #[cfg(feature = "chrono")]
+    #[test]
+    fn date_range_filter_and_adapter_decode_bounds_and_validation() {
+        use crate::{DateRangeFilter, DateRangeFilterAdapter};
+        use chrono::NaiveDate;
+
+        let filter = table_filter::<DateRangeFilter>("created_on");
+        let schema = <DateRangeFilter as McpFilterShape>::input_schema(filter);
+        assert_eq!(schema["type"], "object");
+
+        let decoded = <DateRangeFilter as McpFilterShape>::decode_filter(
+            "created_on",
+            McpAny::from(json!({ "min": "2026-01-01", "max": "2026-01-31" })),
+        )
+        .unwrap();
+        assert_eq!(
+            decoded.min(),
+            Some(&NaiveDate::from_ymd_opt(2026, 1, 1).unwrap())
+        );
+        assert_eq!(
+            decoded.max(),
+            Some(&NaiveDate::from_ymd_opt(2026, 1, 31).unwrap())
+        );
+
+        assert!(
+            <DateRangeFilter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "created_on",
+                McpAny::from(json!({ "min": "2026-01-01" })),
+                |_| Ok(()),
+            )
+            .is_ok()
+        );
+        assert_eq!(
+            <DateRangeFilterAdapter as McpFilterShape>::input_schema(filter),
+            schema
+        );
+        assert!(
+            <DateRangeFilterAdapter as McpFilterShape>::decode_filter(
+                "created_on",
+                McpAny::from(json!({ "max": "2026-12-31" })),
+            )
+            .is_ok()
+        );
+        assert!(
+            <DateRangeFilterAdapter as McpFilterShapeValidation>::decode_filter_with_validation(
+                "created_on",
+                McpAny::from(json!({ "max": "2026-12-31" })),
+                |_| Ok(()),
+            )
+            .is_ok()
+        );
+    }
+}

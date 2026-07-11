@@ -107,4 +107,13 @@ mod tests {
     fn fallback_language_is_a_valid_language_identifier() {
         assert_eq!(fallback_language().to_string(), FALLBACK_LANGUAGE);
     }
+
+    #[gpui::test]
+    fn component_locale_initialization_and_synchronization_are_repeatable(cx: &mut App) {
+        gpui_component::init(cx);
+        assert!(init(cx).is_ok());
+        assert!(set_locale(cx, "en").is_ok());
+        sync_locale(cx);
+        assert_eq!(component_language().to_string(), "en");
+    }
 }

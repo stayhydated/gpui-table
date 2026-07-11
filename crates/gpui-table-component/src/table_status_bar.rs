@@ -129,3 +129,43 @@ impl RenderOnce for TableStatusBar {
             }))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TableStatusBar;
+    use gpui::{
+        Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
+        VisualTestContext,
+    };
+
+    #[gpui::test]
+    fn status_bar_builders_and_state_combinations_render(cx: &mut TestAppContext) {
+        let mut custom = TableStatusBar::new(42, true, false)
+            .row_label("Rows")
+            .loading_text("Working")
+            .idle_text("Ready")
+            .all_loaded_text("Complete")
+            .more_available_text("More")
+            .row_count_style(StyleRefinement::default())
+            .activity_style(StyleRefinement::default())
+            .eof_style(StyleRefinement::default());
+        *custom.style() = StyleRefinement::default();
+
+        assert_eq!(custom.row_count, 42);
+        assert!(custom.loading);
+        assert!(!custom.eof);
+        assert_eq!(custom.row_label.as_deref(), Some("Rows"));
+
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+        visual.update(|window, cx| {
+            let _ = custom.render(window, cx).into_any_element();
+            let _ = TableStatusBar::new(0, false, true)
+                .render(window, cx)
+                .into_any_element();
+            let _ = TableStatusBar::new(1, false, false)
+                .render(window, cx)
+                .into_any_element();
+        });
+    }
+}

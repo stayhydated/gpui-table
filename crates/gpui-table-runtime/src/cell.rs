@@ -367,3 +367,74 @@ impl TableCell for jiff::civil::Time {
             .into_any_element()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{DisplayCell, FormattedCell};
+
+    #[test]
+    fn cell_wrappers_preserve_values_and_formatters() {
+        let display = DisplayCell::new(42);
+        assert_eq!(display.into_inner(), 42);
+
+        let formatted = FormattedCell::new(42, |value: &i32| format!("{value} kg"));
+        assert_eq!(formatted.value(), &42);
+        assert_eq!((formatted.formatter)(formatted.value()), "42 kg");
+        assert_eq!(formatted.into_inner(), 42);
+    }
+
+    #[cfg(feature = "jiff")]
+    #[test]
+    fn jiff_values_format_through_icu() {
+        use super::datetime_format::{
+            format_civil_date, format_civil_datetime, format_civil_time, format_timestamp_local,
+            format_zoned,
+        };
+        use jiff::{Timestamp, Zoned, civil};
+
+        let date = civil::Date::new(2026, 7, 11).unwrap();
+        let time = civil::Time::new(12, 34, 56, 123_000_000).unwrap();
+        let datetime = civil::DateTime::from_parts(date, time);
+        let zoned: Zoned = "2026-07-11T12:34:56-04:00[America/New_York]"
+            .parse()
+            .unwrap();
+        let timestamp: Timestamp = "2026-07-11T16:34:56Z".parse().unwrap();
+
+        assert!(format_civil_date(date).is_some_and(|text| !text.is_empty()));
+        assert!(format_civil_time(time).is_some_and(|text| !text.is_empty()));
+        assert!(format_civil_datetime(datetime).is_some_and(|text| !text.is_empty()));
+        assert!(format_zoned(&zoned).is_some_and(|text| !text.is_empty()));
+        assert!(format_timestamp_local(timestamp).is_some_and(|text| !text.is_empty()));
+    }
+
+    #[cfg(all(feature = "jiff", feature = "chrono"))]
+    #[test]
+    fn chrono_values_convert_to_jiff_equivalents() {
+        use super::datetime_format::{
+            chrono_datetime_to_system_zoned, chrono_naive_date_to_jiff,
+            chrono_naive_datetime_to_jiff, chrono_naive_time_to_jiff,
+        };
+        use chrono::{DateTime, NaiveDate, Utc};
+
+        let date = NaiveDate::from_ymd_opt(2026, 7, 11).unwrap();
+        let time = date.and_hms_nano_opt(12, 34, 56, 123_000_000).unwrap();
+        let zoned = DateTime::<Utc>::from_naive_utc_and_offset(time, Utc);
+
+        assert_eq!(
+            chrono_naive_date_to_jiff(&date).unwrap().to_string(),
+            "2026-07-11"
+        );
+        assert_eq!(
+            chrono_naive_time_to_jiff(&time.time()).unwrap().to_string(),
+            "12:34:56.123"
+        );
+        assert_eq!(
+            chrono_naive_datetime_to_jiff(&time).unwrap().to_string(),
+            "2026-07-11T12:34:56.123"
+        );
+        assert_eq!(
+            chrono_datetime_to_system_zoned(&zoned).unwrap().timestamp(),
+            "2026-07-11T12:34:56.123Z".parse().unwrap()
+        );
+    }
+}

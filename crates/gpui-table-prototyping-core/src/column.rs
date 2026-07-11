@@ -165,3 +165,110 @@ impl ColumnSliceExt for [ColumnVariant] {
         self.iter().filter(|c| c.sortable).collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        ColumnCodeGenerator as _, ColumnInfo, ColumnIterator, ColumnSliceExt as _,
+        DefaultColumnGenerator,
+    };
+    use gpui_table_schema::registry::{ColumnFixed, ColumnVariant, RustType};
+
+    static COLUMNS: [ColumnVariant; 2] = [
+        ColumnVariant::new(
+            "display_name",
+            RustType::from_macro_tokens_unchecked("String"),
+            "Display name",
+            240.0,
+            true,
+            ColumnFixed::Left,
+        ),
+        ColumnVariant::new(
+            "score",
+            RustType::from_macro_tokens_unchecked("Option < i64 >"),
+            "Score",
+            80.0,
+            false,
+            ColumnFixed::Right,
+        ),
+    ];
+
+    #[test]
+    fn default_generator_emits_accessor_and_debug_child_contracts() {
+        let generator = DefaultColumnGenerator;
+
+        assert_eq!(
+            generator.value_accessor(&COLUMNS[0]).to_string(),
+            "& row . display_name"
+        );
+        assert_eq!(
+            generator.render_child(&COLUMNS[0]).to_string(),
+            ". child (format ! (\"{}: {:?}\" , \"Display name\" , row . display_name))"
+        );
+        assert!(generator.additional_imports(&COLUMNS[0]).is_none());
+    }
+
+    #[test]
+    fn column_info_exposes_metadata_and_generated_identifiers() {
+        let info = ColumnInfo::new(&COLUMNS[0]);
+
+        assert_eq!(info.field_ident().to_string(), "display_name");
+        assert_eq!(info.pascal_case_name(), "DisplayName");
+        assert_eq!(info.pascal_case_ident().to_string(), "DisplayName");
+        assert_eq!(info.title(), "Display name");
+        assert_eq!(info.field_type(), "String");
+        let field_type = info.field_type_syn();
+        assert_eq!(quote::quote!(#field_type).to_string(), "String");
+        assert!(info.try_field_type_syn().is_ok());
+        assert_eq!(info.width(), 240.0);
+        assert!(info.sortable());
+        assert_eq!(info.fixed(), &ColumnFixed::Left);
+        assert_eq!(
+            info.generate_value_accessor().to_string(),
+            "row . display_name . clone ()"
+        );
+        assert_eq!(
+            info.generate_display_child().to_string(),
+            ". child (format ! (\"{}: {:?}\" , \"Display name\" , row . display_name))"
+        );
+    }
+
+    #[test]
+    fn invalid_field_types_return_contextual_parse_errors() {
+        let invalid = ColumnVariant::new(
+            "bad",
+            RustType::from_macro_tokens_unchecked("Vec<"),
+            "Bad",
+            1.0,
+            false,
+            ColumnFixed::None,
+        );
+        let error = ColumnInfo::new(&invalid).try_field_type_syn().unwrap_err();
+
+        assert!(
+            error
+                .to_string()
+                .contains("failed to parse field type `Vec<`")
+        );
+    }
+
+    #[test]
+    fn column_iterators_preserve_indexes_and_select_sortable_columns() {
+        let iterated = ColumnIterator::new(&COLUMNS)
+            .map(|(index, info)| (index, info.field_ident().to_string()))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            iterated,
+            [(0, "display_name".to_string()), (1, "score".to_string())]
+        );
+
+        let via_extension = COLUMNS
+            .column_iter()
+            .map(|(index, info)| (index, info.title()))
+            .collect::<Vec<_>>();
+        assert_eq!(via_extension, [(0, "Display name"), (1, "Score")]);
+        let sortable = COLUMNS.sortable_columns();
+        assert_eq!(sortable.len(), 1);
+        assert_eq!(sortable[0].field_name, "display_name");
+    }
+}

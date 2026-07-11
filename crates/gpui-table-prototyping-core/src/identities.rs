@@ -137,3 +137,107 @@ pub(crate) fn parse_ident(
         source,
     })
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{ShapeIdentities, TableIdentities as _, TableIdentitiesExt as _, parse_ident};
+    use crate::code_gen::TableCodegenError;
+    use gpui_table_schema::registry::{
+        ColumnFixed, ColumnVariant, ComponentFieldName, ComponentShapeUse, FilterVariant,
+        GpuiTableShape, RegistryFilterType, RustPath, RustType,
+    };
+
+    static COLUMNS: [ColumnVariant; 1] = [ColumnVariant::new(
+        "display_name",
+        RustType::from_macro_tokens_unchecked("String"),
+        "Display name",
+        100.0,
+        true,
+        ColumnFixed::None,
+    )];
+    static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
+        ComponentShapeUse::new(
+            ComponentFieldName::new("display_name"),
+            RustPath::from_macro_tokens_unchecked("crate::TextFilter"),
+        ),
+        RegistryFilterType::Text,
+        RustPath::from_macro_tokens_unchecked("crate::TextFilter"),
+    )];
+    static SHAPE: GpuiTableShape = GpuiTableShape::new(
+        "PurchaseOrder",
+        "purchase_order",
+        "Purchase orders",
+        true,
+        &COLUMNS,
+        &FILTERS,
+        true,
+        "demo/src/purchase_order.rs",
+    );
+
+    #[test]
+    fn shape_identities_derive_every_public_name_and_flag() {
+        let identities = ShapeIdentities::new(&SHAPE);
+
+        assert_eq!(identities.shape().table_id, "purchase_order");
+        assert_eq!(identities.columns().len(), 1);
+        assert_eq!(identities.struct_name(), "PurchaseOrder");
+        assert_eq!(identities.struct_name_ident().to_string(), "PurchaseOrder");
+        assert_eq!(
+            identities.story_struct_ident().to_string(),
+            "PurchaseOrderTableStory"
+        );
+        assert_eq!(
+            identities.delegate_struct_ident().to_string(),
+            "PurchaseOrderTableDelegate"
+        );
+        assert_eq!(identities.table_id(), "purchase_order");
+        assert_eq!(identities.table_title(), "Purchase orders");
+        assert!(identities.uses_fluent_labels());
+        assert_eq!(identities.snake_case_name(), "purchase_order");
+        assert_eq!(identities.snake_case_ident().to_string(), "purchase_order");
+        assert_eq!(
+            identities.ftl_label_ident().to_string(),
+            "PurchaseOrderLabelVariants"
+        );
+        assert_eq!(
+            identities.ftl_description_ident().to_string(),
+            "PurchaseOrderDescriptionVariants"
+        );
+        assert_eq!(identities.story_id_literal(), "purchase-order-table-story");
+        assert!(identities.has_filters());
+        assert_eq!(
+            identities.try_struct_name_ident().unwrap().to_string(),
+            "PurchaseOrder"
+        );
+        assert_eq!(
+            identities.try_snake_case_ident().unwrap().to_string(),
+            "purchase_order"
+        );
+    }
+
+    #[test]
+    fn parse_ident_reports_the_derived_value_and_shape() {
+        assert_eq!(
+            parse_ident("field", "User", "valid_name".into())
+                .unwrap()
+                .to_string(),
+            "valid_name"
+        );
+
+        let error = parse_ident("field", "User", "invalid field".into()).unwrap_err();
+        match error {
+            TableCodegenError::InvalidIdentifier {
+                kind,
+                struct_name,
+                value,
+                source,
+            } => {
+                assert_eq!(kind, "field");
+                assert_eq!(struct_name, "User");
+                assert_eq!(value, "invalid field");
+                assert!(!source.to_string().is_empty());
+            },
+            other => panic!("unexpected error: {other}"),
+        }
+    }
+}

@@ -1,6 +1,7 @@
 # gpui-table
 
 [![Build Status](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml/badge.svg)](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/github/stayhydated/gpui-table/graph/badge.svg)](https://codecov.io/github/stayhydated/gpui-table)
 [![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 

@@ -676,3 +676,183 @@ fn group_options(options: &[FacetedFilterOption], search_query: &str) -> Vec<Fac
 
     groups
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FacetedFilter, FacetedFilterExt as _, display_option_label, group_options};
+    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
+    use std::{cell::RefCell, collections::HashSet, rc::Rc};
+
+    #[derive(Clone, Debug, Eq, Hash, PartialEq)]
+    enum Status {
+        Active,
+        Pending,
+        Disabled,
+    }
+
+    impl FilterValue for Status {
+        fn to_filter_string(&self) -> String {
+            match self {
+                Self::Active => "active",
+                Self::Pending => "pending",
+                Self::Disabled => "disabled",
+            }
+            .into()
+        }
+
+        fn from_filter_string(value: &str) -> Option<Self> {
+            match value {
+                "active" => Some(Self::Active),
+                "pending" => Some(Self::Pending),
+                "disabled" => Some(Self::Disabled),
+                _ => None,
+            }
+        }
+    }
+
+    impl Filterable for Status {
+        fn options() -> Vec<FacetedFilterOption> {
+            vec![
+                FacetedFilterOption {
+                    group: Some("Enabled".into()),
+                    label: "Active".into(),
+                    value: "active".into(),
+                    count: Some(2),
+                    icon: None,
+                },
+                FacetedFilterOption {
+                    group: Some("Enabled".into()),
+                    label: "Pending".into(),
+                    value: "pending".into(),
+                    count: None,
+                    icon: None,
+                },
+                FacetedFilterOption {
+                    group: None,
+                    label: "Disabled".into(),
+                    value: "disabled".into(),
+                    count: None,
+                    icon: None,
+                },
+            ]
+        }
+    }
+
+    #[test]
+    fn option_grouping_preserves_order_groups_and_search_contracts() {
+        let options = Status::options();
+        assert_eq!(display_option_label(&options[0]), "Enabled: Active");
+        assert_eq!(display_option_label(&options[2]), "Disabled");
+
+        let groups = group_options(&options, "");
+        assert_eq!(groups.len(), 2);
+        assert_eq!(groups[0].title.as_deref(), Some("Enabled"));
+        assert_eq!(groups[0].options.len(), 2);
+        assert_eq!(groups[1].title, None);
+        assert_eq!(groups[1].options[0].value, "disabled");
+
+        let label_match = group_options(&options, " active ");
+        assert_eq!(label_match.len(), 1);
+        assert_eq!(label_match[0].options[0].value, "active");
+
+        let group_match = group_options(&options, "enabled");
+        assert_eq!(group_match[0].options.len(), 2);
+        assert!(group_options(&options, "missing").is_empty());
+    }
+
+    #[gpui::test]
+    fn constructors_selection_labels_and_styles_preserve_state(cx: &mut TestAppContext) {
+        let selected = HashSet::from([Status::Active]);
+        let filter = cx.update(|cx| {
+            FacetedFilter::<Status>::new_for(
+                |_| "Status".into(),
+                selected.clone(),
+                |_, _, _| {},
+                cx,
+            )
+            .searchable(cx)
+            .trigger_style(StyleRefinement::default(), cx)
+            .selected_tag_style(StyleRefinement::default(), cx)
+            .popover_style(StyleRefinement::default(), cx)
+            .search_input_style(StyleRefinement::default(), cx)
+            .options_list_style(StyleRefinement::default(), cx)
+            .option_button_style(StyleRefinement::default(), cx)
+            .clear_button_style(StyleRefinement::default(), cx)
+        });
+
+        filter.read_with(cx, |filter, cx| {
+            assert_eq!((filter.title)(cx), "Status");
+            assert_eq!(filter.value(), &selected);
+            assert!(filter.show_search);
+            assert!(filter.is_selected("active"));
+            assert!(!filter.is_selected("pending"));
+            assert_eq!(filter.get_selected_labels(cx), ["Enabled: Active"]);
+            assert!(filter.search_state.is_none());
+        });
+
+        let manual = cx.update(|cx| {
+            FacetedFilter::<Status>::new_with_options(
+                |_| "Manual".into(),
+                |_| Status::options(),
+                HashSet::new(),
+                |_, _, _| {},
+                cx,
+            )
+        });
+        manual.read_with(cx, |filter, cx| {
+            assert_eq!((filter.options)(cx).len(), 3);
+            assert!(filter.value().is_empty());
+        });
+
+        let fixed =
+            cx.update(|cx| FacetedFilter::<Status>::new("Fixed", HashSet::new(), |_, _, _| {}, cx));
+        fixed.read_with(cx, |filter, cx| {
+            assert_eq!((filter.title)(cx), "Fixed");
+            assert!((filter.options)(cx).is_empty());
+        });
+    }
+
+    #[gpui::test]
+    fn faceted_filter_toggle_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let changes = Rc::new(RefCell::new(Vec::new()));
+        let changes_for_callback = changes.clone();
+        let filter = cx.update(|cx| {
+            FacetedFilter::<Status>::new_for(
+                |_| "Status".into(),
+                HashSet::new(),
+                move |value, _, _| changes_for_callback.borrow_mut().push(value),
+                cx,
+            )
+        });
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.toggle_option(Status::Active, true, window, cx);
+                filter.toggle_option(Status::Active, false, window, cx);
+                filter.toggle_option(Status::Pending, true, window, cx);
+                filter.reset(window, cx);
+            });
+        });
+        assert_eq!(changes.borrow().len(), 4);
+        assert_eq!(changes.borrow()[0], HashSet::from([Status::Active]));
+        assert!(changes.borrow()[1].is_empty());
+        assert_eq!(changes.borrow()[2], HashSet::from([Status::Pending]));
+        assert!(changes.borrow()[3].is_empty());
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.selected_values.insert(Status::Disabled);
+                filter.reset_silent(window, cx);
+            });
+        });
+        assert_eq!(changes.borrow().len(), 4);
+        filter.read_with(&visual.cx, |filter, _| assert!(filter.value().is_empty()));
+        drop(filter);
+        drop(visual);
+        cx.run_until_parked();
+    }
+}

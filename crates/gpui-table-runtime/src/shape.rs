@@ -110,3 +110,21 @@ pub type GpuiTableFilterRawValueOf<Shape> = <Shape as GpuiTableFilterShape>::Raw
 pub type GpuiTableFilterValueOf<Shape> = <Shape as GpuiTableFilterShape>::FilterValue;
 
 pub struct _PrivatePhantom<T>(PhantomData<T>);
+
+#[cfg(test)]
+mod tests {
+    use super::DefaultGpuiTableFilterShapeBuilder;
+
+    #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+    struct Shape;
+
+    #[test]
+    fn default_shape_builder_is_a_copyable_zero_sized_value() {
+        let builder = DefaultGpuiTableFilterShapeBuilder::<Shape>::new();
+        let copied = builder;
+
+        assert_eq!(builder, copied);
+        assert_eq!(builder, DefaultGpuiTableFilterShapeBuilder::default());
+        assert_eq!(std::mem::size_of_val(&builder), 0);
+    }
+}

@@ -169,3 +169,98 @@ impl From<&str> for TextValue {
         Self(s.to_string())
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FacetedValue, RangeValue, SingleValue, TextValue};
+    use std::collections::HashSet;
+
+    #[test]
+    fn faceted_values_match_everything_until_a_selection_is_active() {
+        let mut value = FacetedValue::<bool>::new();
+        assert_eq!(value, FacetedValue::default());
+        assert!(!value.is_active());
+        assert!(value.matches(&true));
+
+        value.insert(true);
+        assert!(value.is_active());
+        assert!(value.matches(&true));
+        assert!(!value.matches(&false));
+
+        let inner: HashSet<_> = value.into();
+        assert_eq!(inner, HashSet::from([true]));
+    }
+
+    #[test]
+    fn single_values_expose_zero_or_one_exact_selection() {
+        let empty = SingleValue::<String>::new();
+        assert_eq!(empty, SingleValue::default());
+        assert!(!empty.is_active());
+        assert!(empty.is_empty());
+        assert_eq!(empty.len(), 0);
+        assert_eq!(empty.value(), None);
+        assert_eq!(empty.iter().count(), 0);
+        assert!(empty.matches(&"anything".to_string()));
+
+        let selected = SingleValue(Some("chosen".to_string()));
+        assert!(selected.is_active());
+        assert!(!selected.is_empty());
+        assert_eq!(selected.len(), 1);
+        assert_eq!(selected.value().map(String::as_str), Some("chosen"));
+        assert_eq!(
+            selected.iter().map(String::as_str).collect::<Vec<_>>(),
+            ["chosen"]
+        );
+        assert!(selected.matches(&"chosen".to_string()));
+        assert!(!selected.matches(&"other".to_string()));
+    }
+
+    #[test]
+    fn range_values_apply_each_bound_inclusively() {
+        let empty = RangeValue::<i32>::new();
+        assert_eq!(empty, RangeValue::default());
+        assert!(!empty.is_active());
+        assert!(empty.matches(&10));
+        assert_eq!(empty.min(), None);
+        assert_eq!(empty.max(), None);
+
+        let min_only = RangeValue(Some(10), None);
+        assert!(min_only.is_active());
+        assert!(min_only.matches(&10));
+        assert!(!min_only.matches(&9));
+        assert_eq!(min_only.min(), Some(&10));
+
+        let max_only = RangeValue(None, Some(20));
+        assert!(max_only.matches(&20));
+        assert!(!max_only.matches(&21));
+        assert_eq!(max_only.max(), Some(&20));
+
+        let bounded = RangeValue(Some(10), Some(20));
+        assert!(bounded.matches(&10));
+        assert!(bounded.matches(&15));
+        assert!(bounded.matches(&20));
+        assert!(!bounded.matches(&9));
+        assert!(!bounded.matches(&21));
+    }
+
+    #[test]
+    fn text_values_match_case_insensitive_substrings() {
+        let mut value = TextValue::new();
+        assert_eq!(value, TextValue::default());
+        assert!(!value.is_active());
+        assert!(value.matches("anything"));
+
+        value.push_str("Rust");
+        assert!(value.is_active());
+        assert!(value.matches("Trustworthy"));
+        assert!(!value.matches("tables"));
+        assert_eq!(value.as_ref(), "Rust");
+        assert_eq!(value.to_string(), "Rust");
+
+        let from_str = TextValue::from("GPUI");
+        let from_string = TextValue::from(String::from("GPUI"));
+        assert_eq!(from_str, from_string);
+        let inner: String = from_string.into();
+        assert_eq!(inner, "GPUI");
+    }
+}

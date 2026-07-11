@@ -96,3 +96,34 @@ pub fn default_render_cell<R: TableRowMeta + ?Sized>(
 pub fn default_render_row(row_ix: usize, _window: &mut Window, _cx: &mut App) -> Stateful<Div> {
     div().id(row_ix)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::TableRowMeta;
+    use crate::TableCell;
+    use gpui_component::table::Column;
+
+    struct Row;
+
+    impl TableRowMeta for Row {
+        const TABLE_ID: &'static str = "row";
+        const TABLE_TITLE: &'static str = "Rows";
+
+        fn table_columns() -> Vec<Column> {
+            Vec::new()
+        }
+
+        fn cell_value(&self, _col_ix: usize) -> Box<dyn TableCell + '_> {
+            Box::new("cell")
+        }
+    }
+
+    #[test]
+    fn row_metadata_defaults_expose_ids_titles_and_no_filters() {
+        assert_eq!(Row::table_title(), "Rows");
+        assert_eq!(Row::table_id().as_str(), "row");
+        assert!(Row::table_columns().is_empty());
+        assert!(Row::table_filters().is_empty());
+        let _ = Row.cell_value(0);
+    }
+}

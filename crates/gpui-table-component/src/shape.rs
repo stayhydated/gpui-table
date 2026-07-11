@@ -792,3 +792,300 @@ where
 
 #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
 impl_date_range_shape_for!(spacetimedb_lib::Timestamp);
+
+#[cfg(test)]
+mod tests {
+    use std::collections::HashSet;
+
+    use gpui_table_core::filter::{FacetedValue, FilterType, RangeValue, TextValue};
+    use gpui_table_runtime::shape::{GpuiTableFilterShape, GpuiTableFilterShapeFor};
+
+    #[cfg(feature = "chrono")]
+    use super::{DateRangeFilter, DateRangeFilterAdapter, DateRangeFilterField};
+    use super::{
+        FacetedFilter, FacetedFilterArgs, TextFilter, TextFilterAdapter, TextFilterArgs,
+        TextFilterField,
+    };
+    #[cfg(feature = "rust_decimal")]
+    use super::{
+        NumberRangeFilter, NumberRangeFilterAdapter, NumberRangeFilterArgs, NumberRangeFilterField,
+    };
+
+    #[derive(Clone, Debug, Eq, Hash, PartialEq)]
+    struct Label(String);
+
+    impl TextFilterField for Label {
+        fn to_filter_text(&self) -> String {
+            self.0.clone()
+        }
+    }
+
+    #[test]
+    fn text_shapes_match_owned_optional_and_adapter_fields() {
+        let active = TextValue::from("rust");
+        let inactive = TextValue::new();
+        let owned = "Trustworthy".to_string();
+
+        assert!(<TextFilter as GpuiTableFilterShapeFor<String>>::matches_field(&owned, &active));
+        assert!(
+            !<TextFilter as GpuiTableFilterShapeFor<String>>::matches_field(
+                &"tables".to_string(),
+                &active,
+            )
+        );
+        assert!(
+            <TextFilter as GpuiTableFilterShapeFor<Option<String>>>::matches_field(
+                &None, &inactive,
+            )
+        );
+        assert!(
+            <TextFilter as GpuiTableFilterShapeFor<Option<String>>>::matches_field(
+                &Some(owned),
+                &active,
+            )
+        );
+        assert!(
+            !<TextFilter as GpuiTableFilterShapeFor<Option<String>>>::matches_field(&None, &active,)
+        );
+
+        assert!(
+            <TextFilterAdapter as GpuiTableFilterShapeFor<Label>>::matches_field(
+                &Label("Rust language".into()),
+                &active,
+            )
+        );
+        assert!(<TextFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Label>,
+        >>::matches_field(&None, &inactive,));
+        assert!(!<TextFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Label>,
+        >>::matches_field(&None, &active,));
+
+        assert!(matches!(
+            <TextFilter as GpuiTableFilterShapeFor<String>>::filter_type(),
+            FilterType::Text
+        ));
+        assert!(matches!(
+            <TextFilterAdapter as GpuiTableFilterShapeFor<Label>>::filter_type(),
+            FilterType::Text
+        ));
+        assert_eq!(
+            <TextFilter as GpuiTableFilterShape>::wrap_value("query".into()),
+            TextValue::from("query")
+        );
+
+        assert_eq!(
+            TextFilter::alphabetic_only().validation,
+            super::TextFilterValidation::Alphabetic
+        );
+        assert_eq!(
+            TextFilter::numeric_only().validation,
+            super::TextFilterValidation::Numeric
+        );
+        assert_eq!(
+            TextFilter::alphanumeric_only().validation,
+            super::TextFilterValidation::Alphanumeric
+        );
+        assert_eq!(
+            TextFilter::matching_regex("[a-z]+").validation,
+            super::TextFilterValidation::MatchingRegex("[a-z]+")
+        );
+        assert_eq!(
+            TextFilterArgs::default().validation,
+            super::TextFilterValidation::None
+        );
+    }
+
+    #[test]
+    fn faceted_shapes_match_scalars_optional_values_and_collections() {
+        let active = FacetedValue(HashSet::from([true]));
+        let inactive = FacetedValue::<bool>::new();
+
+        assert!(
+            <FacetedFilter<bool> as GpuiTableFilterShapeFor<bool>>::matches_field(&true, &active,)
+        );
+        assert!(
+            !<FacetedFilter<bool> as GpuiTableFilterShapeFor<bool>>::matches_field(&false, &active,)
+        );
+        assert!(<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Option<bool>,
+        >>::matches_field(&None, &inactive,));
+        assert!(!<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Option<bool>,
+        >>::matches_field(&None, &active,));
+        assert!(<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Vec<bool>,
+        >>::matches_field(&vec![false, true], &active,));
+        assert!(!<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Vec<bool>,
+        >>::matches_field(&vec![false], &active,));
+        assert!(<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Option<Vec<bool>>,
+        >>::matches_field(&Some(vec![true]), &active,));
+        assert!(!<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Option<Vec<bool>>,
+        >>::matches_field(&None, &active,));
+        assert!(<FacetedFilter<bool> as GpuiTableFilterShapeFor<
+            Option<Vec<bool>>,
+        >>::matches_field(&None, &inactive,));
+        assert!(matches!(
+            <FacetedFilter<bool> as GpuiTableFilterShapeFor<bool>>::filter_type(),
+            FilterType::Faceted(options) if options.len() == 2
+        ));
+        assert_eq!(
+            <FacetedFilter<bool> as GpuiTableFilterShape>::wrap_value(HashSet::from([true])),
+            active
+        );
+        assert!(!FacetedFilterArgs::<bool>::default().searchable);
+        assert!(FacetedFilter::<bool>::searchable(true).searchable);
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    #[test]
+    fn numeric_shapes_match_all_primitive_categories_and_adapter_fields() {
+        use rust_decimal::Decimal;
+
+        let active = RangeValue(Some(Decimal::TEN), Some(Decimal::from(20)));
+        let inactive = RangeValue::<Decimal>::new();
+
+        macro_rules! assert_numeric_shape {
+            ($($ty:ty),* $(,)?) => {
+                $(
+                    assert!(
+                        <NumberRangeFilter as GpuiTableFilterShapeFor<$ty>>::matches_field(
+                            &(15 as $ty),
+                            &active,
+                        )
+                    );
+                    assert!(
+                        <NumberRangeFilter as GpuiTableFilterShapeFor<Option<$ty>>>::matches_field(
+                            &None,
+                            &inactive,
+                        )
+                    );
+                    assert!(
+                        <NumberRangeFilterAdapter as GpuiTableFilterShapeFor<$ty>>::matches_field(
+                            &(15 as $ty),
+                            &active,
+                        )
+                    );
+                    assert!(!
+                        <NumberRangeFilterAdapter as GpuiTableFilterShapeFor<Option<$ty>>>::matches_field(
+                            &None,
+                            &active,
+                        )
+                    );
+                    assert_eq!(
+                        <$ty as NumberRangeFilterField>::to_filter_decimal(&(15 as $ty)),
+                        Decimal::from(15),
+                    );
+                )*
+            };
+        }
+
+        assert_numeric_shape!(i8, i16, i32, i64, isize, u8, u16, u32, u64, usize);
+        assert_numeric_shape!(f32, f64);
+        assert!(
+            <NumberRangeFilter as GpuiTableFilterShapeFor<Decimal>>::matches_field(
+                &Decimal::from(15),
+                &active,
+            )
+        );
+        assert!(<NumberRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<Decimal>,
+        >>::matches_field(&Some(Decimal::from(15)), &active,));
+        assert_eq!(
+            <Decimal as NumberRangeFilterField>::to_filter_decimal(&Decimal::from(15)),
+            Decimal::from(15)
+        );
+        assert!(matches!(
+            <NumberRangeFilter as GpuiTableFilterShapeFor<i32>>::filter_type(),
+            FilterType::NumberRange
+        ));
+        assert!(matches!(
+            <NumberRangeFilterAdapter as GpuiTableFilterShapeFor<i32>>::filter_type(),
+            FilterType::NumberRange
+        ));
+        assert_eq!(
+            <NumberRangeFilter as GpuiTableFilterShape>::wrap_value((
+                Some(Decimal::TEN),
+                Some(Decimal::from(20)),
+            )),
+            active
+        );
+
+        let args = NumberRangeFilter::range(Decimal::ZERO, Decimal::ONE_HUNDRED).step(Decimal::ONE);
+        assert_eq!(
+            args,
+            NumberRangeFilterArgs::default()
+                .range(Decimal::ZERO, Decimal::ONE_HUNDRED)
+                .step(Decimal::ONE)
+        );
+        assert_eq!(
+            NumberRangeFilter::step(Decimal::TEN).step,
+            Some(Decimal::TEN)
+        );
+    }
+
+    #[cfg(feature = "chrono")]
+    #[test]
+    fn date_shapes_match_date_datetime_and_zoned_categories() {
+        use chrono::{NaiveDate, TimeZone as _, Utc};
+
+        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let middle = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
+        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let active = RangeValue(Some(start), Some(end));
+        let inactive = RangeValue::<NaiveDate>::new();
+        let datetime = middle.and_hms_opt(12, 0, 0).unwrap();
+        let zoned = Utc.from_utc_datetime(&datetime);
+
+        assert!(
+            <DateRangeFilter as GpuiTableFilterShapeFor<NaiveDate>>::matches_field(
+                &middle, &active,
+            )
+        );
+        assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
+            chrono::NaiveDateTime,
+        >>::matches_field(&datetime, &active,));
+        assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
+            chrono::DateTime<Utc>,
+        >>::matches_field(&zoned, &active,));
+        assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
+            Option<NaiveDate>,
+        >>::matches_field(&None, &inactive,));
+        assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
+            Option<chrono::NaiveDateTime>,
+        >>::matches_field(&None, &active,));
+        assert!(<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            chrono::DateTime<Utc>,
+        >>::matches_field(&zoned, &active,));
+        assert!(!<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
+            Option<NaiveDate>,
+        >>::matches_field(&None, &active,));
+        assert_eq!(
+            <NaiveDate as DateRangeFilterField>::to_filter_naive_date(&middle),
+            middle
+        );
+        assert_eq!(
+            <chrono::NaiveDateTime as DateRangeFilterField>::to_filter_naive_date(&datetime),
+            middle
+        );
+        assert_eq!(
+            <chrono::DateTime<Utc> as DateRangeFilterField>::to_filter_naive_date(&zoned),
+            middle
+        );
+        assert!(matches!(
+            <DateRangeFilter as GpuiTableFilterShapeFor<NaiveDate>>::filter_type(),
+            FilterType::DateRange
+        ));
+        assert!(matches!(
+            <DateRangeFilterAdapter as GpuiTableFilterShapeFor<NaiveDate>>::filter_type(),
+            FilterType::DateRange
+        ));
+        assert_eq!(
+            <DateRangeFilter as GpuiTableFilterShape>::wrap_value((Some(start), Some(end))),
+            active
+        );
+    }
+}

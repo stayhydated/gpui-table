@@ -1499,7 +1499,14 @@ mod tests {
     #[derive(Clone, Debug, Default, PartialEq)]
     struct EmptyFilters;
 
+    #[derive(Clone, super::Serialize)]
     struct TypedTable;
+
+    impl gpui_table_core::filter::Matchable<EmptyFilters> for TypedTable {
+        fn matches_filters(&self, _filters: &EmptyFilters) -> bool {
+            true
+        }
+    }
 
     impl super::McpTable for TypedTable {
         type FilterValues = EmptyFilters;
@@ -1572,5 +1579,120 @@ mod tests {
         assert_eq!(query.limit, Some(10));
         assert_eq!(query.offset, 5);
         assert_eq!(query.filters, EmptyFilters);
+    }
+
+    #[test]
+    fn typed_table_helpers_cover_prompt_resource_and_named_server_entry_points() {
+        let names = super::table_prompt_names_for::<TypedTable>();
+        assert_eq!(names.query, "query_tests_typed_table_table");
+
+        let mut server = super::McpServer::new("test", "0.0.0");
+        super::register_table_resources::<TypedTable>(&mut server).unwrap();
+        assert_eq!(server.resource_count(), 2);
+
+        super::register_table_prompt_templates::<TypedTable>(&mut server).unwrap();
+        assert_eq!(server.prompt_count(), 1);
+
+        let named = super::server_named("custom-table-server", "1.2.3").unwrap();
+        assert_eq!(named.tool_count(), 0);
+        assert!(super::server().is_ok());
+
+        let mut inventory_server = super::McpServer::new("inventory", "0.0.0");
+        super::register_prompt_templates(&mut inventory_server).unwrap();
+    }
+
+    #[test]
+    fn table_tool_registration_covers_sync_async_rows_and_sources() {
+        let mut rows_server = super::McpServer::new("rows", "0.0.0");
+        super::table::<TypedTable>(&mut rows_server)
+            .rows(vec![TypedTable])
+            .unwrap();
+        assert_eq!(rows_server.tool_count(), 1);
+        assert!(
+            super::table::<TypedTable>(&mut rows_server)
+                .rows(vec![])
+                .is_err()
+        );
+
+        let mut query_server = super::McpServer::new("query", "0.0.0");
+        super::table::<TypedTable>(&mut query_server)
+            .query(|query| {
+                Ok::<_, String>(super::TableQueryResult {
+                    rows: vec![TypedTable],
+                    total: 1,
+                    offset: query.offset,
+                    limit: query.limit,
+                })
+            })
+            .unwrap();
+
+        let mut async_server = super::McpServer::new("async", "0.0.0");
+        super::table::<TypedTable>(&mut async_server)
+            .query_async(|query| async move {
+                Ok::<_, String>(super::TableQueryResult {
+                    rows: Vec::new(),
+                    total: 0,
+                    offset: query.offset,
+                    limit: query.limit,
+                })
+            })
+            .unwrap();
+
+        let mut source_server = super::McpServer::new("source", "0.0.0");
+        super::table::<TypedTable>(&mut source_server)
+            .row_source(|| Ok::<_, String>(vec![TypedTable]))
+            .unwrap();
+
+        let mut async_source_server = super::McpServer::new("async-source", "0.0.0");
+        super::table::<TypedTable>(&mut async_source_server)
+            .row_source_async(|| async { Ok::<_, String>(vec![TypedTable]) })
+            .unwrap();
+    }
+
+    #[test]
+    fn registry_wrappers_invoke_descriptor_and_registration_functions() {
+        fn register_noop(_server: &mut super::McpServer) -> Result<(), super::McpToolError> {
+            Ok(())
+        }
+
+        let table =
+            super::registry::McpTableRegistration::new(<TypedTable as super::McpTable>::descriptor);
+        assert_eq!(table.descriptor().table_name(), "TypedTable");
+
+        let query = super::registry::McpQueryHandlerRegistration::new(register_noop);
+        let mut server = super::McpServer::new("test", "0.0.0");
+        query.register(&mut server).unwrap();
+    }
+
+    #[test]
+    fn raw_filter_shape_decode_and_prompt_helpers_cover_private_composition() {
+        use super::McpFilterShape as _;
+
+        let filter = McpTableFilter::for_shape::<RawRangeShape>(
+            "window",
+            RustType::from_macro_tokens_unchecked("u32"),
+        );
+        assert_eq!(RawRangeShape::input_schema(filter)["type"], "object");
+        let decoded = RawRangeShape::decode_filter(
+            "window",
+            super::McpAny::from(serde_json::json!({ "min": 1, "max": 3 })),
+        )
+        .unwrap();
+        assert_eq!(decoded.into_tuple(), (Some(1), Some(3)));
+
+        let descriptor = <TypedTable as super::McpTable>::descriptor();
+        let prompt = super::table_prompt_result(descriptor, None);
+        assert!(
+            prompt
+                .description
+                .as_deref()
+                .is_some_and(|value| value.contains("Query Typed Table"))
+        );
+
+        let mut seen = std::collections::BTreeSet::new();
+        let mut specs = Vec::new();
+        super::push_descriptor_prompt_specs(&mut seen, &mut specs, descriptor).unwrap();
+        super::push_descriptor_prompt_specs(&mut seen, &mut specs, descriptor).unwrap();
+        assert_eq!(specs.len(), 1);
     }
 }

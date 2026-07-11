@@ -21,7 +21,10 @@ use std::rc::Rc;
 use std::time::Duration;
 
 mod ext;
+mod model;
 mod render;
+
+use model::{BoundTextChange, StepDirection};
 
 pub use ext::NumberRangeFilterExt;
 
@@ -51,10 +54,6 @@ const ROW_GAP_TOTAL_PX: f32 = 16.0;
 const POPOVER_HORIZONTAL_PADDING_PX: f32 = 24.0;
 /// Number of inputs in the min-max row.
 const ROW_INPUT_COUNT: f32 = 2.0;
-/// Default slider minimum when decimal conversion fails.
-const DEFAULT_RANGE_MIN_F32: f32 = 0.0;
-/// Default slider maximum when decimal conversion fails.
-const DEFAULT_RANGE_MAX_F32: f32 = 100.0;
 /// Slider step size.
 const DEFAULT_SLIDER_STEP_F32: f32 = 1.0;
 
@@ -169,24 +168,7 @@ impl NumberRangeFilter {
         on_change: impl Fn((Option<Decimal>, Option<Decimal>), &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
-        let mut range_min = Decimal::ZERO;
-        let mut range_max = Decimal::ONE_HUNDRED;
-        if let Some(min) = value.0 {
-            if min < range_min {
-                range_min = min;
-            }
-            if min > range_max {
-                range_max = min;
-            }
-        }
-        if let Some(max) = value.1 {
-            if max < range_min {
-                range_min = max;
-            }
-            if max > range_max {
-                range_max = max;
-            }
-        }
+        let (range_min, range_max) = model::dynamic_range(value.0, value.1);
 
         cx.new(|_cx| Self {
             title,
@@ -278,44 +260,11 @@ impl NumberRangeFilter {
             return;
         }
 
-        let mut range_min = Decimal::ZERO;
-        let mut range_max = Decimal::ONE_HUNDRED;
-        if let Some(min) = self.min {
-            if min < range_min {
-                range_min = min;
-            }
-            if min > range_max {
-                range_max = min;
-            }
-        }
-        if let Some(max) = self.max {
-            if max < range_min {
-                range_min = max;
-            }
-            if max > range_max {
-                range_max = max;
-            }
-        }
-
-        self.range_min = range_min;
-        self.range_max = range_max;
+        (self.range_min, self.range_max) = model::dynamic_range(self.min, self.max);
     }
 
     fn slider_values(&self) -> (f32, f32, f32, f32) {
-        let range_min = self.range_min.to_f32().unwrap_or(DEFAULT_RANGE_MIN_F32);
-        let range_max = self.range_max.to_f32().unwrap_or(DEFAULT_RANGE_MAX_F32);
-        let current_min = self
-            .min
-            .and_then(|d| d.to_f32())
-            .unwrap_or(range_min)
-            .clamp(range_min, range_max);
-        let current_max = self
-            .max
-            .and_then(|d| d.to_f32())
-            .unwrap_or(range_max)
-            .clamp(range_min, range_max);
-
-        (range_min, range_max, current_min, current_max)
+        model::slider_values(self.min, self.max, self.range_min, self.range_max)
     }
 
     fn bound_value(&self, bound: BoundInput) -> Option<Decimal> {
@@ -340,18 +289,13 @@ impl NumberRangeFilter {
     }
 
     fn update_bound_from_text(&mut self, bound: BoundInput, text: &str, cx: &mut Context<Self>) {
-        if let Ok(val) = Decimal::from_str(text) {
-            let next = if self.range_is_explicit {
-                Some(val.clamp(self.range_min, self.range_max))
-            } else {
-                Some(val)
-            };
-            self.set_bound_value(bound, next);
-            if !self.range_is_explicit {
-                self.recompute_dynamic_range_from_values();
-            }
-        } else if text.is_empty() {
-            self.set_bound_value(bound, None);
+        match model::bound_text_change(text, self.range_is_explicit, self.range_min, self.range_max)
+        {
+            BoundTextChange::Set(value) => self.set_bound_value(bound, Some(value)),
+            BoundTextChange::Clear => self.set_bound_value(bound, None),
+            BoundTextChange::Unchanged => {},
+        }
+        if !self.range_is_explicit {
             self.recompute_dynamic_range_from_values();
         }
 
@@ -360,23 +304,28 @@ impl NumberRangeFilter {
     }
 
     fn step_amount(&self) -> Decimal {
-        self.step_size
-            .unwrap_or((self.range_max - self.range_min) / Decimal::ONE_HUNDRED)
+        model::step_amount(self.step_size, self.range_min, self.range_max)
     }
 
     fn step_bound(&mut self, bound: BoundInput, action: &StepAction, cx: &mut Context<Self>) {
-        let current = self.bound_value(bound).unwrap_or(match bound {
+        let fallback = match bound {
             BoundInput::Min => self.range_min,
             BoundInput::Max => self.range_max,
-        });
-        let step = self.step_amount();
-        let mut next = match action {
-            StepAction::Increment => current + step,
-            StepAction::Decrement => current - step,
         };
-        if self.range_is_explicit {
-            next = next.clamp(self.range_min, self.range_max);
-        }
+        let direction = match action {
+            StepAction::Increment => StepDirection::Increment,
+            StepAction::Decrement => StepDirection::Decrement,
+        };
+        let explicit_range = self
+            .range_is_explicit
+            .then_some((self.range_min, self.range_max));
+        let next = model::stepped_value(
+            self.bound_value(bound),
+            fallback,
+            self.step_amount(),
+            direction,
+            explicit_range,
+        );
 
         self.set_bound_value(bound, Some(next));
         self.recompute_dynamic_range_from_values();
@@ -632,5 +581,157 @@ fn format_decimal(d: Decimal) -> String {
         format!("{:.0}", normalized)
     } else {
         normalized.to_string()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        BoundInput, LastChanged, NumberRangeFilter, NumberRangeFilterExt as _, format_decimal,
+    };
+    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use rust_decimal::Decimal;
+    use std::{cell::RefCell, rc::Rc};
+
+    #[test]
+    fn decimal_and_layout_helpers_are_stable_for_localized_content() {
+        assert_eq!(format_decimal(Decimal::new(1000, 2)), "10");
+        assert_eq!(format_decimal(Decimal::new(1234, 2)), "12.34");
+
+        assert_eq!(NumberRangeFilter::between_width_px("to"), 40.0);
+        assert!(NumberRangeFilter::between_width_px("through") > 40.0);
+
+        let input_width = NumberRangeFilter::input_width_px(40.0, "Min", "Maximum");
+        assert!(input_width >= 132.0);
+        let row_width = NumberRangeFilter::row_width_px(input_width, 40.0);
+        assert_eq!(row_width, input_width * 2.0 + 56.0);
+        assert_eq!(
+            NumberRangeFilter::popover_width_px(row_width),
+            row_width + 24.0
+        );
+    }
+
+    #[gpui::test]
+    fn constructors_ranges_steps_and_styles_preserve_numeric_state(cx: &mut TestAppContext) {
+        let filter = cx.update(|cx| {
+            NumberRangeFilter::new(
+                "Amount",
+                (Some(Decimal::from(-5)), Some(Decimal::from(150))),
+                |_, _, _| {},
+                cx,
+            )
+            .range(Decimal::from(-10), Decimal::from(10), cx)
+            .step(Decimal::new(5, 1), cx)
+            .trigger_style(StyleRefinement::default(), cx)
+            .popover_style(StyleRefinement::default(), cx)
+            .inputs_row_style(StyleRefinement::default(), cx)
+            .min_input_style(StyleRefinement::default(), cx)
+            .max_input_style(StyleRefinement::default(), cx)
+            .between_style(StyleRefinement::default(), cx)
+            .slider_style(StyleRefinement::default(), cx)
+            .clear_button_style(StyleRefinement::default(), cx)
+        });
+
+        filter.read_with(cx, |filter, cx| {
+            assert_eq!((filter.title)(cx), "Amount");
+            assert_eq!(
+                filter.value(),
+                (Some(Decimal::from(-5)), Some(Decimal::from(10)))
+            );
+            assert_eq!(filter.range_min, Decimal::from(-10));
+            assert_eq!(filter.range_max, Decimal::from(10));
+            assert!(filter.range_is_explicit);
+            assert_eq!(filter.step_amount(), Decimal::new(5, 1));
+            assert!(filter.has_value());
+            assert_eq!(filter.format_range(), "-5 - 10");
+            assert_eq!(filter.slider_values(), (-10.0, 10.0, -5.0, 10.0));
+            assert!(filter.min_input.is_none());
+            assert!(filter.slider_state.is_none());
+        });
+
+        filter.update(cx, |filter, _| {
+            assert_eq!(filter.bound_value(BoundInput::Min), Some(Decimal::from(-5)));
+            assert_eq!(filter.bound_value(BoundInput::Max), Some(Decimal::from(10)));
+            filter.set_bound_value(BoundInput::Min, None);
+            filter.set_bound_value(BoundInput::Max, Some(Decimal::from(5)));
+            assert!(matches!(
+                NumberRangeFilter::last_changed_for(BoundInput::Min),
+                LastChanged::MinInput
+            ));
+            assert!(matches!(
+                NumberRangeFilter::last_changed_for(BoundInput::Max),
+                LastChanged::MaxInput
+            ));
+        });
+        filter.read_with(cx, |filter, _| assert_eq!(filter.format_range(), "<= 5"));
+
+        let dynamic = cx.update(|cx| {
+            NumberRangeFilter::new_for(
+                |_| "Dynamic".into(),
+                (Some(Decimal::from(-20)), Some(Decimal::from(200))),
+                |_, _, _| {},
+                cx,
+            )
+        });
+        dynamic.update(cx, |filter, _| {
+            assert_eq!(filter.range_min, Decimal::from(-20));
+            assert_eq!(filter.range_max, Decimal::from(200));
+            assert_eq!(filter.step_amount(), Decimal::new(22, 1));
+
+            filter.min = Some(Decimal::from(20));
+            filter.max = None;
+            filter.recompute_dynamic_range_from_values();
+            assert_eq!(filter.range_min, Decimal::ZERO);
+            assert_eq!(filter.range_max, Decimal::ONE_HUNDRED);
+            assert_eq!(filter.format_range(), ">= 20");
+
+            filter.min = None;
+            assert_eq!(filter.format_range(), "");
+            assert!(!filter.has_value());
+        });
+    }
+
+    #[gpui::test]
+    fn number_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let changes = Rc::new(RefCell::new(Vec::new()));
+        let changes_for_callback = changes.clone();
+        let filter = cx.update(|cx| {
+            NumberRangeFilter::new(
+                "Amount",
+                (Some(Decimal::from(10)), Some(Decimal::from(20))),
+                move |value, _, _| changes_for_callback.borrow_mut().push(value),
+                cx,
+            )
+        });
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.apply(window, cx);
+                filter.reset(window, cx);
+            });
+        });
+        assert_eq!(changes.borrow().len(), 2);
+        assert_eq!(
+            changes.borrow()[0],
+            (Some(Decimal::from(10)), Some(Decimal::from(20)))
+        );
+        assert_eq!(changes.borrow()[1], (None, None));
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.min = Some(Decimal::ONE);
+                filter.reset_silent(window, cx);
+            });
+        });
+        assert_eq!(changes.borrow().len(), 2);
+        filter.read_with(&visual.cx, |filter, _| {
+            assert_eq!(filter.value(), (None, None))
+        });
+        drop(filter);
+        drop(visual);
+        cx.run_until_parked();
     }
 }

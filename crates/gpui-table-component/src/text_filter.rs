@@ -425,7 +425,9 @@ impl Render for TextFilter {
 
 #[cfg(test)]
 mod tests {
-    use super::validators;
+    use super::{TextFilter, TextFilterExt as _, validators};
+    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use std::{cell::RefCell, rc::Rc};
 
     #[test]
     fn matching_regex_accepts_complete_matches() {
@@ -443,5 +445,106 @@ mod tests {
 
         assert_eq!(validator("123", ""), "123");
         assert_eq!(validator("abc123", "123"), "123");
+    }
+
+    #[test]
+    fn built_in_character_validators_preserve_only_their_allowed_classes() {
+        assert_eq!(validators::alphabetic_only("Ab 12-é"), "Abé");
+        assert_eq!(validators::ascii_only("ASCII-é🙂"), "ASCII-");
+        assert_eq!(validators::numeric_only("a1２3"), "13");
+        assert_eq!(validators::alphanumeric_only("A-1_é🙂"), "A1é");
+    }
+
+    #[test]
+    fn regex_builders_report_invalid_patterns_and_keep_previous_values() {
+        assert!(validators::full_match_regex("[").is_err());
+        assert!(validators::matching_regex_pattern("[").is_err());
+
+        let regex = validators::full_match_regex("[A-Z]+").unwrap();
+        let validator = validators::matching_regex(regex);
+        assert_eq!(validator("ABC", "OLD"), "ABC");
+        assert_eq!(validator("ABC1", "OLD"), "OLD");
+    }
+
+    #[gpui::test]
+    fn text_filter_constructors_and_configuration_preserve_state(cx: &mut TestAppContext) {
+        let filter = cx.update(|cx| {
+            TextFilter::new("Name", "Alice".into(), |_, _, _| {}, cx)
+                .numeric_only(cx)
+                .alphabetic_only(cx)
+                .alphanumeric_only(cx)
+                .matching_regex("[A-Za-z]*", cx)
+                .validate(|value| value.trim().to_string(), cx)
+                .validate_with_previous(
+                    |value, previous| {
+                        if value.is_empty() {
+                            previous.to_string()
+                        } else {
+                            value.to_string()
+                        }
+                    },
+                    cx,
+                )
+                .container_style(StyleRefinement::default(), cx)
+                .input_style(StyleRefinement::default(), cx)
+        });
+
+        filter.read_with(cx, |filter, cx| {
+            assert_eq!(filter.value(), "Alice");
+            assert_eq!((filter.title)(cx), "Name");
+            assert!(filter.validator.is_some());
+            assert!(filter.input_state.is_none());
+            assert!(!filter.pending_apply);
+        });
+
+        let reactive = cx.update(|cx| {
+            TextFilter::new_for(|_| "Reactive".into(), String::new(), |_, _, _| {}, cx)
+        });
+        reactive.read_with(cx, |filter, cx| {
+            assert_eq!((filter.title)(cx), "Reactive");
+            assert_eq!(filter.value(), "");
+        });
+
+        assert!(
+            cx.update(|cx| reactive.clone().try_matching_regex("[", cx))
+                .is_err()
+        );
+    }
+
+    #[gpui::test]
+    fn text_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let changes = Rc::new(RefCell::new(Vec::new()));
+        let changes_for_callback = changes.clone();
+        let filter = cx.update(|cx| {
+            TextFilter::new(
+                "Name",
+                "Alice".into(),
+                move |value, _, _| changes_for_callback.borrow_mut().push(value),
+                cx,
+            )
+        });
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.apply(window, cx);
+                filter.reset(window, cx);
+            });
+        });
+        assert_eq!(&*changes.borrow(), &["Alice", ""]);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.value = "silent".into();
+                filter.reset_silent(window, cx);
+            });
+        });
+        assert_eq!(&*changes.borrow(), &["Alice", ""]);
+        filter.read_with(&visual.cx, |filter, _| assert_eq!(filter.value(), ""));
+        drop(filter);
+        drop(visual);
+        cx.run_until_parked();
     }
 }
