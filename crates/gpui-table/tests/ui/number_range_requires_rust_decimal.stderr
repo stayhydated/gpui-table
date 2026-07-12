@@ -1,5 +1,5 @@
-error: `filter(number_range(...))` requires enabling the `gpui-table/rust_decimal` feature
- --> tests/ui/number_range_requires_rust_decimal.rs:7:5
+error: `gpui_table_component::NumberRangeFilter` requires enabling the `gpui-table/rust_decimal` feature
+ --> tests/ui/number_range_requires_rust_decimal.rs:6:25
   |
-7 |     age: u8,
-  |     ^^^
+6 |     #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^

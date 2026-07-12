@@ -12,6 +12,7 @@ pub struct TextFilterStory {
     default_filter: Entity<TextFilter>,
     numeric_filter: Entity<TextFilter>,
     alphanumeric_filter: Entity<TextFilter>,
+    regex_filter: Entity<TextFilter>,
 }
 
 impl TextFilterStory {
@@ -49,11 +50,22 @@ impl TextFilterStory {
         .container_style(StyleRefinement::default().w(px(420.)), cx)
         .input_style(StyleRefinement::default().w(px(280.)), cx);
 
+        let regex_filter = TextFilter::new_for(
+            |_| "External Ref".to_string(),
+            "ACCT-42".to_string(),
+            |_value, _window, _cx| {},
+            cx,
+        )
+        .matching_regex(r"[A-Z0-9-]*", cx)
+        .container_style(StyleRefinement::default().w(px(420.)), cx)
+        .input_style(StyleRefinement::default().w(px(280.)), cx);
+
         Self {
             focus_handle: cx.focus_handle(),
             default_filter,
             numeric_filter,
             alphanumeric_filter,
+            regex_filter,
         }
     }
 }
@@ -83,6 +95,7 @@ impl Render for TextFilterStory {
         let default_value = self.default_filter.read(cx).value().to_string();
         let numeric_value = self.numeric_filter.read(cx).value().to_string();
         let alphanumeric_value = self.alphanumeric_filter.read(cx).value().to_string();
+        let regex_value = self.regex_filter.read(cx).value().to_string();
 
         v_flex()
             .id("text-filter-story")
@@ -131,6 +144,20 @@ impl Render for TextFilterStory {
                         div()
                             .text_sm()
                             .child(format!("Current value: \"{alphanumeric_value}\"")),
+                    ),
+            )
+            .child(
+                v_flex()
+                    .gap_2()
+                    .p_3()
+                    .border_1()
+                    .rounded(px(8.))
+                    .child(div().text_sm().font_semibold().child("Regex"))
+                    .child(self.regex_filter.clone())
+                    .child(
+                        div()
+                            .text_sm()
+                            .child(format!("Current value: \"{regex_value}\"")),
                     ),
             )
     }

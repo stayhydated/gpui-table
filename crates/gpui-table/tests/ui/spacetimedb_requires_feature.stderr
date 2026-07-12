@@ -1,5 +1,5 @@
-error: `filter(date_range())` on `spacetimedb_lib :: Timestamp` requires enabling the `gpui-table/spacetimedb` feature
- --> tests/ui/spacetimedb_requires_feature.rs:7:5
+error: `gpui_table_component::DateRangeFilter` on `spacetimedb_lib::Timestamp` requires enabling the `gpui-table/spacetimedb` feature
+ --> tests/ui/spacetimedb_requires_feature.rs:6:25
   |
-7 |     created_at: spacetimedb_lib::Timestamp,
-  |     ^^^^^^^^^^
+6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^

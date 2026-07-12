@@ -16,7 +16,8 @@ pub(crate) fn derive_table_cell(input: TokenStream) -> TokenStream {
 }
 
 fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
-    let use_fluent_for_unit_variants = has_derive_named(&input, "EsFluent");
+    let use_fluent_for_unit_variants =
+        cfg!(feature = "fluent") && has_derive_named(&input, "EsFluent");
     let use_display_for_unit_variants = has_derive_named(&input, "Display");
     let options = TableCellOptions::parse_attrs(&input.attrs)?;
     let name = input.ident;
@@ -75,7 +76,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
                                 quote! {
-                                    gpui_table::runtime::generated_filters::localize_message(cx, self)
+                                    gpui_table::core::i18n::localize_message(self)
                                         .into_any_element()
                                 }
                             } else if use_display_for_unit_variants {

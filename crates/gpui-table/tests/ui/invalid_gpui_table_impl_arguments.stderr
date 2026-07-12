@@ -1,0 +1,18 @@
+error: `#[gpui_table_impl]` does not accept arguments; apply it to an `impl TableLoader for <Row>TableDelegate` block
+ --> tests/ui/invalid_gpui_table_impl_arguments.rs:9:19
+  |
+9 | #[gpui_table_impl(gpui_table::runtime::TableLoader)]
+  |                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+error[E0277]: the trait bound `InvalidImplArgumentsRowTableDelegate: gpui_table::__private::LoadMoreDelegate` is not satisfied
+ --> tests/ui/invalid_gpui_table_impl_arguments.rs:3:10
+  |
+3 | #[derive(GpuiTable)]
+  |          ^^^^^^^^^ unsatisfied trait bound
+  |
+help: the trait `gpui_table::__private::LoadMoreDelegate` is not implemented for `InvalidImplArgumentsRowTableDelegate`
+ --> tests/ui/invalid_gpui_table_impl_arguments.rs:3:10
+  |
+3 | #[derive(GpuiTable)]
+  |          ^^^^^^^^^
+  = note: this error originates in the derive macro `GpuiTable` (in Nightly builds, run with -Z macro-backtrace for more info)

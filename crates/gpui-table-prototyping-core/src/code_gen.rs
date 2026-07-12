@@ -5,9 +5,9 @@ use thiserror::Error;
 
 use crate::{
     identities::{ShapeIdentities, TableIdentities as _, TableIdentitiesExt as _, parse_ident},
-    imports::{Alias, ImportItem, ImportSet},
     source_path::source_path_to_use_path,
 };
+use component_shape_codegen::imports::{Alias, ImportItem, ImportSet};
 
 /// Imports every generated table story needs regardless of configuration.
 const FRAMEWORK_IMPORTS: &[ImportItem] = &[
@@ -94,7 +94,7 @@ impl<'a> TableShapeAdapter<'a> {
 
     /// Collect all imports needed by this table's generated file.
     ///
-    /// Starts with the universal [`FRAMEWORK_IMPORTS`] base, then conditionally
+    /// Starts with the universal `FRAMEWORK_IMPORTS` base, then conditionally
     /// adds filter imports. The result can be rendered as grouped `use`
     /// statements via [`ImportSet::to_token_stream`].
     pub fn required_imports(&self) -> ImportSet {
@@ -299,7 +299,7 @@ impl<'a> TableShapeAdapter<'a> {
                         parse_ident(
                             "filter field identifier",
                             self.shape.struct_name,
-                            filter.field_name.to_string(),
+                            filter.shape_use.field_name().to_string(),
                         )
                     })
                     .collect::<Result<Vec<_>, _>>()?;
@@ -322,7 +322,7 @@ impl<'a> TableShapeAdapter<'a> {
 
         Ok(quote! {
             #filter_views
-            .child(gpui_table::runtime::generated_filters::TableStatusBar::new(
+            .child(gpui_table_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,
@@ -339,7 +339,7 @@ impl<'a> TableShapeAdapter<'a> {
         if self.identities.uses_fluent_labels() {
             let struct_name_ident = self.identities.struct_name_ident();
             quote! {
-                gpui_table::runtime::generated_filters::localize_label::<#struct_name_ident>(cx)
+                gpui_table_component::i18n::localize_label::<#struct_name_ident>(cx)
             }
         } else {
             let title = self.identities.table_title();
@@ -451,13 +451,68 @@ impl TableShape for TableShapeAdapter<'_> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui_table_schema::registry::{FilterVariant, RegistryFilterType};
+    use gpui_table_schema::registry::{
+        ColumnFixed, ColumnVariant, ComponentFieldName, ComponentShapeUse, FilterVariant,
+        RegistryFilterType, RustPath, RustType,
+    };
+
+    static COLUMNS: [ColumnVariant; 1] = [ColumnVariant::new(
+        "name",
+        RustType::from_macro_tokens_unchecked("String"),
+        "Name",
+        120.0,
+        true,
+        ColumnFixed::None,
+    )];
+    static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
+        ComponentShapeUse::new(
+            ComponentFieldName::new("name"),
+            RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
+        ),
+        RegistryFilterType::Text,
+        RustPath::from_macro_tokens_unchecked(
+            "gpui_table::runtime::generated_filters::text_filter::TextFilter",
+        ),
+    )];
+
+    fn shape(
+        filters: bool,
+        load_more: bool,
+        fluent: bool,
+        source_path: &'static str,
+    ) -> GpuiTableShape {
+        GpuiTableShape::new(
+            "User",
+            "users",
+            "Users",
+            fluent,
+            &COLUMNS,
+            if filters { &FILTERS } else { &[] },
+            load_more,
+            source_path,
+        )
+    }
+
+    struct MinimalLayout;
+
+    impl TableLayout for MinimalLayout {
+        fn generate_file(&self, parts: &TableParts) -> syn::File {
+            let story_ident = &parts.story_struct_ident;
+            syn::parse2(quote! { pub struct #story_ident; }).unwrap()
+        }
+    }
 
     #[test]
     fn try_parts_rejects_invalid_manual_filter_field_identifiers() {
         static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
-            "invalid field",
+            ComponentShapeUse::new(
+                ComponentFieldName::new("invalid field"),
+                RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
+            ),
             RegistryFilterType::Text,
+            RustPath::from_macro_tokens_unchecked(
+                "gpui_table::runtime::generated_filters::text_filter::TextFilter",
+            ),
         )];
 
         let shape = GpuiTableShape::new(
@@ -479,5 +534,182 @@ mod tests {
             Err(other) => panic!("unexpected error: {other}"),
             Ok(_) => panic!("invalid filter field name should be rejected"),
         }
+    }
+
+    #[test]
+    fn parts_cover_plain_table_generation_contract() {
+        let shape = shape(false, false, false, "demo-crate/src/user.rs");
+        let adapter = TableShapeAdapter::new(&shape, false);
+        let parts = adapter.try_parts().unwrap();
+
+        assert_eq!(parts.struct_name_ident.to_string(), "User");
+        assert_eq!(parts.story_struct_ident.to_string(), "UserTableStory");
+        assert_eq!(parts.delegate_struct_ident.to_string(), "UserTableDelegate");
+        let source_module_path = &parts.source_module_path;
+        assert_eq!(
+            quote!(#source_module_path).to_string(),
+            "demo_crate :: user"
+        );
+        assert!(!parts.has_filters);
+        assert!(!parts.load_more);
+        assert!(
+            parts
+                .imports
+                .to_string()
+                .contains("use demo_crate :: user :: *")
+        );
+        assert!(
+            !adapter
+                .required_imports()
+                .try_to_token_stream()
+                .unwrap()
+                .to_string()
+                .contains("h_flex")
+        );
+        assert!(
+            parts
+                .delegate_creation
+                .to_string()
+                .contains("UserTableDelegate :: new")
+        );
+        assert!(
+            parts
+                .table_state_creation
+                .to_string()
+                .contains("TableState :: new")
+        );
+        assert!(!parts.table_state_creation.to_string().contains("load_data"));
+        assert!(!parts.field_initializers.to_string().contains("filters"));
+        assert!(!parts.struct_fields.to_string().contains("filters"));
+        assert!(
+            parts
+                .render_children
+                .to_string()
+                .contains("TableStatusBar :: new")
+        );
+        assert!(
+            parts
+                .render_children
+                .to_string()
+                .contains("DataTable :: new")
+        );
+        assert_eq!(parts.title_expr.to_string(), "\"Users\" . to_string ()");
+    }
+
+    #[test]
+    fn table_state_generation_covers_load_and_filter_combinations() {
+        let plain_loading = shape(false, true, false, "demo/src/user.rs");
+        let plain_tokens = TableShapeAdapter::new(&plain_loading, false)
+            .table_state_creation()
+            .to_string();
+        assert!(plain_tokens.contains("load_data"));
+
+        let filtered = shape(true, false, false, "demo/src/user.rs");
+        let filtered_adapter = TableShapeAdapter::new(&filtered, false);
+        let filtered_tokens = filtered_adapter.table_state_creation().to_string();
+        assert!(filtered_tokens.contains("build_for_table"));
+        assert!(!filtered_tokens.contains("build_for_table_loader"));
+        assert!(
+            filtered_adapter
+                .required_imports()
+                .try_to_token_stream()
+                .unwrap()
+                .to_string()
+                .contains("h_flex")
+        );
+
+        let filtered_loading = shape(true, true, false, "demo/src/user.rs");
+        let loading_tokens = TableShapeAdapter::new(&filtered_loading, false)
+            .table_state_creation()
+            .to_string();
+        assert!(loading_tokens.contains("build_for_table_loader"));
+    }
+
+    #[test]
+    fn render_generation_supports_helpers_and_explicit_filter_entities() {
+        let shape = shape(true, false, false, "demo/src/user.rs");
+        let helper_adapter = TableShapeAdapter::new(&shape, true);
+        let explicit_adapter = TableShapeAdapter::new(&shape, false);
+
+        assert!(
+            helper_adapter
+                .render_children()
+                .to_string()
+                .contains("all_filters")
+        );
+        let explicit = explicit_adapter.render_children().to_string();
+        assert!(explicit.contains("self . filters . name . clone"));
+        assert!(!explicit.contains("all_filters"));
+
+        assert!(
+            helper_adapter
+                .field_initializers()
+                .to_string()
+                .contains("filters")
+        );
+        assert!(
+            helper_adapter
+                .struct_fields()
+                .to_string()
+                .contains("UserFilterEntities")
+        );
+        assert!(
+            helper_adapter
+                .delegate_creation()
+                .to_string()
+                .contains("UserTableDelegate")
+        );
+    }
+
+    #[test]
+    fn fluent_titles_and_layout_entry_points_are_generated() {
+        let shape = shape(true, false, true, "demo/src/user.rs");
+        let adapter = TableShapeAdapter::new(&shape, true);
+
+        assert!(
+            adapter
+                .title_expr()
+                .to_string()
+                .contains("localize_label :: < User >")
+        );
+
+        let direct = adapter.try_generate_file(&MinimalLayout).unwrap();
+        assert_eq!(quote!(#direct).to_string(), "pub struct UserTableStory ;");
+        let infallible = adapter.generate_file(&MinimalLayout);
+        assert_eq!(
+            quote!(#infallible).to_string(),
+            "pub struct UserTableStory ;"
+        );
+
+        let parts = adapter.parts();
+        assert!(parts.has_filters);
+    }
+
+    #[test]
+    fn invalid_struct_and_source_metadata_return_typed_errors() {
+        let invalid_struct = GpuiTableShape::new(
+            "invalid name",
+            "invalid",
+            "Invalid",
+            false,
+            &[],
+            &[],
+            false,
+            "demo/src/invalid.rs",
+        );
+        assert!(matches!(
+            TableShapeAdapter::new(&invalid_struct, false).try_parts(),
+            Err(TableCodegenError::InvalidIdentifier {
+                kind: "struct identifier",
+                ..
+            })
+        ));
+
+        let invalid_source = shape(false, false, false, "src/user.rs");
+        assert!(matches!(
+            TableShapeAdapter::new(&invalid_source, false).try_parts(),
+            Err(TableCodegenError::InvalidSourcePath { source_path })
+                if source_path == "src/user.rs"
+        ));
     }
 }

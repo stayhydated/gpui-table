@@ -1,0 +1,5 @@
+error: duplicate `style` option
+ --> tests/ui/invalid_duplicate_style.rs:5:39
+  |
+5 |     #[gpui_table(style = render_name, style = render_name)]
+  |                                       ^^^^^

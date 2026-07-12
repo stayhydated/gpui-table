@@ -1,6 +1,13 @@
+#[cfg(feature = "story")]
+use es_fluent::EsFluent;
+use es_fluent::unic_langid::LanguageIdentifier;
 use es_fluent::{FluentLabel, FluentMessage};
+#[cfg(feature = "story")]
+use es_fluent_lang::es_fluent_language;
 use gpui::App;
 use std::borrow::Borrow;
+#[cfg(feature = "story")]
+use strum::EnumIter;
 
 const FALLBACK_LANGUAGE: &str = "en";
 
@@ -8,11 +15,22 @@ es_fluent_manager_embedded::define_i18n_module!();
 
 pub use gpui_es_fluent::{EmbeddedInitError, I18n};
 
-fn component_language() -> es_fluent::unic_langid::LanguageIdentifier {
-    gpui_es_fluent::component_language(FALLBACK_LANGUAGE)
+#[cfg(feature = "story")]
+#[es_fluent_language]
+#[derive(Clone, Copy, Debug, EnumIter, Eq, EsFluent, PartialEq)]
+pub enum Languages {}
+
+fn fallback_language() -> LanguageIdentifier {
+    FALLBACK_LANGUAGE
+        .parse()
+        .expect("table component fallback language must be a valid language identifier")
 }
 
-fn sync_core_locale(language: &es_fluent::unic_langid::LanguageIdentifier) {
+fn component_language() -> LanguageIdentifier {
+    gpui_es_fluent::component_language(fallback_language())
+}
+
+fn sync_core_locale(language: &LanguageIdentifier) {
     gpui_table_core::i18n::set_locale(language.to_string());
 }
 
@@ -25,15 +43,16 @@ pub fn init(cx: &mut App) -> Result<(), EmbeddedInitError> {
 
 /// Select the locale used by built-in table filter components.
 pub fn set_locale(cx: &mut App, locale: impl AsRef<str>) -> Result<(), EmbeddedInitError> {
-    let language = gpui_es_fluent::set_component_locale(cx, locale, FALLBACK_LANGUAGE)?;
+    let language = gpui_es_fluent::set_component_locale(cx, locale, fallback_language())?;
     sync_core_locale(&language);
     Ok(())
 }
 
 /// Synchronize table component localization with the active `gpui-component` locale.
 pub fn sync_locale(cx: &impl Borrow<App>) {
-    let language = gpui_es_fluent::sync_component_locale(cx, FALLBACK_LANGUAGE);
-    sync_core_locale(&language);
+    if let Ok(language) = gpui_es_fluent::sync_component_locale(cx, fallback_language()) {
+        sync_core_locale(&language);
+    }
 }
 
 /// Localize a typed Fluent message through the component embedded i18n context.
@@ -78,4 +97,23 @@ where
     T: FluentLabel,
 {
     gpui_es_fluent::fallback_label::<T>()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fallback_language_is_a_valid_language_identifier() {
+        assert_eq!(fallback_language().to_string(), FALLBACK_LANGUAGE);
+    }
+
+    #[gpui::test]
+    fn component_locale_initialization_and_synchronization_are_repeatable(cx: &mut App) {
+        gpui_component::init(cx);
+        assert!(init(cx).is_ok());
+        assert!(set_locale(cx, "en").is_ok());
+        sync_locale(cx);
+        assert_eq!(component_language().to_string(), "en");
+    }
 }

@@ -1,0 +1,40 @@
+[package]
+name = "gpui-table-mcp"
+description = """
+Experimental MCP query integration for gpui-table
+"""
+version.workspace = true
+rust-version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+repository.workspace = true
+readme = "README.md"
+keywords = [ "gpui", "gpui-component", "table", "mcp" ]
+
+[features]
+chrono = [ "component-shape-mcp/chrono", "gpui-table-core/chrono", "gpui-table-runtime/chrono" ]
+default = [ "chrono" ]
+rust_decimal = [
+  "component-shape-mcp/rust_decimal",
+  "gpui-table-core/rust_decimal",
+  "gpui-table-runtime/rust_decimal",
+]
+spacetimedb = [ "chrono", "gpui-table-core/spacetimedb", "gpui-table-runtime/spacetimedb" ]
+
+[dependencies]
+component-shape = { workspace = true }
+component-shape-mcp = { workspace = true }
+gpui-table-core = { default-features = false, workspace = true }
+gpui-table-runtime = { default-features = false, workspace = true }
+gpui-table-schema = { workspace = true }
+inventory = { workspace = true }
+rmcp = { workspace = true }
+serde = { features = [ "derive" ], workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+gpui = { workspace = true }
+
+[lints]
+workspace = true

@@ -3,16 +3,20 @@
 `gpui-table-derive` contains the proc macros behind the `gpui-table`
 derive-based workflow.
 
-Most application code should depend on `gpui-table` and use the macro
-re-exports from there. This crate is mainly for people reading the macro docs
-or integrating with the proc-macro layer directly.
+Most application code should depend on `gpui-table`, use the macro re-exports
+from there, and add `gpui-table-component` when using the built-in filter
+shapes shown below. This crate is mainly for people reading the macro docs or
+integrating with the proc-macro layer directly.
 
 ## Macros
 
 ### `#[derive(GpuiTable)]`
 
 Generates the typed table delegate, column enum, row metadata, optional filter
-entities/values, and optional inventory registration for a row struct.
+entities/values, optional inventory registration, and optional MCP table query
+registration for a row struct.
+Unless `#[gpui_table(id = "...")]` is set, generated `TableRowMeta::TABLE_ID`
+uses the row type name in snake_case.
 
 ```rs
 use gpui_table::GpuiTable;
@@ -20,34 +24,151 @@ use gpui_table::GpuiTable;
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters, load_more)]
 pub struct User {
-    #[gpui_table(sortable, width = 160., filter(text()))]
+    #[gpui_table(sortable, width = 160., filter(gpui_table_component::TextFilter))]
     pub name: String,
 
-    #[gpui_table(width = 80., filter(number_range(min = 0, max = 120)))]
+    #[gpui_table(width = 80., filter(gpui_table_component::NumberRangeFilter))]
     pub age: u8,
 
-    #[gpui_table(width = 90., filter(faceted()))]
+    #[gpui_table(width = 90., filter(gpui_table_component::FacetedFilter::<bool>.searchable(true)))]
     pub active: bool,
 }
 ```
 
-Built-in filter syntaxes:
+Field-level filters require explicit built-in or custom shape paths, or a
+configured shape expression for the same base shape:
 
-- `filter(text())`
-- `filter(number_range(...))`
-- `filter(date_range())`
-- `filter(faceted(...))`
+- strings use `filter(gpui_table_component::TextFilter)`
+- text filters can be configured with
+  `filter(gpui_table_component::TextFilter.numeric_only())` or
+  `filter(gpui_table_component::TextFilter.alphanumeric_only())`, or with
+  a full-value regex using
+  `filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*"))`
+- numbers use `filter(gpui_table_component::NumberRangeFilter)`
+- number range filters can be configured with
+  `filter(gpui_table_component::NumberRangeFilter.range(min, max).step(step))`
+- date-like values use `filter(gpui_table_component::DateRangeFilter)`
+- enum-like or `Filterable` values use `filter(gpui_table_component::FacetedFilter::<T>)`
+- faceted filters can enable the search input with
+  `filter(gpui_table_component::FacetedFilter::<T>.searchable(true))`
 
 Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
 filter state uses `T` in all cases, so optional and vector fields can facet over
 present values without requiring `Option<T>` or `Vec<T>` itself to implement
 `Filterable`.
 
+Use field-level `style = path::to_fn` for custom cell rendering. The style
+function receives `&Row`, `&FieldType`, `&mut gpui::Window`, and
+`&mut gpui::App`, and returns any `impl gpui::IntoElement`.
+
+```rs
+#[derive(gpui_table::GpuiTable)]
+pub struct Item {
+    pub name: String,
+
+    #[gpui_table(width = 120., style = render_weight_cell)]
+    pub weight: u8,
+}
+
+fn render_weight_cell(
+    row: &Item,
+    value: &u8,
+    window: &mut gpui::Window,
+    cx: &mut gpui::App,
+) -> impl gpui::IntoElement {
+    use gpui::{ParentElement as _, Styled as _};
+
+    let _ = (row, window, cx);
+    gpui::div()
+        .child(format!("{value} kg"))
+        .px_2()
+        .py_0p5()
+}
+```
+
 Feature requirements are validated during macro expansion:
 
-- `number_range(...)` requires `gpui-table/rust_decimal`
-- `date_range()` requires `gpui-table/chrono`
+- `gpui_table_component::NumberRangeFilter` requires `gpui-table/rust_decimal`
+- `gpui_table_component::DateRangeFilter` requires `gpui-table/chrono`
 - supported SpacetimeDB range usage requires `gpui-table/spacetimedb`
+
+With the facade crate's `mcp` feature, a table that opts in with
+`#[gpui_table(mcp)]` receives a `gpui_table::mcp::McpTable` implementation and
+an inventory registration for `gpui-table-mcp`. MCP arguments use filter field
+names directly, with `limit` and `offset` reserved for pagination, and decode
+into the generated `XxxFilterValues` type before an application-owned query
+handler runs. Tables without filters accept only pagination arguments.
+Faceted filter schemas include valid `Filterable::to_filter_string()` values
+and labels for MCP clients.
+Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+MCP filter argument before the query handler runs. Generated schemas attach the
+rules in `x-gpuiTableValidation`; literal `LenValidation`, `RangeValidation`,
+and `NonEmptyValidation` arguments are also reflected as JSON Schema hints when
+the filter argument schema is unambiguous. The validators apply to the filter
+shape's raw value, not directly to the row field type. Application crates using
+these validators should depend on `koruma` and the validator crate that provides
+the rule.
+Custom filter shapes used by MCP-enabled tables must implement
+`gpui_table::mcp::McpFilterShape`; the generated descriptor and decoder require
+that trait, so missing decoders fail at the filter field.
+For common custom filters, derive `gpui_table::McpFilterShape` on the shape and
+let the generated impl decode `RawValue` through
+`gpui_table::mcp::McpToolValue`. The blanket implementation covers
+`Deserialize` raw values that implement or derive `McpJsonSchema`. Use
+`gpui_table::mcp::McpRange<T>` for range-shaped raw values that should decode
+from `{ "min": ..., "max": ... }`. App-owned named structs,
+tuple or named transparent newtypes, and fieldless enums can derive
+`McpJsonSchema`; fixed tuples with 1 to 4 elements publish exact array schemas,
+field schemas record aliases in `x-mcpAliases`, and enum schemas include
+aliases. `McpToolInput` also implements `McpJsonSchema`, so object inputs can
+be reused as filter raw values. Implement
+`gpui_table::mcp::McpFilterShape` manually for explicit schema or decode hooks.
+Manual shapes that should support field-level Koruma filter validation must also
+implement `gpui_table::mcp::McpFilterShapeValidation`.
+Struct-level `#[gpui_table(mcp(...))]` supports `name`, `title`,
+`description`, `row_schema`, `read_only`, `destructive`, `idempotent`, and
+`open_world` options for generated MCP tool metadata, row output schemas, and
+annotations. Use `row_schema` only when the row type implements
+`gpui_table::mcp::McpJsonSchema`; opted-in tables publish that schema under the
+standard query output `rows.items`. When `description` is omitted, the derive
+uses the row type's Rust doc comment.
+Use `#[gpui_table::mcp_query]` for custom query handlers and local row sources.
+The macro infers the row type from `TableQuery<Row>` and zero-argument
+`Result<Vec<Row>, E>` signatures. Local row sources are called for each MCP
+query. The inferred row type must opt in with `#[gpui_table(mcp)]`. Custom query
+handlers may be synchronous or async and must return matching
+`Result<gpui_table::mcp::TableQueryResult<Row>, E>` with `Row: serde::Serialize`.
+The handler
+registration macros resolve the facade crate path, so renamed `gpui-table`
+dependencies work for MCP handler
+registration output.
+
+### `#[derive(GpuiTableFilterShape)]`
+
+Generates a custom filter shape by adapting an existing base shape. Use this
+when a field should keep the UI, matching, and reset behavior of a built-in
+filter but expose a different raw value type to table state or MCP decoding.
+
+```rs
+#[derive(Clone, Debug, Default, PartialEq)]
+struct PrefixText(String);
+
+#[derive(gpui_table::GpuiTableFilterShape)]
+#[gpui_table_filter_shape(
+    base = gpui_table_component::TextFilter,
+    raw_value = PrefixText,
+    field = String,
+    into_base = |value: PrefixText| value.0,
+    from_base = PrefixText
+)]
+struct PrefixTextFilter;
+```
+
+The derive emits `ComponentShapeMetadata`, declared-shape marker impls,
+`GpuiTableFilterShape`, and `GpuiTableFilterShapeFor<Field>`. When the
+`gpui-table/mcp` feature is enabled, it also emits the default
+`gpui_table::mcp::McpFilterShape` impl if the raw value implements
+`gpui_table::mcp::McpToolValue`.
 
 ### `#[derive(Filterable)]`
 
@@ -87,8 +208,8 @@ should use typed Fluent resources.
 ### `#[derive(TableCell)]`
 
 Generates a `TableCell` impl for single-field wrapper types and unit enums.
-This is useful when a column should render through an inner type but you still
-want a dedicated wrapper in your domain model.
+This is useful when a column should render through an inner type and keep a
+dedicated wrapper in your domain model.
 
 Use `#[table_cell(display)]` when the wrapper's own `Display` implementation
 should be used instead of delegating to the inner field, or
@@ -143,7 +264,10 @@ impl TableLoader for UserTableDelegate {
 
 - Use `gpui-table` for the normal application-facing workflow.
 - Use `gpui-table-component` if you only need the built-in filter widgets.
+- Use `gpui-table-mcp` when you need the experimental MCP query registry,
+  stdio server, or generated table query contracts.
 - Use `gpui-table-prototyping-core` if you are consuming inventory metadata for generation.
 
-For expansion details, generated type contracts, and test coverage boundaries,
-see `docs/ARCHITECTURE.md`.
+For expansion details and generated type contracts, read the crate rustdocs, the
+macro modules under `src/gpui_table`, and the compile-fail fixtures under
+`crates/gpui-table/tests/ui`.

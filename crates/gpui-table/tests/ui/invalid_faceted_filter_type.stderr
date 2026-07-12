@@ -1,5 +1,64 @@
-error: `filter(faceted(...))` on `String` requires a field type that implements `gpui_table::core::filter::Filterable`; `Option<T>` and `Vec<T>` work when `T` implements `Filterable`, `bool` works out of the box, and enums can `#[derive(Filterable)]`
- --> tests/ui/invalid_faceted_filter_type.rs:7:11
+error[E0277]: table filter shape `FacetedFilter<bool>` does not support field value `std::string::String`
+ --> tests/ui/invalid_faceted_filter_type.rs:8:25
   |
-7 |     name: String,
-  |           ^^^^^^
+8 |     #[gpui_table(filter(BoolFilter))]
+  |                         ^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `FacetedFilter<bool>`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
+help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+  |
+  | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<T>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<T>>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Vec<T>>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<Vec<T>>>`
+note: required by a bound in `__gpui_table_assert_name_filter_shape_field_support`
+ --> tests/ui/invalid_faceted_filter_type.rs:8:25
+  |
+8 |     #[gpui_table(filter(BoolFilter))]
+  |                         ^^^^^^^^^^ required by this bound in `__gpui_table_assert_name_filter_shape_field_support`
+
+error[E0277]: table filter shape `FacetedFilter<bool>` does not support field value `std::string::String`
+ --> tests/ui/invalid_faceted_filter_type.rs:8:25
+  |
+8 |     #[gpui_table(filter(BoolFilter))]
+  |                         ^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `FacetedFilter<bool>`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
+help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
+ --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+  |
+  | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<T>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<T>>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Vec<T>>`
+...
+  | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
+  | | where
+  | |     T: gpui_table_core::filter::Filterable,
+  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<Vec<T>>>`

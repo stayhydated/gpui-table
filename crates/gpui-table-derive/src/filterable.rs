@@ -41,6 +41,12 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
     let variants = data.take_enum().ok_or_else(|| {
         syn::Error::new(enum_name.span(), "Filterable can only be derived for enums")
     })?;
+    if fluent && !cfg!(feature = "fluent") {
+        return Err(syn::Error::new(
+            enum_name.span(),
+            "`#[filter(fluent)]` requires enabling the `gpui-table/fluent` feature",
+        ));
+    }
 
     let mut options = Vec::new();
     let mut variant_name_arms = Vec::new();
@@ -52,7 +58,7 @@ fn expand_derive_filterable(input: DeriveInput) -> syn::Result<proc_macro2::Toke
 
         let label_expr = if fluent {
             quote! {
-                gpui_table::runtime::generated_filters::fallback_message(&Self::#variant_ident)
+                gpui_table::core::i18n::localize_message(&Self::#variant_ident)
             }
         } else {
             let label = variant

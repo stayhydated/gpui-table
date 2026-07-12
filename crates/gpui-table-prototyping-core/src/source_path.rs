@@ -37,3 +37,35 @@ pub fn source_path_to_use_path(source_path: &str) -> Option<syn::Path> {
 
     syn::parse_str(&path_segments.join("::")).ok()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::source_path_to_use_path;
+    use quote::ToTokens as _;
+
+    fn parsed(path: &str) -> Option<String> {
+        source_path_to_use_path(path).map(|path| path.into_token_stream().to_string())
+    }
+
+    #[test]
+    fn source_paths_become_crate_qualified_rust_paths() {
+        assert_eq!(
+            parsed("examples/some-lib/src/structs/user.rs").as_deref(),
+            Some("some_lib :: structs :: user")
+        );
+        assert_eq!(
+            parsed("my-crate/src/nested/mod.rs").as_deref(),
+            Some("my_crate :: nested")
+        );
+        assert_eq!(
+            parsed("my-crate/src/lib.rs").as_deref(),
+            Some("my_crate :: lib")
+        );
+    }
+
+    #[test]
+    fn paths_without_a_crate_before_src_are_rejected() {
+        assert_eq!(parsed("src/user.rs"), None);
+        assert_eq!(parsed("user.rs"), None);
+    }
+}

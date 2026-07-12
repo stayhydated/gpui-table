@@ -11,7 +11,7 @@
 /// #[derive(GpuiTable)]
 /// #[gpui_table(filters)]
 /// pub struct User {
-///     #[gpui_table(filter(text()))]
+///     #[gpui_table(filter(gpui_table_component::TextFilter))]
 ///     pub name: String,
 /// }
 ///

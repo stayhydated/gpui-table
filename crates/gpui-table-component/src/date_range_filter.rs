@@ -33,7 +33,7 @@ mod date_display {
     fn formatter_preferences() -> DateTimeFormatterPreferences {
         let locale = gpui_component::locale()
             .parse::<Locale>()
-            .unwrap_or_else(|_| locale!("en-US"));
+            .unwrap_or(locale!("en-US"));
         locale.into()
     }
 
@@ -76,6 +76,31 @@ pub struct DateRangeFilter {
     on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
 }
+
+impl component_shape::ComponentShapeMetadata for DateRangeFilter {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::date_range();
+}
+impl component_shape::DeclaredComponentShape for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<NaiveDate> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<NaiveDate>> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<chrono::NaiveDateTime> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<chrono::NaiveDateTime>> for DateRangeFilter {}
+
+impl<Tz> component_shape::ComponentShapeFor<chrono::DateTime<Tz>> for DateRangeFilter where
+    Tz: chrono::TimeZone
+{
+}
+
+impl<Tz> component_shape::ComponentShapeFor<Option<chrono::DateTime<Tz>>> for DateRangeFilter where
+    Tz: chrono::TimeZone
+{
+}
+
+#[cfg(feature = "spacetimedb")]
+impl component_shape::ComponentShapeFor<spacetimedb_lib::Timestamp> for DateRangeFilter {}
+
+#[cfg(feature = "spacetimedb")]
+impl component_shape::ComponentShapeFor<Option<spacetimedb_lib::Timestamp>> for DateRangeFilter {}
 
 impl TableFilterComponent for DateRangeFilter {
     type Value = (Option<NaiveDate>, Option<NaiveDate>);
@@ -231,18 +256,6 @@ fn format_date(date: NaiveDate) -> String {
     date_display::format_date(date)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::format_date;
-    use chrono::NaiveDate;
-
-    #[test]
-    fn formats_dates_with_icu4x() {
-        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
-        assert_eq!(format_date(date), "Jan 31, 2026");
-    }
-}
-
 impl Render for DateRangeFilter {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         // Ensure calendar exists
@@ -375,5 +388,114 @@ impl DateRangeFilterExt for Entity<DateRangeFilter> {
             this.clear_button_style = style;
         });
         self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{DateRangeFilter, DateRangeFilterExt as _, format_date};
+    use chrono::NaiveDate;
+    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use std::{cell::RefCell, rc::Rc};
+
+    #[test]
+    fn formats_dates_with_icu4x() {
+        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
+        assert_eq!(format_date(date), "Jan 31, 2026");
+    }
+
+    #[gpui::test]
+    fn range_display_and_configuration_cover_each_bound_shape(cx: &mut TestAppContext) {
+        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+
+        let both = cx.update(|cx| {
+            DateRangeFilter::new("Created", (Some(start), Some(end)), |_, _, _| {}, cx)
+                .trigger_style(StyleRefinement::default(), cx)
+                .popover_style(StyleRefinement::default(), cx)
+                .calendar_style(StyleRefinement::default(), cx)
+                .clear_button_style(StyleRefinement::default(), cx)
+        });
+        both.read_with(cx, |filter, cx| {
+            assert!(filter.has_value());
+            assert_eq!(filter.value(), (Some(start), Some(end)));
+            assert_eq!(filter.format_range(), "Jan 1, 2026 - Jan 31, 2026");
+            assert_eq!((filter.title)(cx), "Created");
+            assert!(filter.calendar.is_none());
+        });
+
+        let same = cx.update(|cx| {
+            DateRangeFilter::new_for(
+                |_| "Date".into(),
+                (Some(start), Some(start)),
+                |_, _, _| {},
+                cx,
+            )
+        });
+        same.read_with(cx, |filter, _| {
+            assert_eq!(filter.format_range(), "Jan 1, 2026")
+        });
+
+        let start_only =
+            cx.update(|cx| DateRangeFilter::new("Date", (Some(start), None), |_, _, _| {}, cx));
+        start_only.read_with(cx, |filter, _| {
+            assert_eq!(filter.format_range(), "Jan 1, 2026")
+        });
+
+        let end_only =
+            cx.update(|cx| DateRangeFilter::new("Date", (None, Some(end)), |_, _, _| {}, cx));
+        end_only.read_with(cx, |filter, _| {
+            assert_eq!(filter.format_range(), "... - Jan 31, 2026")
+        });
+
+        let empty = cx.update(|cx| DateRangeFilter::new("Date", (None, None), |_, _, _| {}, cx));
+        empty.read_with(cx, |filter, _| {
+            assert!(!filter.has_value());
+            assert_eq!(filter.format_range(), "");
+        });
+    }
+
+    #[gpui::test]
+    fn date_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
+        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let changes = Rc::new(RefCell::new(Vec::new()));
+        let changes_for_callback = changes.clone();
+        let filter = cx.update(|cx| {
+            DateRangeFilter::new(
+                "Created",
+                (Some(start), Some(end)),
+                move |value, _, _| changes_for_callback.borrow_mut().push(value),
+                cx,
+            )
+        });
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.apply(window, cx);
+                filter.reset(window, cx);
+            });
+        });
+        assert_eq!(
+            &*changes.borrow(),
+            &[(Some(start), Some(end)), (None, None)]
+        );
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.selected_range = (Some(start), None);
+                filter.reset_silent(window, cx);
+            });
+        });
+        assert_eq!(changes.borrow().len(), 2);
+        filter.read_with(&visual.cx, |filter, _| {
+            assert_eq!(filter.value(), (None, None))
+        });
+        drop(filter);
+        drop(visual);
+        cx.run_until_parked();
     }
 }

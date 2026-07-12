@@ -65,3 +65,32 @@ impl RenderOnce for ResetFilters {
         )
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::ResetFilters;
+    use gpui::{
+        Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
+        VisualTestContext,
+    };
+
+    #[gpui::test]
+    fn reset_control_builders_render_with_default_and_custom_ids(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let default = ResetFilters::new(|_, _| {});
+        assert_eq!(default.button_id, "table-reset-filters");
+
+        let mut custom = ResetFilters::new(|_, _| {})
+            .button_id("clear-all")
+            .button_style(StyleRefinement::default());
+        *custom.style() = StyleRefinement::default();
+        assert_eq!(custom.button_id, "clear-all");
+
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+        visual.update(|window, cx| {
+            let _ = default.render(window, cx).into_any_element();
+            let _ = custom.render(window, cx).into_any_element();
+        });
+    }
+}

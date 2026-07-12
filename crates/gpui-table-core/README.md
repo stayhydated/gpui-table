@@ -58,4 +58,5 @@ filters work without extra glue code.
 If you also need generated tables, GPUI runtime traits, or built-in filter UI,
 use `gpui-table` instead of depending on this crate directly.
 
-For implementation details and internal contracts, see `docs/ARCHITECTURE.md`.
+For implementation details and internal contracts, read the crate rustdocs and
+the focused tests in `src/filter`.

@@ -4,7 +4,7 @@
 `TableStatusBar` used across the `gpui-table` ecosystem.
 
 Use this crate when you want direct control over filter UI composition.
-Most application code should still start with `gpui-table`.
+Most application code should start with `gpui-table`.
 
 ## Use This Crate When
 
@@ -44,6 +44,58 @@ let status = TableStatusBar::new(rows.len(), loading, eof)
 - `ResetFilters`
 - `TableStatusBar`
 
+The filter component types are also the built-in `#[gpui_table(filter(...))]`
+shape types:
+
+```rs
+#[gpui_table(filter(gpui_table_component::TextFilter))]
+name: String,
+
+#[gpui_table(filter(gpui_table_component::TextFilter.numeric_only()))]
+numeric_code: String,
+
+#[gpui_table(filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*")))]
+external_ref: String,
+
+#[gpui_table(filter(
+    gpui_table_component::NumberRangeFilter
+        .range(rust_decimal::Decimal::new(0, 0), rust_decimal::Decimal::new(100, 0))
+        .step(rust_decimal::Decimal::new(10, 0))
+))]
+score: rust_decimal::Decimal,
+
+#[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>.searchable(true)))]
+status: Status,
+```
+
+Configured built-in filter expressions construct the same shape type while
+applying its `GpuiTableFilterShapeBuilder`: `TextFilter.numeric_only()`,
+`TextFilter.alphanumeric_only()`, and `TextFilter.matching_regex("...")`
+enable text validators, `NumberRangeFilter.range(...).step(...)` sets numeric
+slider bounds and step size, and
+`FacetedFilter::<T>.searchable(true)` shows the faceted search input.
+
+When a field is an application-owned value type but should reuse a built-in
+filter widget, use an adapter shape and implement its field trait:
+
+```rs
+pub struct AccountCode(String);
+
+impl gpui_table_component::TextFilterField for AccountCode {
+    fn to_filter_text(&self) -> String {
+        self.0.clone()
+    }
+}
+
+#[gpui_table(filter(gpui_table_component::TextFilterAdapter))]
+code: AccountCode,
+```
+
+`TextFilterAdapter`, `NumberRangeFilterAdapter`, and `DateRangeFilterAdapter`
+reuse the built-in UI, raw value, reset behavior, and MCP schema while adding
+support for both `T` and `Option<T>` fields that implement the matching field
+trait.
+
 All filter widgets expose chainable extension-trait setters for styling or
 behavior tweaks.
 
@@ -59,14 +111,15 @@ gpui_table_component::i18n::set_locale(cx, "en")?;
 ```
 
 Generated filter flows call the same localization helpers through
-`gpui_table::runtime::generated_filters`. Runtime widget text reads the
+`gpui_table_component::i18n`. Runtime widget text reads the
 `EmbeddedI18n` handle from GPUI global state; context-free metadata such as
 storybook titles uses explicit fallback helpers.
 
 ## Interop With Generated Tables
 
-The derive-generated filter code targets this crate through
-`gpui_table::runtime::generated_filters`.
+The derive-generated filter code constructs filter widgets through
+`gpui_table::runtime::shape::GpuiTableFilterShape`; this crate supplies those
+impls for the built-in filter widgets.
 
 That means you can:
 
@@ -75,13 +128,16 @@ That means you can:
 - serialize either raw component values or generated wrapper values with `QueryFilterValue`
 
 Custom `TableFilterComponent` implementations are a runtime integration point.
-They are useful for manual filter collections, but they do not add a new
-`#[gpui_table(filter(...))]` syntax on their own.
+They are useful for manual filter collections, but generated tables also require
+a `GpuiTableFilterShape` implementation before a component can be used in
+`#[gpui_table(filter(...))]`.
 
 ## Feature Flags
 
 - `chrono` (default): enables `DateRangeFilter`
 - `rust_decimal` (default): enables `NumberRangeFilter`
+- `mcp`: implements `gpui_table::mcp::McpFilterShape` for the built-in filters
+  and adapters
 - `story`: enables the storybook binary and pulls in the built-in filter stories
 
 ## Storybook
@@ -90,5 +146,5 @@ They are useful for manual filter collections, but they do not add a new
 cargo run -p gpui-table-component --bin story --features story
 ```
 
-For internals, module boundaries, and serialization contracts, see
-`docs/ARCHITECTURE.md`.
+For internals, module boundaries, and serialization contracts, read the crate
+rustdocs and the focused tests in `src/lib.rs`.

@@ -75,5 +75,5 @@ The recommended entry points for tools are the `try_*` methods, which return
 See `examples/prototyping/src/main.rs` for a complete generator and
 `examples/prototyping/output` for the produced story modules.
 
-For internal generator stages and adapter contracts, see
-`docs/ARCHITECTURE.md`.
+For internal generator stages and adapter contracts, read the crate rustdocs and
+the modules under `src/`.

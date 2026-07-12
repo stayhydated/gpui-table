@@ -16,9 +16,12 @@ const DEBOUNCE_MS: u64 = 300;
 
 /// Text validation function type
 pub type TextValidator = Rc<dyn Fn(&str) -> String>;
+type TextInputValidator = Rc<dyn Fn(&str, &str) -> String>;
 
 /// Built-in validators for common text filtering patterns
 pub mod validators {
+    use regex::Regex;
+
     /// Only allow alphabetic characters.
     pub fn alphabetic_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphabetic()).collect()
@@ -37,6 +40,32 @@ pub mod validators {
     /// Only allow alphanumeric characters
     pub fn alphanumeric_only(s: &str) -> String {
         s.chars().filter(|c| c.is_alphanumeric()).collect()
+    }
+
+    /// Compile a regex that must match the complete candidate value.
+    ///
+    /// The pattern is wrapped with `\A(?:...)\z`; include partial quantifiers
+    /// when normal typing should accept incomplete values.
+    pub fn full_match_regex(pattern: &str) -> Result<Regex, regex::Error> {
+        Regex::new(&format!(r"\A(?:{pattern})\z"))
+    }
+
+    /// Accept regex-matching candidate values and otherwise keep the previous value.
+    pub fn matching_regex(regex: Regex) -> impl Fn(&str, &str) -> String {
+        move |candidate, previous| {
+            if regex.is_match(candidate) {
+                candidate.to_string()
+            } else {
+                previous.to_string()
+            }
+        }
+    }
+
+    /// Build a validator from a regex pattern that must match the full value.
+    pub fn matching_regex_pattern(
+        pattern: &str,
+    ) -> Result<impl Fn(&str, &str) -> String + 'static, regex::Error> {
+        full_match_regex(pattern).map(matching_regex)
     }
 }
 
@@ -57,12 +86,19 @@ pub struct TextFilter {
     /// Current debounce task - dropping it cancels the pending apply
     _debounce_task: Option<Task<()>>,
     /// Optional validator function to filter input
-    validator: Option<TextValidator>,
+    validator: Option<TextInputValidator>,
     /// Pending validated value to apply to input during render
     pending_validated_value: Option<String>,
     /// Last placeholder applied to the input state.
     last_placeholder: Option<String>,
 }
+
+impl component_shape::ComponentShapeMetadata for TextFilter {
+    const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::string();
+}
+impl component_shape::DeclaredComponentShape for TextFilter {}
+impl component_shape::ComponentShapeFor<String> for TextFilter {}
+impl component_shape::ComponentShapeFor<Option<String>> for TextFilter {}
 
 /// Extension trait for configuring TextFilter via method chaining.
 pub trait TextFilterExt: Sized {
@@ -72,8 +108,25 @@ pub trait TextFilterExt: Sized {
     fn numeric_only(self, cx: &mut App) -> Self;
     /// Only allow alphanumeric characters in the input.
     fn alphanumeric_only(self, cx: &mut App) -> Self;
+    /// Accept only candidate values that fully match the regex pattern.
+    ///
+    /// Include partial quantifiers when normal typing should accept incomplete
+    /// values, such as `[A-Z0-9-]*` for an uppercase identifier in progress.
+    fn matching_regex(self, pattern: impl AsRef<str>, cx: &mut App) -> Self;
+    /// Try to configure a full-value regex validator.
+    fn try_matching_regex(
+        self,
+        pattern: impl AsRef<str>,
+        cx: &mut App,
+    ) -> Result<Self, regex::Error>;
     /// Set a custom validation function.
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self;
+    /// Set a custom validation function that can keep the previous accepted value.
+    fn validate_with_previous(
+        self,
+        validator: impl Fn(&str, &str) -> String + 'static,
+        cx: &mut App,
+    ) -> Self;
     /// Set style refinement for the filter container.
     fn container_style(self, _style: StyleRefinement, _cx: &mut App) -> Self {
         self
@@ -97,7 +150,30 @@ impl TextFilterExt for Entity<TextFilter> {
         self.validate(validators::alphanumeric_only, cx)
     }
 
+    fn matching_regex(self, pattern: impl AsRef<str>, cx: &mut App) -> Self {
+        let pattern = pattern.as_ref();
+        self.try_matching_regex(pattern, cx)
+            .unwrap_or_else(|error| panic!("invalid TextFilter regex `{pattern}`: {error}"))
+    }
+
+    fn try_matching_regex(
+        self,
+        pattern: impl AsRef<str>,
+        cx: &mut App,
+    ) -> Result<Self, regex::Error> {
+        let validator = validators::matching_regex_pattern(pattern.as_ref())?;
+        Ok(self.validate_with_previous(validator, cx))
+    }
+
     fn validate(self, validator: impl Fn(&str) -> String + 'static, cx: &mut App) -> Self {
+        self.validate_with_previous(move |value, _previous| validator(value), cx)
+    }
+
+    fn validate_with_previous(
+        self,
+        validator: impl Fn(&str, &str) -> String + 'static,
+        cx: &mut App,
+    ) -> Self {
         self.update(cx, |this, _| {
             this.validator = Some(Rc::new(validator));
         });
@@ -208,7 +284,8 @@ impl TextFilter {
 
                         // Apply validator if set
                         let new_value = if let Some(ref validator) = this.validator {
-                            let validated = validator(&raw_value);
+                            let previous_value = this.value.clone();
+                            let validated = validator(&raw_value, &previous_value);
                             // If validation changed the value, schedule update for next render
                             if validated != raw_value {
                                 this.pending_validated_value = Some(validated.clone());
@@ -343,5 +420,131 @@ impl Render for TextFilter {
                     .refine_style(&self.input_style),
             )
             .into_any_element()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{TextFilter, TextFilterExt as _, validators};
+    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use std::{cell::RefCell, rc::Rc};
+
+    #[test]
+    fn matching_regex_accepts_complete_matches() {
+        let validator = validators::matching_regex_pattern(r"[A-Z]{0,3}-?[0-9]{0,3}")
+            .expect("regex should compile");
+
+        assert_eq!(validator("ABC-123", "ABC-12"), "ABC-123");
+        assert_eq!(validator("ABC-123x", "ABC-123"), "ABC-123");
+    }
+
+    #[test]
+    fn matching_regex_rejects_substring_only_matches() {
+        let validator =
+            validators::matching_regex_pattern(r"[0-9]*").expect("regex should compile");
+
+        assert_eq!(validator("123", ""), "123");
+        assert_eq!(validator("abc123", "123"), "123");
+    }
+
+    #[test]
+    fn built_in_character_validators_preserve_only_their_allowed_classes() {
+        assert_eq!(validators::alphabetic_only("Ab 12-é"), "Abé");
+        assert_eq!(validators::ascii_only("ASCII-é🙂"), "ASCII-");
+        assert_eq!(validators::numeric_only("a1２3"), "13");
+        assert_eq!(validators::alphanumeric_only("A-1_é🙂"), "A1é");
+    }
+
+    #[test]
+    fn regex_builders_report_invalid_patterns_and_keep_previous_values() {
+        assert!(validators::full_match_regex("[").is_err());
+        assert!(validators::matching_regex_pattern("[").is_err());
+
+        let regex = validators::full_match_regex("[A-Z]+").unwrap();
+        let validator = validators::matching_regex(regex);
+        assert_eq!(validator("ABC", "OLD"), "ABC");
+        assert_eq!(validator("ABC1", "OLD"), "OLD");
+    }
+
+    #[gpui::test]
+    fn text_filter_constructors_and_configuration_preserve_state(cx: &mut TestAppContext) {
+        let filter = cx.update(|cx| {
+            TextFilter::new("Name", "Alice".into(), |_, _, _| {}, cx)
+                .numeric_only(cx)
+                .alphabetic_only(cx)
+                .alphanumeric_only(cx)
+                .matching_regex("[A-Za-z]*", cx)
+                .validate(|value| value.trim().to_string(), cx)
+                .validate_with_previous(
+                    |value, previous| {
+                        if value.is_empty() {
+                            previous.to_string()
+                        } else {
+                            value.to_string()
+                        }
+                    },
+                    cx,
+                )
+                .container_style(StyleRefinement::default(), cx)
+                .input_style(StyleRefinement::default(), cx)
+        });
+
+        filter.read_with(cx, |filter, cx| {
+            assert_eq!(filter.value(), "Alice");
+            assert_eq!((filter.title)(cx), "Name");
+            assert!(filter.validator.is_some());
+            assert!(filter.input_state.is_none());
+            assert!(!filter.pending_apply);
+        });
+
+        let reactive = cx.update(|cx| {
+            TextFilter::new_for(|_| "Reactive".into(), String::new(), |_, _, _| {}, cx)
+        });
+        reactive.read_with(cx, |filter, cx| {
+            assert_eq!((filter.title)(cx), "Reactive");
+            assert_eq!(filter.value(), "");
+        });
+
+        assert!(
+            cx.update(|cx| reactive.clone().try_matching_regex("[", cx))
+                .is_err()
+        );
+    }
+
+    #[gpui::test]
+    fn text_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
+        cx.update(gpui_component::init);
+        let changes = Rc::new(RefCell::new(Vec::new()));
+        let changes_for_callback = changes.clone();
+        let filter = cx.update(|cx| {
+            TextFilter::new(
+                "Name",
+                "Alice".into(),
+                move |value, _, _| changes_for_callback.borrow_mut().push(value),
+                cx,
+            )
+        });
+        let window = cx.add_window(|_, _| Empty);
+        let mut visual = VisualTestContext::from_window(window.into(), cx);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.apply(window, cx);
+                filter.reset(window, cx);
+            });
+        });
+        assert_eq!(&*changes.borrow(), &["Alice", ""]);
+
+        visual.update(|window, cx| {
+            filter.update(cx, |filter, cx| {
+                filter.value = "silent".into();
+                filter.reset_silent(window, cx);
+            });
+        });
+        assert_eq!(&*changes.borrow(), &["Alice", ""]);
+        filter.read_with(&visual.cx, |filter, _| assert_eq!(filter.value(), ""));
+        drop(filter);
+        drop(visual);
+        cx.run_until_parked();
     }
 }

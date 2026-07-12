@@ -12,21 +12,17 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [ "dep:chrono", "gpui-table-component/chrono", "gpui-table-core/chrono", "jiff" ]
+chrono = [ "dep:chrono", "gpui-table-core/chrono", "jiff" ]
 default = [ "chrono" ]
 jiff = [ "dep:icu", "dep:jiff" ]
-rust_decimal = [
-  "dep:rust_decimal",
-  "gpui-table-component/rust_decimal",
-  "gpui-table-core/rust_decimal",
-]
+rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
+component-shape = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
-gpui-table-component = { default-features = false, workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 icu = { optional = true, workspace = true }

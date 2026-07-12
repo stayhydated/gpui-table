@@ -94,3 +94,32 @@ impl Filterable for bool {
         ]
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FilterValue as _, Filterable as _};
+
+    #[test]
+    fn bool_filter_values_round_trip_and_reject_other_spellings() {
+        assert_eq!(true.to_filter_string(), "true");
+        assert_eq!(false.to_filter_string(), "false");
+        assert_eq!(bool::from_filter_string("true"), Some(true));
+        assert_eq!(bool::from_filter_string("false"), Some(false));
+        assert_eq!(bool::from_filter_string("True"), None);
+        assert_eq!(bool::from_filter_string(""), None);
+    }
+
+    #[test]
+    fn bool_filter_options_are_complete_and_stable() {
+        let options = bool::options();
+
+        assert_eq!(options.len(), 2);
+        assert_eq!(options[0].value, "true");
+        assert_eq!(options[1].value, "false");
+        assert!(!options[0].label.is_empty());
+        assert!(!options[1].label.is_empty());
+        assert!(options.iter().all(|option| {
+            option.group.is_none() && option.count.is_none() && option.icon.is_none()
+        }));
+    }
+}

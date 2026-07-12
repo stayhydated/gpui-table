@@ -1,464 +1,241 @@
-use darling::{Error as DarlingError, FromMeta};
+#[cfg(feature = "inventory")]
+use component_shape_codegen::rust_path_metadata_tokens;
+use component_shape_codegen::{
+    ResolvedComponentShape as SharedResolvedComponentShape, ShapeOptions as SharedShapeOptions,
+    shape_type_assertion_tokens_with_suffixes,
+};
+use proc_macro2::{Span, TokenStream};
 use quote::{ToTokens as _, quote};
-use syn::{Expr, GenericArgument, Lit, Path, PathArguments, Type, UnOp, spanned::Spanned as _};
+use syn::Expr;
 
-/// Built-in text validation modes
-#[derive(Clone, Debug, FromMeta)]
-#[darling(rename_all = "snake_case")]
-pub enum TextValidation {
-    /// Only allow alphabetic characters (a-z, A-Z)
-    Alphabetic,
-    /// Only allow numeric characters (0-9)
-    Numeric,
-    /// Only allow alphanumeric characters
-    Alphanumeric,
-    /// Custom validation function path
-    #[darling(rename = "fn")]
-    Custom(Path),
-}
-
-/// Options for text filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct TextFilterOptions {
-    /// Validation mode for the text input
-    #[darling(default)]
-    pub validate: Option<TextValidation>,
-}
-
-/// A decimal literal captured from `number_range(...)` metadata.
-///
-/// The raw string is preserved so macro validation can point at the original
-/// literal while codegen can lower the parsed value directly into a
-/// `rust_decimal::Decimal` constructor.
 #[derive(Clone, Debug)]
-pub struct DecimalLiteral {
-    raw: String,
-    span: proc_macro2::Span,
+pub(crate) struct FilterShapeOptions {
+    inner: SharedShapeOptions,
 }
 
-impl DecimalLiteral {
-    #[cfg(feature = "rust_decimal")]
-    pub fn span(&self) -> proc_macro2::Span {
-        self.span
-    }
-
-    #[cfg(feature = "rust_decimal")]
-    pub fn parse_decimal(&self, key: &str) -> syn::Result<rust_decimal::Decimal> {
-        rust_decimal::Decimal::from_str_exact(&self.raw).map_err(|_| {
-            syn::Error::new(
-                self.span,
-                format!(
-                    "invalid decimal literal `{}` for `number_range({key} = ...)`; use a plain decimal like `0.25` or a quoted decimal string like \"0.25\"",
-                    self.raw
-                ),
-            )
+impl FilterShapeOptions {
+    pub(crate) fn from_constructor_expr_with_span(expr: Expr, span: Span) -> syn::Result<Self> {
+        Ok(Self {
+            inner: SharedShapeOptions::from_constructor_expr_with_span(
+                expr,
+                span,
+                "expected a filter shape path or configured filter shape expression",
+            )?,
         })
     }
 
-    #[cfg(feature = "rust_decimal")]
-    pub fn decimal_tokens(&self, key: &str) -> proc_macro2::TokenStream {
-        let decimal = self
-            .parse_decimal(key)
-            .expect("number_range decimal literal should be validated before code generation");
-        let mantissa = decimal.mantissa();
-        let scale = decimal.scale();
-        quote! {
-            gpui_table::__deps::rust_decimal::Decimal::from_i128_with_scale(#mantissa, #scale)
+    pub(crate) fn resolve(&self, field_name: String, field_type: syn::Type) -> ResolvedFilterShape {
+        ResolvedFilterShape {
+            inner: self.inner.clone().resolve(field_name, field_type),
         }
     }
 }
 
-impl FromMeta for DecimalLiteral {
-    fn from_expr(expr: &Expr) -> darling::Result<Self> {
-        parse_decimal_literal(expr).map_err(|message| DarlingError::custom(message).with_span(expr))
-    }
+#[derive(Clone, Debug)]
+pub(crate) struct ResolvedFilterShape {
+    inner: SharedResolvedComponentShape,
 }
 
-/// Options for number range filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct NumberRangeFilterOptions {
-    /// Minimum value for the range
-    #[darling(default)]
-    pub min: Option<DecimalLiteral>,
-    /// Maximum value for the range
-    #[darling(default)]
-    pub max: Option<DecimalLiteral>,
-    /// Step size for increment/decrement
-    #[darling(default)]
-    pub step: Option<DecimalLiteral>,
-}
-
-/// Options for date range filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct DateRangeFilterOptions {}
-
-/// Options for faceted filter
-#[derive(Clone, Debug, Default, FromMeta)]
-#[darling(default)]
-pub struct FacetedFilterOptions {
-    /// Whether the filter should show a search input
-    #[darling(default)]
-    pub searchable: bool,
-}
-
-/// Filter component enum parsed from attributes.
-/// Supports syntax like: `filter(text())` or `filter(number_range(min = 0, max = 100))`
-#[derive(Clone, Debug, FromMeta)]
-#[darling(rename_all = "snake_case")]
-pub enum FilterComponents {
-    /// Text search filter with optional validation
-    Text(TextFilterOptions),
-    /// Numeric range filter with min/max bounds
-    NumberRange(NumberRangeFilterOptions),
-    /// Date range filter with start/end dates
-    DateRange(DateRangeFilterOptions),
-    /// Faceted filter with enumerated options
-    Faceted(FacetedFilterOptions),
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum FilterKind {
-    Text,
-    NumberRange,
-    DateRange,
-    Faceted,
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub(crate) enum FilterRenderGroup {
-    Text,
-    NumberRange,
-    Faceted,
-    DateRange,
-}
-
-impl FilterKind {
-    #[cfg(any(
-        not(feature = "chrono"),
-        not(feature = "rust_decimal"),
-        not(feature = "spacetimedb")
-    ))]
-    pub(crate) fn attribute_syntax(self) -> &'static str {
-        match self {
-            Self::Text => "text()",
-            Self::NumberRange => "number_range(...)",
-            Self::DateRange => "date_range()",
-            Self::Faceted => "faceted(...)",
-        }
+impl ResolvedFilterShape {
+    pub(crate) fn shape(&self) -> &syn::Path {
+        self.inner.shape()
     }
 
-    pub(crate) fn label(self) -> &'static str {
-        match self {
-            Self::Text => "text",
-            Self::NumberRange => "number range",
-            Self::DateRange => "date range",
-            Self::Faceted => "faceted",
-        }
+    pub(crate) fn constructor_expr(&self) -> Option<&syn::Expr> {
+        self.inner.constructor_expr()
     }
 
-    pub(crate) fn render_group(self) -> FilterRenderGroup {
-        match self {
-            Self::Text => FilterRenderGroup::Text,
-            Self::NumberRange => FilterRenderGroup::NumberRange,
-            Self::DateRange => FilterRenderGroup::DateRange,
-            Self::Faceted => FilterRenderGroup::Faceted,
-        }
-    }
-}
-
-impl FilterRenderGroup {
-    pub(crate) const ALL: [Self; 4] = [
-        Self::Text,
-        Self::NumberRange,
-        Self::Faceted,
-        Self::DateRange,
-    ];
-
-    pub(crate) fn method_name(self) -> &'static str {
-        match self {
-            Self::Text => "text_filters",
-            Self::NumberRange => "number_filters",
-            Self::Faceted => "faceted_filters",
-            Self::DateRange => "date_filters",
-        }
+    pub(crate) fn field_type(&self) -> &syn::Type {
+        self.inner.field_type()
     }
 
-    pub(crate) fn doc_label(self) -> &'static str {
-        match self {
-            Self::Text => "text filters",
-            Self::NumberRange => "number range filters",
-            Self::Faceted => "faceted filters",
-            Self::DateRange => "date range filters",
-        }
-    }
-}
-
-impl FilterComponents {
-    pub(crate) fn kind(&self) -> FilterKind {
-        match self {
-            Self::Text(_) => FilterKind::Text,
-            Self::NumberRange(_) => FilterKind::NumberRange,
-            Self::DateRange(_) => FilterKind::DateRange,
-            Self::Faceted(_) => FilterKind::Faceted,
-        }
+    pub(crate) fn field_name(&self) -> &str {
+        self.inner.field_name()
     }
 
-    /// The attribute syntax users write for this built-in filter.
-    #[cfg(any(
-        not(feature = "chrono"),
-        not(feature = "rust_decimal"),
-        not(feature = "spacetimedb")
-    ))]
-    pub(crate) fn attribute_syntax(&self) -> &'static str {
-        self.kind().attribute_syntax()
+    pub(crate) fn span(&self) -> Span {
+        self.inner.span()
     }
 
-    /// A short human-readable label for generated docs and diagnostics.
     pub(crate) fn kind_label(&self) -> &'static str {
-        self.kind().label()
+        "shape"
     }
 
-    pub(crate) fn render_group(&self) -> FilterRenderGroup {
-        self.kind().render_group()
+    pub(crate) fn component_type_tokens(&self) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::Component
+        }
     }
 
-    pub(crate) fn component_type_tokens(
-        &self,
-        field_ty: Option<&syn::Type>,
-    ) -> proc_macro2::TokenStream {
-        match self {
-            Self::Text(_) => {
-                quote! { gpui_table::runtime::generated_filters::text_filter::TextFilter }
-            },
-            Self::NumberRange(_) => {
-                quote! { gpui_table::runtime::generated_filters::number_range_filter::NumberRangeFilter }
-            },
-            Self::DateRange(_) => {
-                quote! { gpui_table::runtime::generated_filters::date_range_filter::DateRangeFilter }
-            },
-            Self::Faceted(_) => {
-                if let Some(ty) = field_ty {
-                    let filter_value_ty = faceted_filter_value_type(ty);
-                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<#filter_value_ty> }
-                } else {
-                    quote! { gpui_table::runtime::generated_filters::faceted_filter::FacetedFilter::<String> }
-                }
-            },
+    pub(crate) fn raw_value_type_tokens(&self) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::RawValue
+        }
+    }
+
+    pub(crate) fn generated_value_type_tokens(&self) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::FilterValue
         }
     }
 
     #[cfg(feature = "inventory")]
-    pub(crate) fn registry_filter_type_tokens(&self) -> proc_macro2::TokenStream {
-        match self.kind() {
-            FilterKind::Text => {
-                quote! { gpui_table::schema::registry::RegistryFilterType::Text }
-            },
-            FilterKind::NumberRange => {
-                quote! { gpui_table::schema::registry::RegistryFilterType::NumberRange }
-            },
-            FilterKind::DateRange => {
-                quote! { gpui_table::schema::registry::RegistryFilterType::DateRange }
-            },
-            FilterKind::Faceted => {
-                quote! { gpui_table::schema::registry::RegistryFilterType::Faceted }
-            },
+    pub(crate) fn registry_kind_tokens(&self) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::FILTER_TYPE
         }
     }
 
-    pub(crate) fn runtime_filter_type_expr(
-        &self,
-        field_ty: &syn::Type,
-    ) -> proc_macro2::TokenStream {
-        match self {
-            Self::Text(_) => quote! { gpui_table::core::filter::FilterType::Text },
-            Self::NumberRange(_) => {
-                quote! { gpui_table::core::filter::FilterType::NumberRange }
-            },
-            Self::DateRange(_) => {
-                quote! { gpui_table::core::filter::FilterType::DateRange }
-            },
-            Self::Faceted(_) => {
-                let filter_value_ty = faceted_filter_value_type(field_ty);
-                quote! { gpui_table::core::filter::FilterType::Faceted(<#filter_value_ty as gpui_table::core::filter::Filterable>::options()) }
-            },
+    pub(crate) fn runtime_filter_type_expr(&self) -> TokenStream {
+        let shape = self.shape();
+        let field_type = self.field_type();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShapeFor<#field_type>>::filter_type()
         }
     }
 
-    pub(crate) fn raw_value_type_tokens(&self, field_ty: &syn::Type) -> proc_macro2::TokenStream {
-        match self {
-            Self::Text(_) => quote! { String },
-            Self::NumberRange(_) => {
-                quote! { (Option<gpui_table::__deps::rust_decimal::Decimal>, Option<gpui_table::__deps::rust_decimal::Decimal>) }
-            },
-            Self::Faceted(_) => {
-                let filter_value_ty = faceted_filter_value_type(field_ty);
-                quote! { std::collections::HashSet<#filter_value_ty> }
-            },
-            Self::DateRange(_) => {
-                quote! { (Option<gpui_table::__deps::chrono::NaiveDate>, Option<gpui_table::__deps::chrono::NaiveDate>) }
-            },
+    pub(crate) fn read_raw_value_expr(&self, field_ident: &syn::Ident) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::read_value(
+                &self.#field_ident,
+                cx,
+            )
         }
     }
 
-    pub(crate) fn generated_value_type_tokens(
-        &self,
-        field_ty: &syn::Type,
-    ) -> proc_macro2::TokenStream {
-        match self {
-            Self::Text(_) => quote! { gpui_table::core::filter::TextValue },
-            Self::NumberRange(_) => {
-                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal> }
-            },
-            Self::Faceted(_) => {
-                let filter_value_ty = faceted_filter_value_type(field_ty);
-                quote! { gpui_table::core::filter::FacetedValue<#filter_value_ty> }
-            },
-            Self::DateRange(_) => {
-                quote! { gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate> }
-            },
+    pub(crate) fn wrap_raw_value_expr(&self, raw_value_expr: TokenStream) -> TokenStream {
+        let shape = self.shape();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::wrap_value(#raw_value_expr)
         }
     }
 
-    pub(crate) fn wrap_raw_value_expr(
-        &self,
-        raw_value_expr: proc_macro2::TokenStream,
-    ) -> proc_macro2::TokenStream {
-        match self {
-            Self::Text(_) => quote! { gpui_table::core::filter::TextValue::from(#raw_value_expr) },
-            Self::NumberRange(_) | Self::DateRange(_) => {
-                quote! { gpui_table::core::filter::RangeValue::from(#raw_value_expr) }
-            },
-            Self::Faceted(_) => {
-                quote! { gpui_table::core::filter::FacetedValue::from(#raw_value_expr) }
-            },
+    pub(crate) fn matches_field_expr(&self, field_ident: &syn::Ident) -> TokenStream {
+        let shape = self.shape();
+        let field_type = self.field_type();
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShapeFor<#field_type>>::matches_field(
+                &self.#field_ident,
+                &filters.#field_ident,
+            )
         }
     }
-}
 
-fn faceted_filter_value_type(ty: &Type) -> &Type {
-    let value_ty = option_inner_type(ty).unwrap_or(ty);
-    vec_inner_type(value_ty).unwrap_or(value_ty)
-}
+    pub(crate) fn validate_feature_gate(&self) -> syn::Result<()> {
+        if !cfg!(feature = "rust_decimal") && self.is_builtin_shape("NumberRangeFilter") {
+            return Err(syn::Error::new(
+                self.span(),
+                "`gpui_table_component::NumberRangeFilter` requires enabling the `gpui-table/rust_decimal` feature",
+            ));
+        }
 
-fn option_inner_type(ty: &Type) -> Option<&Type> {
-    let Type::Path(type_path) = ty else {
-        return None;
-    };
+        if !cfg!(feature = "chrono") && self.is_builtin_shape("DateRangeFilter") {
+            return Err(syn::Error::new(
+                self.span(),
+                "`gpui_table_component::DateRangeFilter` requires enabling the `gpui-table/chrono` feature",
+            ));
+        }
 
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Option" {
-        return None;
+        if !cfg!(feature = "spacetimedb") && self.is_spacetimedb_range_shape() {
+            let shape = if self.is_builtin_shape("NumberRangeFilter") {
+                "gpui_table_component::NumberRangeFilter"
+            } else {
+                "gpui_table_component::DateRangeFilter"
+            };
+            return Err(syn::Error::new(
+                self.span(),
+                format!(
+                    "`{shape}` on `{}` requires enabling the `gpui-table/spacetimedb` feature",
+                    self.compact_field_type(),
+                ),
+            ));
+        }
+
+        Ok(())
     }
 
-    let PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
+    pub(crate) fn type_check_tokens(&self) -> TokenStream {
+        let shape = self.shape();
+        let field_type = self.field_type();
+        let span = self.span();
+        let runtime_crate: syn::Path = syn::parse_quote!(gpui_table::runtime);
 
-    let GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
-}
-
-fn vec_inner_type(ty: &Type) -> Option<&Type> {
-    let Type::Path(type_path) = ty else {
-        return None;
-    };
-
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Vec" {
-        return None;
+        shape_type_assertion_tokens_with_suffixes(
+            "gpui_table",
+            self.field_name(),
+            shape,
+            field_type,
+            span,
+            [
+                quote! { #runtime_crate::shape::DeclaredGpuiTableFilterShape },
+                quote! { #runtime_crate::shape::GpuiTableFilterShape },
+            ],
+            quote! { #runtime_crate::shape::GpuiTableFilterShapeFor },
+            "declared_filter_shape",
+            "filter_shape_field_support",
+        )
     }
 
-    let PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
-
-    let GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
-}
-
-fn parse_decimal_literal(expr: &Expr) -> Result<DecimalLiteral, String> {
-    match expr {
-        Expr::Lit(expr_lit) => parse_decimal_lit(&expr_lit.lit),
-        Expr::Group(group) => parse_decimal_literal(&group.expr),
-        Expr::Unary(unary) => parse_signed_decimal_literal(unary),
-        _ => {
-            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
-        },
+    #[cfg(feature = "inventory")]
+    pub(crate) fn shape_path_tokens(&self) -> TokenStream {
+        rust_path_metadata_tokens(
+            quote! { gpui_table::schema::registry::RustPath },
+            self.shape(),
+        )
     }
-}
 
-fn parse_signed_decimal_literal(unary: &syn::ExprUnary) -> Result<DecimalLiteral, String> {
-    let prefix = match unary.op {
-        UnOp::Neg(_) => "-",
-        _ => {
-            return Err(
-                "expected an integer, float, or string literal in `number_range(...)`".to_string(),
-            );
-        },
-    };
-
-    match unary.expr.as_ref() {
-        Expr::Lit(expr_lit) => {
-            let mut literal = parse_decimal_lit(&expr_lit.lit)?;
-            literal.raw = format!("{prefix}{}", literal.raw);
-            literal.span = unary.span();
-            Ok(literal)
-        },
-        Expr::Group(group) => {
-            let mut literal = parse_decimal_literal(&group.expr)?;
-            literal.raw = format!("{prefix}{}", literal.raw);
-            literal.span = unary.span();
-            Ok(literal)
-        },
-        _ => {
-            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
-        },
+    #[cfg(feature = "inventory")]
+    pub(crate) fn component_path_tokens(&self) -> TokenStream {
+        let component_type = self.component_type_tokens();
+        let component_type_string = component_type.to_string();
+        quote! {
+            gpui_table::schema::registry::RustPath::from_macro_tokens_unchecked(#component_type_string)
+        }
     }
-}
 
-fn parse_decimal_lit(lit: &Lit) -> Result<DecimalLiteral, String> {
-    match lit {
-        Lit::Int(lit_int) => {
-            if !lit_int.suffix().is_empty() {
-                return Err(
-                    "number_range values cannot use numeric suffixes; use `1.25` or \"1.25\""
-                        .to_string(),
-                );
-            }
+    fn is_builtin_shape(&self, component_name: &str) -> bool {
+        let shape = self.shape();
+        let segments = shape
+            .segments
+            .iter()
+            .map(|segment| segment.ident.to_string())
+            .collect::<Vec<_>>();
 
-            Ok(DecimalLiteral {
-                raw: lit_int.base10_digits().to_string(),
-                span: lit_int.span(),
-            })
-        },
-        Lit::Float(lit_float) => {
-            if !lit_float.suffix().is_empty() {
-                return Err(
-                    "number_range values cannot use numeric suffixes; use `1.25` or \"1.25\""
-                        .to_string(),
-                );
-            }
+        matches!(
+            segments.as_slice(),
+            [root, name] if root == "gpui_table_component" && name == component_name
+        ) || matches!(
+            segments.as_slice(),
+            [root, runtime, shape, name]
+                if root == "gpui_table"
+                    && runtime == "runtime"
+                    && shape == "shape"
+                    && name == component_name
+        )
+    }
 
-            Ok(DecimalLiteral {
-                raw: lit_float.to_token_stream().to_string().replace('_', ""),
-                span: lit_float.span(),
-            })
-        },
-        Lit::Str(lit_str) => Ok(DecimalLiteral {
-            raw: lit_str.value(),
-            span: lit_str.span(),
-        }),
-        _ => {
-            Err("expected an integer, float, or string literal in `number_range(...)`".to_string())
-        },
+    fn is_spacetimedb_range_shape(&self) -> bool {
+        (self.is_builtin_shape("DateRangeFilter") || self.is_builtin_shape("NumberRangeFilter"))
+            && (self
+                .compact_field_type()
+                .contains("spacetimedb_lib::Timestamp")
+                || self
+                    .compact_field_type()
+                    .contains("spacetimedb_lib::TimeDuration"))
+    }
+
+    fn compact_field_type(&self) -> String {
+        self.field_type()
+            .to_token_stream()
+            .to_string()
+            .replace(" :: ", "::")
+            .replace(" < ", "<")
+            .replace(" >", ">")
+            .replace(" , ", ", ")
     }
 }

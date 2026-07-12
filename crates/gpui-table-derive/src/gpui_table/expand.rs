@@ -1,24 +1,33 @@
 use crate::gpui_table::delegate::generate_delegate;
+use crate::gpui_table::filter_codegen::get_filter_type_expr;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
-use crate::gpui_table::filter_codegen::{get_filter_type_expr, validate_filter_config};
 use crate::gpui_table::filter_entities::generate_filter_entities;
 use crate::gpui_table::filter_matching::generate_matches_filters_method;
+#[cfg(feature = "mcp")]
+use crate::gpui_table::mcp::generate_mcp_impl;
 use crate::gpui_table::meta::{FilterFieldMeta, TableMeta};
 
 use darling::util::Override;
-use heck::{ToPascalCase as _, ToTitleCase as _};
+use heck::{ToPascalCase as _, ToSnakeCase as _, ToTitleCase as _};
+#[cfg(feature = "inventory")]
+use quote::ToTokens as _;
 use quote::quote;
-use syn::Ident;
+use syn::{DeriveInput, Ident};
 
-pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::TokenStream> {
+pub(super) fn expand_gpui_table(
+    meta: TableMeta,
+    original_input: &DeriveInput,
+) -> syn::Result<proc_macro2::TokenStream> {
+    #[cfg(not(feature = "mcp"))]
+    let _ = original_input;
+
     let TableMeta {
         ident: struct_name,
         data,
         id,
         title,
         delegate,
-        custom_style,
         custom_context_menu,
         context_menu_row_id,
         context_menu_route,
@@ -29,16 +38,31 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         loading,
         load_more,
         filters: filters_enabled,
+        mcp,
     } = meta;
 
-    let table_id = id.unwrap_or_else(|| struct_name.to_string());
+    if let Some(mcp) = mcp.as_ref() {
+        mcp.validate(struct_name.span())?;
+    }
+    if fluent.is_some() && !cfg!(feature = "fluent") {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`#[gpui_table(fluent = ...)]` requires enabling the `gpui-table/fluent` feature",
+        ));
+    }
+    let mcp_enabled = mcp.is_some();
+    #[cfg(not(feature = "mcp"))]
+    if mcp_enabled {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "`#[gpui_table(mcp)]` requires the `gpui-table/mcp` feature",
+        ));
+    }
+    let filters_effective = filters_enabled || mcp_enabled;
+
+    let table_id = id.unwrap_or_else(|| struct_name.to_string().to_snake_case());
     let table_title = title.unwrap_or_else(|| struct_name.to_string());
 
-    let custom_style = match custom_style {
-        Some(Override::Explicit(val)) => val,
-        Some(Override::Inherit) => true,
-        None => false,
-    };
     let custom_context_menu = match custom_context_menu {
         Some(Override::Explicit(val)) => val,
         Some(Override::Inherit) => true,
@@ -171,8 +195,10 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let mut column_variants = Vec::new();
     let mut from_usize_arms = Vec::new();
     let mut into_usize_arms = Vec::new();
+    let mut style_match_arms = Vec::new();
     let mut filters_init = Vec::new();
     let mut filter_fields: Vec<FilterFieldMeta> = Vec::new();
+    let mut filter_shape_type_checks = Vec::new();
 
     #[cfg(feature = "inventory")]
     let mut column_variant_constructions: Vec<proc_macro2::TokenStream> = Vec::new();
@@ -185,6 +211,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
 
     for (i, field) in active_fields {
         let ident = field.ident.as_ref().unwrap();
+        let style = field.style.clone();
         let key = field.col.unwrap_or_else(|| ident.to_string());
         let width = field.width.unwrap_or(100.0);
 
@@ -194,10 +221,10 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                 "`ascending` and `descending` cannot both be set",
             ));
         }
-        if !filters_enabled && field.filter.is_some() {
+        if !filters_effective && field.filter.is_some() {
             return Err(syn::Error::new(
                 ident.span(),
-                "field-level `filter(...)` requires struct-level `#[gpui_table(filters)]`",
+                "field-level `filter` or `filter(...)` requires struct-level `#[gpui_table(filters)]` or `#[gpui_table(mcp)]`",
             ));
         }
         if let Some(fixed) = field.fixed.as_deref()
@@ -259,9 +286,24 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         });
 
         // Only process filter attributes when filters are enabled at struct level
-        if filters_enabled && let Some(ref filter_config) = field.filter {
-            validate_filter_config(filter_config, ident, &field.ty)?;
-            let filter_type_ts = get_filter_type_expr(filter_config, &field.ty);
+        if field.validation.is_some() && field.filter.is_none() {
+            return Err(syn::Error::new(
+                ident.span(),
+                "`#[koruma(...)]` table validation only applies to fields with `#[gpui_table(filter(...))]`",
+            ));
+        }
+        if field.validation.is_some() && !mcp_enabled {
+            return Err(syn::Error::new(
+                ident.span(),
+                "`#[koruma(...)]` table filter validation requires `#[gpui_table(mcp)]`",
+            ));
+        }
+
+        if filters_effective && let Some(ref filter_options) = field.filter {
+            let filter_config = filter_options.resolve(ident.to_string(), field.ty.clone());
+            filter_config.validate_feature_gate()?;
+            filter_shape_type_checks.push(filter_config.type_check_tokens());
+            let filter_type_ts = get_filter_type_expr(&filter_config);
 
             filters_init.push(quote! {
                 gpui_table::core::filter::FilterConfig {
@@ -274,18 +316,28 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             filter_fields.push(FilterFieldMeta {
                 field_ident: ident.clone(),
                 filter_config: filter_config.clone(),
-                field_type: field.ty.clone(),
+                validation: field.validation.clone(),
             });
 
             #[cfg(feature = "inventory")]
             {
                 let field_name_str = ident.to_string();
-                let registry_filter_type = get_registry_filter_type(filter_config);
+                let field_type_str = field.ty.to_token_stream().to_string();
+                let registry_filter_type = get_registry_filter_type(&filter_config);
+                let shape_path = filter_config.shape_path_tokens();
+                let component_path = filter_config.component_path_tokens();
 
                 filter_variant_constructions.push(quote! {
                     gpui_table::schema::registry::FilterVariant::new(
-                        #field_name_str,
+                        gpui_table::schema::registry::ComponentShapeUse::for_field(
+                            #field_name_str,
+                            #shape_path,
+                        )
+                        .with_field_type(
+                            gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str)
+                        ),
                         #registry_filter_type,
+                        #component_path,
                     )
                 });
             }
@@ -319,9 +371,16 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         from_usize_arms.push(quote! { #i => #column_enum_name::#variant_ident, });
         into_usize_arms.push(quote! { #column_enum_name::#variant_ident => #i, });
 
+        if let Some(style) = style {
+            style_match_arms.push(quote! {
+                #column_enum_name::#variant_ident => {
+                    (#style)(self, &self.#ident, window, cx).into_any_element()
+                },
+            });
+        }
+
         #[cfg(feature = "inventory")]
         {
-            use quote::ToTokens as _;
             let field_name_str = ident.to_string();
             let field_type_str = field.ty.to_token_stream().to_string();
             let title_str = field
@@ -337,7 +396,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
             column_variant_constructions.push(quote! {
                 gpui_table::schema::registry::ColumnVariant::new(
                     #field_name_str,
-                    #field_type_str,
+                    gpui_table::schema::registry::RustType::from_macro_tokens_unchecked(#field_type_str),
                     #title_str,
                     #width,
                     #sortable,
@@ -351,7 +410,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         Some(Override::Explicit(_)) | Some(Override::Inherit) => {
             quote! {
                 fn table_title() -> String {
-                    gpui_table::runtime::generated_filters::fallback_label::<Self>()
+                    gpui_table::core::i18n::fallback_label::<Self>()
                 }
             }
         },
@@ -382,7 +441,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         }
     };
 
-    let style_impl = if !custom_style {
+    let style_impl = if style_match_arms.is_empty() {
         quote! {
             impl gpui_table::runtime::TableRowStyle for #struct_name {
                 type ColumnId = #column_enum_name;
@@ -393,13 +452,32 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
                     window: &mut ::gpui::Window,
                     cx: &mut ::gpui::App,
                 ) -> ::gpui::AnyElement {
-                    use ::gpui::IntoElement;
+                    use ::gpui::IntoElement as _;
                     gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }
         }
     } else {
-        quote! {}
+        quote! {
+            impl gpui_table::runtime::TableRowStyle for #struct_name {
+                type ColumnId = #column_enum_name;
+
+                fn render_table_cell(
+                    &self,
+                    col: Self::ColumnId,
+                    window: &mut ::gpui::Window,
+                    cx: &mut ::gpui::App,
+                ) -> ::gpui::AnyElement {
+                    use ::gpui::IntoElement as _;
+
+                    match col {
+                        #(#style_match_arms)*
+                        _ => gpui_table::runtime::default_render_cell(self, col.into(), window, cx)
+                            .into_any_element(),
+                    }
+                }
+            }
+        }
     };
 
     let generated_context_menu_impl =
@@ -466,6 +544,23 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     // Generate matches_filters() method on the struct (only when filters enabled)
     let matches_filters_impl = generate_matches_filters_method(&struct_name, &filter_fields);
 
+    #[cfg(feature = "mcp")]
+    let mcp_impl = if let Some(mcp_options) = mcp.as_ref() {
+        generate_mcp_impl(
+            &struct_name,
+            &table_id,
+            &table_title,
+            &filter_fields,
+            Some(mcp_options),
+            original_input,
+        )?
+    } else {
+        quote! {}
+    };
+
+    #[cfg(not(feature = "mcp"))]
+    let mcp_impl = quote! {};
+
     #[cfg(feature = "inventory")]
     let uses_fluent_labels = fluent.is_some();
 
@@ -495,6 +590,8 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
     let shape_impl = quote! {};
 
     Ok(quote! {
+        #(#filter_shape_type_checks)*
+
         #column_enum
 
         impl gpui_table::TableRowMeta for #struct_name {
@@ -530,6 +627,7 @@ pub(super) fn expand_gpui_table(meta: TableMeta) -> syn::Result<proc_macro2::Tok
         #delegate_impl
         #filter_entities_impl
         #matches_filters_impl
+        #mcp_impl
     })
 }
 
@@ -561,7 +659,7 @@ fn determine_title_expr(
         let fluent_variant_ident = Ident::new(&field_name, ident.span());
 
         quote! {
-            gpui_table::runtime::generated_filters::fallback_message(
+            gpui_table::core::i18n::localize_message(
                 &#fluent_enum_ident::#fluent_variant_ident
             )
         }

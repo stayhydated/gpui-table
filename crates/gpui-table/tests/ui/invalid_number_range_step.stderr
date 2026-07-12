@@ -1,5 +1,0 @@
-error: `number_range(step = 0)` must be greater than 0
- --> tests/ui/invalid_number_range_step.rs:6:68
-  |
-6 |     #[gpui_table(filter(number_range(min = 0.0, max = 10.0, step = 0.0)))]
-  |                                                                    ^^^

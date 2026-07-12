@@ -3,7 +3,8 @@ source: crates/gpui-table/tests/table_rendering_snapshots.rs
 assertion_line: 88
 expression: "table_snapshot::<BasicRow>()"
 ---
-table_id: BasicRow
+table_id: basic_row
+typed_table_id: basic_row
 title: BasicRow
 columns:
   - key: name

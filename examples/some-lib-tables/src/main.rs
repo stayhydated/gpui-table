@@ -1,15 +1,9 @@
-use es_fluent::EsFluent;
-use es_fluent_lang::es_fluent_language;
 use gpui_storybook::{Assets, Gallery};
-use strum::EnumIter;
+use some_lib::i18n::Languages;
 
 // bring the stories in scope for inventory
 #[allow(unused_imports, clippy::single_component_path_imports)]
 use some_lib_tables;
-
-#[es_fluent_language]
-#[derive(Clone, Copy, Debug, EnumIter, EsFluent, PartialEq)]
-pub enum Languages {}
 
 fn main() {
     env_logger::init();
@@ -25,7 +19,7 @@ fn main() {
         gpui_storybook::change_locale(app_cx, Languages::default()).unwrap();
 
         #[cfg(feature = "router")]
-        gpui_router::init(app_cx);
+        some_lib_tables::route::init(app_cx);
 
         gpui_tokio::init(app_cx);
 

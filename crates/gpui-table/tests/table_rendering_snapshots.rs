@@ -2,6 +2,7 @@ use gpui::{App, Context, TextAlign, Window};
 use gpui_component::menu::PopupMenu;
 use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
 use gpui_table::TableRowMeta;
+use gpui_table::runtime::TableLoader;
 use gpui_table::{GpuiTable, gpui_table_impl};
 use serde::Serialize;
 
@@ -38,8 +39,7 @@ struct StyledRow {
 }
 
 #[gpui_table_impl]
-impl StyledRowTableDelegate {
-    #[load_more]
+impl TableLoader for StyledRowTableDelegate {
     fn load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
         // No-op for tests
     }
@@ -56,11 +56,9 @@ struct ThresholdRow {
 }
 
 #[gpui_table_impl]
-impl ThresholdRowTableDelegate {
-    #[threshold]
-    const LOAD_MORE_THRESHOLD: usize = 42;
+impl TableLoader for ThresholdRowTableDelegate {
+    const THRESHOLD: usize = 42;
 
-    #[load_more]
     fn load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
         // No-op for tests
     }
@@ -77,12 +75,10 @@ struct AnotherThresholdRow {
 }
 
 #[gpui_table_impl]
-impl AnotherThresholdRowTableDelegate {
-    #[threshold]
-    const MY_THRESHOLD: usize = 15;
+impl TableLoader for AnotherThresholdRowTableDelegate {
+    const THRESHOLD: usize = 15;
 
-    #[load_more]
-    fn fetch_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
+    fn load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
         // No-op for tests
     }
 }
@@ -100,12 +96,10 @@ struct CallbackRow {
 static LOAD_MORE_CALLED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 
 #[gpui_table_impl]
-impl CallbackRowTableDelegate {
-    #[threshold]
+impl TableLoader for CallbackRowTableDelegate {
     const THRESHOLD: usize = 5;
 
-    #[load_more]
-    fn on_load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
+    fn load_more(&mut self, _window: &mut Window, _cx: &mut Context<TableState<Self>>) {
         LOAD_MORE_CALLED.store(true, std::sync::atomic::Ordering::SeqCst);
     }
 }
@@ -205,6 +199,7 @@ struct ColumnSnapshot {
 #[derive(Serialize)]
 struct TableSnapshot {
     table_id: &'static str,
+    typed_table_id: String,
     title: String,
     columns: Vec<ColumnSnapshot>,
 }
@@ -238,9 +233,20 @@ fn to_column_snapshot(column: &Column) -> ColumnSnapshot {
 fn table_snapshot<T: TableRowMeta>() -> TableSnapshot {
     TableSnapshot {
         table_id: T::TABLE_ID,
+        typed_table_id: T::table_id().to_string(),
         title: T::table_title(),
         columns: T::table_columns().iter().map(to_column_snapshot).collect(),
     }
+}
+
+#[test]
+fn table_row_meta_exposes_typed_table_id() {
+    let table_id = BasicRow::table_id();
+
+    assert_eq!(table_id.as_str(), BasicRow::TABLE_ID);
+    assert_eq!(table_id.to_string(), "basic_row");
+    assert_eq!(String::from(table_id), "basic_row");
+    assert!(!table_id.is_empty());
 }
 
 #[test]
@@ -266,28 +272,28 @@ fn test_default_threshold_no_load_more() {
 
 #[test]
 fn test_default_threshold_load_more_enabled() {
-    // StyledRowTableDelegate enables load_more but has no #[threshold] const.
+    // StyledRowTableDelegate enables load_more and uses TableLoader::THRESHOLD.
     let delegate = StyledRowTableDelegate::new(vec![]);
     assert_eq!(delegate.load_more_threshold(), 10);
 }
 
 #[test]
 fn test_custom_threshold() {
-    // ThresholdRowTableDelegate has #[threshold] const LOAD_MORE_THRESHOLD: usize = 42
+    // ThresholdRowTableDelegate sets TableLoader::THRESHOLD to 42.
     let delegate = ThresholdRowTableDelegate::new(vec![]);
     assert_eq!(delegate.load_more_threshold(), 42);
 }
 
 #[test]
-fn test_custom_threshold_different_name() {
-    // AnotherThresholdRowTableDelegate has #[threshold] const MY_THRESHOLD: usize = 15
+fn test_custom_threshold_second_delegate() {
+    // AnotherThresholdRowTableDelegate sets TableLoader::THRESHOLD to 15.
     let delegate = AnotherThresholdRowTableDelegate::new(vec![]);
     assert_eq!(delegate.load_more_threshold(), 15);
 }
 
 #[test]
 fn test_callback_row_threshold() {
-    // CallbackRowTableDelegate has #[threshold] const THRESHOLD: usize = 5
+    // CallbackRowTableDelegate sets TableLoader::THRESHOLD to 5.
     let delegate = CallbackRowTableDelegate::new(vec![]);
     assert_eq!(delegate.load_more_threshold(), 5);
 }
@@ -297,7 +303,7 @@ fn test_has_more_default_eof() {
     // Test has_more with default eof field
     let delegate = BasicRowTableDelegate::new(vec![]);
 
-    // With no #[load_more], has_more defaults to false even though eof/loading are false.
+    // With load_more disabled, has_more defaults to false even though eof/loading are false.
     assert!(!delegate.eof);
     assert!(!delegate.loading);
     // Note: has_more requires &App which we can't easily create in unit tests

@@ -1,0 +1,59 @@
+codecov:
+  require_ci_to_pass: true
+
+# https://docs.codecov.com/docs/components
+component_management:
+  individual_components:
+    - component_id: gpui-table
+      name: "gpui-table"
+      paths:
+        - crates/gpui-table/**
+
+    - component_id: gpui-table-component
+      name: "gpui-table-component"
+      paths:
+        - crates/gpui-table-component/**
+
+    - component_id: gpui-table-core
+      name: "gpui-table-core"
+      paths:
+        - crates/gpui-table-core/**
+
+    - component_id: gpui-table-derive
+      name: "gpui-table-derive"
+      paths:
+        - crates/gpui-table-derive/**
+
+    - component_id: gpui-table-mcp
+      name: "gpui-table-mcp"
+      paths:
+        - crates/gpui-table-mcp/**
+
+    - component_id: gpui-table-prototyping-core
+      name: "gpui-table-prototyping-core"
+      paths:
+        - crates/gpui-table-prototyping-core/**
+
+    - component_id: gpui-table-runtime
+      name: "gpui-table-runtime"
+      paths:
+        - crates/gpui-table-runtime/**
+
+    - component_id: gpui-table-schema
+      name: "gpui-table-schema"
+      paths:
+        - crates/gpui-table-schema/**
+
+coverage:
+  precision: 2
+  round: down
+  range: "90...100"
+  status:
+    project:
+      default:
+        target: 90%
+        threshold: 5%
+    patch:
+      default:
+        target: 90%
+        threshold: 10%

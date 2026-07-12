@@ -43,3 +43,31 @@ pub enum FilterType {
     NumberRange,
     Text,
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{FacetedFilterIcon, FacetedFilterOption, FilterConfig, FilterType};
+
+    #[test]
+    fn faceted_filter_metadata_preserves_icons_and_option_details() {
+        let icon = FacetedFilterIcon::from_path("icons/check.svg");
+        assert_eq!(icon.path(), "icons/check.svg");
+
+        let option = FacetedFilterOption {
+            group: Some("State".into()),
+            label: "Active".into(),
+            value: "active".into(),
+            count: Some(3),
+            icon: Some(icon),
+        };
+        let config = FilterConfig {
+            column_index: 2,
+            filter_type: FilterType::Faceted(vec![option.clone()]),
+        };
+
+        assert_eq!(config.column_index, 2);
+        assert_eq!(config.filter_type, FilterType::Faceted(vec![option]));
+        assert_ne!(FilterType::DateRange, FilterType::NumberRange);
+        assert_ne!(FilterType::Text, FilterType::NumberRange);
+    }
+}

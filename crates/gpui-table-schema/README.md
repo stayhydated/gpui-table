@@ -34,13 +34,14 @@ In normal application code, those registrations are produced by
 ## What It Provides
 
 - `FilterConfig`, `FilterType`, `FacetedFilterOption`, and `FacetedFilterIcon`
-- `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
-- the `inventory` re-export used to collect and iterate registered shapes
+- `TableId`, `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
+- `ComponentShapeUse`, `RustPath`, and `RustType` for field-to-filter-shape and Rust syntax metadata captured from macro-generated schema registrations
+- the `inventory` re-export for collecting and iterating registered shapes
 
 This crate intentionally does not depend on `gpui` or `gpui-component`.
 
 If you need derives, loaders, rendering traits, or built-in filter UI, use
 `gpui-table` instead.
 
-For internal metadata contracts and dependency boundaries, see
-`docs/ARCHITECTURE.md`.
+For internal metadata contracts and dependency boundaries, read the crate
+rustdocs and the registry module.

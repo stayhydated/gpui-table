@@ -1,0 +1,4 @@
+interface:
+  display_name: "use-gpui-table-component-shapes"
+  short_description: "Choose gpui-table filter shape patterns"
+  default_prompt: "Use $use-gpui-table-component-shapes to wire custom filter component shapes into gpui-table tables."

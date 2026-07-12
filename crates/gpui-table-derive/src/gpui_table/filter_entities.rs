@@ -1,5 +1,4 @@
-use crate::components::{FilterComponents, FilterRenderGroup};
-use crate::gpui_table::filter_codegen::{generate_filter_chain_methods, get_filter_type_tokens};
+use crate::gpui_table::filter_codegen::get_filter_type_tokens;
 use crate::gpui_table::meta::FilterFieldMeta;
 
 use darling::util::Override;
@@ -29,7 +28,7 @@ pub(super) fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let filter_type_tokens = get_filter_type_tokens(&f.filter_config, Some(&f.field_type));
+            let filter_type_tokens = get_filter_type_tokens(&f.filter_config);
             let field_doc = format!(
                 "Entity handle for the `{}` {} filter component.",
                 field_ident,
@@ -65,10 +64,13 @@ pub(super) fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
+            let shape = f.filter_config.shape();
             quote! {
-                self.#field_ident.update(cx, |filter, cx| {
-                    filter.reset_silent(window, cx);
-                });
+                <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::reset_silent(
+                    &self.#field_ident,
+                    window,
+                    cx,
+                );
             }
         })
         .collect();
@@ -84,16 +86,8 @@ pub(super) fn generate_filter_entities(
                 field_ident,
                 f.filter_config.kind_label()
             );
-            let raw_value_type = f.filter_config.raw_value_type_tokens(&f.field_type);
-            let raw_value_expr = match &f.filter_config {
-                FilterComponents::Text(_) => quote! { self.#field_ident.read(cx).value().to_string() },
-                FilterComponents::NumberRange(_) | FilterComponents::DateRange(_) => {
-                    quote! { self.#field_ident.read(cx).value() }
-                },
-                FilterComponents::Faceted(_) => {
-                    quote! { self.#field_ident.read(cx).value().clone() }
-                },
-            };
+            let raw_value_type = f.filter_config.raw_value_type_tokens();
+            let raw_value_expr = f.filter_config.read_raw_value_expr(field_ident);
 
             quote! {
                 #[doc = #getter_doc]
@@ -101,18 +95,6 @@ pub(super) fn generate_filter_entities(
                     #raw_value_expr
                 }
             }
-        })
-        .collect();
-
-    // Generate render helpers that group filters by type.
-    let group_renders: Vec<proc_macro2::TokenStream> = FilterRenderGroup::ALL
-        .into_iter()
-        .map(|group| {
-            let fields: Vec<&FilterFieldMeta> = filter_fields
-                .iter()
-                .filter(|field| field.filter_config.render_group() == group)
-                .collect();
-            generate_group_render_method(group.method_name(), group.doc_label(), &fields)
         })
         .collect();
 
@@ -133,7 +115,7 @@ pub(super) fn generate_filter_entities(
         .iter()
         .map(|f| {
             let field_ident = &f.field_ident;
-            let value_type = f.filter_config.generated_value_type_tokens(&f.field_type);
+            let value_type = f.filter_config.generated_value_type_tokens();
             let field_doc = filter_value_field_doc(f);
             let query_doc = filter_value_query_doc(f);
             quote! {
@@ -168,19 +150,19 @@ pub(super) fn generate_filter_entities(
         .collect();
 
     let build_doc = format!(
-        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` can be used to snapshot the current state into `{filter_values_name}`."
+        "Build all filter entities without wiring them into a specific table state.\n\nUse this when you want to manage reloads manually. The optional `on_filter_change` callback runs after any generated filter changes, and `read_values()` snapshots the current state into `{filter_values_name}`."
     );
     let build_for_table_doc = format!(
         "Build filters and wire them directly into a generated table delegate for client-side filtering.\n\nOn each filter change this reads `{filter_values_name}`, calls `table.delegate_mut().set_filter_values(...)`, and notifies the table so generated `Matchable` logic re-runs against the in-memory rows."
     );
     let build_for_table_loader_doc = format!(
-        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports it."
+        "Build filters and wire them into a generated table delegate that uses `TableDataLoader` for server-side loading.\n\nOn each filter change this reads `{filter_values_name}`, stores it with `set_filter_values(...)`, resets paging state, and calls `load_data(...)`. Inside your loader implementation, inspect those generated wrapper fields and serialize them with `gpui_table_component::QueryFilterValue::to_query_string()` when the wrapped type supports it."
     );
     let build_for_table_loader_with_doc = format!(
         "Same as `build_for_table_loader(...)`, but lets callers customize delegate state just before each `load_data(...)` call.\n\nThe optional `before_reload` hook runs before every reload, including the initial one. This is useful when `{filter_values_name}` changes should also clear cached rows, paging cursors, or other delegate-owned request state."
     );
     let read_values_doc = format!(
-        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table::runtime::generated_filters::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
+        "Read all current filter state into `{filter_values_name}`.\n\nThe returned fields use the typed wrappers from `gpui_table::core::filter`, which are the same values stored on generated delegates via `set_filter_values(...)`. For server-side loaders, serialize individual fields with `gpui_table_component::QueryFilterValue::to_query_string()` when the wrapped type supports query serialization."
     );
     let filter_values_doc = format!(
         "Typed filter state produced by `{filter_entities_name}`.\n\nEach field uses a wrapper from `gpui_table::core::filter` (`TextValue`, `RangeValue<_>`, `FacetedValue<_>`, or `SingleValue<_>`), which is the shape consumed by generated client-side matching and stored on generated delegates for loader-based tables."
@@ -216,8 +198,6 @@ pub(super) fn generate_filter_entities(
                 >,
                 cx: &mut ::gpui::App,
             ) -> Self {
-                use gpui_table::runtime::generated_filters::TableFilterComponent as _;
-
                 #(#filter_builders)*
 
                 Self {
@@ -360,9 +340,9 @@ pub(super) fn generate_filter_entities(
             }
 
             /// Build a localized reset button bound to these filter entities.
-            pub fn reset_button(&self) -> gpui_table::runtime::generated_filters::reset_filters::ResetFilters {
+            pub fn reset_button(&self) -> gpui_table_component::reset_filters::ResetFilters {
                 let filters = self.clone();
-                gpui_table::runtime::generated_filters::reset_filters::ResetFilters::new(move |window, cx| {
+                gpui_table_component::reset_filters::ResetFilters::new(move |window, cx| {
                     filters.reset_filters(window, cx);
                 })
                 .button_id(format!("{}-reset-filters", stringify!(#struct_name)))
@@ -375,8 +355,6 @@ pub(super) fn generate_filter_entities(
                     #(#all_filter_fields)*
                     .child(self.reset_button())
             }
-
-            #(#group_renders)*
 
             // Value getters for server-side filtering
             #(#value_getters)*
@@ -430,56 +408,55 @@ fn generate_filter_builder_tokens(
     struct_name: &Ident,
 ) -> proc_macro2::TokenStream {
     let field_ident = &field.field_ident;
-    let filter_type_tokens = get_filter_type_tokens(&field.filter_config, Some(&field.field_type));
     let title_expr = determine_filter_title_expr(field_ident, fluent_config, struct_name);
-    let chain_methods = generate_filter_chain_methods(&field.filter_config);
+    let shape = field.filter_config.shape();
+    let constructor = field.filter_config.constructor_expr();
+    let constructor_tokens =
+        filter_constructor_tokens(shape, constructor, quote! { |cx| #title_expr });
 
     quote! {
         let #field_ident = {
             let on_filter_change = on_filter_change.clone();
-            let filter = #filter_type_tokens::new_for(
-                |cx| #title_expr,
-                Default::default(),
-                move |_value, window, cx| {
-                    if let Some(ref on_change) = on_filter_change {
-                        let on_change = on_change.clone();
-                        window.defer(cx, move |window, cx| {
-                            on_change(window, cx);
-                        });
-                    }
-                },
-                cx,
-            );
-            #chain_methods
-            filter
+            #constructor_tokens
         };
     }
 }
 
-fn generate_group_render_method(
-    method_name: &str,
-    doc_label: &str,
-    fields: &[&FilterFieldMeta],
+fn filter_constructor_tokens(
+    shape: &syn::Path,
+    constructor: Option<&syn::Expr>,
+    title: proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
-    if fields.is_empty() {
-        return quote! {};
-    }
+    let value = quote! { Default::default() };
+    let on_change = quote! {
+        move |_value, window, cx| {
+            if let Some(ref on_change) = on_filter_change {
+                let on_change = on_change.clone();
+                window.defer(cx, move |window, cx| {
+                    on_change(window, cx);
+                });
+            }
+        }
+    };
 
-    let method_ident = Ident::new(method_name, proc_macro2::Span::call_site());
-    let children: Vec<proc_macro2::TokenStream> = fields
-        .iter()
-        .map(|field| {
-            let ident = &field.field_ident;
-            quote! { .child(self.#ident.clone()) }
-        })
-        .collect();
-
-    quote! {
-        #[doc = concat!("Render all ", #doc_label, " as children (returns impl IntoElement).")]
-        pub fn #method_ident(&self) -> impl gpui::IntoElement {
-            use gpui::{ParentElement as _, Styled as _};
-            gpui::div().flex().items_center().gap_2()
-                #(#children)*
+    if let Some(constructor) = constructor {
+        quote! {
+            gpui_table::runtime::shape::build_filter_shape::<#shape, _>(
+                #constructor,
+                #title,
+                #value,
+                #on_change,
+                cx,
+            )
+        }
+    } else {
+        quote! {
+            <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::new_for(
+                #title,
+                #value,
+                #on_change,
+                cx,
+            )
         }
     }
 }
@@ -494,29 +471,16 @@ fn filter_value_field_doc(field: &FilterFieldMeta) -> String {
 }
 
 fn filter_value_query_doc(_field: &FilterFieldMeta) -> String {
-    "This wrapper can be serialized with `gpui_table::runtime::generated_filters::QueryFilterValue` for loader-style query building.".to_string()
+    "This wrapper can be serialized with `gpui_table_component::QueryFilterValue` for loader-style query building.".to_string()
 }
 
 fn generated_filter_value_type_name(field: &FilterFieldMeta) -> String {
-    match &field.filter_config {
-        FilterComponents::Text(_) => "gpui_table::core::filter::TextValue".to_string(),
-        FilterComponents::NumberRange(_) => {
-            "gpui_table::core::filter::RangeValue<gpui_table::__deps::rust_decimal::Decimal>"
-                .to_string()
-        },
-        FilterComponents::Faceted(_) => format!(
-            "gpui_table::core::filter::FacetedValue<{}>",
-            compact_type_name(faceted_filter_value_type(&field.field_type))
-        ),
-        FilterComponents::DateRange(_) => {
-            "gpui_table::core::filter::RangeValue<gpui_table::__deps::chrono::NaiveDate>"
-                .to_string()
-        },
-    }
+    compact_type_name(&field.filter_config.generated_value_type_tokens())
 }
 
-fn compact_type_name(ty: &impl ToTokens) -> String {
-    ty.to_token_stream()
+fn compact_type_name(tokens: &impl ToTokens) -> String {
+    tokens
+        .to_token_stream()
         .to_string()
         .replace(" :: ", "::")
         .replace(" < ", "<")
@@ -524,31 +488,6 @@ fn compact_type_name(ty: &impl ToTokens) -> String {
         .replace(" , ", ", ")
         .replace(" ( ", "(")
         .replace(" )", ")")
-}
-
-fn faceted_filter_value_type(ty: &syn::Type) -> &syn::Type {
-    option_inner_type(ty).unwrap_or(ty)
-}
-
-fn option_inner_type(ty: &syn::Type) -> Option<&syn::Type> {
-    let syn::Type::Path(type_path) = ty else {
-        return None;
-    };
-
-    let segment = type_path.path.segments.last()?;
-    if segment.ident != "Option" {
-        return None;
-    }
-
-    let syn::PathArguments::AngleBracketed(args) = &segment.arguments else {
-        return None;
-    };
-
-    let syn::GenericArgument::Type(inner) = args.args.first()? else {
-        return None;
-    };
-
-    Some(inner)
 }
 
 /// Determine the title expression for a filter based on fluent config.
@@ -575,7 +514,7 @@ fn determine_filter_title_expr(
         let fluent_variant_ident = Ident::new(&field_name, field_ident.span());
 
         quote! {
-            gpui_table::runtime::generated_filters::localize_message(
+            gpui_table_component::i18n::localize_message(
                 cx,
                 &#fluent_enum_ident::#fluent_variant_ident
             )

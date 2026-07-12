@@ -1,0 +1,82 @@
+error[E0277]: table filter shape `NumberRangeFilter` does not support field value `std::string::String`
+ --> tests/ui/invalid_number_range_type_spacetimedb.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `NumberRangeFilter`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `NumberRangeFilter`, or choose a filter shape that supports the field type
+  = help: `NumberRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
+            GpuiTableFilterShapeFor<f32>
+            GpuiTableFilterShapeFor<f64>
+            GpuiTableFilterShapeFor<gpui_table::__deps::rust_decimal::decimal::Decimal>
+            GpuiTableFilterShapeFor<i16>
+            GpuiTableFilterShapeFor<i32>
+            GpuiTableFilterShapeFor<i64>
+            GpuiTableFilterShapeFor<i8>
+            GpuiTableFilterShapeFor<isize>
+            GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
+            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
+            GpuiTableFilterShapeFor<std::option::Option<f32>>
+            GpuiTableFilterShapeFor<std::option::Option<f64>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
+            GpuiTableFilterShapeFor<std::option::Option<i16>>
+            GpuiTableFilterShapeFor<std::option::Option<i32>>
+            GpuiTableFilterShapeFor<std::option::Option<i64>>
+            GpuiTableFilterShapeFor<std::option::Option<i8>>
+            GpuiTableFilterShapeFor<std::option::Option<isize>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::time_duration::TimeDuration>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<u16>>
+            GpuiTableFilterShapeFor<std::option::Option<u32>>
+            GpuiTableFilterShapeFor<std::option::Option<u64>>
+            GpuiTableFilterShapeFor<std::option::Option<u8>>
+            GpuiTableFilterShapeFor<std::option::Option<usize>>
+            GpuiTableFilterShapeFor<u16>
+            GpuiTableFilterShapeFor<u32>
+            GpuiTableFilterShapeFor<u64>
+            GpuiTableFilterShapeFor<u8>
+            GpuiTableFilterShapeFor<usize>
+note: required by a bound in `__gpui_table_assert_name_filter_shape_field_support`
+ --> tests/ui/invalid_number_range_type_spacetimedb.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^ required by this bound in `__gpui_table_assert_name_filter_shape_field_support`
+
+error[E0277]: table filter shape `NumberRangeFilter` does not support field value `std::string::String`
+ --> tests/ui/invalid_number_range_type_spacetimedb.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `NumberRangeFilter`
+  |
+  = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `NumberRangeFilter`, or choose a filter shape that supports the field type
+  = help: `NumberRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
+            GpuiTableFilterShapeFor<f32>
+            GpuiTableFilterShapeFor<f64>
+            GpuiTableFilterShapeFor<gpui_table::__deps::rust_decimal::decimal::Decimal>
+            GpuiTableFilterShapeFor<i16>
+            GpuiTableFilterShapeFor<i32>
+            GpuiTableFilterShapeFor<i64>
+            GpuiTableFilterShapeFor<i8>
+            GpuiTableFilterShapeFor<isize>
+            GpuiTableFilterShapeFor<spacetimedb_sats::time_duration::TimeDuration>
+            GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
+            GpuiTableFilterShapeFor<std::option::Option<f32>>
+            GpuiTableFilterShapeFor<std::option::Option<f64>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::rust_decimal::decimal::Decimal>>
+            GpuiTableFilterShapeFor<std::option::Option<i16>>
+            GpuiTableFilterShapeFor<std::option::Option<i32>>
+            GpuiTableFilterShapeFor<std::option::Option<i64>>
+            GpuiTableFilterShapeFor<std::option::Option<i8>>
+            GpuiTableFilterShapeFor<std::option::Option<isize>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::time_duration::TimeDuration>>
+            GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<u16>>
+            GpuiTableFilterShapeFor<std::option::Option<u32>>
+            GpuiTableFilterShapeFor<std::option::Option<u64>>
+            GpuiTableFilterShapeFor<std::option::Option<u8>>
+            GpuiTableFilterShapeFor<std::option::Option<usize>>
+            GpuiTableFilterShapeFor<u16>
+            GpuiTableFilterShapeFor<u32>
+            GpuiTableFilterShapeFor<u64>
+            GpuiTableFilterShapeFor<u8>
+            GpuiTableFilterShapeFor<usize>

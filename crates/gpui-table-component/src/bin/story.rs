@@ -1,15 +1,9 @@
-use es_fluent::EsFluent;
-use es_fluent_lang::es_fluent_language;
 use gpui_storybook::{Assets, Gallery};
-use strum::EnumIter;
+use gpui_table_component::i18n::Languages;
 
 // bring the stories in scope for inventory
 #[allow(unused_imports, clippy::single_component_path_imports)]
 use gpui_table_component;
-
-#[es_fluent_language]
-#[derive(Clone, Copy, Debug, EnumIter, Eq, EsFluent, PartialEq)]
-pub enum Languages {}
 
 fn main() {
     let app = gpui_platform::application().with_assets(Assets);

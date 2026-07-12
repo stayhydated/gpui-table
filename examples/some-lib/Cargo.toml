@@ -12,32 +12,26 @@ crate-type = [ "cdylib", "lib" ]
 client = [
   "dep:chrono",
   "dep:es-fluent",
+  "dep:es-fluent-lang",
   "dep:es-fluent-manager-embedded",
   "dep:fake",
   "dep:gpui",
   "dep:gpui-component",
-  "dep:gpui-router",
   "dep:gpui-table",
   "dep:gpui-table-component",
-  "dep:gpui_tokio",
-  "dep:heck",
-  "dep:log",
-  "dep:reqwest",
   "dep:rust_decimal",
   "dep:serde",
-  "dep:serde_json",
   "dep:strum",
-  "dep:tokio",
-  "dep:urlencoding",
   "dep:uuid",
 ]
 db = [  ]
 default = [  ]
-router = [ "client", "dep:gpui-router" ]
+router = [ "client" ]
 
 [dependencies]
 chrono = { optional = true, workspace = true }
-es-fluent = { features = [ "derive" ], optional = true, workspace = true }
+es-fluent = { optional = true, workspace = true }
+es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 fake = { features = [
   "derive",
@@ -48,25 +42,23 @@ fake = { features = [
 ], optional = true, workspace = true }
 gpui = { optional = true, workspace = true }
 gpui-component = { optional = true, workspace = true }
-gpui-router = { optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",
   "rust_decimal",
   "chrono",
 ], optional = true, workspace = true }
-gpui-table-component = { optional = true, workspace = true }
-gpui_tokio = { optional = true, workspace = true }
-heck = { optional = true, workspace = true }
-log = { optional = true, workspace = true }
-reqwest = { features = [ "json" ], optional = true, workspace = true }
+gpui-table-component = { features = [
+  "chrono",
+  "rust_decimal",
+], optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
-serde_json = { optional = true, workspace = true }
-strum = { features = [ "derive" ], optional = true, workspace = true }
-tokio = { optional = true, workspace = true }
-urlencoding = { optional = true, workspace = true }
+strum = { optional = true, workspace = true }
 uuid = { optional = true, workspace = true }
 
 [build-dependencies]
 es-fluent-build = { workspace = true }
+
+[lints]
+workspace = true

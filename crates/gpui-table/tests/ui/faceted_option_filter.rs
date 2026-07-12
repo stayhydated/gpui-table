@@ -9,7 +9,7 @@ enum Status {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct OptionalFacetedRow {
-    #[gpui_table(filter(faceted()))]
+    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>))]
     status: Option<Status>,
 }
 

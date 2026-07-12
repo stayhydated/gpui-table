@@ -147,3 +147,80 @@ impl ToNaiveDate for spacetimedb_lib::Timestamp {
             .unwrap_or_default()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    #[cfg(feature = "rust_decimal")]
+    use super::ToDecimal as _;
+    #[cfg(feature = "chrono")]
+    use super::ToNaiveDate as _;
+
+    #[cfg(feature = "rust_decimal")]
+    #[test]
+    fn standard_numbers_convert_to_decimal_without_losing_their_value() {
+        use rust_decimal::Decimal;
+
+        assert_eq!(Decimal::new(125, 2).to_decimal(), Decimal::new(125, 2));
+        assert_eq!(1.5_f64.to_decimal(), Decimal::from_f64_retain(1.5).unwrap());
+        assert_eq!(2.5_f32.to_decimal(), Decimal::from_f32_retain(2.5).unwrap());
+        assert_eq!(f64::NAN.to_decimal(), Decimal::ZERO);
+        assert_eq!(f32::NAN.to_decimal(), Decimal::ZERO);
+
+        assert_eq!((-8_i8).to_decimal(), Decimal::from(-8));
+        assert_eq!((-16_i16).to_decimal(), Decimal::from(-16));
+        assert_eq!((-32_i32).to_decimal(), Decimal::from(-32));
+        assert_eq!((-64_i64).to_decimal(), Decimal::from(-64));
+        assert_eq!(8_u8.to_decimal(), Decimal::from(8));
+        assert_eq!(16_u16.to_decimal(), Decimal::from(16));
+        assert_eq!(32_u32.to_decimal(), Decimal::from(32));
+        assert_eq!(64_u64.to_decimal(), Decimal::from(64));
+        assert_eq!(8_usize.to_decimal(), Decimal::from(8));
+        assert_eq!((-8_isize).to_decimal(), Decimal::from(-8));
+    }
+
+    #[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
+    #[test]
+    fn spacetimedb_time_values_convert_to_decimal_microseconds() {
+        use rust_decimal::Decimal;
+        use spacetimedb_lib::{TimeDuration, Timestamp};
+
+        assert_eq!(
+            Timestamp::from_micros_since_unix_epoch(42).to_decimal(),
+            Decimal::from(42)
+        );
+        assert_eq!(
+            TimeDuration::from_micros(-42).to_decimal(),
+            Decimal::from(-42)
+        );
+    }
+
+    #[cfg(feature = "chrono")]
+    #[test]
+    fn chrono_values_convert_to_their_calendar_date() {
+        use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+
+        let date = NaiveDate::from_ymd_opt(2026, 7, 11).unwrap();
+        let datetime = date.and_hms_opt(23, 59, 58).unwrap();
+        let zoned = DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc);
+
+        assert_eq!(date.to_naive_date(), date);
+        assert_eq!(NaiveDateTime::to_naive_date(&datetime), date);
+        assert_eq!(zoned.to_naive_date(), date);
+    }
+
+    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[test]
+    fn spacetimedb_timestamps_convert_to_dates_with_a_safe_fallback() {
+        use chrono::NaiveDate;
+        use spacetimedb_lib::Timestamp;
+
+        assert_eq!(
+            Timestamp::from_micros_since_unix_epoch(0).to_naive_date(),
+            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
+        );
+        assert_eq!(
+            Timestamp::from_micros_since_unix_epoch(i64::MAX).to_naive_date(),
+            NaiveDate::default()
+        );
+    }
+}

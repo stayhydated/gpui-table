@@ -15,9 +15,29 @@ path = "src/bin/story.rs"
 required-features = [ "story" ]
 
 [features]
-chrono = [ "dep:chrono", "dep:icu", "dep:jiff" ]
+chrono = [
+  "dep:chrono",
+  "dep:icu",
+  "dep:jiff",
+  "gpui-table-mcp?/chrono",
+  "gpui-table-core/chrono",
+  "gpui-table-runtime/chrono",
+]
 default = [ "chrono", "rust_decimal" ]
-rust_decimal = [ "dep:rust_decimal" ]
+mcp = [ "dep:gpui-table-mcp" ]
+rust_decimal = [
+  "dep:rust_decimal",
+  "gpui-table-mcp?/rust_decimal",
+  "gpui-table-core/rust_decimal",
+  "gpui-table-runtime/rust_decimal",
+]
+spacetimedb = [
+  "chrono",
+  "dep:spacetimedb-lib",
+  "gpui-table-mcp?/spacetimedb",
+  "gpui-table-core/spacetimedb",
+  "gpui-table-runtime/spacetimedb",
+]
 story = [
   "chrono",
   "rust_decimal",
@@ -29,7 +49,8 @@ story = [
 
 [dependencies]
 chrono = { features = [ "serde" ], optional = true, workspace = true }
-es-fluent = { features = [ "derive" ], workspace = true }
+component-shape = { workspace = true }
+es-fluent = { workspace = true }
 es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { workspace = true }
 gpui = { workspace = true }
@@ -37,15 +58,22 @@ gpui-component = { workspace = true }
 gpui-es-fluent = { features = [ "component" ], workspace = true }
 gpui-storybook = { optional = true, workspace = true }
 gpui-table-core = { default-features = false, features = [ "fluent" ], workspace = true }
+gpui-table-mcp = { default-features = false, optional = true, workspace = true }
+gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 gpui_platform = { optional = true, workspace = true }
 icu = { optional = true, workspace = true }
 jiff = { optional = true, workspace = true }
+regex = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
+spacetimedb-lib = { optional = true, workspace = true }
 strum = { features = [ "derive" ], optional = true, workspace = true }
 
 [build-dependencies]
 es-fluent-build = { workspace = true }
+
+[dev-dependencies]
+gpui = { features = [ "test-support" ], workspace = true }
 
 [lints]
 workspace = true

@@ -2,9 +2,20 @@
 //!
 //! Public API is namespaced by responsibility:
 //! - `gpui_table::core` for pure filter semantics
+//! - `gpui_table::mcp` for experimental MCP table query integration
 //! - `gpui_table::runtime` for GPUI-facing traits/helpers
 //! - `gpui_table::schema` for metadata and registry types
-//! - root-level proc macros from `gpui-table-derive`
+//! - root-level proc macros from `gpui-table-derive`, including
+//!   `GpuiTableFilterShape` for adapting existing filter shapes
+//!
+//! Concrete filter widgets and component-owned helpers live in
+//! `gpui-table-component` and are intentionally not re-exported from this
+//! facade.
+//!
+//! The facade owns the stable paths that macro-generated code names. Changes to
+//! root re-exports, `runtime::generated_filters`, `registry`, `__deps`, or
+//! `__private` must stay aligned with `gpui-table-derive`, examples, and UI
+//! compile-fail fixtures.
 //!
 //! # Quick Start
 //!
@@ -20,8 +31,8 @@
 //!
 //! # Filter Feature Requirements
 //!
-//! - `filter(number_range(...))` requires the `rust_decimal` feature.
-//! - `filter(date_range(...))` requires the `chrono` feature.
+//! - `gpui_table_component::NumberRangeFilter` requires the `rust_decimal` feature.
+//! - `gpui_table_component::DateRangeFilter` requires the `chrono` feature.
 //! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!
@@ -32,9 +43,11 @@ pub use gpui_table_derive::*;
 
 pub use gpui_table_core as core;
 pub use gpui_table_core::filter;
+#[cfg(feature = "mcp")]
+pub use gpui_table_mcp as mcp;
 pub use gpui_table_runtime as runtime;
 pub use gpui_table_runtime::{
-    FilterEntitiesExt, TableCell, TableDataLoader, TableLoader, TableRowContextMenu,
+    FilterEntitiesExt, TableCell, TableDataLoader, TableId, TableLoader, TableRowContextMenu,
     TableRowGeneratedContextMenu, TableRowMeta, TableRowStyle,
 };
 pub use gpui_table_schema as schema;

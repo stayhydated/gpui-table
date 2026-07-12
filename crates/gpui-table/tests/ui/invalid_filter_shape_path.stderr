@@ -1,0 +1,5 @@
+error[E0425]: cannot find type `MissingFilter` in crate `gpui_table_component`
+ --> tests/ui/invalid_filter_shape_path.rs:6:47
+  |
+6 |     #[gpui_table(filter(gpui_table_component::MissingFilter))]
+  |                                               ^^^^^^^^^^^^^ not found in `gpui_table_component`

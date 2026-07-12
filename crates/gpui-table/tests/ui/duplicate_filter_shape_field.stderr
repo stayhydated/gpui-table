@@ -1,0 +1,5 @@
+error: duplicate `GpuiTableFilterShape` field type
+ --> tests/ui/duplicate_filter_shape_field.rs:7:12
+  |
+7 |     fields(String)
+  |            ^^^^^^

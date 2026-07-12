@@ -1,6 +1,6 @@
 use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
 use gpui_component::{menu::PopupMenu, table::Column};
-use gpui_table_schema::filter::FilterConfig;
+use gpui_table_schema::{filter::FilterConfig, registry::TableId};
 
 use crate::TableCell;
 
@@ -18,6 +18,11 @@ pub trait TableRowMeta {
         Self::TABLE_TITLE.to_string()
     }
 
+    /// Returns the typed table identifier.
+    fn table_id() -> TableId<'static> {
+        TableId::new(Self::TABLE_ID)
+    }
+
     /// Returns the column definitions for this row type.
     fn table_columns() -> Vec<Column>;
 
@@ -30,7 +35,7 @@ pub trait TableRowMeta {
     }
 }
 
-/// Styling hooks for a table row.
+/// Rendering contract for a table row.
 pub trait TableRowStyle: TableRowMeta {
     /// The type representing the columns of the table.
     type ColumnId: Into<usize> + From<usize>;
@@ -90,4 +95,35 @@ pub fn default_render_cell<R: TableRowMeta + ?Sized>(
 /// Default implementation for rendering a row.
 pub fn default_render_row(row_ix: usize, _window: &mut Window, _cx: &mut App) -> Stateful<Div> {
     div().id(row_ix)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::TableRowMeta;
+    use crate::TableCell;
+    use gpui_component::table::Column;
+
+    struct Row;
+
+    impl TableRowMeta for Row {
+        const TABLE_ID: &'static str = "row";
+        const TABLE_TITLE: &'static str = "Rows";
+
+        fn table_columns() -> Vec<Column> {
+            Vec::new()
+        }
+
+        fn cell_value(&self, _col_ix: usize) -> Box<dyn TableCell + '_> {
+            Box::new("cell")
+        }
+    }
+
+    #[test]
+    fn row_metadata_defaults_expose_ids_titles_and_no_filters() {
+        assert_eq!(Row::table_title(), "Rows");
+        assert_eq!(Row::table_id().as_str(), "row");
+        assert!(Row::table_columns().is_empty());
+        assert!(Row::table_filters().is_empty());
+        let _ = Row.cell_value(0);
+    }
 }
