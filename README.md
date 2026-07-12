@@ -102,7 +102,8 @@ expression:
 `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges,
 `filter(gpui_table_component::DateRangeFilter)` for date ranges, and
 `filter(gpui_table_component::FacetedFilter::<T>)` for faceted values.
-Use `TextFilter.numeric_only()`, `TextFilter.alphanumeric_only()`,
+Use `TextFilter.alphabetic_only()`, `TextFilter.numeric_only()`,
+`TextFilter.alphanumeric_only()`,
 `TextFilter.matching_regex("[A-Z0-9-]*")`, or
 `FacetedFilter::<T>.searchable(true)` when the generated filter entity should
 construct a configured built-in filter. Use
@@ -115,6 +116,14 @@ Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
 implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
 store selected `T` values in the generated filter state; when a selection is
 active, rows with `None` or no matching vector element do not match that facet.
+
+Generated delegates expose source rows through `rows` and a filtered view to
+`DataTable`. Use `set_filter_values` or `clear_filter_values` to control typed
+client-side filters, and `set_row_scope` or `clear_row_scope` for an additional
+application-owned predicate. `visible_row_indices` returns indices into the
+source rows. Call `refresh_filtered_rows` after mutating row values in place
+when active filters or the row scope may produce a different result without a
+row-count change.
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
@@ -222,8 +231,9 @@ return value must use the same row type, so custom backends must return
 `Result<gpui_table::mcp::TableQueryResult<User>, E>`, and `User` must implement
 `serde::Serialize`. Custom query handlers can be synchronous or async.
 Use
-`query.result(rows, total)` to build the standard response from a decoded
-query. Use struct-level
+`query.result(rows, total)` to build the standard response from a decoded query
+when the backend owns filtering or totals, or `query.filter_rows(rows)` for
+generated filtering and pagination over an in-memory source. Use struct-level
 `#[gpui_table(mcp(name = "...", title = "...", description = "..."))]` to
 override the generated MCP tool name, title, or description. When
 `description` is omitted, the derive uses the row type's Rust doc comment.

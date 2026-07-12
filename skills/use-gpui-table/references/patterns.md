@@ -85,7 +85,8 @@ Built-in filters are explicit shape paths or configured shape expressions:
 `TextFilter` for strings,
 `NumberRangeFilter` for numeric values, `DateRangeFilter` for date-like values,
 and `FacetedFilter::<T>` for enum-like fields. Use
-`TextFilter.numeric_only()`, `TextFilter.alphanumeric_only()`,
+`TextFilter.alphabetic_only()`, `TextFilter.numeric_only()`,
+`TextFilter.alphanumeric_only()`,
 `TextFilter.matching_regex("[A-Z0-9-]*")`, or
 `FacetedFilter::<T>.searchable(true)` when generated filter entities should
 construct configured built-in filters. Use
@@ -107,6 +108,19 @@ pub enum Status {
     Pending,
 }
 ```
+
+## Delegate Visibility
+
+Generated delegates keep source rows in `delegate.rows` and expose a filtered
+view to `DataTable`. Use `set_filter_values(values)` or `clear_filter_values()`
+to control generated client-side filters. Use `set_row_scope(predicate)` for an
+additional application-owned predicate and `clear_row_scope()` to remove it;
+the scope composes with generated filter values.
+
+`visible_row_indices()` returns indices into the source `rows` vector. Call
+`refresh_filtered_rows()` after mutating row values in place when the active
+filters or row scope may produce a different result without changing the row
+count.
 
 ## Fluent Labels
 
@@ -262,7 +276,8 @@ dependencies.
 Custom query handlers can be synchronous or async and must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
-query.
+query when the backend owns filtering or totals. Use `query.filter_rows(rows)`
+for generated filtering, offset, and limit over an in-memory row source.
 Use struct-level `#[gpui_table(mcp(...))]` with `name`, `title`,
 `description`, `row_schema`, `read_only`, `destructive`, `idempotent`, and
 `open_world` when generated MCP tools need application-owned metadata, precise
@@ -289,6 +304,10 @@ precise row output schemas. Use
 `gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
 composed server should publish inventory-discovered table resources without
 their query handlers.
+Prompt templates are opt-in: use
+`gpui_table::mcp::register_prompt_templates(&mut server)?` for inventory tables
+or `register_table_prompt_templates::<Row>(&mut server)?` for one table. The
+generated prompt directs clients to the table descriptor and schema resources.
 Registration reports setup errors such as duplicate tool names.
 MCP schemas and decoders use the same explicit filter shapes selected for
 generated filter UI.

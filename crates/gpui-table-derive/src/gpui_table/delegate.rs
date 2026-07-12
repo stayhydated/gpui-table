@@ -178,35 +178,47 @@ pub(super) fn generate_delegate(
                     .expect("invalid filtered row index")
             }
 
+            /// Replaces the generated filter values used to select visible rows.
             pub fn set_filter_values(&mut self, filters: #filter_values_name) {
                 *self.active_filters.get_mut() = Some(filters);
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Clears the active generated filter values.
             pub fn clear_filter_values(&mut self) {
                 *self.active_filters.get_mut() = None;
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Restricts visible rows to those accepted by `scope`.
+            ///
+            /// The scope is applied together with any active generated filter values.
             pub fn set_row_scope(&mut self, scope: impl Fn(&#struct_name) -> bool + 'static) {
                 *self.row_scope.get_mut() = Some(std::rc::Rc::new(scope));
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Clears the row scope so every row is eligible for display.
             pub fn clear_row_scope(&mut self) {
                 *self.row_scope.get_mut() = None;
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Returns whether a row scope is active.
             pub fn has_row_scope(&self) -> bool {
                 self.row_scope.borrow().is_some()
             }
 
+            /// Returns source-row indices for the rows currently visible through the delegate.
             pub fn visible_row_indices(&self) -> Vec<usize> {
                 self.ensure_filter_cache();
                 self.filtered_row_indices.borrow().clone()
             }
 
+            /// Invalidates and immediately rebuilds the visible-row cache.
+            ///
+            /// Call this after mutating row values in place when filters or the row scope
+            /// may produce different results without changing the row count.
             pub fn refresh_filtered_rows(&self) {
                 self.filter_cache_dirty.set(true);
                 self.ensure_filter_cache();
@@ -240,25 +252,33 @@ pub(super) fn generate_delegate(
                     .expect("invalid filtered row index")
             }
 
+            /// Restricts visible rows to those accepted by `scope`.
             pub fn set_row_scope(&mut self, scope: impl Fn(&#struct_name) -> bool + 'static) {
                 *self.row_scope.get_mut() = Some(std::rc::Rc::new(scope));
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Clears the row scope so every row is eligible for display.
             pub fn clear_row_scope(&mut self) {
                 *self.row_scope.get_mut() = None;
                 self.filter_cache_dirty.set(true);
             }
 
+            /// Returns whether a row scope is active.
             pub fn has_row_scope(&self) -> bool {
                 self.row_scope.borrow().is_some()
             }
 
+            /// Returns source-row indices for the rows currently visible through the delegate.
             pub fn visible_row_indices(&self) -> Vec<usize> {
                 self.ensure_filter_cache();
                 self.filtered_row_indices.borrow().clone()
             }
 
+            /// Invalidates and immediately rebuilds the visible-row cache.
+            ///
+            /// Call this after mutating row values in place when the row scope may produce
+            /// different results without changing the row count.
             pub fn refresh_filtered_rows(&self) {
                 self.filter_cache_dirty.set(true);
                 self.ensure_filter_cache();
@@ -283,6 +303,7 @@ pub(super) fn generate_delegate(
 
     quote! {
 
+        /// Table delegate generated for this row type.
         pub struct #delegate_name {
             pub rows: Vec<#struct_name>,
             columns: Vec<gpui_component::table::Column>,
@@ -295,6 +316,7 @@ pub(super) fn generate_delegate(
         }
 
         impl #delegate_name {
+            /// Creates a delegate backed by `rows`.
             pub fn new(rows: Vec<#struct_name>) -> Self {
                 #precompute_rows_len
                 Self {

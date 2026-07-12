@@ -69,8 +69,9 @@ status: Status,
 ```
 
 Configured built-in filter expressions construct the same shape type while
-applying its `GpuiTableFilterShapeBuilder`: `TextFilter.numeric_only()`,
-`TextFilter.alphanumeric_only()`, and `TextFilter.matching_regex("...")`
+applying its `GpuiTableFilterShapeBuilder`: `TextFilter.alphabetic_only()`,
+`TextFilter.numeric_only()`, `TextFilter.alphanumeric_only()`, and
+`TextFilter.matching_regex("...")`
 enable text validators, `NumberRangeFilter.range(...).step(...)` sets numeric
 slider bounds and step size, and
 `FacetedFilter::<T>.searchable(true)` shows the faceted search input.

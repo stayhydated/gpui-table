@@ -381,12 +381,16 @@ fn table_filter_descriptor_value(filter: McpTableFilter) -> Value {
 }
 
 #[derive(Clone, Debug)]
+/// A decoded query for a generated MCP table.
 pub struct TableQuery<Table>
 where
     Table: McpTable,
 {
+    /// Generated filter values decoded from tool arguments.
     pub filters: Table::FilterValues,
+    /// Maximum number of rows requested for this page.
     pub limit: Option<usize>,
+    /// Number of matching rows to skip before this page.
     pub offset: usize,
 }
 
@@ -394,6 +398,7 @@ impl<Table> TableQuery<Table>
 where
     Table: McpTable,
 {
+    /// Builds a standard query response from backend-selected rows and a total count.
     pub fn result(&self, rows: Vec<Table>, total: usize) -> TableQueryResult<Table> {
         TableQueryResult {
             rows,
@@ -403,6 +408,7 @@ where
         }
     }
 
+    /// Applies generated filters, offset, and limit to an in-memory row source.
     pub fn filter_rows<Rows>(&self, rows: Rows) -> TableQueryResult<Table>
     where
         Table: gpui_table_core::filter::Matchable<Table::FilterValues>,
@@ -428,18 +434,27 @@ where
 }
 
 #[derive(Clone, Debug, Serialize)]
+/// Standard serialized response for a generated table query tool.
 pub struct TableQueryResult<Row> {
+    /// Rows in the requested page.
     pub rows: Vec<Row>,
+    /// Number of rows matching the query before pagination.
     pub total: usize,
+    /// Applied page offset.
     pub offset: usize,
+    /// Applied page limit.
     pub limit: Option<usize>,
 }
 
+/// Generated table contract used for MCP schema, decoding, and registration.
 pub trait McpTable: Sized + 'static {
+    /// Generated filter-value type decoded from query tool arguments.
     type FilterValues: Default + Clone + 'static;
 
+    /// Returns table metadata, filters, schemas, and MCP tool annotations.
     fn descriptor() -> McpTableDescriptor;
 
+    /// Decodes a raw MCP tool call into a typed table query.
     fn decode_query(call: McpToolCall) -> Result<TableQuery<Self>, McpToolError>;
 }
 
@@ -637,6 +652,7 @@ where
     TableTool::new(server)
 }
 
+/// Fluent registration handle for one generated table query tool.
 pub struct TableTool<'server, Table> {
     server: &'server mut McpServer,
     _table: PhantomData<fn() -> Table>,
@@ -653,6 +669,7 @@ where
         }
     }
 
+    /// Registers a synchronous application-owned query handler.
     pub fn query<Handler, Error>(self, handler: Handler) -> Result<(), McpToolError>
     where
         Handler:
@@ -665,6 +682,7 @@ where
         })
     }
 
+    /// Registers an asynchronous application-owned query handler.
     pub fn query_async<Handler, Fut, Error>(self, handler: Handler) -> Result<(), McpToolError>
     where
         Handler: Fn(TableQuery<Table>) -> Fut + Send + Sync + 'static,
@@ -680,6 +698,7 @@ where
         })
     }
 
+    /// Registers a fixed in-memory row set with generated filtering and pagination.
     pub fn rows(self, rows: Vec<Table>) -> Result<(), McpToolError>
     where
         Table: gpui_table_core::filter::Matchable<Table::FilterValues>
@@ -694,6 +713,7 @@ where
         })
     }
 
+    /// Registers a synchronous row source called once per query.
     pub fn row_source<Source, Error>(self, source: Source) -> Result<(), McpToolError>
     where
         Source: Fn() -> Result<Vec<Table>, Error> + Send + Sync + 'static,
@@ -711,6 +731,7 @@ where
         })
     }
 
+    /// Registers an asynchronous row source called once per query.
     pub fn row_source_async<Source, Fut, Error>(self, source: Source) -> Result<(), McpToolError>
     where
         Source: Fn() -> Fut + Send + Sync + 'static,

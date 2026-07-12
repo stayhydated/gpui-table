@@ -37,34 +37,41 @@ derives, generated types, and runtime helpers:
    supports SpacetimeDB temporal range filtering. Enable `mcp` only for MCP
    query tools backed by row data.
 2. Define row structs with `#[derive(Clone, GpuiTable)]`.
-3. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
+3. Use `#[gpui_table(id = "...")]` when the table needs a stable external
+   identifier other than the row type's snake_case name.
+4. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
    context menu behavior. Declare built-in filters explicitly with
    `filter(gpui_table_component::<Shape>)`, or use configured shape
-   expressions such as `TextFilter.numeric_only()`,
-   `TextFilter.matching_regex("[A-Z0-9-]*")`, and
+   expressions such as `TextFilter.alphabetic_only()`,
+   `TextFilter.numeric_only()`, `TextFilter.matching_regex("[A-Z0-9-]*")`, and
    `FacetedFilter::<T>.searchable(true)` when generated filter entities should
    construct configured filter widgets. Use
    `NumberRangeFilter.range(min, max).step(step)` to configure generated
    numeric range widgets. Use the same shape-path or configured expression form
    for custom filters.
-4. Use `#[derive(Filterable)]` for faceted enums. Include
+5. Use `#[derive(Filterable)]` for faceted enums. Include
    `Clone + Eq + Hash + PartialEq`; add `#[filter(fluent)]` only when labels
    come from `es-fluent`.
-5. Use `#[derive(TableCell)]` for value objects. Add `#[table_cell(display)]`
+6. Use `#[derive(TableCell)]` for value objects. Add `#[table_cell(display)]`
    when the wrapper should render through its own `Display` implementation, or
    `#[table_cell(format = path::to::formatter)]` for a dedicated formatter.
-6. Add `#[gpui_table(filters)]` when generated filter entities and typed filter
+7. Add `#[gpui_table(filters)]` when generated filter entities and typed filter
    state are needed.
-7. Add `#[gpui_table(load_more)]` plus `#[gpui_table::gpui_table_impl] impl
+8. Use generated delegate methods such as `set_filter_values`,
+   `clear_filter_values`, and `set_row_scope` when application state should
+   control visible rows without rebuilding the delegate.
+9. Add `#[gpui_table(load_more)]` plus `#[gpui_table::gpui_table_impl] impl
    TableLoader for <Row>TableDelegate` for infinite-loading tables.
-8. Add field-level `style = path::to_fn` when a column needs custom cell
-   rendering. The function receives the row, field value, GPUI window, and app
-   context, and returns `impl gpui::IntoElement`.
-9. Compose generated tables with `gpui_component::table::DataTable` and
-   generated filter helpers, or use `gpui-table-component` directly when manual
-   filter UI composition is a better fit.
-10. For MCP query integrations, register the generated row type with
+10. Add field-level `style = path::to_fn` when a column needs custom cell
+
+    rendering. The function receives the row, field value, GPUI window, and app
+    context, and returns `impl gpui::IntoElement`.
+11. Compose generated tables with `gpui_component::table::DataTable` and
+
+    generated filter helpers, or use `gpui-table-component` directly when manual
+    filter UI composition is a better fit.
+12. For MCP query integrations, register the generated row type with
     `#[gpui_table(mcp)]` on the row type and `#[gpui_table::mcp_query]` on the
     handler. A `TableQuery<Row>` first parameter selects a custom backend, while
     a zero-argument `Result<Vec<Row>, E>` or `Vec<Row>` return type selects a
@@ -116,7 +123,9 @@ on non-filter columns are ignored by table MCP generation. Add
 dependencies. Custom query handlers can be synchronous or async and must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
-query. Use `McpServer` directly only when a custom server composition is
+query when the backend owns filtering or totals, or `query.filter_rows(rows)`
+for generated filtering and pagination over an in-memory source. Use
+`McpServer` directly only when a custom server composition is
 needed. Use `gpui_table::mcp::server()?` for the default generated server and
 `gpui_table::mcp::server_named(name, version)?` when application-owned server
 metadata is needed. Use `gpui_table::mcp::builder()` or
@@ -132,7 +141,10 @@ with `gpui_table::mcp::table::<Row>(&mut server).query(handler)?` for
 also publishes that table's descriptor and schema resources. Use
 `gpui_table::mcp::register_inventory_table_resources(&mut server)?` when a
 composed server should publish inventory-discovered table resources without
-their query handlers. Use struct-level
+their query handlers. Register opt-in query prompt templates with
+`gpui_table::mcp::register_prompt_templates(&mut server)?` for inventory tables
+or `register_table_prompt_templates::<Row>(&mut server)?` for one table. Use
+struct-level
 `#[gpui_table(mcp(...))]` with `name`, `title`, `description`, `row_schema`,
 `read_only`, `destructive`, `idempotent`, and `open_world` when generated MCP
 tools need application-owned metadata, precise row output schemas, or MCP tool
@@ -179,6 +191,8 @@ Generated names follow the row type:
 Declare built-in filters explicitly:
 
 - `filter(gpui_table_component::TextFilter)` for string search.
+- `filter(gpui_table_component::TextFilter.alphabetic_only())` for alphabetic
+  input.
 - `filter(gpui_table_component::TextFilter.numeric_only())` or
   `filter(gpui_table_component::TextFilter.alphanumeric_only())` for
   configured text filters.

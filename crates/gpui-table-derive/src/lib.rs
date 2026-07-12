@@ -52,6 +52,7 @@ pub fn gpui_table_impl(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "mcp")]
+/// Registers a synchronous or asynchronous application query handler for a generated MCP table.
 #[proc_macro_attribute]
 pub fn mcp_query(attr: TokenStream, item: TokenStream) -> TokenStream {
     match mcp_handlers::expand_query(attr.into(), item.into()) {
@@ -61,6 +62,8 @@ pub fn mcp_query(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 #[cfg(feature = "mcp")]
+/// Derives MCP schema and decoding for a table filter shape whose raw value implements
+/// `McpToolValue`.
 #[proc_macro_derive(McpFilterShape)]
 pub fn derive_mcp_filter_shape(input: TokenStream) -> TokenStream {
     match mcp_filter_shape::expand(input.into()) {
@@ -69,6 +72,7 @@ pub fn derive_mcp_filter_shape(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Derives a table filter shape by adapting an existing base shape.
 #[proc_macro_derive(GpuiTableFilterShape, attributes(gpui_table_filter_shape))]
 pub fn derive_gpui_table_filter_shape(input: TokenStream) -> TokenStream {
     match table_filter_shape::expand(input.into()) {
@@ -77,16 +81,20 @@ pub fn derive_gpui_table_filter_shape(input: TokenStream) -> TokenStream {
     }
 }
 
+/// Derives columns, row metadata, a table delegate, and enabled filter, inventory, or MCP
+/// integration surfaces for a named struct.
 #[proc_macro_derive(GpuiTable, attributes(gpui_table, koruma))]
 pub fn derive_gpui_table(input: TokenStream) -> TokenStream {
     gpui_table::derive_gpui_table(input)
 }
 
+/// Derives faceted filter values and options for an enum.
 #[proc_macro_derive(Filterable, attributes(filter))]
 pub fn derive_filterable(input: TokenStream) -> TokenStream {
     filterable::derive_filterable(input)
 }
 
+/// Derives table-cell rendering for a one-field value type or supported enum.
 #[proc_macro_derive(TableCell, attributes(table_cell))]
 pub fn derive_table_cell(input: TokenStream) -> TokenStream {
     table_cell::derive_table_cell(input)

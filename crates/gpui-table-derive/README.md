@@ -40,7 +40,8 @@ configured shape expression for the same base shape:
 
 - strings use `filter(gpui_table_component::TextFilter)`
 - text filters can be configured with
-  `filter(gpui_table_component::TextFilter.numeric_only())` or
+  `filter(gpui_table_component::TextFilter.alphabetic_only())`,
+  `filter(gpui_table_component::TextFilter.numeric_only())`, or
   `filter(gpui_table_component::TextFilter.alphanumeric_only())`, or with
   a full-value regex using
   `filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*"))`
@@ -56,6 +57,14 @@ Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
 filter state uses `T` in all cases, so optional and vector fields can facet over
 present values without requiring `Option<T>` or `Vec<T>` itself to implement
 `Filterable`.
+
+The generated delegate keeps source rows in its public `rows` vector and
+exposes a filtered view to `DataTable`. Use `set_filter_values` and
+`clear_filter_values` for generated typed filters. Use `set_row_scope` and
+`clear_row_scope` for an additional application-owned predicate. Read
+`visible_row_indices` when source indices are needed, and call
+`refresh_filtered_rows` after in-place row mutations that may change visible
+results without changing the row count.
 
 Use field-level `style = path::to_fn` for custom cell rendering. The style
 function receives `&Row`, `&FieldType`, `&mut gpui::Window`, and
