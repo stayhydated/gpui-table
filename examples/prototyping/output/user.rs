@@ -54,7 +54,28 @@ impl Render for UserTableStory {
             .size_full()
             .gap_4()
             .p_4()
-            .child(h_flex().gap_2().flex_wrap().child(self.filters.all_filters()))
+            .child(
+                v_flex()
+                    .gap_2()
+                    .children(
+                        self
+                            .filters
+                            .filter_sidebar_data(cx)
+                            .into_groups()
+                            .into_iter()
+                            .map(|group| {
+                                h_flex()
+                                    .gap_2()
+                                    .flex_wrap()
+                                    .children(
+                                        group
+                                            .into_items()
+                                            .into_iter()
+                                            .map(|item| item.into_element()),
+                                    )
+                            }),
+                    ),
+            )
             .child(
                 gpui_table_component::TableStatusBar::new(
                     delegate.rows.len(),

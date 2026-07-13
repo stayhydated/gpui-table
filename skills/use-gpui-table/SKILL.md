@@ -67,10 +67,14 @@ derives, generated types, and runtime helpers:
 
     rendering. The function receives the row, field value, GPUI window, and app
     context, and returns `impl gpui::IntoElement`.
-11. Compose generated tables with `gpui_component::table::DataTable` and
-
-    generated filter helpers, or use `gpui-table-component` directly when manual
-    filter UI composition is a better fit.
+11. Compose generated tables with `gpui_component::table::DataTable`. Use
+    `filter_sidebar_data(cx)` when the application needs semantic Text,
+    Faceted, Number Range, and Date Range groups with stable IDs, localized
+    labels, active states, and erased filter elements. Use
+    `active_filter_count(cx)` for filter-toggle badges and
+    `reset_filters(window, cx)` for the reset action. Use
+    `gpui-table-component` directly when manual filter UI composition is a
+    better fit.
 12. For MCP query integrations, register the generated row type with
     `#[gpui_table(mcp)]` on the row type and `#[gpui_table::mcp_query]` on the
     handler. A `TableQuery<Row>` first parameter selects a custom backend, while

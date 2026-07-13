@@ -1,5 +1,0 @@
-error: `#[koruma(...)]` table filter validation requires `#[gpui_table(mcp)]`
- --> tests/ui/koruma_filter_requires_mcp.rs:8:5
-  |
-8 |     name: String,
-  |     ^^^^

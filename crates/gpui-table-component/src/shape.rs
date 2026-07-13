@@ -284,6 +284,19 @@ macro_rules! delegate_filter_shape {
                 <$base as GpuiTableFilterShape>::wrap_value(value)
             }
 
+            fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+                <$base as GpuiTableFilterShape>::unwrap_value(value)
+            }
+
+            fn set_silent(
+                entity: &Entity<Self::Component>,
+                value: Self::RawValue,
+                window: &mut Window,
+                cx: &mut App,
+            ) {
+                <$base as GpuiTableFilterShape>::set_silent(entity, value, window, cx);
+            }
+
             fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {
                 <$base as GpuiTableFilterShape>::reset_silent(entity, window, cx);
             }
@@ -432,6 +445,19 @@ impl GpuiTableFilterShape for TextFilter {
         TextValue::from(value)
     }
 
+    fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+        value.0
+    }
+
+    fn set_silent(
+        entity: &Entity<Self::Component>,
+        value: Self::RawValue,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        entity.update(cx, |filter, cx| filter.set_silent(value, window, cx));
+    }
+
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {
         entity.update(cx, |filter, cx| filter.reset_silent(window, cx));
     }
@@ -545,6 +571,19 @@ where
         FacetedValue::from(value)
     }
 
+    fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+        value.0
+    }
+
+    fn set_silent(
+        entity: &Entity<Self::Component>,
+        value: Self::RawValue,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        entity.update(cx, |filter, cx| filter.set_silent(value, window, cx));
+    }
+
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {
         entity.update(cx, |filter, cx| filter.reset_silent(window, cx));
     }
@@ -635,6 +674,19 @@ impl GpuiTableFilterShape for NumberRangeFilter {
         gpui_table_core::filter::RangeValue::from(value)
     }
 
+    fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+        (value.0, value.1)
+    }
+
+    fn set_silent(
+        entity: &Entity<Self::Component>,
+        value: Self::RawValue,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        entity.update(cx, |filter, cx| filter.set_silent(value, window, cx));
+    }
+
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {
         entity.update(cx, |filter, cx| filter.reset_silent(window, cx));
     }
@@ -716,6 +768,19 @@ impl GpuiTableFilterShape for DateRangeFilter {
 
     fn wrap_value(value: Self::RawValue) -> Self::FilterValue {
         gpui_table_core::filter::RangeValue::from(value)
+    }
+
+    fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+        (value.0, value.1)
+    }
+
+    fn set_silent(
+        entity: &Entity<Self::Component>,
+        value: Self::RawValue,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        entity.update(cx, |filter, cx| filter.set_silent(value, window, cx));
     }
 
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App) {

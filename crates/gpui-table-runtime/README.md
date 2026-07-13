@@ -45,8 +45,11 @@ fn render_default_cell<R: TableRowMeta>(
   field-level filter expressions such as
   `FacetedFilter::<Status>.searchable(true)` and
   `NumberRangeFilter.range(min, max).step(step)`.
-- `generated_filters`, which provides generic filter-entity helpers such as
-  `FilterEntitiesExt`
+- `generated_filters`, which provides `FilterEntitiesExt` plus
+  `FilterSidebarData`, `FilterSidebarGroup`, and `FilterSidebarItem` for stable
+  semantic grouping, localized labels, active-filter counts, and erased GPUI
+  elements. Generated collections expose `filter_sidebar_data(cx)`,
+  `active_filter_count(cx)`, and `reset_filters(window, cx)`.
 
 Built-in filter component types such as `gpui_table_component::TextFilter` are
 their own shape types. Their `shape::GpuiTableFilterShape` implementations live

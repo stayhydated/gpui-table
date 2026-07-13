@@ -75,6 +75,24 @@ pub(super) fn generate_filter_entities(
         })
         .collect();
 
+    let apply_value_fields: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let shape = f.filter_config.shape();
+            quote! {
+                <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::set_silent(
+                    &self.#field_ident,
+                    <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::unwrap_value(
+                        values.#field_ident,
+                    ),
+                    window,
+                    cx,
+                );
+            }
+        })
+        .collect();
+
     // Generate value getter methods for each filter
     let value_getters: Vec<proc_macro2::TokenStream> = filter_fields
         .iter()
@@ -98,15 +116,6 @@ pub(super) fn generate_filter_entities(
         })
         .collect();
 
-    // Generate all_filters render method
-    let all_filter_fields: Vec<proc_macro2::TokenStream> = filter_fields
-        .iter()
-        .map(|f| {
-            let ident = &f.field_ident;
-            quote! { .child(self.#ident.clone()) }
-        })
-        .collect();
-
     // Generate FilterValues struct for client-side filtering
     let filter_values_name =
         Ident::new(&format!("{}FilterValues", struct_name), struct_name.span());
@@ -122,6 +131,33 @@ pub(super) fn generate_filter_entities(
                 #[doc = #field_doc]
                 #[doc = #query_doc]
                 pub #field_ident: #value_type,
+            }
+        })
+        .collect();
+
+    let preset_encode_fields: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            quote! {
+                object.insert(
+                    stringify!(#field_ident).to_string(),
+                    gpui_table::FilterPresetValue::to_preset_json(&self.#field_ident),
+                );
+            }
+        })
+        .collect();
+
+    let preset_decode_fields: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            quote! {
+                #field_ident: object
+                    .get(stringify!(#field_ident))
+                    .map(gpui_table::FilterPresetValue::from_preset_json)
+                    .transpose()?
+                    .unwrap_or_default(),
             }
         })
         .collect();
@@ -146,6 +182,32 @@ pub(super) fn generate_filter_entities(
         .map(|f| {
             let field_ident = &f.field_ident;
             quote! { self.#field_ident.is_active() }
+        })
+        .collect();
+
+    let active_filter_count_checks: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            quote! { + usize::from(values.#field_ident.is_active()) }
+        })
+        .collect();
+
+    let filter_sidebar_items: Vec<proc_macro2::TokenStream> = filter_fields
+        .iter()
+        .map(|f| {
+            let field_ident = &f.field_ident;
+            let shape = f.filter_config.shape();
+            let label = determine_filter_title_expr(field_ident, fluent_config, struct_name);
+            quote! {
+                gpui_table::runtime::FilterSidebarItem::new(
+                    concat!(stringify!(#struct_name), "-", stringify!(#field_ident)),
+                    #label,
+                    <#shape as gpui_table::runtime::shape::GpuiTableFilterShape>::FILTER_TYPE,
+                    values.#field_ident.is_active(),
+                    self.#field_ident.clone(),
+                )
+            }
         })
         .collect();
 
@@ -339,6 +401,21 @@ pub(super) fn generate_filter_entities(
                 }
             }
 
+            /// Apply a complete typed filter preset and invoke the change callback once.
+            pub fn apply_values(
+                &self,
+                values: #filter_values_name,
+                window: &mut ::gpui::Window,
+                cx: &mut ::gpui::App,
+            ) {
+                #(#apply_value_fields)*
+
+                if let Some(ref on_change) = self.__on_filter_change {
+                    let on_change = on_change.clone();
+                    window.defer(cx, move |window, cx| on_change(window, cx));
+                }
+            }
+
             /// Build a localized reset button bound to these filter entities.
             pub fn reset_button(&self) -> gpui_table_component::reset_filters::ResetFilters {
                 let filters = self.clone();
@@ -346,14 +423,6 @@ pub(super) fn generate_filter_entities(
                     filters.reset_filters(window, cx);
                 })
                 .button_id(format!("{}-reset-filters", stringify!(#struct_name)))
-            }
-
-            /// Render all filters with a reset button appended.
-            pub fn all_filters_with_reset(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().flex_wrap().items_center().gap_2()
-                    #(#all_filter_fields)*
-                    .child(self.reset_button())
             }
 
             // Value getters for server-side filtering
@@ -366,11 +435,21 @@ pub(super) fn generate_filter_entities(
                 }
             }
 
-            /// Render all filters in a single row.
-            pub fn all_filters(&self) -> impl gpui::IntoElement {
-                use gpui::{ParentElement as _, Styled as _};
-                gpui::div().flex().flex_wrap().items_center().gap_2()
-                    #(#all_filter_fields)*
+            /// Build grouped, sidebar-ready render data for all generated filters.
+            pub fn filter_sidebar_data(
+                &self,
+                cx: &::gpui::App,
+            ) -> gpui_table::runtime::FilterSidebarData {
+                let values = self.read_values(cx);
+                gpui_table::runtime::FilterSidebarData::new(vec![
+                    #(#filter_sidebar_items,)*
+                ])
+            }
+
+            /// Count generated filters that currently narrow the row set.
+            pub fn active_filter_count(&self, cx: &::gpui::App) -> usize {
+                let values = self.read_values(cx);
+                0usize #(#active_filter_count_checks)*
             }
         }
 
@@ -381,8 +460,28 @@ pub(super) fn generate_filter_entities(
                 <#filter_entities_name>::read_values(self, cx)
             }
 
-            fn all_filters(&self) -> impl gpui::IntoElement {
-                <#filter_entities_name>::all_filters(self)
+            fn apply_values(
+                &self,
+                values: Self::Values,
+                window: &mut ::gpui::Window,
+                cx: &mut ::gpui::App,
+            ) {
+                <#filter_entities_name>::apply_values(self, values, window, cx);
+            }
+
+            fn filter_sidebar_data(
+                &self,
+                cx: &::gpui::App,
+            ) -> gpui_table::runtime::FilterSidebarData {
+                <#filter_entities_name>::filter_sidebar_data(self, cx)
+            }
+
+            fn active_filter_count(&self, cx: &::gpui::App) -> usize {
+                <#filter_entities_name>::active_filter_count(self, cx)
+            }
+
+            fn reset_filters(&self, window: &mut ::gpui::Window, cx: &mut ::gpui::App) {
+                <#filter_entities_name>::reset_filters(self, window, cx);
             }
         }
 
@@ -390,6 +489,27 @@ pub(super) fn generate_filter_entities(
         #[derive(Clone, Debug, Default)]
         pub struct #filter_values_name {
             #(#filter_values_fields)*
+        }
+
+        impl #filter_values_name {
+            /// Encode this typed filter snapshot for a saved table-filter preset.
+            pub fn to_preset_json(&self) -> gpui_table::__deps::serde_json::Value {
+                let mut object = gpui_table::__deps::serde_json::Map::new();
+                #(#preset_encode_fields)*
+                gpui_table::__deps::serde_json::Value::Object(object)
+            }
+
+            /// Decode a saved table-filter preset through each generated field's typed codec.
+            pub fn from_preset_json(
+                value: &gpui_table::__deps::serde_json::Value,
+            ) -> Result<Self, String> {
+                let object = value
+                    .as_object()
+                    .ok_or_else(|| "table filter preset must be a JSON object".to_string())?;
+                Ok(Self {
+                    #(#preset_decode_fields)*
+                })
+            }
         }
 
         impl gpui_table::core::filter::FilterValuesExt for #filter_values_name {

@@ -230,6 +230,22 @@ impl DateRangeFilter {
         self.reset_inner(false, window, cx);
     }
 
+    /// Replace date bounds without invoking the change callback.
+    pub fn set_silent(
+        &mut self,
+        value: (Option<NaiveDate>, Option<NaiveDate>),
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.selected_range = value;
+        if let Some(calendar) = &self.calendar {
+            calendar.update(cx, |calendar, cx| {
+                calendar.set_date(Date::Range(value.0, value.1), window, cx);
+            });
+        }
+        cx.notify();
+    }
+
     /// Get the current filter value.
     pub fn value(&self) -> (Option<NaiveDate>, Option<NaiveDate>) {
         self.selected_range

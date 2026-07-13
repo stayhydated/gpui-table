@@ -362,6 +362,20 @@ impl TextFilter {
         self.reset_inner(false, window, cx);
     }
 
+    /// Replace the filter value without invoking the change callback.
+    pub fn set_silent(&mut self, value: String, window: &mut Window, cx: &mut Context<Self>) {
+        self.value = value.clone();
+        self.pending_apply = false;
+        self._debounce_task = None;
+        self.pending_validated_value = None;
+        if let Some(input) = &self.input_state {
+            input.update(cx, |input, cx| input.set_value(value, window, cx));
+        } else {
+            self.pending_validated_value = Some(value);
+        }
+        cx.notify();
+    }
+
     /// Get the current filter value.
     pub fn value(&self) -> &str {
         &self.value

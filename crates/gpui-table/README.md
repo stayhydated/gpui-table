@@ -124,6 +124,13 @@ source rows. Call `refresh_filtered_rows` after mutating row values in place
 when active filters or the row scope may produce a different result without a
 row-count change.
 
+Generated filter collections expose `filter_sidebar_data(cx)` for application
+shells that render filters outside a flat toolbar. It returns nonempty groups in
+Text, Faceted, Number Range, Date Range order; each item carries a stable field
+ID, localized label, active state, filter type, and erased GPUI element. Use
+`active_filter_count(cx)` for filter-toggle badges and `reset_filters(window,
+cx)` for one-shot reset behavior.
+
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
 type, and resolved base shape path through `ComponentShapeUse`; configured

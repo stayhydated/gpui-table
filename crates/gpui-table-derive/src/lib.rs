@@ -4,6 +4,9 @@
 //! metadata, optional filter entities and values, optional inventory metadata,
 //! optional context-menu helpers, and optional MCP query metadata. The emitted
 //! code depends on stable paths re-exported by the `gpui-table` facade.
+//! Field-level `#[koruma(...)]` attributes become table-filter input validation
+//! only for `#[gpui_table(mcp)]`; otherwise they remain available to the owning
+//! domain or form derive without affecting table generation.
 //!
 //! `#[derive(Filterable)]`, `#[derive(TableCell)]`,
 //! `#[derive(GpuiTableFilterShape)]`, `#[derive(McpFilterShape)]` when the

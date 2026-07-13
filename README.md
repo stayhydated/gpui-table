@@ -87,6 +87,8 @@ With `#[gpui_table(filters)]`, the derive also generates:
 - `UserTableDelegate` and `UserTableColumn`
 - `UserFilterEntities` for rendering built-in filters
 - `UserFilterValues` for typed filter state
+- `UserFilterValues::to_preset_json` and `from_preset_json` for checked saved
+  filter round trips
 - `Matchable<UserFilterValues>` so client-side filtering stays strongly typed
 
 The generated `TableRowMeta::TABLE_ID` defaults to the row type name converted to
@@ -124,6 +126,13 @@ application-owned predicate. `visible_row_indices` returns indices into the
 source rows. Call `refresh_filtered_rows` after mutating row values in place
 when active filters or the row scope may produce a different result without a
 row-count change.
+
+Generated filter collections expose `filter_sidebar_data(cx)` for application
+shells that render filters outside a flat toolbar. It returns nonempty groups in
+Text, Faceted, Number Range, Date Range order; each item carries a stable field
+ID, localized label, active state, filter type, and erased GPUI element. Use
+`active_filter_count(cx)` for filter-toggle badges and `reset_filters(window,
+cx)` for one-shot reset behavior.
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
@@ -194,7 +203,7 @@ Generated schemas publish faceted arguments as unique string sets, include
 valid facet values under the filter's item `enum`, and preserve labels in
 `x-gpuiTableFacetOptions`, so MCP clients can discover valid facet strings from
 `tools/list`.
-Field-level `#[koruma(...)]` validators on filtered fields validate the decoded
+With `#[gpui_table(mcp)]`, field-level `#[koruma(...)]` validators on filtered fields validate the decoded
 MCP filter argument before the query handler runs. Generated schemas attach the
 rules in `x-gpuiTableValidation`; literal `LenValidation`, `RangeValidation`,
 and `NonEmptyValidation` arguments are also reflected as JSON Schema hints when

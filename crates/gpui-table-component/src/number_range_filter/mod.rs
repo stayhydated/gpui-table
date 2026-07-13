@@ -557,6 +557,23 @@ impl NumberRangeFilter {
         self.reset_inner(false, window, cx);
     }
 
+    /// Replace range bounds without invoking the change callback.
+    pub fn set_silent(
+        &mut self,
+        value: (Option<Decimal>, Option<Decimal>),
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) {
+        self.min = value.0;
+        self.max = value.1;
+        self.recompute_dynamic_range_from_values();
+        self.pending_apply = false;
+        self._debounce_task = None;
+        self.last_changed = LastChanged::Slider;
+        self.sync_components(window, cx);
+        cx.notify();
+    }
+
     /// Get the current filter value.
     pub fn value(&self) -> (Option<Decimal>, Option<Decimal>) {
         (self.min, self.max)

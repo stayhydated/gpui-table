@@ -286,19 +286,12 @@ pub(super) fn expand_gpui_table(
         });
 
         // Only process filter attributes when filters are enabled at struct level
-        if field.validation.is_some() && field.filter.is_none() {
+        if mcp_enabled && field.validation.is_some() && field.filter.is_none() {
             return Err(syn::Error::new(
                 ident.span(),
                 "`#[koruma(...)]` table validation only applies to fields with `#[gpui_table(filter(...))]`",
             ));
         }
-        if field.validation.is_some() && !mcp_enabled {
-            return Err(syn::Error::new(
-                ident.span(),
-                "`#[koruma(...)]` table filter validation requires `#[gpui_table(mcp)]`",
-            ));
-        }
-
         if filters_effective && let Some(ref filter_options) = field.filter {
             let filter_config = filter_options.resolve(ident.to_string(), field.ty.clone());
             filter_config.validate_feature_gate()?;
@@ -316,7 +309,7 @@ pub(super) fn expand_gpui_table(
             filter_fields.push(FilterFieldMeta {
                 field_ident: ident.clone(),
                 filter_config: filter_config.clone(),
-                validation: field.validation.clone(),
+                validation: mcp_enabled.then(|| field.validation.clone()).flatten(),
             });
 
             #[cfg(feature = "inventory")]

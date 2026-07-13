@@ -47,6 +47,7 @@ gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], workspace = true }
+serde_json = { workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true }
@@ -56,7 +57,6 @@ gpui-table-component = { features = [ "mcp", "rust_decimal", "spacetimedb" ], wo
 insta = { features = [ "yaml" ], workspace = true }
 koruma = { workspace = true }
 koruma-collection = { workspace = true }
-serde_json = { workspace = true }
 spacetimedb-lib = { workspace = true }
 strum = { features = [ "derive" ], workspace = true }
 trybuild = { workspace = true }

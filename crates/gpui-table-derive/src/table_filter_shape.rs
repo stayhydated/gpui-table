@@ -197,6 +197,28 @@ impl TableFilterShapeDerive {
                     )
                 }
 
+                fn unwrap_value(value: Self::FilterValue) -> Self::RawValue {
+                    (#from_base)(
+                        <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::unwrap_value(
+                            value,
+                        ),
+                    )
+                }
+
+                fn set_silent(
+                    entity: &::gpui::Entity<Self::Component>,
+                    value: Self::RawValue,
+                    window: &mut ::gpui::Window,
+                    cx: &mut ::gpui::App,
+                ) {
+                    <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::set_silent(
+                        entity,
+                        (#into_base)(value),
+                        window,
+                        cx,
+                    );
+                }
+
                 fn reset_silent(
                     entity: &::gpui::Entity<Self::Component>,
                     window: &mut ::gpui::Window,

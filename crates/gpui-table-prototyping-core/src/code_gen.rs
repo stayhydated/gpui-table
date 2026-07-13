@@ -284,10 +284,25 @@ impl<'a> TableShapeAdapter<'a> {
             if self.use_filter_helpers {
                 quote! {
                     .child(
-                        h_flex()
+                        v_flex()
                             .gap_2()
-                            .flex_wrap()
-                            .child(self.filters.all_filters())
+                            .children(
+                                self.filters
+                                    .filter_sidebar_data(cx)
+                                    .into_groups()
+                                    .into_iter()
+                                    .map(|group| {
+                                        h_flex()
+                                            .gap_2()
+                                            .flex_wrap()
+                                            .children(
+                                                group
+                                                    .into_items()
+                                                    .into_iter()
+                                                    .map(|item| item.into_element())
+                                            )
+                                    })
+                            )
                     )
                 }
             } else {
@@ -635,11 +650,11 @@ mod tests {
             helper_adapter
                 .render_children()
                 .to_string()
-                .contains("all_filters")
+                .contains("filter_sidebar_data")
         );
         let explicit = explicit_adapter.render_children().to_string();
         assert!(explicit.contains("self . filters . name . clone"));
-        assert!(!explicit.contains("all_filters"));
+        assert!(!explicit.contains("filter_sidebar_data"));
 
         assert!(
             helper_adapter

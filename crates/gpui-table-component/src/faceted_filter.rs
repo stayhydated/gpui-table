@@ -273,8 +273,14 @@ impl<T: FilterValue> FacetedFilter<T> {
         self.reset_inner(false, window, cx);
     }
 
-    /// Get the labels of selected values for display.
-    fn get_selected_labels(&self, cx: &App) -> Vec<String> {
+    /// Replace selected facets without invoking the change callback.
+    pub fn set_silent(&mut self, value: HashSet<T>, _window: &mut Window, cx: &mut Context<Self>) {
+        self.selected_values = value;
+        cx.notify();
+    }
+
+    /// Get the selected options for trigger-tag display.
+    fn get_selected_options(&self, cx: &App) -> Vec<FacetedFilterOption> {
         let options = (self.options)(cx);
         let selected_strings: HashSet<String> = self
             .selected_values
@@ -284,7 +290,7 @@ impl<T: FilterValue> FacetedFilter<T> {
         options
             .iter()
             .filter(|opt| selected_strings.contains(&opt.value))
-            .map(display_option_label)
+            .cloned()
             .collect()
     }
 
@@ -380,7 +386,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
         let title = (self.title)(app(cx));
         let selected_count = self.selected_values.len();
         let has_selection = selected_count > 0;
-        let selected_labels = self.get_selected_labels(app(cx));
+        let selected_options = self.get_selected_options(app(cx));
 
         let view = cx.entity();
         let options_fn = self.options.clone();
@@ -446,10 +452,22 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                         )
                     } else {
                         div().flex().items_center().gap_1().children(
-                            selected_labels.into_iter().map(|label| {
+                            selected_options.into_iter().map(|option| {
+                                let label = display_option_label(&option);
                                 Tag::secondary()
                                     .small()
-                                    .child(label)
+                                    .child(
+                                        h_flex()
+                                            .gap_1()
+                                            .when_some(option.icon, |this, icon_name| {
+                                                this.child(
+                                                    Icon::default()
+                                                        .path(icon_name.path().to_string())
+                                                        .xsmall(),
+                                                )
+                                            })
+                                            .child(label),
+                                    )
                                     .refine_style(&selected_tag_style)
                             }),
                         )
@@ -719,7 +737,9 @@ mod tests {
                     label: "Active".into(),
                     value: "active".into(),
                     count: Some(2),
-                    icon: None,
+                    icon: Some(gpui_table_core::filter::FacetedFilterIcon::from_path(
+                        "icons/check.svg",
+                    )),
                 },
                 FacetedFilterOption {
                     group: Some("Enabled".into()),
@@ -762,7 +782,7 @@ mod tests {
     }
 
     #[gpui::test]
-    fn constructors_selection_labels_and_styles_preserve_state(cx: &mut TestAppContext) {
+    fn constructors_selection_options_and_styles_preserve_state(cx: &mut TestAppContext) {
         let selected = HashSet::from([Status::Active]);
         let filter = cx.update(|cx| {
             FacetedFilter::<Status>::new_for(
@@ -787,7 +807,16 @@ mod tests {
             assert!(filter.show_search);
             assert!(filter.is_selected("active"));
             assert!(!filter.is_selected("pending"));
-            assert_eq!(filter.get_selected_labels(cx), ["Enabled: Active"]);
+            let selected_options = filter.get_selected_options(cx);
+            assert_eq!(selected_options.len(), 1);
+            assert_eq!(
+                display_option_label(&selected_options[0]),
+                "Enabled: Active"
+            );
+            assert_eq!(
+                selected_options[0].icon.as_ref().map(|icon| icon.path()),
+                Some("icons/check.svg")
+            );
             assert!(filter.search_state.is_none());
         });
 

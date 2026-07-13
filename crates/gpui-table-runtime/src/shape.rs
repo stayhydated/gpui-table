@@ -28,6 +28,19 @@ pub trait GpuiTableFilterShape: ComponentShapeMetadata {
 
     fn wrap_value(value: Self::RawValue) -> Self::FilterValue;
 
+    fn unwrap_value(_value: Self::FilterValue) -> Self::RawValue {
+        panic!("filter shape does not support applying a typed preset")
+    }
+
+    fn set_silent(
+        entity: &Entity<Self::Component>,
+        _value: Self::RawValue,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        Self::reset_silent(entity, window, cx);
+    }
+
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App);
 }
 
