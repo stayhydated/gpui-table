@@ -144,7 +144,12 @@ pub struct User {
 }
 ```
 
-Use the application's existing Fluent resource layout and locale-selection pattern. Keep generated table labels and faceted enum labels in the same localization system as the rest of the app.
+Use the application's existing Fluent resource layout and locale-selection
+pattern. Keep generated table labels and faceted enum labels in the same
+localization system as the rest of the app. Initialize
+`gpui_table_component::i18n` before rendering; locale setup returns typed errors,
+and missing typed resources are hard failures rather than key-derived display
+strings.
 
 ## Custom Cell Rendering
 

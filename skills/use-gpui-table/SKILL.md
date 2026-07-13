@@ -218,4 +218,7 @@ shapes whose configuration value implements
 
 Keep localized labels explicit. Use `#[filter(fluent)]` or the matching table
 label attributes only when the application owns an `es-fluent` localizer and the
-labels are rendered through that context.
+labels are rendered through that context. Initialize table-component
+localization before rendering. Locale setup returns typed errors, and ordinary
+typed label/message rendering fails hard when localization state or resources
+are missing.

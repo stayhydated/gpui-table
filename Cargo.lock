@@ -2243,8 +2243,7 @@ dependencies = [
 [[package]]
 name = "es-fluent"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ddbc41e43442c1fde3a43cc052b8287e04f295072fba208171a313d545d9280"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
@@ -2258,8 +2257,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-build"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "344ecd8ece6d0ce441a9b8b853136baf82592730766242d316ea2a98f5334511"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-toml",
 ]
@@ -2267,8 +2265,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "92c891c2bf3894907ab1f53edafbd25dd0b3fd8e1dbcb6879811c5147fe04085"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
@@ -2281,8 +2278,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive-core"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c09c6532cc5fc3683f69c49d15598355fc5184229c791632179d1ca14e52f9bc"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "bon",
  "darling 0.23.0",
@@ -2301,8 +2297,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "980099327a1a7c25ff2cce4953d4b210f31cef7d9ec2098ab1ac1b9c4dc818b6"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -2318,8 +2313,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb966d5eb5e4c6363b9c2ca21240e88b87520c59dcbd57876737337123102f12"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-toml",
@@ -2333,8 +2327,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-core"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d428c52252f96eaefff8358f15495161e392a457cab05cf9ab593dc12abd91c6"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-shared",
  "fluent-bundle",
@@ -2353,8 +2346,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-embedded"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d1cdcbe9131084c935a3826b4b3fd8699a570d648efb1407eb097a5fc97ea103"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -2367,8 +2359,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-macros"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43a32687d9d2ee4b99723d2c28cf10dbb2cc5fd2193dff722334742d5615759e"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-shared",
@@ -2383,8 +2374,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-shared"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ecefb31b992b63784a0a9ed25669c9b666c94c2627e7118e01837aae1e4e461"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "anyhow",
  "camino",
@@ -2407,8 +2397,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-toml"
 version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e33bc08e59f6891c1c930f885a378e59759169d774bf2cc15e447517e3c8681"
+source = "git+https://github.com/stayhydated/es-fluent#faf6583e658bc50d561097371c27b24d6d3e59c9"
 dependencies = [
  "bon",
  "es-fluent-shared",
@@ -3429,20 +3418,21 @@ dependencies = [
 [[package]]
 name = "gpui-es-fluent"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/gpui-es-fluent#c1609302332c3bba76e1986424c48d395c77d340"
+source = "git+https://github.com/stayhydated/gpui-es-fluent#474b0131485d414676fc5a9745eaa3674c6672f9"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-embedded",
  "gpui",
  "gpui-component",
  "strum 0.28.0",
+ "thiserror 2.0.18",
  "unic-langid",
 ]
 
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#f0592647b2a0347b17166d586a17d6624a221a72"
+source = "git+https://github.com/stayhydated/gpui-storybook#28c7ca6e65f39a07e4de239799e1b0069feee039"
 dependencies = [
  "gpui",
  "gpui-storybook-core",
@@ -3455,7 +3445,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#f0592647b2a0347b17166d586a17d6624a221a72"
+source = "git+https://github.com/stayhydated/gpui-storybook#28c7ca6e65f39a07e4de239799e1b0069feee039"
 dependencies = [
  "gpui",
  "gpui-component",
@@ -3464,7 +3454,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#f0592647b2a0347b17166d586a17d6624a221a72"
+source = "git+https://github.com/stayhydated/gpui-storybook#28c7ca6e65f39a07e4de239799e1b0069feee039"
 dependencies = [
  "anyhow",
  "derive_more 2.1.1",
@@ -3488,7 +3478,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#f0592647b2a0347b17166d586a17d6624a221a72"
+source = "git+https://github.com/stayhydated/gpui-storybook#28c7ca6e65f39a07e4de239799e1b0069feee039"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3499,7 +3489,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#f0592647b2a0347b17166d586a17d6624a221a72"
+source = "git+https://github.com/stayhydated/gpui-storybook#28c7ca6e65f39a07e4de239799e1b0069feee039"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -3554,6 +3544,7 @@ dependencies = [
  "rust_decimal",
  "spacetimedb-lib",
  "strum 0.28.0",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -3568,6 +3559,7 @@ dependencies = [
  "gpui-table-schema",
  "rust_decimal",
  "spacetimedb-lib",
+ "thiserror 2.0.18",
 ]
 
 [[package]]
@@ -5098,8 +5090,7 @@ checksum = "e2db585e1d738fc771bf08a151420d3ed193d9d895a36df7f6f8a9456b911ddc"
 [[package]]
 name = "koruma"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "795782a96e661e711b4f5a3d5bcf8068a68bd2ce65582a44ec9dd3d647aab658"
+source = "git+https://github.com/stayhydated/koruma#352ef6490ce7f19a062dedd347a72b5bf7527302"
 dependencies = [
  "koruma-core",
  "koruma-derive",
@@ -5108,8 +5099,7 @@ dependencies = [
 [[package]]
 name = "koruma-collection"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "55af993278c28c3d4cab1450e402440225f8361120574a6a095598fd49706a6a"
+source = "git+https://github.com/stayhydated/koruma#352ef6490ce7f19a062dedd347a72b5bf7527302"
 dependencies = [
  "es-fluent-build",
  "koruma",
@@ -5118,14 +5108,12 @@ dependencies = [
 [[package]]
 name = "koruma-core"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "268f7d209f7793d0b6c0a15942a8bc82db1097f1a4d8a6a76855b9dc2d2314bd"
+source = "git+https://github.com/stayhydated/koruma#352ef6490ce7f19a062dedd347a72b5bf7527302"
 
 [[package]]
 name = "koruma-derive"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0081cf85d494d3b7f032a98253508f3b5ef7c411a10751eaa05b59d7c5ae49b1"
+source = "git+https://github.com/stayhydated/koruma#352ef6490ce7f19a062dedd347a72b5bf7527302"
 dependencies = [
  "heck 0.5.0",
  "koruma-derive-core",
@@ -5138,8 +5126,7 @@ dependencies = [
 [[package]]
 name = "koruma-derive-core"
 version = "0.10.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd6c192750e685e967be6c3d08b0b7eb9b96b4f3bc3f067c176794c197e321c1"
+source = "git+https://github.com/stayhydated/koruma#352ef6490ce7f19a062dedd347a72b5bf7527302"
 dependencies = [
  "attribute-dsl",
  "heck 0.5.0",

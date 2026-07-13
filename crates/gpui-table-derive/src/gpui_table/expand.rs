@@ -403,7 +403,7 @@ pub(super) fn expand_gpui_table(
         Some(Override::Explicit(_)) | Some(Override::Inherit) => {
             quote! {
                 fn table_title() -> String {
-                    gpui_table::core::i18n::fallback_label::<Self>()
+                    gpui_table::core::i18n::localize_label::<Self>()
                 }
             }
         },

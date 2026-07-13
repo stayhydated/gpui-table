@@ -371,7 +371,8 @@ impl<T: Filterable> FacetedFilter<T> {
 
 impl<T: FilterValue> Render for FacetedFilter<T> {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-        crate::i18n::sync_locale(cx);
+        crate::i18n::sync_locale(cx)
+            .unwrap_or_else(|error| panic!("failed to synchronize table locale: {error}"));
 
         let should_show_search = self.show_search
             || (self.options)(app(cx))

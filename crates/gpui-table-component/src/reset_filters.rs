@@ -77,6 +77,7 @@ mod tests {
     #[gpui::test]
     fn reset_control_builders_render_with_default_and_custom_ids(cx: &mut TestAppContext) {
         cx.update(gpui_component::init);
+        cx.update(|cx| crate::i18n::init(cx).unwrap());
         let default = ResetFilters::new(|_, _| {});
         assert_eq!(default.button_id, "table-reset-filters");
 

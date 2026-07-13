@@ -14,7 +14,7 @@ readme = "README.md"
 [features]
 chrono = [ "dep:chrono" ]
 default = [ "chrono" ]
-fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded" ]
+fluent = [ "dep:es-fluent", "dep:es-fluent-manager-embedded", "dep:thiserror" ]
 rust_decimal = [ "dep:rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono" ]
 
@@ -26,6 +26,7 @@ es-fluent-manager-embedded = { optional = true, workspace = true }
 gpui-table-schema = { workspace = true }
 rust_decimal = { optional = true, workspace = true }
 spacetimedb-lib = { optional = true, workspace = true }
+thiserror = { optional = true, workspace = true }
 
 [build-dependencies]
 es-fluent-build = { workspace = true }

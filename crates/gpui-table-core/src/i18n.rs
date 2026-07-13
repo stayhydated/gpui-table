@@ -1,8 +1,5 @@
-use es_fluent::{
-    FluentArgs, FluentLabel, FluentLocalizer, FluentLocalizerExt as _, FluentMessage,
-    registry::{StaticFluentDomain, StaticFluentEntryId},
-};
-use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError};
+use es_fluent::{FluentLabel, FluentMessage};
+use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError, LocalizationError};
 use std::sync::{Mutex, OnceLock};
 
 const FALLBACK_LANGUAGE: &str = "en";
@@ -13,25 +10,24 @@ static I18N: OnceLock<EmbeddedI18n> = OnceLock::new();
 static ACTIVE_LANGUAGE: Mutex<Option<es_fluent::unic_langid::LanguageIdentifier>> =
     Mutex::new(None);
 
-struct FallbackLocalizer;
-
-impl FluentLocalizer for FallbackLocalizer {
-    fn localize<'a>(
-        &self,
-        id: StaticFluentEntryId,
-        _args: Option<&FluentArgs<'a>>,
-    ) -> Option<String> {
-        Some(id.as_ref().to_string())
-    }
-
-    fn localize_in_domain<'a>(
-        &self,
-        _domain: StaticFluentDomain,
-        id: StaticFluentEntryId,
-        _args: Option<&FluentArgs<'a>>,
-    ) -> Option<String> {
-        Some(id.as_ref().to_string())
-    }
+/// Errors produced while selecting the process-global table-core locale.
+#[derive(Debug, thiserror::Error)]
+pub enum LocaleError {
+    /// The supplied locale is not a valid Unicode language identifier.
+    #[error("invalid gpui-table-core locale `{locale}`")]
+    InvalidLocale {
+        /// The rejected locale string.
+        locale: String,
+        /// The language identifier parse error.
+        #[source]
+        source: es_fluent::unic_langid::LanguageIdentifierError,
+    },
+    /// The embedded localization manager could not be initialized.
+    #[error("failed to initialize gpui-table-core localization")]
+    Initialization(#[from] EmbeddedInitError),
+    /// The embedded localization manager rejected the requested language.
+    #[error("failed to select gpui-table-core locale")]
+    Selection(#[from] LocalizationError),
 }
 
 fn fallback_language() -> es_fluent::unic_langid::LanguageIdentifier {
@@ -51,64 +47,81 @@ fn i18n() -> Result<&'static EmbeddedI18n, EmbeddedInitError> {
         .expect("gpui-table-core i18n should be initialized"))
 }
 
-fn mark_language_active(language: &es_fluent::unic_langid::LanguageIdentifier) -> bool {
-    let mut active_language = ACTIVE_LANGUAGE
+fn language_is_active(language: &es_fluent::unic_langid::LanguageIdentifier) -> bool {
+    ACTIVE_LANGUAGE
         .lock()
-        .unwrap_or_else(|error| error.into_inner());
+        .unwrap_or_else(|error| error.into_inner())
+        .as_ref()
+        == Some(language)
+}
 
-    if active_language.as_ref() == Some(language) {
-        return true;
-    }
-
-    *active_language = Some(language.clone());
-    false
+fn record_active_language(language: es_fluent::unic_langid::LanguageIdentifier) {
+    *ACTIVE_LANGUAGE
+        .lock()
+        .unwrap_or_else(|error| error.into_inner()) = Some(language);
 }
 
 /// Select the locale used by built-in core filter labels.
-pub fn set_locale(locale: impl AsRef<str>) {
-    let Ok(language) = locale
-        .as_ref()
-        .parse::<es_fluent::unic_langid::LanguageIdentifier>()
-    else {
-        return;
-    };
+///
+/// # Errors
+///
+/// Returns [`LocaleError`] when the locale is invalid, localization cannot be
+/// initialized, or the requested language is unsupported.
+pub fn set_locale(locale: impl AsRef<str>) -> Result<(), LocaleError> {
+    let locale = locale.as_ref();
+    let language = locale
+        .parse()
+        .map_err(|source| LocaleError::InvalidLocale {
+            locale: locale.to_owned(),
+            source,
+        })?;
 
-    if mark_language_active(&language) {
-        return;
+    if language_is_active(&language) {
+        return Ok(());
     }
 
-    if let Ok(i18n) = i18n() {
-        let _ = i18n.select_language(language);
-    }
+    i18n()?.select_language(language.clone())?;
+    record_active_language(language);
+    Ok(())
 }
 
 /// Localize a typed Fluent message through the core embedded i18n context.
+///
+/// # Panics
+///
+/// Panics when localization cannot initialize or the typed resource is missing.
 pub fn localize_message<T>(message: &T) -> String
 where
     T: FluentMessage + ?Sized,
 {
-    match i18n() {
-        Ok(i18n) => i18n.localize_message(message),
-        Err(_) => FallbackLocalizer.localize_message(message),
-    }
+    i18n()
+        .unwrap_or_else(|error| {
+            panic!("failed to initialize gpui-table-core localization: {error}")
+        })
+        .localize_message(message)
 }
 
-/// Render a type label without consulting GPUI component state.
-pub fn fallback_label<T>() -> String
+/// Localize a type label through the core embedded i18n context.
+///
+/// # Panics
+///
+/// Panics when localization cannot initialize or the typed label is missing.
+pub fn localize_label<T>() -> String
 where
     T: FluentLabel,
 {
-    es_fluent::fallback_label::<T>()
+    T::localize_label(i18n().unwrap_or_else(|error| {
+        panic!("failed to initialize gpui-table-core localization: {error}")
+    }))
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        FallbackLocalizer, fallback_label, fallback_language, i18n, mark_language_active,
-        set_locale,
+        FALLBACK_LANGUAGE, LocaleError, fallback_language, i18n, localize_label, set_locale,
     };
     use es_fluent::{
-        FluentLabel, FluentLocalizer as _,
+        FluentLabel,
         registry::{StaticFluentDomain, StaticFluentEntryId},
     };
 
@@ -126,36 +139,25 @@ mod tests {
 
     #[test]
     fn embedded_i18n_initializes_and_locale_selection_is_idempotent() {
-        let english = fallback_language();
-        let french = "fr".parse().unwrap();
-
         assert!(i18n().is_ok());
-        assert!(!mark_language_active(&english));
-        assert!(mark_language_active(&english));
-        assert!(!mark_language_active(&french));
-        assert!(mark_language_active(&french));
-
-        set_locale("not a locale");
-        set_locale("en");
-        set_locale("en");
-        set_locale("fr");
+        assert!(set_locale("en").is_ok());
+        assert!(set_locale("en").is_ok());
+        assert!(set_locale("fr-FR").is_ok());
+        assert!(set_locale("en").is_ok());
+        assert_eq!(fallback_language().to_string(), FALLBACK_LANGUAGE);
     }
 
     #[test]
-    fn fallback_localizer_preserves_ids_and_humanizes_type_labels() {
-        let domain = StaticFluentDomain::try_new("gpui-table-core").unwrap();
-        let id = StaticFluentEntryId::try_new("purchase_order_label").unwrap();
+    fn invalid_locale_is_a_typed_error() {
+        assert!(matches!(
+            set_locale("not a locale"),
+            Err(LocaleError::InvalidLocale { locale, .. }) if locale == "not a locale"
+        ));
+    }
 
-        assert_eq!(
-            FallbackLocalizer.localize(id, None).as_deref(),
-            Some("purchase_order_label")
-        );
-        assert_eq!(
-            FallbackLocalizer
-                .localize_in_domain(domain, id, None)
-                .as_deref(),
-            Some("purchase_order_label")
-        );
-        assert_eq!(fallback_label::<PurchaseOrder>(), "Purchase Order");
+    #[test]
+    #[should_panic(expected = "missing Fluent label `purchase_order_label`")]
+    fn missing_type_label_is_not_humanized() {
+        localize_label::<PurchaseOrder>();
     }
 }

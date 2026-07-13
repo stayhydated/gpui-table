@@ -113,8 +113,10 @@ gpui_table_component::i18n::set_locale(cx, "en")?;
 
 Generated filter flows call the same localization helpers through
 `gpui_table_component::i18n`. Runtime widget text reads the
-`EmbeddedI18n` handle from GPUI global state; context-free metadata such as
-storybook titles uses explicit fallback helpers.
+`EmbeddedI18n` handle from GPUI global state. Locale parsing and selection
+return typed errors. Ordinary message and label rendering requires initialized
+localization state and a matching typed resource; missing state or resources
+fail hard rather than rendering a key-derived string.
 
 ## Interop With Generated Tables
 
