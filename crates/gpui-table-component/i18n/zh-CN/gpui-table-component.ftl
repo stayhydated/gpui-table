@@ -17,3 +17,11 @@ reset_filters_ftl-Reset = 重置
 ## TextFilterFtl
 
 text_filter_ftl-Placeholder = 按 { $title } 筛选...
+
+## TableStatusBarFtl
+
+table_status_bar_ftl-ItemsLoaded = 已加载 { $count } 项
+table_status_bar_ftl-Loading = 正在加载...
+table_status_bar_ftl-Idle = 空闲
+table_status_bar_ftl-AllDataLoaded = 所有数据已加载
+table_status_bar_ftl-ScrollForMore = 滚动以加载更多

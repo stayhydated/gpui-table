@@ -24,44 +24,46 @@ mod date_display {
     use icu::{
         calendar::{Date, Iso},
         datetime::{DateTimeFormatter, DateTimeFormatterPreferences, fieldsets},
-        locale::{Locale, locale},
+        locale::Locale,
     };
     use jiff::civil;
 
     type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
 
     fn formatter_preferences() -> DateTimeFormatterPreferences {
-        let locale = gpui_component::locale()
-            .parse::<Locale>()
-            .unwrap_or(locale!("en-US"));
+        let raw = gpui_component::locale();
+        let normalized = raw.replace('_', "-");
+        let locale = normalized.parse::<Locale>().unwrap_or_else(|error| {
+            panic!("gpui-component locale `{normalized}` is not a valid ICU locale: {error}")
+        });
         locale.into()
     }
 
-    fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
+    fn date_formatter() -> DateFormatter {
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium())
+            .unwrap_or_else(|error| panic!("failed to create ICU date formatter: {error:?}"))
     }
 
-    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
-        let month = i8::try_from(value.month()).ok()?;
-        let day = i8::try_from(value.day()).ok()?;
-        let year = i16::try_from(value.year()).ok()?;
-        civil::Date::new(year, month, day).ok()
+    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> civil::Date {
+        let month = i8::try_from(value.month()).expect("chrono months fit jiff values");
+        let day = i8::try_from(value.day()).expect("chrono days fit jiff values");
+        let year = i16::try_from(value.year()).unwrap_or_else(|error| {
+            panic!("chrono date `{value}` is outside jiff's year range: {error}")
+        });
+        civil::Date::new(year, month, day).expect("valid chrono date should remain valid in jiff")
     }
 
-    fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {
-        let month = u8::try_from(value.month()).ok()?;
-        let day = u8::try_from(value.day()).ok()?;
-        Date::try_new_iso(i32::from(value.year()), month, day).ok()
+    fn to_icu_date(value: civil::Date) -> Date<Iso> {
+        let month = u8::try_from(value.month()).expect("jiff months fit ICU month values");
+        let day = u8::try_from(value.day()).expect("jiff days fit ICU day values");
+        Date::try_new_iso(i32::from(value.year()), month, day).unwrap_or_else(|error| {
+            panic!("jiff date `{value}` is not a valid ICU date: {error:?}")
+        })
     }
 
     pub(super) fn format_date(value: NaiveDate) -> String {
-        chrono_naive_date_to_jiff(&value)
-            .and_then(|value| {
-                let date = to_icu_date(value)?;
-                let formatter = date_formatter()?;
-                Some(formatter.format(&date).to_string())
-            })
-            .unwrap_or_else(|| value.to_string())
+        let date = to_icu_date(chrono_naive_date_to_jiff(&value));
+        date_formatter().format(&date).to_string()
     }
 }
 

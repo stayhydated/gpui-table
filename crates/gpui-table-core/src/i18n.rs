@@ -2,7 +2,7 @@ use es_fluent::{FluentLabel, FluentMessage};
 use es_fluent_manager_embedded::{EmbeddedI18n, EmbeddedInitError, LocalizationError};
 use std::sync::{Mutex, OnceLock};
 
-const FALLBACK_LANGUAGE: &str = "en";
+const DEFAULT_LANGUAGE: &str = "en";
 
 es_fluent_manager_embedded::define_i18n_module!();
 
@@ -30,15 +30,15 @@ pub enum LocaleError {
     Selection(#[from] LocalizationError),
 }
 
-fn fallback_language() -> es_fluent::unic_langid::LanguageIdentifier {
-    FALLBACK_LANGUAGE
+fn default_language() -> es_fluent::unic_langid::LanguageIdentifier {
+    DEFAULT_LANGUAGE
         .parse()
-        .expect("gpui-table-core fallback language must be a valid language identifier")
+        .expect("gpui-table-core default language must be a valid language identifier")
 }
 
 fn i18n() -> Result<&'static EmbeddedI18n, EmbeddedInitError> {
     if I18N.get().is_none() {
-        let i18n = EmbeddedI18n::try_new_with_language(fallback_language())?;
+        let i18n = EmbeddedI18n::try_new_with_language(default_language())?;
         let _ = I18N.set(i18n);
     }
 
@@ -118,7 +118,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::{
-        FALLBACK_LANGUAGE, LocaleError, fallback_language, i18n, localize_label, set_locale,
+        DEFAULT_LANGUAGE, LocaleError, default_language, i18n, localize_label, set_locale,
     };
     use es_fluent::{
         FluentLabel,
@@ -144,7 +144,7 @@ mod tests {
         assert!(set_locale("en").is_ok());
         assert!(set_locale("fr-FR").is_ok());
         assert!(set_locale("en").is_ok());
-        assert_eq!(fallback_language().to_string(), FALLBACK_LANGUAGE);
+        assert_eq!(default_language().to_string(), DEFAULT_LANGUAGE);
     }
 
     #[test]

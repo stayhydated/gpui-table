@@ -61,6 +61,10 @@ in `gpui-table-component`, not in this runtime crate.
 - `rust_decimal`: decimal cell rendering and numeric range filter field support
 - `spacetimedb`: supported SpacetimeDB temporal range-filter support through the core layer
 
+Date/time cells use the active `gpui-component` locale. Invalid locale strings,
+out-of-range conversions, and unavailable ICU formatters are hard errors
+instead of silently degrading to raw `Display` output.
+
 If you only want the normal derive-based workflow, depend on `gpui-table`
 instead of this crate directly.
 

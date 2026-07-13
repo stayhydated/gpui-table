@@ -117,6 +117,9 @@ Generated filter flows call the same localization helpers through
 return typed errors. Ordinary message and label rendering requires initialized
 localization state and a matching typed resource; missing state or resources
 fail hard rather than rendering a key-derived string.
+The status bar follows the same typed-resource path. Date-range display uses
+the active `gpui-component` locale and treats invalid locales or unavailable
+ICU formatters as hard errors instead of substituting raw or English dates.
 
 ## Interop With Generated Tables
 

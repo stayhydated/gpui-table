@@ -16,14 +16,18 @@ impl ToDecimal for rust_decimal::Decimal {
 #[cfg(feature = "rust_decimal")]
 impl ToDecimal for f64 {
     fn to_decimal(&self) -> rust_decimal::Decimal {
-        rust_decimal::Decimal::from_f64_retain(*self).unwrap_or(rust_decimal::Decimal::ZERO)
+        rust_decimal::Decimal::from_f64_retain(*self).unwrap_or_else(|| {
+            panic!("floating-point value `{self}` cannot be represented as a Decimal")
+        })
     }
 }
 
 #[cfg(feature = "rust_decimal")]
 impl ToDecimal for f32 {
     fn to_decimal(&self) -> rust_decimal::Decimal {
-        rust_decimal::Decimal::from_f32_retain(*self).unwrap_or(rust_decimal::Decimal::ZERO)
+        rust_decimal::Decimal::from_f32_retain(*self).unwrap_or_else(|| {
+            panic!("floating-point value `{self}` cannot be represented as a Decimal")
+        })
     }
 }
 
@@ -144,7 +148,12 @@ impl ToNaiveDate for spacetimedb_lib::Timestamp {
     fn to_naive_date(&self) -> chrono::NaiveDate {
         chrono::DateTime::from_timestamp_micros(self.to_micros_since_unix_epoch())
             .map(|value| value.date_naive())
-            .unwrap_or_default()
+            .unwrap_or_else(|| {
+                panic!(
+                    "SpacetimeDB timestamp `{}` is outside chrono's supported date range",
+                    self.to_micros_since_unix_epoch()
+                )
+            })
     }
 }
 
@@ -163,9 +172,6 @@ mod tests {
         assert_eq!(Decimal::new(125, 2).to_decimal(), Decimal::new(125, 2));
         assert_eq!(1.5_f64.to_decimal(), Decimal::from_f64_retain(1.5).unwrap());
         assert_eq!(2.5_f32.to_decimal(), Decimal::from_f32_retain(2.5).unwrap());
-        assert_eq!(f64::NAN.to_decimal(), Decimal::ZERO);
-        assert_eq!(f32::NAN.to_decimal(), Decimal::ZERO);
-
         assert_eq!((-8_i8).to_decimal(), Decimal::from(-8));
         assert_eq!((-16_i16).to_decimal(), Decimal::from(-16));
         assert_eq!((-32_i32).to_decimal(), Decimal::from(-32));
@@ -176,6 +182,13 @@ mod tests {
         assert_eq!(64_u64.to_decimal(), Decimal::from(64));
         assert_eq!(8_usize.to_decimal(), Decimal::from(8));
         assert_eq!((-8_isize).to_decimal(), Decimal::from(-8));
+    }
+
+    #[cfg(feature = "rust_decimal")]
+    #[test]
+    #[should_panic(expected = "cannot be represented as a Decimal")]
+    fn non_finite_numbers_are_rejected_instead_of_becoming_zero() {
+        _ = f64::NAN.to_decimal();
     }
 
     #[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
@@ -210,7 +223,7 @@ mod tests {
 
     #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
     #[test]
-    fn spacetimedb_timestamps_convert_to_dates_with_a_safe_fallback() {
+    fn spacetimedb_timestamps_convert_to_dates() {
         use chrono::NaiveDate;
         use spacetimedb_lib::Timestamp;
 
@@ -218,9 +231,14 @@ mod tests {
             Timestamp::from_micros_since_unix_epoch(0).to_naive_date(),
             NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
         );
-        assert_eq!(
-            Timestamp::from_micros_since_unix_epoch(i64::MAX).to_naive_date(),
-            NaiveDate::default()
-        );
+    }
+
+    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[test]
+    #[should_panic(expected = "outside chrono's supported date range")]
+    fn out_of_range_spacetimedb_timestamps_are_rejected() {
+        use spacetimedb_lib::Timestamp;
+
+        _ = Timestamp::from_micros_since_unix_epoch(i64::MAX).to_naive_date();
     }
 }

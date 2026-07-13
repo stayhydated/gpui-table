@@ -109,7 +109,7 @@ impl TableIdentities for ShapeIdentities<'_> {
     }
 
     fn table_id(&self) -> &'static str {
-        self.0.table_id
+        self.0.table_id.as_str()
     }
 
     fn table_title(&self) -> &'static str {
@@ -178,7 +178,7 @@ mod tests {
     fn shape_identities_derive_every_public_name_and_flag() {
         let identities = ShapeIdentities::new(&SHAPE);
 
-        assert_eq!(identities.shape().table_id, "purchase_order");
+        assert_eq!(identities.shape().table_id.as_str(), "purchase_order");
         assert_eq!(identities.columns().len(), 1);
         assert_eq!(identities.struct_name(), "PurchaseOrder");
         assert_eq!(identities.struct_name_ident().to_string(), "PurchaseOrder");

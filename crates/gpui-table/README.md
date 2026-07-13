@@ -385,7 +385,9 @@ GPUI global state. The example app declares its languages in a library-reachable
 `gpui_table_component::i18n` during GPUI startup, and selects the active locale
 through the GPUI storybook locale APIs.
 Generated Storybook table titles use the GPUI app context so they follow the
-active Storybook locale; context-free metadata uses fallback label helpers.
+active Storybook locale. Context-free table titles use the strict embedded
+table-core localizer. Missing typed resources and missing GPUI localization
+state are hard failures instead of display-string fallbacks.
 
 ## Examples
 

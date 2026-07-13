@@ -12,8 +12,16 @@ pub struct TableId<'a> {
 }
 
 impl<'a> TableId<'a> {
-    /// Creates a table id wrapper from a borrowed identifier.
+    /// Creates a validated table id from a borrowed identifier.
+    ///
+    /// Table ids are non-empty and contain only lowercase ASCII letters,
+    /// digits, `_`, or `-`.
+    ///
+    /// # Panics
+    ///
+    /// Panics when `value` is not a valid stable table identifier.
     pub const fn new(value: &'a str) -> Self {
+        assert_valid_table_id(value);
         Self { value }
     }
 
@@ -21,10 +29,20 @@ impl<'a> TableId<'a> {
     pub const fn as_str(&self) -> &'a str {
         self.value
     }
+}
 
-    /// Returns whether the table id is empty.
-    pub const fn is_empty(&self) -> bool {
-        self.value.is_empty()
+const fn assert_valid_table_id(value: &str) {
+    let bytes = value.as_bytes();
+    assert!(!bytes.is_empty(), "table ids must not be empty");
+
+    let mut index = 0;
+    while index < bytes.len() {
+        let byte = bytes[index];
+        assert!(
+            matches!(byte, b'a'..=b'z' | b'0'..=b'9' | b'_' | b'-'),
+            "table ids must use lowercase ASCII letters, digits, `_`, or `-`"
+        );
+        index += 1;
     }
 }
 
@@ -44,7 +62,7 @@ impl From<TableId<'_>> for String {
 #[derive(Debug)]
 pub struct GpuiTableShape {
     pub struct_name: &'static str,
-    pub table_id: &'static str,
+    pub table_id: TableId<'static>,
     pub table_title: &'static str,
     pub fluent: bool,
     pub columns: &'static [ColumnVariant],
@@ -70,7 +88,7 @@ impl GpuiTableShape {
     ) -> Self {
         Self {
             struct_name,
-            table_id,
+            table_id: TableId::new(table_id),
             table_title,
             fluent,
             columns,
@@ -81,7 +99,7 @@ impl GpuiTableShape {
     }
 
     pub const fn table_id(&self) -> TableId<'static> {
-        TableId::new(self.table_id)
+        self.table_id
     }
 }
 
@@ -180,8 +198,18 @@ mod tests {
         assert_eq!(table_id.as_str(), "purchase_order");
         assert_eq!(table_id.to_string(), "purchase_order");
         assert_eq!(String::from(table_id), "purchase_order");
-        assert!(!table_id.is_empty());
-        assert!(TableId::new("").is_empty());
+    }
+
+    #[test]
+    #[should_panic(expected = "table ids must not be empty")]
+    fn table_ids_reject_empty_values() {
+        _ = TableId::new("");
+    }
+
+    #[test]
+    #[should_panic(expected = "table ids must use lowercase ASCII")]
+    fn table_ids_reject_unstable_text() {
+        _ = TableId::new("Purchase Order");
     }
 
     #[test]

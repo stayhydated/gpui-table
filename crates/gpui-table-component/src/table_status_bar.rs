@@ -1,7 +1,19 @@
+use es_fluent::EsFluent;
 use gpui::{
     App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
 };
 use gpui_component::{StyledExt as _, h_flex};
+
+use crate::i18n::localize_message;
+
+#[derive(Clone, Debug, EsFluent)]
+enum TableStatusBarFtl {
+    ItemsLoaded { count: usize },
+    Loading,
+    Idle,
+    AllDataLoaded,
+    ScrollForMore,
+}
 
 /// Configuration for the table status bar display.
 #[derive(IntoElement)]
@@ -39,31 +51,31 @@ impl TableStatusBar {
         }
     }
 
-    /// Set a custom label for the row count (default: "Items Loaded")
+    /// Set a custom label for the row count.
     pub fn row_label(mut self, label: impl Into<String>) -> Self {
         self.row_label = Some(label.into());
         self
     }
 
-    /// Set custom text for the loading state (default: "Loading...")
+    /// Set custom text for the loading state.
     pub fn loading_text(mut self, text: impl Into<String>) -> Self {
         self.loading_text = Some(text.into());
         self
     }
 
-    /// Set custom text for the idle state (default: "Idle")
+    /// Set custom text for the idle state.
     pub fn idle_text(mut self, text: impl Into<String>) -> Self {
         self.idle_text = Some(text.into());
         self
     }
 
-    /// Set custom text for when all data is loaded (default: "All data loaded")
+    /// Set custom text for when all data is loaded.
     pub fn all_loaded_text(mut self, text: impl Into<String>) -> Self {
         self.all_loaded_text = Some(text.into());
         self
     }
 
-    /// Set custom text for when more data is available (default: "Scroll for more")
+    /// Set custom text for when more data is available.
     pub fn more_available_text(mut self, text: impl Into<String>) -> Self {
         self.more_available_text = Some(text.into());
         self
@@ -95,15 +107,30 @@ impl Styled for TableStatusBar {
 }
 
 impl RenderOnce for TableStatusBar {
-    fn render(self, _window: &mut Window, _cx: &mut App) -> impl IntoElement {
-        let row_label = self.row_label.as_deref().unwrap_or("Items Loaded");
-        let loading_text = self.loading_text.as_deref().unwrap_or("Loading...");
-        let idle_text = self.idle_text.as_deref().unwrap_or("Idle");
-        let all_loaded_text = self.all_loaded_text.as_deref().unwrap_or("All data loaded");
+    fn render(self, _window: &mut Window, cx: &mut App) -> impl IntoElement {
+        let row_count_text = self.row_label.map_or_else(
+            || {
+                localize_message(
+                    cx,
+                    &TableStatusBarFtl::ItemsLoaded {
+                        count: self.row_count,
+                    },
+                )
+            },
+            |label| format!("{label}: {}", self.row_count),
+        );
+        let loading_text = self
+            .loading_text
+            .unwrap_or_else(|| localize_message(cx, &TableStatusBarFtl::Loading));
+        let idle_text = self
+            .idle_text
+            .unwrap_or_else(|| localize_message(cx, &TableStatusBarFtl::Idle));
+        let all_loaded_text = self
+            .all_loaded_text
+            .unwrap_or_else(|| localize_message(cx, &TableStatusBarFtl::AllDataLoaded));
         let more_available_text = self
             .more_available_text
-            .as_deref()
-            .unwrap_or("Scroll for more");
+            .unwrap_or_else(|| localize_message(cx, &TableStatusBarFtl::ScrollForMore));
 
         h_flex()
             .gap_4()
@@ -111,21 +138,21 @@ impl RenderOnce for TableStatusBar {
             .child(
                 div()
                     .refine_style(&self.row_count_style)
-                    .child(format!("{}: {}", row_label, self.row_count)),
+                    .child(row_count_text),
             )
             .child(
                 div()
                     .refine_style(&self.activity_style)
                     .child(if self.loading {
-                        loading_text.to_string()
+                        loading_text
                     } else {
-                        idle_text.to_string()
+                        idle_text
                     }),
             )
             .child(div().refine_style(&self.eof_style).child(if self.eof {
-                all_loaded_text.to_string()
+                all_loaded_text
             } else {
-                more_available_text.to_string()
+                more_available_text
             }))
     }
 }
@@ -140,6 +167,11 @@ mod tests {
 
     #[gpui::test]
     fn status_bar_builders_and_state_combinations_render(cx: &mut TestAppContext) {
+        cx.update(|cx| {
+            gpui_component::init(cx);
+            crate::i18n::init(cx).expect("table status-bar localization should initialize");
+        });
+
         let mut custom = TableStatusBar::new(42, true, false)
             .row_label("Rows")
             .loading_text("Working")

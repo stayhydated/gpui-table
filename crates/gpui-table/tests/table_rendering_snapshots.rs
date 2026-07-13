@@ -246,7 +246,6 @@ fn table_row_meta_exposes_typed_table_id() {
     assert_eq!(table_id.as_str(), BasicRow::TABLE_ID);
     assert_eq!(table_id.to_string(), "basic_row");
     assert_eq!(String::from(table_id), "basic_row");
-    assert!(!table_id.is_empty());
 }
 
 #[test]

@@ -17,3 +17,11 @@ reset_filters_ftl-Reset = Reset
 ## TextFilterFtl
 
 text_filter_ftl-Placeholder = Filter by { $title }...
+
+## TableStatusBarFtl
+
+table_status_bar_ftl-ItemsLoaded = Items loaded: { $count }
+table_status_bar_ftl-Loading = Loading...
+table_status_bar_ftl-Idle = Idle
+table_status_bar_ftl-AllDataLoaded = All data loaded
+table_status_bar_ftl-ScrollForMore = Scroll for more

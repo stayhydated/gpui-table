@@ -67,7 +67,7 @@ mod datetime_format {
             fieldsets::{self, Combo},
             input::{DateTime as IcuDateTime, Time, UtcOffset, ZonedDateTime},
         },
-        locale::{Locale, locale},
+        locale::Locale,
     };
     use jiff::{Timestamp, Zoned, civil, tz::TimeZone};
 
@@ -78,125 +78,149 @@ mod datetime_format {
     type TimeFormatter = NoCalendarFormatter<fieldsets::T>;
 
     fn formatter_preferences() -> DateTimeFormatterPreferences {
-        let locale = gpui_component::locale()
-            .parse::<Locale>()
-            .unwrap_or(locale!("en-US"));
+        let raw = gpui_component::locale();
+        let normalized = raw.replace('_', "-");
+        let locale = normalized.parse::<Locale>().unwrap_or_else(|error| {
+            panic!("gpui-component locale `{normalized}` is not a valid ICU locale: {error}")
+        });
         locale.into()
     }
 
-    fn date_formatter() -> Option<DateFormatter> {
-        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium()).ok()
+    fn date_formatter() -> DateFormatter {
+        DateTimeFormatter::try_new(formatter_preferences(), fieldsets::YMD::medium())
+            .unwrap_or_else(|error| panic!("failed to create ICU date formatter: {error:?}"))
     }
 
-    fn datetime_formatter() -> Option<DateTimeFormatterNoZone> {
+    fn datetime_formatter() -> DateTimeFormatterNoZone {
         let fieldset = fieldsets::YMD::medium().with_time_hms();
-        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset)
+            .unwrap_or_else(|error| panic!("failed to create ICU datetime formatter: {error:?}"))
     }
 
-    fn zoned_datetime_formatter() -> Option<DateTimeFormatterWithZone> {
+    fn zoned_datetime_formatter() -> DateTimeFormatterWithZone {
         let fieldset = fieldsets::YMD::medium()
             .with_time_hms()
             .with_zone(fieldsets::zone::LocalizedOffsetLong);
-        DateTimeFormatter::try_new(formatter_preferences(), fieldset).ok()
+        DateTimeFormatter::try_new(formatter_preferences(), fieldset).unwrap_or_else(|error| {
+            panic!("failed to create ICU zoned datetime formatter: {error:?}")
+        })
     }
 
-    fn time_formatter() -> Option<TimeFormatter> {
-        NoCalendarFormatter::try_new(formatter_preferences(), fieldsets::T::medium()).ok()
+    fn time_formatter() -> TimeFormatter {
+        NoCalendarFormatter::try_new(formatter_preferences(), fieldsets::T::medium())
+            .unwrap_or_else(|error| panic!("failed to create ICU time formatter: {error:?}"))
     }
 
-    fn to_icu_date(value: civil::Date) -> Option<Date<Iso>> {
-        let month = u8::try_from(value.month()).ok()?;
-        let day = u8::try_from(value.day()).ok()?;
-        Date::try_new_iso(i32::from(value.year()), month, day).ok()
+    fn to_icu_date(value: civil::Date) -> Date<Iso> {
+        let month = u8::try_from(value.month()).expect("jiff months fit ICU month values");
+        let day = u8::try_from(value.day()).expect("jiff days fit ICU day values");
+        Date::try_new_iso(i32::from(value.year()), month, day).unwrap_or_else(|error| {
+            panic!("jiff date `{value}` is not a valid ICU date: {error:?}")
+        })
     }
 
-    fn to_icu_time(value: civil::Time) -> Option<Time> {
-        let hour = u8::try_from(value.hour()).ok()?;
-        let minute = u8::try_from(value.minute()).ok()?;
-        let second = u8::try_from(value.second()).ok()?;
-        let nanosecond = u32::try_from(value.subsec_nanosecond()).ok()?;
-        Time::try_new(hour, minute, second, nanosecond).ok()
+    fn to_icu_time(value: civil::Time) -> Time {
+        let hour = u8::try_from(value.hour()).expect("jiff hours fit ICU hour values");
+        let minute = u8::try_from(value.minute()).expect("jiff minutes fit ICU minute values");
+        let second = u8::try_from(value.second()).expect("jiff seconds fit ICU second values");
+        let nanosecond =
+            u32::try_from(value.subsec_nanosecond()).expect("jiff nanoseconds fit ICU values");
+        Time::try_new(hour, minute, second, nanosecond).unwrap_or_else(|error| {
+            panic!("jiff time `{value}` is not a valid ICU time: {error:?}")
+        })
     }
 
-    pub(super) fn format_zoned(value: &Zoned) -> Option<String> {
-        let utc_offset = UtcOffset::try_from_seconds(value.offset().seconds()).ok()?;
+    pub(super) fn format_zoned(value: &Zoned) -> String {
+        let utc_offset =
+            UtcOffset::try_from_seconds(value.offset().seconds()).unwrap_or_else(|error| {
+                panic!("zoned datetime `{value}` has an invalid ICU offset: {error:?}")
+            });
         let zoned = ZonedDateTime::from_epoch_milliseconds_and_utc_offset(
             value.timestamp().as_millisecond(),
             utc_offset,
         );
-        let formatter = zoned_datetime_formatter()?;
-        Some(formatter.format(&zoned).to_string())
+        let formatter = zoned_datetime_formatter();
+        formatter.format(&zoned).to_string()
     }
 
-    pub(super) fn format_timestamp_local(value: Timestamp) -> Option<String> {
+    pub(super) fn format_timestamp_local(value: Timestamp) -> String {
         let zoned = value.to_zoned(TimeZone::system());
         format_zoned(&zoned)
     }
 
-    pub(super) fn format_civil_datetime(value: civil::DateTime) -> Option<String> {
-        let date = to_icu_date(value.date())?;
-        let time = to_icu_time(value.time())?;
+    pub(super) fn format_civil_datetime(value: civil::DateTime) -> String {
+        let date = to_icu_date(value.date());
+        let time = to_icu_time(value.time());
         let datetime = IcuDateTime { date, time };
-        let formatter = datetime_formatter()?;
-        Some(formatter.format(&datetime).to_string())
+        datetime_formatter().format(&datetime).to_string()
     }
 
-    pub(super) fn format_civil_date(value: civil::Date) -> Option<String> {
-        let date = to_icu_date(value)?;
-        let formatter = date_formatter()?;
-        Some(formatter.format(&date).to_string())
+    pub(super) fn format_civil_date(value: civil::Date) -> String {
+        let date = to_icu_date(value);
+        date_formatter().format(&date).to_string()
     }
 
-    pub(super) fn format_civil_time(value: civil::Time) -> Option<String> {
-        let time = to_icu_time(value)?;
-        let formatter = time_formatter()?;
-        Some(formatter.format(&time).to_string())
+    pub(super) fn format_civil_time(value: civil::Time) -> String {
+        let time = to_icu_time(value);
+        time_formatter().format(&time).to_string()
     }
 
     #[cfg(feature = "chrono")]
     pub(super) fn chrono_datetime_to_system_zoned<Tz: chrono::TimeZone>(
         value: &chrono::DateTime<Tz>,
-    ) -> Option<Zoned> {
-        let nanosecond = i32::try_from(value.timestamp_subsec_nanos()).ok()?;
-        let timestamp = Timestamp::new(value.timestamp(), nanosecond).ok()?;
-        Some(timestamp.to_zoned(TimeZone::system()))
+    ) -> Zoned {
+        let nanosecond = i32::try_from(value.timestamp_subsec_nanos())
+            .expect("chrono nanoseconds fit jiff values");
+        let timestamp = Timestamp::new(value.timestamp(), nanosecond).unwrap_or_else(|error| {
+            panic!(
+                "chrono timestamp `{}.{nanosecond:09}` is outside jiff's range: {error}",
+                value.timestamp()
+            )
+        });
+        timestamp.to_zoned(TimeZone::system())
     }
 
     #[cfg(feature = "chrono")]
-    pub(super) fn chrono_naive_datetime_to_jiff(
-        value: &chrono::NaiveDateTime,
-    ) -> Option<civil::DateTime> {
+    pub(super) fn chrono_naive_datetime_to_jiff(value: &chrono::NaiveDateTime) -> civil::DateTime {
         use chrono::{Datelike as _, Timelike as _};
 
-        let month = i8::try_from(value.month()).ok()?;
-        let day = i8::try_from(value.day()).ok()?;
-        let hour = i8::try_from(value.hour()).ok()?;
-        let minute = i8::try_from(value.minute()).ok()?;
-        let second = i8::try_from(value.second()).ok()?;
-        let nanosecond = i32::try_from(value.nanosecond()).ok()?;
-        let year = i16::try_from(value.year()).ok()?;
-        civil::DateTime::new(year, month, day, hour, minute, second, nanosecond).ok()
+        let month = i8::try_from(value.month()).expect("chrono months fit jiff values");
+        let day = i8::try_from(value.day()).expect("chrono days fit jiff values");
+        let hour = i8::try_from(value.hour()).expect("chrono hours fit jiff values");
+        let minute = i8::try_from(value.minute()).expect("chrono minutes fit jiff values");
+        let second = i8::try_from(value.second()).expect("chrono seconds fit jiff values");
+        let nanosecond =
+            i32::try_from(value.nanosecond()).expect("chrono nanoseconds fit jiff values");
+        let year = i16::try_from(value.year()).unwrap_or_else(|error| {
+            panic!("chrono datetime `{value}` is outside jiff's year range: {error}")
+        });
+        civil::DateTime::new(year, month, day, hour, minute, second, nanosecond)
+            .expect("valid chrono datetime should remain valid in jiff")
     }
 
     #[cfg(feature = "chrono")]
-    pub(super) fn chrono_naive_date_to_jiff(value: &chrono::NaiveDate) -> Option<civil::Date> {
+    pub(super) fn chrono_naive_date_to_jiff(value: &chrono::NaiveDate) -> civil::Date {
         use chrono::Datelike as _;
 
-        let month = i8::try_from(value.month()).ok()?;
-        let day = i8::try_from(value.day()).ok()?;
-        let year = i16::try_from(value.year()).ok()?;
-        civil::Date::new(year, month, day).ok()
+        let month = i8::try_from(value.month()).expect("chrono months fit jiff values");
+        let day = i8::try_from(value.day()).expect("chrono days fit jiff values");
+        let year = i16::try_from(value.year()).unwrap_or_else(|error| {
+            panic!("chrono date `{value}` is outside jiff's year range: {error}")
+        });
+        civil::Date::new(year, month, day).expect("valid chrono date should remain valid in jiff")
     }
 
     #[cfg(feature = "chrono")]
-    pub(super) fn chrono_naive_time_to_jiff(value: &chrono::NaiveTime) -> Option<civil::Time> {
+    pub(super) fn chrono_naive_time_to_jiff(value: &chrono::NaiveTime) -> civil::Time {
         use chrono::Timelike as _;
 
-        let hour = i8::try_from(value.hour()).ok()?;
-        let minute = i8::try_from(value.minute()).ok()?;
-        let second = i8::try_from(value.second()).ok()?;
-        let nanosecond = i32::try_from(value.nanosecond()).ok()?;
-        civil::Time::new(hour, minute, second, nanosecond).ok()
+        let hour = i8::try_from(value.hour()).expect("chrono hours fit jiff values");
+        let minute = i8::try_from(value.minute()).expect("chrono minutes fit jiff values");
+        let second = i8::try_from(value.second()).expect("chrono seconds fit jiff values");
+        let nanosecond =
+            i32::try_from(value.nanosecond()).expect("chrono nanoseconds fit jiff values");
+        civil::Time::new(hour, minute, second, nanosecond)
+            .expect("valid chrono time should remain valid in jiff")
     }
 }
 
@@ -285,10 +309,7 @@ where
     Tz::Offset: std::fmt::Display,
 {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::chrono_datetime_to_system_zoned(self)
-            .as_ref()
-            .and_then(datetime_format::format_zoned)
-            .unwrap_or_else(|| self.to_rfc3339())
+        datetime_format::format_zoned(&datetime_format::chrono_datetime_to_system_zoned(self))
             .into_any_element()
     }
 }
@@ -296,9 +317,7 @@ where
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDateTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::chrono_naive_datetime_to_jiff(self)
-            .and_then(datetime_format::format_civil_datetime)
-            .unwrap_or_else(|| self.to_string())
+        datetime_format::format_civil_datetime(datetime_format::chrono_naive_datetime_to_jiff(self))
             .into_any_element()
     }
 }
@@ -306,9 +325,7 @@ impl TableCell for chrono::NaiveDateTime {
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDate {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::chrono_naive_date_to_jiff(self)
-            .and_then(datetime_format::format_civil_date)
-            .unwrap_or_else(|| self.to_string())
+        datetime_format::format_civil_date(datetime_format::chrono_naive_date_to_jiff(self))
             .into_any_element()
     }
 }
@@ -316,9 +333,7 @@ impl TableCell for chrono::NaiveDate {
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::chrono_naive_time_to_jiff(self)
-            .and_then(datetime_format::format_civil_time)
-            .unwrap_or_else(|| self.to_string())
+        datetime_format::format_civil_time(datetime_format::chrono_naive_time_to_jiff(self))
             .into_any_element()
     }
 }
@@ -326,45 +341,35 @@ impl TableCell for chrono::NaiveTime {
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::Zoned {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_zoned(self)
-            .unwrap_or_else(|| self.to_string())
-            .into_any_element()
+        datetime_format::format_zoned(self).into_any_element()
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::Timestamp {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_timestamp_local(*self)
-            .unwrap_or_else(|| self.to_string())
-            .into_any_element()
+        datetime_format::format_timestamp_local(*self).into_any_element()
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::DateTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_datetime(*self)
-            .unwrap_or_else(|| self.to_string())
-            .into_any_element()
+        datetime_format::format_civil_datetime(*self).into_any_element()
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::Date {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_date(*self)
-            .unwrap_or_else(|| self.to_string())
-            .into_any_element()
+        datetime_format::format_civil_date(*self).into_any_element()
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::Time {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_time(*self)
-            .unwrap_or_else(|| self.to_string())
-            .into_any_element()
+        datetime_format::format_civil_time(*self).into_any_element()
     }
 }
 
@@ -400,11 +405,11 @@ mod tests {
             .unwrap();
         let timestamp: Timestamp = "2026-07-11T16:34:56Z".parse().unwrap();
 
-        assert!(format_civil_date(date).is_some_and(|text| !text.is_empty()));
-        assert!(format_civil_time(time).is_some_and(|text| !text.is_empty()));
-        assert!(format_civil_datetime(datetime).is_some_and(|text| !text.is_empty()));
-        assert!(format_zoned(&zoned).is_some_and(|text| !text.is_empty()));
-        assert!(format_timestamp_local(timestamp).is_some_and(|text| !text.is_empty()));
+        assert!(!format_civil_date(date).is_empty());
+        assert!(!format_civil_time(time).is_empty());
+        assert!(!format_civil_datetime(datetime).is_empty());
+        assert!(!format_zoned(&zoned).is_empty());
+        assert!(!format_timestamp_local(timestamp).is_empty());
     }
 
     #[cfg(all(feature = "jiff", feature = "chrono"))]
@@ -420,20 +425,17 @@ mod tests {
         let time = date.and_hms_nano_opt(12, 34, 56, 123_000_000).unwrap();
         let zoned = DateTime::<Utc>::from_naive_utc_and_offset(time, Utc);
 
+        assert_eq!(chrono_naive_date_to_jiff(&date).to_string(), "2026-07-11");
         assert_eq!(
-            chrono_naive_date_to_jiff(&date).unwrap().to_string(),
-            "2026-07-11"
-        );
-        assert_eq!(
-            chrono_naive_time_to_jiff(&time.time()).unwrap().to_string(),
+            chrono_naive_time_to_jiff(&time.time()).to_string(),
             "12:34:56.123"
         );
         assert_eq!(
-            chrono_naive_datetime_to_jiff(&time).unwrap().to_string(),
+            chrono_naive_datetime_to_jiff(&time).to_string(),
             "2026-07-11T12:34:56.123"
         );
         assert_eq!(
-            chrono_datetime_to_system_zoned(&zoned).unwrap().timestamp(),
+            chrono_datetime_to_system_zoned(&zoned).timestamp(),
             "2026-07-11T12:34:56.123Z".parse().unwrap()
         );
     }

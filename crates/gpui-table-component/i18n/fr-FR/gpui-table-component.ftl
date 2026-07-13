@@ -21,3 +21,11 @@ reset_filters_ftl-Reset = Réinitialiser
 ## TextFilterFtl
 
 text_filter_ftl-Placeholder = Filtrer par { $title }...
+
+## TableStatusBarFtl
+
+table_status_bar_ftl-ItemsLoaded = Éléments chargés : { $count }
+table_status_bar_ftl-Loading = Chargement...
+table_status_bar_ftl-Idle = Inactif
+table_status_bar_ftl-AllDataLoaded = Toutes les données sont chargées
+table_status_bar_ftl-ScrollForMore = Faites défiler pour afficher la suite
