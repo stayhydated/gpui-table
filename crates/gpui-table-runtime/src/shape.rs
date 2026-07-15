@@ -28,10 +28,18 @@ pub trait GpuiTableFilterShape: ComponentShapeMetadata {
 
     fn wrap_value(value: Self::RawValue) -> Self::FilterValue;
 
+    /// Convert a generated typed filter value back into component-facing state.
+    ///
+    /// Implement this together with [`Self::set_silent`] when generated filter
+    /// collections should support `apply_values(...)` for restored presets.
     fn unwrap_value(_value: Self::FilterValue) -> Self::RawValue {
         panic!("filter shape does not support applying a typed preset")
     }
 
+    /// Replace the component value without running its public change callback.
+    ///
+    /// The default resets the component. Shapes that support applying a
+    /// non-default typed preset must override this method.
     fn set_silent(
         entity: &Entity<Self::Component>,
         _value: Self::RawValue,
@@ -41,6 +49,7 @@ pub trait GpuiTableFilterShape: ComponentShapeMetadata {
         Self::reset_silent(entity, window, cx);
     }
 
+    /// Reset the component without running its public change callback.
     fn reset_silent(entity: &Entity<Self::Component>, window: &mut Window, cx: &mut App);
 }
 

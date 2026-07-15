@@ -44,7 +44,7 @@ use proc_macro::TokenStream;
 /// impl TableLoader for ProductTableDelegate {
 ///     const THRESHOLD: usize = 20;
 ///
-///     pub fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
+///     fn load_more(&mut self, window: &mut Window, cx: &mut Context<TableState<Self>>) {
 ///         // Load more data...
 ///     }
 /// }

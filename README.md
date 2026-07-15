@@ -94,7 +94,9 @@ With `#[gpui_table(filters)]`, the derive also generates:
 The generated `TableRowMeta::TABLE_ID` defaults to the row type name converted to
 snake_case, such as `user` for `User` and `purchase_order` for
 `PurchaseOrder`. Use `#[gpui_table(id = "...")]` when a table needs a stable
-external identifier that does not follow the snake_case Rust type name. Use
+external identifier that does not follow the snake_case Rust type name. Table
+IDs must be nonempty and contain only lowercase ASCII letters, digits, `_`, or
+`-`. Use
 `TableRowMeta::table_id()` when callers need the typed `TableId` wrapper instead
 of the raw string constant.
 
@@ -114,10 +116,11 @@ range widgets with explicit slider bounds or step size. Use the same forms for
 custom shapes whose configured expression implements
 `gpui_table::runtime::shape::GpuiTableFilterShapeBuilder<Shape>`.
 
-Faceted filters work with `T`, `Option<T>`, or `Vec<T>` fields when `T`
-implements `gpui_table::filter::Filterable`. Optional and vector faceted fields
-store selected `T` values in the generated filter state; when a selection is
-active, rows with `None` or no matching vector element do not match that facet.
+Faceted filters work with `T`, `Option<T>`, `Vec<T>`, or `Option<Vec<T>>`
+fields when `T` implements `gpui_table::filter::Filterable`. Optional and
+vector faceted fields store selected `T` values in the generated filter state;
+when a selection is active, rows with `None` or no matching vector element do
+not match that facet.
 
 Generated delegates expose source rows through `rows` and a filtered view to
 `DataTable`. Use `set_filter_values` or `clear_filter_values` to control typed
@@ -132,7 +135,10 @@ shells that render filters outside a flat toolbar. It returns nonempty groups in
 Text, Faceted, Number Range, Date Range order; each item carries a stable field
 ID, localized label, active state, filter type, and erased GPUI element. Use
 `active_filter_count(cx)` for filter-toggle badges and `reset_filters(window,
-cx)` for one-shot reset behavior.
+cx)` for one-shot reset behavior. Save the current typed values with
+`read_values(cx).to_preset_json()`, restore them with
+`UserFilterValues::from_preset_json(...)`, and apply the complete preset with
+`apply_values(values, window, cx)`.
 
 If you enable `inventory`, the same derive registers a `GpuiTableShape` for
 tooling and code generation. Filter registrations expose their field, field
@@ -309,8 +315,11 @@ type, and raw-value conversions. The derive generates the runtime filter shape,
 declared-shape markers, field-support impl, and, with the `mcp` feature, the
 default `McpFilterShape` decoder when the raw value implements
 `gpui_table::mcp::McpToolValue`. Add `koruma_newtype` when the shape adapts a
-base filter over a Koruma newtype field's inner value. For fully custom runtime filters, implement
-the runtime shape traits directly, then derive `gpui_table::McpFilterShape`
+base filter over a Koruma newtype field's inner value. The adapter delegates
+typed preset application to its base shape. For fully custom runtime filters,
+use a `FilterValue` that implements `gpui_table::FilterPresetValue`, and
+implement `unwrap_value` plus `set_silent` so generated filter collections can
+apply restored presets. Then derive `gpui_table::McpFilterShape`
 when `RawValue: McpToolValue` or implement `gpui_table::mcp::McpFilterShape`
 manually for custom schema/decoding. Use `gpui_table::mcp::McpAny` when a
 typed raw value or manual tool input intentionally accepts unconstrained JSON,

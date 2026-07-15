@@ -22,6 +22,10 @@ Use `gpui-table/mcp` only when row data should be exposed to MCP clients as
 query tools; generated filters become typed arguments when present, and
 filterless tables expose pagination only.
 
+For built-in adapter shapes, `#[derive(GpuiTableFilterShape)]`, fully custom
+filter shapes, shape-level preset support, or custom MCP filter decoding, use
+`use-gpui-table-component-shapes`.
+
 This skill is for application code that consumes `gpui-table`. It avoids
 repository maintenance, release, generated-output, and implementation-internal
 guidance.
@@ -38,7 +42,8 @@ derives, generated types, and runtime helpers:
    query tools backed by row data.
 2. Define row structs with `#[derive(Clone, GpuiTable)]`.
 3. Use `#[gpui_table(id = "...")]` when the table needs a stable external
-   identifier other than the row type's snake_case name.
+   identifier other than the row type's snake_case name. IDs must be nonempty
+   and contain only lowercase ASCII letters, digits, `_`, or `-`.
 4. Add field-level `#[gpui_table(...)]` attributes for widths, sorting,
    movement, resizing, filters, skipped fields, context menu ids, or generated
    context menu behavior. Declare built-in filters explicitly with
@@ -48,8 +53,8 @@ derives, generated types, and runtime helpers:
    `FacetedFilter::<T>.searchable(true)` when generated filter entities should
    construct configured filter widgets. Use
    `NumberRangeFilter.range(min, max).step(step)` to configure generated
-   numeric range widgets. Use the same shape-path or configured expression form
-   for custom filters.
+   numeric range widgets. Switch to `use-gpui-table-component-shapes` for
+   adapters or custom filter shapes.
 5. Use `#[derive(Filterable)]` for faceted enums. Include
    `Clone + Eq + Hash + PartialEq`; add `#[filter(fluent)]` only when labels
    come from `es-fluent`.
@@ -60,7 +65,9 @@ derives, generated types, and runtime helpers:
    state are needed.
 8. Use generated delegate methods such as `set_filter_values`,
    `clear_filter_values`, and `set_row_scope` when application state should
-   control visible rows without rebuilding the delegate.
+   control visible rows without rebuilding the delegate. Persist generated
+   filter values with `to_preset_json`, restore them with `from_preset_json`,
+   and pass the result to generated `FilterEntities::apply_values(...)`.
 9. Add `#[gpui_table(load_more)]` plus `#[gpui_table::gpui_table_impl] impl
    TableLoader for <Row>TableDelegate` for infinite-loading tables.
 10. Add field-level `style = path::to_fn` when a column needs custom cell
@@ -118,13 +125,11 @@ field-level `#[koruma(...)]` validators to filtered fields when MCP filter
 arguments should be validated before the query handler runs; generated schemas
 attach rule metadata in `x-gpuiTableValidation` and literal length, range, or
 non-empty constraints as JSON Schema hints when the argument schema is
-unambiguous. For Koruma newtype fields filtered by their inner raw value, derive
-the adapter shape with `#[gpui_table_filter_shape(..., koruma_newtype)]`;
-manual shapes must implement
-`gpui_table::mcp::McpKorumaNewtypeFilterValidation<Field>`. Koruma annotations
-on non-filter columns are ignored by table MCP generation. Add
-`koruma` and the validator crate that provides the rule to the application
-dependencies. Custom query handlers can be synchronous or async and must return
+unambiguous. Koruma annotations on non-filter columns are ignored by table MCP
+generation. Add `koruma` and the validator crate that provides the rule to the
+application dependencies. Use `use-gpui-table-component-shapes` when the filter
+adapts a Koruma newtype. Custom query handlers can be synchronous or async and
+must return
 `Result<gpui_table::mcp::TableQueryResult<Row>, E>`.
 Use `query.result(rows, total)` to build the standard response from a decoded
 query when the backend owns filtering or totals, or `query.filter_rows(rows)`
@@ -157,25 +162,9 @@ Rust doc comment. Generated table query tools default to read-only,
 non-destructive, and idempotent annotations.
 `read_only = true` and `destructive = true` cannot be combined.
 Registration reports setup errors such as duplicate tool names. MCP filter
-schemas and decoders use the same explicit filter shape declared for generated
-filter UI. For transparent or domain-specific field types that should reuse a
-built-in raw value and MCP schema, prefer `TextFilterAdapter`,
-`NumberRangeFilterAdapter`, or `DateRangeFilterAdapter` and implement the
-matching field trait. For custom filters that adapt an existing built-in shape,
-derive `gpui_table::GpuiTableFilterShape` and declare the base shape, raw
-value, field type, and raw-value conversions; with the `mcp` feature, the
-derive also emits the default `McpFilterShape` decoder when the raw value implements
-`gpui_table::mcp::McpToolValue`. For fully custom runtime filters,
-implement the runtime shape traits directly, then derive
-`gpui_table::McpFilterShape` when `RawValue: McpToolValue` or write a manual
-`McpFilterShape` impl when the blanket `McpToolValue` contract is not the
-right MCP contract. Use `gpui_table::mcp::McpAny` when a typed raw value or
-manual tool input intentionally accepts unconstrained JSON. Use
-`gpui_table::mcp::McpRange<T>` for `{ "min": ..., "max": ... }` range raw
-values. Manual shapes that should support field-level Koruma filter validation
-must also implement `gpui_table::mcp::McpFilterShapeValidation`. Manual shapes
-that support Koruma newtype inner-value filters must also implement
-`gpui_table::mcp::McpKorumaNewtypeFilterValidation<Field>`.
+schemas and decoders use the same explicit built-in filter shape declared for
+generated filter UI. Use `use-gpui-table-component-shapes` for adapters,
+custom filter shapes, or manual filter schema and decoding contracts.
 Fixed tuples with 1 to 4 elements publish exact array schemas.
 App-owned named structs, tuple or named transparent newtypes, and fieldless
 enums can derive `McpJsonSchema`; the derive follows serde deserialize names,
@@ -203,8 +192,8 @@ Declare built-in filters explicitly:
 - `filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*"))`
   for a text filter that accepts only values matched by a full-value regex.
 - `filter(gpui_table_component::FacetedFilter::<T>)` for enum-like `T`,
-  `Option<T>`, or `Vec<T>` fields when `T` derives or implements
-  `Filterable`.
+  `Option<T>`, `Vec<T>`, or `Option<Vec<T>>` fields when `T` derives or
+  implements `Filterable`.
 - `filter(gpui_table_component::FacetedFilter::<T>.searchable(true))` for a
   generated faceted filter with a search input.
 - `filter(gpui_table_component::NumberRangeFilter)` for numeric ranges.
@@ -212,9 +201,8 @@ Declare built-in filters explicitly:
   for generated numeric range filters with explicit slider bounds or step size.
 - `filter(gpui_table_component::DateRangeFilter)` for temporal ranges.
 
-Use the same `filter(path::ToShape)` or configured expression form for custom
-shapes whose configuration value implements
-`gpui_table::runtime::shape::GpuiTableFilterShapeBuilder<Shape>`.
+Use `use-gpui-table-component-shapes` for custom filter paths, configured
+custom builders, adapters, and runtime shape contracts.
 
 Keep localized labels explicit. Use `#[filter(fluent)]` or the matching table
 label attributes only when the application owns an `es-fluent` localizer and the

@@ -40,6 +40,9 @@ In normal application code, those registrations are produced by
 
 This crate intentionally does not depend on `gpui` or `gpui-component`.
 
+`TableId::new` accepts nonempty stable identifiers made from lowercase ASCII
+letters, digits, `_`, and `-`.
+
 If you need derives, loaders, rendering traits, or built-in filter UI, use
 `gpui-table` instead.
 

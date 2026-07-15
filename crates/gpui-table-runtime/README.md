@@ -48,8 +48,14 @@ fn render_default_cell<R: TableRowMeta>(
 - `generated_filters`, which provides `FilterEntitiesExt` plus
   `FilterSidebarData`, `FilterSidebarGroup`, and `FilterSidebarItem` for stable
   semantic grouping, localized labels, active-filter counts, and erased GPUI
-  elements. Generated collections expose `filter_sidebar_data(cx)`,
+  elements. Generated collections expose `read_values(cx)`,
+  `apply_values(values, window, cx)`, `filter_sidebar_data(cx)`,
   `active_filter_count(cx)`, and `reset_filters(window, cx)`.
+
+Filter shapes that support applying typed presets implement `unwrap_value` and
+`set_silent`; the default `unwrap_value` rejects preset application. Generated
+filter-value structs encode and decode saved presets through the facade's
+`FilterPresetValue` contract.
 
 Built-in filter component types such as `gpui_table_component::TextFilter` are
 their own shape types. Their `shape::GpuiTableFilterShape` implementations live

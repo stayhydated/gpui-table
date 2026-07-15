@@ -134,10 +134,11 @@ impl FilterSidebarData {
 
 /// Trait for generated filter entity collections that can read and render their current values.
 ///
-/// The derive macro also emits inherent `read_values()`, `filter_sidebar_data()`,
-/// `active_filter_count()`, and `reset_filters()` methods on each generated
-/// `XxxFilterEntities` type. This trait remains useful for generic helper code
-/// that wants to work across multiple generated filter collections.
+/// The derive macro also emits inherent `read_values()`, `apply_values()`,
+/// `filter_sidebar_data()`, `active_filter_count()`, and `reset_filters()`
+/// methods on each generated `XxxFilterEntities` type. This trait remains
+/// useful for generic helper code that wants to work across multiple generated
+/// filter collections.
 pub trait FilterEntitiesExt {
     /// The filter values type that this entity collection produces.
     type Values: gpui_table_core::filter::FilterValuesExt;

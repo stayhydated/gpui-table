@@ -16,13 +16,14 @@ prototyping metadata.
 Use `use-gpui-table` for ordinary application tables that only use the built-in
 text, faceted, number range, or date range filters.
 
-Use the component-shape repository skills for shape ownership and declaration:
+Use the framework-neutral component-shape skill for shared metadata:
 
 - `use-component-shape` for framework-neutral shape metadata, suffixes,
   capabilities, and MCP input metadata.
-- `use-component-shape-gpui` for `component_shape_gpui::GpuiComponentShape`,
-  `component_shape_gpui::component_shape!`, GPUI render contracts, and
-  value-change declarations.
+
+Table filters use the table-owned `GpuiTableFilterShape` contract rather than
+`component_shape_gpui::GpuiComponentShape`; keep their GPUI entity lifecycle,
+field matching, and reset/preset behavior in this skill.
 
 This reusable skill does not cover proc-macro implementation internals,
 repository maintenance, or contributor-only architecture work. Use the
@@ -44,8 +45,8 @@ First decide whether the table can use an existing filter shape:
 - Adapter shape: derive `gpui_table::GpuiTableFilterShape` when an existing
   base shape should keep its UI, reset behavior, and field matching but expose a
   custom raw value to table state or MCP decoding.
-- New custom shape: create or select the shape with component-shape GPUI
-  guidance first, then implement the table runtime shape contracts here.
+- New custom shape: use `use-component-shape` for shared metadata decisions,
+  then implement the table runtime shape contracts here.
 
 Application crates that only derive tables normally depend on `gpui-table` and
 `gpui-table-component`. Crates that define reusable custom filter shapes may
@@ -157,7 +158,8 @@ The derive emits `ComponentShapeMetadata`, declared-shape marker impls,
 `GpuiTableFilterShape`, and `GpuiTableFilterShapeFor<Field>`. With the
 `gpui-table/mcp` feature enabled, it also emits the default
 `gpui_table::mcp::McpFilterShape` and validation bridge when the raw value
-implements `McpToolValue`.
+implements `McpToolValue`. It delegates typed preset conversion and silent
+application to the base shape.
 
 Use `fields(A, B, ...)` when the adapter supports multiple field types. Use
 `koruma_newtype` when the source table field is a Koruma newtype but the filter
@@ -176,8 +178,8 @@ impl gpui_table::runtime::shape::GpuiTableFilterShape for MyTextFilterShape {
     const FILTER_TYPE: gpui_table::schema::registry::RegistryFilterType =
         gpui_table::schema::registry::RegistryFilterType::Text;
 
-    // new_for, read_value, wrap_value, and reset_silent connect generated
-    // filter entities to the GPUI component.
+    // new_for, read_value, wrap_value, unwrap_value, set_silent, and
+    // reset_silent connect generated filter entities to the GPUI component.
 }
 
 impl gpui_table::runtime::shape::DeclaredGpuiTableFilterShape for MyTextFilterShape {}
@@ -195,9 +197,17 @@ impl gpui_table::runtime::shape::GpuiTableFilterShapeFor<String> for MyTextFilte
 ```
 
 `RawValue` is the component-facing state that generated filter entities read,
-store, reset, serialize with `QueryFilterValue`, and decode from MCP when
-enabled. `FilterValue` is the typed wrapper used for matching table fields.
-Keep inactive filter values matching all rows.
+store, and reset. It can serialize through `QueryFilterValue` when the raw type
+implements that trait, and it is decoded from MCP when MCP support is enabled.
+`FilterValue` is the typed wrapper used for matching table fields. Keep
+inactive filter values matching all rows.
+
+Generated `<Row>FilterValues::to_preset_json` and `from_preset_json` require
+each shape's `FilterValue` to implement `gpui_table::FilterPresetValue`;
+built-in wrapper values already do. Implement `unwrap_value` and `set_silent`
+so generated `FilterEntities::apply_values(...)` can restore a non-default
+preset. The runtime defaults reject unwrapping and reset instead of applying a
+non-default value, so fully custom shapes should override both methods.
 
 Choose the registry and filter metadata category that matches the user-facing
 filter semantics: `Text`, `Faceted`, `NumberRange`, or `DateRange`.

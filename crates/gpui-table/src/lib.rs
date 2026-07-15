@@ -56,8 +56,10 @@ pub use gpui_table_schema::registry;
 
 /// Typed JSON codec used by generated table-filter presets.
 pub trait FilterPresetValue: Default + Clone + Send + 'static {
+    /// Encode this typed filter value for a saved preset.
     fn to_preset_json(&self) -> serde_json::Value;
 
+    /// Decode and validate this typed filter value from a saved preset.
     fn from_preset_json(value: &serde_json::Value) -> Result<Self, String>;
 }
 

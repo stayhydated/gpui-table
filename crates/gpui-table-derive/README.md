@@ -16,7 +16,8 @@ Generates the typed table delegate, column enum, row metadata, optional filter
 entities/values, optional inventory registration, and optional MCP table query
 registration for a row struct.
 Unless `#[gpui_table(id = "...")]` is set, generated `TableRowMeta::TABLE_ID`
-uses the row type name in snake_case.
+uses the row type name in snake_case. Explicit IDs must be nonempty and contain
+only lowercase ASCII letters, digits, `_`, or `-`.
 
 ```rs
 use gpui_table::GpuiTable;
@@ -53,9 +54,9 @@ configured shape expression for the same base shape:
 - faceted filters can enable the search input with
   `filter(gpui_table_component::FacetedFilter::<T>.searchable(true))`
 
-Faceted filters accept `T`, `Option<T>`, and `Vec<T>` fields. The generated
-filter state uses `T` in all cases, so optional and vector fields can facet over
-present values without requiring `Option<T>` or `Vec<T>` itself to implement
+Faceted filters accept `T`, `Option<T>`, `Vec<T>`, and `Option<Vec<T>>` fields.
+The generated filter state uses `T` in all cases, so optional and vector fields
+can facet over present values without requiring the wrapper itself to implement
 `Filterable`.
 
 The generated delegate keeps source rows in its public `rows` vector and
@@ -65,6 +66,11 @@ exposes a filtered view to `DataTable`. Use `set_filter_values` and
 `visible_row_indices` when source indices are needed, and call
 `refresh_filtered_rows` after in-place row mutations that may change visible
 results without changing the row count.
+
+Generated `XxxFilterEntities` values expose `read_values`, `apply_values`,
+`filter_sidebar_data`, `active_filter_count`, and `reset_filters`. Generated
+`XxxFilterValues` values expose `to_preset_json` and `from_preset_json` for
+checked saved-filter round trips.
 
 Use field-level `style = path::to_fn` for custom cell rendering. The style
 function receives `&Row`, `&FieldType`, `&mut gpui::Window`, and
@@ -177,7 +183,8 @@ The derive emits `ComponentShapeMetadata`, declared-shape marker impls,
 `GpuiTableFilterShape`, and `GpuiTableFilterShapeFor<Field>`. When the
 `gpui-table/mcp` feature is enabled, it also emits the default
 `gpui_table::mcp::McpFilterShape` impl if the raw value implements
-`gpui_table::mcp::McpToolValue`.
+`gpui_table::mcp::McpToolValue`. Preset application delegates to the base
+shape's `unwrap_value` and `set_silent` implementations.
 
 ### `#[derive(Filterable)]`
 
