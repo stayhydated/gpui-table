@@ -391,12 +391,16 @@ pub struct User {
 ```
 
 The built-in table/filter widgets keep their embedded `es-fluent` localizer in
-GPUI global state. The example app declares its languages in a library-reachable
-`i18n` module with `#[es_fluent_language]`, initializes
-`gpui_table_component::i18n` during GPUI startup, and selects the active locale
-through the GPUI storybook locale APIs.
+GPUI global state. The example app declares its languages and locale adapter in
+a library-reachable `i18n` module with `#[es_fluent_language]`. That adapter
+explicitly links the domain resources and synchronizes the domain,
+table-component, and table-core contexts. The Storybook launcher passes it to
+`StorybookOptions` with the stable `gpui-table-some-lib-tables` consumer ID and
+awaits preference readiness before opening the first window. Normal launches
+persist saved appearance, theme, language, and scrollbar intent in Storybook's
+consumer-scoped application-data database.
 Generated Storybook table titles use the GPUI app context so they follow the
-active Storybook locale. Context-free table titles use the strict embedded
+resolved Storybook locale. Context-free table titles use the strict embedded
 table-core localizer. Missing typed resources and missing GPUI localization
 state are hard failures instead of display-string fallbacks.
 
@@ -406,6 +410,8 @@ The canonical end-to-end examples live under [`examples/`](examples/README.md).
 
 - `cargo run`
   Launches `examples/some-lib-tables`, the storybook app for the derived tables.
+- `cargo run -p gpui-table-component --bin story --features story`
+  Launches the built-in filter and status-bar Storybook consumer.
 - `cargo run -p prototyping`
   Regenerates `examples/prototyping/output` from `GpuiTableShape` inventory registrations.
 - `cargo run -p mcp-query`

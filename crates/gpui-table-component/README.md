@@ -152,5 +152,12 @@ a `GpuiTableFilterShape` implementation before a component can be used in
 cargo run -p gpui-table-component --bin story --features story
 ```
 
+The launcher uses the stable `gpui-table-component-story` consumer ID and
+passes `gpui_table_component::i18n::apply_locale` to `StorybookOptions`. The
+adapter explicitly links this crate's generated Fluent module and keeps the
+component and table-core contexts synchronized. Storybook loads the consumer's
+local preferences before the first window is created; normal launches persist
+saved intent in the platform application-data directory.
+
 For internals, module boundaries, and serialization contracts, read the crate
 rustdocs and the focused tests in `src/lib.rs`.

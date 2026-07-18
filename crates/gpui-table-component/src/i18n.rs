@@ -47,6 +47,7 @@ fn sync_core_locale(
 /// localization context cannot select it.
 pub fn init(cx: &mut App) -> Result<(), LocaleError> {
     let language = component_language()?;
+    let _linked_module = &GPUI_TABLE_COMPONENT_I18N_MODULE;
     gpui_es_fluent::replace_with_language(cx, language.clone())
         .map_err(ComponentLocaleError::Initialization)?;
     sync_core_locale(&language)?;
@@ -60,9 +61,22 @@ pub fn init(cx: &mut App) -> Result<(), LocaleError> {
 /// Returns [`LocaleError`] when the locale is invalid or either localization
 /// context cannot select it.
 pub fn set_locale(cx: &mut App, locale: impl AsRef<str>) -> Result<(), LocaleError> {
+    let _linked_module = &GPUI_TABLE_COMPONENT_I18N_MODULE;
     let language = gpui_es_fluent::set_component_locale(cx, locale)?;
     sync_core_locale(&language)?;
     Ok(())
+}
+
+/// Applies Storybook's resolved locale to the component and table-core contexts.
+///
+/// # Errors
+///
+/// Returns [`LocaleError`] when the locale cannot be applied to either context.
+#[cfg(feature = "story")]
+pub fn apply_locale(language: Languages, cx: &mut App) -> Result<(), LocaleError> {
+    let _linked_module = &GPUI_TABLE_COMPONENT_I18N_MODULE;
+    let language: LanguageIdentifier = language.into();
+    set_locale(cx, language.to_string())
 }
 
 /// Synchronize table component localization with the active `gpui-component` locale.

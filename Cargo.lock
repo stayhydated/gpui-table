@@ -1968,6 +1968,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "directories"
+version = "6.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "16f5094c54661b38d03bd7e50df373292118db60b585c08a411c6d840017fe7d"
+dependencies = [
+ "dirs-sys",
+]
+
+[[package]]
 name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1985,7 +1994,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3432,20 +3441,25 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#e76114da0aa7afd686c5ffef20b63585cb0b5721"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
 dependencies = [
  "gpui",
+ "gpui-es-fluent",
  "gpui-storybook-core",
  "gpui-storybook-macros",
+ "gpui-storybook-preferences",
  "gpui-storybook-toml",
+ "gpui_tokio",
  "inventory",
+ "thiserror 2.0.18",
  "tracing",
+ "unic-langid",
 ]
 
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#e76114da0aa7afd686c5ffef20b63585cb0b5721"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
 dependencies = [
  "gpui",
  "gpui-component",
@@ -3454,17 +3468,21 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#e76114da0aa7afd686c5ffef20b63585cb0b5721"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
 dependencies = [
  "anyhow",
  "derive_more 2.1.1",
  "es-fluent",
  "es-fluent-build",
+ "es-fluent-manager-core",
+ "es-fluent-manager-embedded",
  "gpui",
  "gpui-component",
  "gpui-component-assets",
  "gpui-es-fluent",
  "gpui-storybook-components",
+ "gpui-storybook-preferences",
+ "gpui_tokio",
  "gtk",
  "inventory",
  "rust-embed",
@@ -3478,7 +3496,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#e76114da0aa7afd686c5ffef20b63585cb0b5721"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -3487,9 +3505,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "gpui-storybook-preferences"
+version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
+dependencies = [
+ "directories",
+ "fluent-langneg",
+ "schemars",
+ "serde",
+ "serde_json",
+ "strum 0.28.0",
+ "sys-locale",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "unic-langid",
+]
+
+[[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
-source = "git+https://github.com/stayhydated/gpui-storybook#e76114da0aa7afd686c5ffef20b63585cb0b5721"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=d344c0cd876c314b31f3caec089c07ff03f2154c#d344c0cd876c314b31f3caec089c07ff03f2154c"
 dependencies = [
  "serde",
  "toml 1.1.2+spec-1.1.0",
@@ -5746,7 +5783,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -8280,6 +8317,7 @@ dependencies = [
  "fake",
  "gpui",
  "gpui-component",
+ "gpui-es-fluent",
  "gpui-table",
  "gpui-table-component",
  "rust_decimal",
@@ -8293,6 +8331,7 @@ name = "some-lib-tables"
 version = "0.5.0"
 dependencies = [
  "env_logger",
+ "es-fluent",
  "fake",
  "gpui",
  "gpui-component",
@@ -8300,7 +8339,6 @@ dependencies = [
  "gpui-table",
  "gpui-table-component",
  "gpui_platform",
- "gpui_tokio",
  "reqwest_client",
  "some-lib",
 ]

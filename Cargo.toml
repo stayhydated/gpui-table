@@ -42,7 +42,7 @@ fake = "4.4"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "d344c0cd876c314b31f3caec089c07ff03f2154c" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
@@ -57,7 +57,6 @@ gpui_platform = { branch = "linux-headless-renderer", features = [
   "wayland",
   "runtime_shaders",
 ], git = "https://github.com/stayhydated/zed" }
-gpui_tokio = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
 heck = "0.5.0"
 icu = "2.2"
 insta = "1.48"
