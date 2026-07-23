@@ -906,7 +906,7 @@ version = "3.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dee98b0db6a962de883bf5d20362dee4d7ca0d12fe39a7c6c73c844e1cd7c1f"
 dependencies = [
- "darling 0.20.11",
+ "darling 0.23.0",
  "ident_case",
  "prettyplease",
  "proc-macro2",
@@ -1836,7 +1836,6 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
- "strsim",
  "syn 2.0.119",
 ]
 
@@ -2078,9 +2077,9 @@ checksum = "75b325c5dbd37f80359721ad39aca5a29fb04c89279657cffdda8736d0c0b9d2"
 
 [[package]]
 name = "dummy"
-version = "0.11.0"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3bbcf21279103a67372982cb1156a2154a452451dff2b884cf897ccecce389e0"
+checksum = "6d2a69babd8861dbe09217678b4e8ee461869f9af8a57021e16479628dbd83bd"
 dependencies = [
  "darling 0.20.11",
  "proc-macro2",
@@ -2532,15 +2531,15 @@ dependencies = [
 
 [[package]]
 name = "fake"
-version = "4.4.0"
+version = "5.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f2b0902eb36fbab51c14eda1c186bda119fcff91e5e4e7fc2dd2077298197ce8"
+checksum = "ea6be833b323a56361118a747470a45a1bcd5c52a2ec9b1e40c83dafe687e453"
 dependencies = [
  "chrono",
  "deunicode",
  "dummy",
  "either",
- "rand 0.9.5",
+ "rand 0.10.2",
  "random_color",
  "rust_decimal",
  "uuid",
@@ -8473,7 +8472,6 @@ version = "0.5.0"
 dependencies = [
  "env_logger",
  "es-fluent",
- "fake",
  "gpui",
  "gpui-component",
  "gpui-storybook",

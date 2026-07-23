@@ -11,7 +11,6 @@ router = [ "some-lib/router" ]
 
 [dependencies]
 env_logger = { workspace = true }
-fake = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-storybook = { features = [ "macros" ], workspace = true }

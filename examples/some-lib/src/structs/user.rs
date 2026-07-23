@@ -2,12 +2,15 @@ use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::decimal::PositiveDecimal;
 use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
-use gpui::{App, Window};
+use fake::{Fake as _, Faker};
+use gpui::{App, Context, Window};
 use gpui_component::IconName;
 use gpui_component::menu::PopupMenu;
-use gpui_table::runtime::TableRowContextMenu;
+use gpui_component::table::TableState;
+use gpui_table::runtime::{TableLoader, TableRowContextMenu};
 use gpui_table::{Filterable, GpuiTable, TableCell};
 use rust_decimal::Decimal;
+use std::time::Duration;
 
 #[derive(
     Clone, Debug, Eq, Hash, fake::Dummy, es_fluent::EsFluent, Filterable, PartialEq, TableCell,
@@ -27,6 +30,7 @@ pub enum UserStatus {
 #[gpui_table(
     fluent = "label",
     filters,
+    load_more,
     custom_context_menu,
     context_menu_route_fn = crate::structs::context_menu_common::user_context_menu_route,
     context_menu_label_fn = crate::structs::context_menu_common::user_context_menu_label
@@ -66,6 +70,44 @@ pub struct User {
     #[gpui_table(sortable, width = 300., filter(gpui_table_component::DateRangeFilter))]
     #[dummy(faker = "DateTime()")]
     pub created_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[gpui_table::gpui_table_impl]
+impl TableLoader for UserTableDelegate {
+    const THRESHOLD: usize = 20;
+
+    fn load_more(&mut self, _window: &mut Window, cx: &mut Context<TableState<Self>>) {
+        if self.loading || self.eof {
+            return;
+        }
+
+        self.loading = true;
+        cx.notify();
+
+        cx.spawn(async move |view, cx| {
+            cx.background_executor()
+                .timer(Duration::from_millis(100))
+                .await;
+
+            let new_rows: Vec<User> = (0..50).map(|_| Faker.fake()).collect();
+
+            cx.update(|cx| {
+                view.update(cx, |table, cx| {
+                    let delegate = table.delegate_mut();
+                    delegate.rows.extend(new_rows);
+                    delegate.loading = false;
+
+                    if delegate.rows.len() >= 500 {
+                        delegate.eof = true;
+                    }
+
+                    cx.notify();
+                })
+                .unwrap();
+            });
+        })
+        .detach();
+    }
 }
 
 #[cfg(not(feature = "router"))]

@@ -106,7 +106,7 @@ before rendering.
 ## Files To Read First
 
 - `examples/some-lib/src/structs/user.rs`
-  Generated filters, localized titles, faceted enums, and custom context-menu composition.
+  Generated filters, load-more wiring, localized titles, faceted enums, and custom context-menu composition.
 - `examples/some-lib/src/structs/item.rs`
   Load-more wiring via `#[gpui_table_impl]` plus field-level cell style functions.
 - `examples/some-lib-tables/src/tables/user.rs`

@@ -1,6 +1,5 @@
 #[cfg(feature = "router")]
 use crate::route::{self, ExampleRoute, ExampleRouterState};
-use fake::{Fake as _, Faker};
 #[cfg(feature = "router")]
 use gpui::InteractiveElement as _;
 use gpui::{
@@ -34,9 +33,12 @@ impl UserTableStory {
         cx.new(|cx| Self::new(window, cx))
     }
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
-        let users: Vec<User> = (0..200).map(|_| Faker.fake()).collect();
-        let delegate = UserTableDelegate::new(users);
+        let delegate = UserTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
+        table.update(cx, |table, cx| {
+            use gpui_table::runtime::TableDataLoader as _;
+            table.delegate_mut().load_data(window, cx);
+        });
         let filters = UserFilterEntities::build_for_table(table.clone(), cx);
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {

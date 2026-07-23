@@ -421,7 +421,7 @@ The canonical end-to-end examples live under [`examples/`](examples/README.md).
 
 The main walkthrough files are:
 
-- `examples/some-lib/src/structs/user.rs` for derived filters, localized titles, and context menus
+- `examples/some-lib/src/structs/user.rs` for derived filters, load-more, localized titles, and context menus
 - `examples/some-lib/src/structs/item.rs` for load-more and custom cell rendering
 - `examples/mcp-query/src/main.rs` for MCP tools that control generated filters and return rows
 - `../gpui-form/examples/mcp-form-table/src/main.rs` for a composed
