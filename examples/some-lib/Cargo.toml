@@ -17,6 +17,7 @@ client = [
   "dep:fake",
   "dep:gpui",
   "dep:gpui-component",
+  "dep:gpui-es-fluent",
   "dep:gpui-table",
   "dep:gpui-table-component",
   "dep:rust_decimal",
@@ -42,6 +43,7 @@ fake = { features = [
 ], optional = true, workspace = true }
 gpui = { optional = true, workspace = true }
 gpui-component = { optional = true, workspace = true }
+gpui-es-fluent = { features = [ "component" ], optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",

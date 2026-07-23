@@ -4,14 +4,12 @@ use fake::{Fake as _, Faker};
 #[cfg(feature = "router")]
 use gpui::InteractiveElement as _;
 use gpui::{
-    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render, Styled,
-    Subscription, Window,
+    App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement as _, Render,
+    Styled as _, Subscription, Window,
 };
 use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
 use some_lib::structs::user::*;
-#[gpui_storybook::story_init]
-pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,

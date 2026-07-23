@@ -13,7 +13,10 @@ cargo run
 ```
 
 From the workspace root, this starts `examples/some-lib-tables`, which is also
-the default workspace member.
+the default workspace member. The launcher uses the stable
+`gpui-table-some-lib-tables` consumer ID, loads
+`.gpui-storybook/gpui-table-some-lib-tables.json`, and waits for resolved
+appearance, theme, and locale state before opening the first window.
 
 Use it to see:
 
@@ -94,8 +97,11 @@ pub enum UserStatus {
 
 `examples/some-lib/i18n.toml` lives next to that package's `Cargo.toml`, and
 `examples/some-lib/src/i18n.rs` declares both the embedded resources and the
-app language enum with `#[es_fluent_language]`. The storybook binary imports
-`some_lib::i18n::Languages` and selects the storybook locale before rendering.
+app language enum with `#[es_fluent_language]`. Its locale adapter explicitly
+links those resources, applies the resolved language to the domain manager, and
+synchronizes the table-component and table-core localizers. The Storybook
+binary supplies that adapter through `StorybookOptions` and awaits readiness
+before rendering.
 
 ## Files To Read First
 

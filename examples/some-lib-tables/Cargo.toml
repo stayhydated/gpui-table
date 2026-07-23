@@ -18,9 +18,12 @@ gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
 gpui-table-component = { workspace = true }
 gpui_platform = { workspace = true }
-gpui_tokio = { workspace = true }
 reqwest_client = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
+
+[dev-dependencies]
+es-fluent = { workspace = true }
+gpui = { features = [ "test-support" ], workspace = true }
 
 [lints]
 workspace = true
