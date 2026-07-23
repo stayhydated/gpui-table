@@ -66,6 +66,7 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui::AppContext as _;
 
     #[derive(Clone, Copy, es_fluent::EsFluent)]
     #[fluent(domain = "gpui-table-component")]
@@ -82,7 +83,7 @@ mod tests {
     }
 
     #[gpui::test]
-    async fn disabled_french_startup_applies_component_and_core_locales(
+    async fn disabled_french_startup_applies_locales_and_generates_registered_stories(
         cx: &mut gpui::TestAppContext,
     ) {
         cx.executor().allow_parking();
@@ -129,5 +130,35 @@ mod tests {
         assert_eq!(language, "fr-FR");
         assert_eq!(component_reset, "Réinitialiser");
         assert_eq!(core_true, "Vrai");
+
+        cx.update(|cx| {
+            cx.open_window(Default::default(), |window, cx| {
+                let story_keys = gpui_storybook::generate_stories(window, cx)
+                    .into_iter()
+                    .map(|story| {
+                        story
+                            .read(cx)
+                            .story_key()
+                            .expect("registered component story should have a stable key")
+                            .as_str()
+                    })
+                    .collect::<Vec<_>>();
+
+                assert_eq!(
+                    story_keys,
+                    [
+                        "gpui-table-component-DateRangeFilterStory",
+                        "gpui-table-component-FacetedFilterStory",
+                        "gpui-table-component-NumberRangeFilterStory",
+                        "gpui-table-component-ResetFiltersStory",
+                        "gpui-table-component-TableStatusBarStory",
+                        "gpui-table-component-TextFilterStory",
+                    ]
+                );
+
+                cx.new(|_| gpui::EmptyView)
+            })
+            .expect("component Storybook should generate stories in a test window");
+        });
     }
 }

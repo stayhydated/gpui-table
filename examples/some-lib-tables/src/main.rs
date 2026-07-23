@@ -89,6 +89,24 @@ mod tests {
         assert_eq!(options.fallback_language, Languages::default());
     }
 
+    #[test]
+    fn binary_links_expected_story_registrations() {
+        let mut story_keys =
+            gpui_storybook::__inventory::iter::<gpui_storybook::__registry::StoryEntry>()
+                .filter(|entry| entry.crate_name == env!("CARGO_PKG_NAME"))
+                .map(|entry| entry.key.as_str())
+                .collect::<Vec<_>>();
+        story_keys.sort_unstable();
+
+        assert_eq!(
+            story_keys,
+            [
+                "some-lib-tables-ItemTableStory",
+                "some-lib-tables-UserTableStory",
+            ]
+        );
+    }
+
     #[gpui::test]
     async fn disabled_french_startup_applies_domain_component_and_core_locales(
         cx: &mut gpui::TestAppContext,

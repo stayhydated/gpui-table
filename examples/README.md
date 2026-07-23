@@ -14,9 +14,9 @@ cargo run
 
 From the workspace root, this starts `examples/some-lib-tables`, which is also
 the default workspace member. The launcher uses the stable
-`gpui-table-some-lib-tables` consumer ID, loads its local Storybook preferences,
-and waits for resolved appearance, theme, and locale state before opening the
-first window.
+`gpui-table-some-lib-tables` consumer ID, loads
+`.gpui-storybook/gpui-table-some-lib-tables.json`, and waits for resolved
+appearance, theme, and locale state before opening the first window.
 
 Use it to see:
 

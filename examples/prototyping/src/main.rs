@@ -27,9 +27,6 @@ impl TableLayout for StorybookLayout {
         syn::parse2(quote! {
             #imports
 
-            #[gpui_storybook::story_init]
-            pub fn init(_cx: &mut App) {}
-
             #[gpui_storybook::story]
             pub struct #story_struct_ident {
                 #struct_fields

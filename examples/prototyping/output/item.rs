@@ -5,8 +5,6 @@ use gpui::{
 };
 use gpui_component::v_flex;
 use gpui_component::table::{DataTable, TableDelegate as _, TableState};
-#[gpui_storybook::story_init]
-pub fn init(_cx: &mut App) {}
 #[gpui_storybook::story]
 pub struct ItemTableStory {
     table: Entity<TableState<ItemTableDelegate>>,

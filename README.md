@@ -397,8 +397,8 @@ explicitly links the domain resources and synchronizes the domain,
 table-component, and table-core contexts. The Storybook launcher passes it to
 `StorybookOptions` with the stable `gpui-table-some-lib-tables` consumer ID and
 awaits preference readiness before opening the first window. Normal launches
-persist saved appearance, theme, language, and scrollbar intent in Storybook's
-consumer-scoped application-data database.
+persist saved appearance, theme, language, and scrollbar intent in
+`.gpui-storybook/gpui-table-some-lib-tables.json` at the workspace root.
 Generated Storybook table titles use the GPUI app context so they follow the
 resolved Storybook locale. Context-free table titles use the strict embedded
 table-core localizer. Missing typed resources and missing GPUI localization
