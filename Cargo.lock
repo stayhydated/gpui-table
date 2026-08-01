@@ -906,7 +906,7 @@ version = "3.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6dee98b0db6a962de883bf5d20362dee4d7ca0d12fe39a7c6c73c844e1cd7c1f"
 dependencies = [
- "darling 0.23.0",
+ "darling 0.20.11",
  "ident_case",
  "prettyplease",
  "proc-macro2",
@@ -1836,6 +1836,7 @@ dependencies = [
  "ident_case",
  "proc-macro2",
  "quote",
+ "strsim",
  "syn 2.0.119",
 ]
 
@@ -2019,7 +2020,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -2292,13 +2293,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
 name = "es-fluent"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
@@ -2311,7 +2312,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-build"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-toml",
 ]
@@ -2319,7 +2320,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
@@ -2332,7 +2333,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "bon",
  "darling 0.23.0",
@@ -2351,7 +2352,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -2367,7 +2368,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-toml",
@@ -2381,7 +2382,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-shared",
  "fluent-bundle",
@@ -2400,7 +2401,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-embedded"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -2413,7 +2414,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-macros"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-shared",
@@ -2428,7 +2429,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-shared"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "anyhow",
  "camino",
@@ -2451,7 +2452,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-toml"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#b600ac3ef5cc56035b277e36684f1b507095f33d"
+source = "git+https://github.com/stayhydated/es-fluent#07102e7203c76525d78c260a7c111f807e43ef51"
 dependencies = [
  "bon",
  "es-fluent-shared",
@@ -5882,7 +5883,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -7160,7 +7161,7 @@ dependencies = [
  "once_cell",
  "socket2",
  "tracing",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -7836,7 +7837,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -9043,7 +9044,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.4",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -10351,7 +10352,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
