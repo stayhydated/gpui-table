@@ -5,22 +5,40 @@ version.workspace = true
 edition.workspace = true
 license = "Unlicense"
 publish = false
+autobins = false
+autolib = false
+
+[[bin]]
+name = "some-lib-tables"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[[example]]
+name = "demo"
+path = "examples/demo.rs"
 
 [features]
 router = [ "some-lib/router" ]
 
 [dependencies]
-env_logger = { workspace = true }
 gpui = { workspace = true }
 gpui-component = { workspace = true }
 gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
 gpui-table-component = { workspace = true }
 gpui_platform = { workspace = true }
-reqwest_client = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
 
-[dev-dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+env_logger = { workspace = true }
+reqwest_client = { workspace = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+wasm-bindgen = { workspace = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 es-fluent = { workspace = true }
 gpui = { features = [ "test-support" ], workspace = true }
 

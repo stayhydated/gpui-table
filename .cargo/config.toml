@@ -5,3 +5,6 @@ codegen-backend = "cranelift"
 
 [env]
 RUST_LOG = "info"
+
+[alias]
+xtask = "run -p xtask --"
