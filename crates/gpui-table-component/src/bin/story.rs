@@ -69,7 +69,6 @@ mod tests {
     use gpui::AppContext as _;
 
     #[derive(Clone, Copy, es_fluent::EsFluent)]
-    #[fluent(domain = "gpui-table-component")]
     enum ResetFiltersFtl {
         Reset,
     }

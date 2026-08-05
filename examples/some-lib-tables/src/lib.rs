@@ -83,10 +83,25 @@ pub fn run_storybook(app: Application, selected_story: Option<String>) {
 mod tests {
     use super::*;
 
-    #[derive(Clone, Copy, es_fluent::EsFluent)]
-    #[fluent(domain = "gpui-table-component")]
+    #[derive(Clone, Copy)]
     enum ResetFiltersFtl {
         Reset,
+    }
+
+    impl es_fluent::FluentMessage for ResetFiltersFtl {
+        fn to_fluent_string_with(
+            &self,
+            localize: &mut es_fluent::FluentMessageLookup<'_>,
+        ) -> String {
+            localize(
+                es_fluent::registry::__macro::static_message_key(
+                    "gpui-table-component",
+                    es_fluent::registry::__macro::static_domain("gpui-table-component"),
+                    es_fluent::registry::__macro::static_entry_id("reset_filters_ftl-Reset"),
+                ),
+                None,
+            )
+        }
     }
 
     #[test]

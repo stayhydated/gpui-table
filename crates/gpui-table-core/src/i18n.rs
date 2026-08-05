@@ -120,20 +120,17 @@ mod tests {
     use super::{
         DEFAULT_LANGUAGE, LocaleError, default_language, i18n, localize_label, set_locale,
     };
-    use es_fluent::{
-        FluentLabel,
-        registry::{StaticFluentDomain, StaticFluentEntryId},
-    };
+    use es_fluent::{FluentLabel, registry::StaticFluentMessageKey};
 
     struct PurchaseOrder;
 
     impl FluentLabel for PurchaseOrder {
-        fn fluent_label_domain() -> StaticFluentDomain {
-            StaticFluentDomain::try_new("gpui-table-core").unwrap()
-        }
-
-        fn fluent_label_id() -> StaticFluentEntryId {
-            StaticFluentEntryId::try_new("purchase_order_label").unwrap()
+        fn fluent_label_key() -> StaticFluentMessageKey {
+            es_fluent::registry::__macro::static_message_key(
+                "gpui-table-core",
+                es_fluent::registry::__macro::static_domain("gpui-table-core"),
+                es_fluent::registry::__macro::static_entry_id("purchase_order_label"),
+            )
         }
     }
 
