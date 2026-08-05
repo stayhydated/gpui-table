@@ -13,6 +13,8 @@ Start here:
   widgets or `TableStatusBar`.
 - `crates/gpui-table-prototyping-core` and `examples/prototyping` for
   inventory-backed story or scaffold generation.
+- `book/src/SUMMARY.md` for user-guide routing and `web/src/lib.rs` for the
+  public catalog.
 - `just --list` for the maintained local command index.
 
 ## Project Summary
@@ -29,9 +31,9 @@ Before editing, classify the change:
 1. Find the surface in the workspace map and use its audience label to decide
    how much public explanation the change needs.
 2. Place documentation by content. User-facing workflows belong in READMEs,
-   examples, rustdocs, or in-repository `skills/*` guidance when those surfaces
-   already cover the workflow. Internal contracts belong near the code, tests,
-   snapshots, generated fixtures, or this routing guide.
+   `book/src`, examples, rustdocs, or in-repository `skills/*` guidance when
+   those surfaces already cover the workflow. Internal contracts belong near
+   the code, tests, snapshots, generated fixtures, or this routing guide.
 3. Sync public workflow changes. If derive syntax, generated filter behavior,
    MCP query shape, registry metadata, feature flags, generated output,
    localization, or recommended usage changes, update the owning source,
@@ -63,7 +65,9 @@ shape, localization, or other user-visible API shape:
 4. Update `skills/use-gpui-table` or
    `skills/use-gpui-table-component-shapes` when application-developer guidance
    changes.
-5. Update this guide when it names the changed routing, ownership, validation,
+5. Update matching `book/src` chapters and `web/src/lib.rs` when the public
+   guide or catalog description changes.
+6. Update this guide when it names the changed routing, ownership, validation,
    or sync boundary.
 
 `examples/some-lib` and `examples/some-lib-tables` are the canonical
@@ -81,7 +85,12 @@ README, example, and generated-output surfaces.
 Linux build setup has separate owners: `.cargo/config.toml` controls local
 environment settings, `.github/workflows/ci.yml` owns CI jobs, and
 `.github/actions/install-linux-deps` owns Linux package installation for GPUI
-builds. Update the file that owns the changed build requirement.
+builds. `.github/workflows/gh-pages.yml` owns book, demo, and site deployment.
+Update the file that owns the changed build requirement.
+
+Build `web/public/book`, `web/public/llms*`, `web/public/gpui-demo`, and
+`web/dist` through `cargo xtask`; their sources are `book/src`, `web/src`, and
+`examples/some-lib-tables`.
 
 ## Workspace Map
 
@@ -138,8 +147,10 @@ builds. Update the file that owns the changed build requirement.
 
 - `examples/some-lib` and `examples/some-lib-tables`
   Audience: **User-facing**
-  Role: shared domain types plus the storybook-style GPUI app. `cargo run`
-  from the workspace root launches `examples/some-lib-tables`.
+  Role: shared domain types plus the native and WebAssembly Storybook gallery.
+  The `demo` example runs on either target and discovers the same table stories
+  as the native binary. `cargo run` from the workspace root launches
+  `examples/some-lib-tables`.
 
 - `crates/gpui-table-component` storybook
   Audience: **User-facing**
@@ -169,6 +180,26 @@ builds. Update the file that owns the changed build requirement.
   Role: `insta` snapshots for table-rendering structures. Review snapshot
   diffs when generated table metadata changes.
 
+### Documentation, Demo, and Publishing
+
+- `book/src`
+  Audience: **User-facing**
+  Role: mdBook source for columns, filters, loading, localization, MCP, and
+  feature workflows.
+
+- `examples/some-lib-tables/examples/demo.rs`
+  Audience: **User-facing**
+  Role: native and nightly Trunk entry point for the full `some-lib-tables`
+  Storybook gallery.
+
+- `web`
+  Audience: **User-facing**
+  Role: Dioxus catalog for the book, GPUI demo, API docs, and source.
+
+- `xtask`
+  Audience: **Internal**
+  Role: book, `llms.txt`, GPUI demo, and Pages-site build orchestration.
+
 ## Validation and Editing Rules
 
 - Run the narrowest command that proves the edited behavior for the affected
@@ -181,8 +212,12 @@ builds. Update the file that owns the changed build requirement.
   surface.
 - `just cov` measures all targets and features for the eight publishable
   library crates, the MCP query example, and the shared example library. It
-  excludes the `prototyping` generator and the `some-lib-tables` GUI demo so
-  the report centers on testable library and integration contracts.
+  excludes the prototyping generator, GUI demos, and publication tooling so the
+  report centers on testable library and integration contracts.
+- Use `cargo xtask build book` and `cargo xtask build llms-txt` for book
+  changes, `cargo xtask build gpui-demo` for the nightly Wasm demo, and
+  `cargo xtask build web` for the catalog. `just web-build` runs the complete
+  publication pipeline.
 - Match CI explicitly when needed: `.github/workflows/ci.yml` runs
   `cargo fmt --check`, `cargo clippy --workspace --all-features`,
   `cargo test --workspace --all-features`,

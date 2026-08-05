@@ -1617,6 +1617,12 @@ mod tests {
 
         let named = super::server_named("custom-table-server", "1.2.3").unwrap();
         assert_eq!(named.tool_count(), 0);
+        let server_info = rmcp::ServerHandler::get_info(&named);
+        assert_eq!(
+            server_info.protocol_version,
+            rmcp::model::ProtocolVersion::V_2026_07_28
+        );
+        assert_eq!(server_info.server_info.name, "custom-table-server");
         assert!(super::server().is_ok());
 
         let mut inventory_server = super::McpServer::new("inventory", "0.0.0");

@@ -1,64 +1,13 @@
 # gpui-table-core
 
-`gpui-table-core` is the pure filter-semantics layer for the workspace.
-It holds typed filter wrapper values, faceted-filter traits, and conversion
-helpers without depending on GPUI.
+`gpui-table-core` provides typed filter values and matching semantics
+without depending on GPUI. It is useful for shared client/server filtering,
+non-UI query logic, and generic code over `Matchable<F>`.
 
-This crate is for integration work. Most application code should depend on
+The crate includes text, faceted, range, and single-value wrappers; faceted
+filter traits; and feature-gated date, decimal, SpacetimeDB, and Fluent support.
+Applications that derive or render tables should normally depend on
 `gpui-table` instead.
 
-## Use This Crate When
-
-- you want to match typed filter state outside the GPUI runtime
-- you want shared filter DTOs or logic between client and server code
-- you want to test filtering behavior without bringing in GPUI dependencies
-
-## Example
-
-```rs
-use gpui_table_core::filter::{Matchable, RangeValue, TextValue};
-
-#[derive(Default)]
-pub struct UserFilters {
-    pub name: TextValue,
-    pub age: RangeValue<u8>,
-}
-
-pub struct User {
-    pub name: String,
-    pub age: u8,
-}
-
-impl Matchable<UserFilters> for User {
-    fn matches_filters(&self, filters: &UserFilters) -> bool {
-        filters.name.matches(&self.name) && filters.age.matches(&self.age)
-    }
-}
-```
-
-## What It Provides
-
-- `TextValue`, `RangeValue<T>`, `FacetedValue<T>`, and `SingleValue<T>`
-- `FilterValue` and `Filterable` for typed faceted filters
-- `Matchable<F>` and `FilterValuesExt` for strongly typed filtering flows
-- `ToDecimal` and `ToNaiveDate` when the corresponding features are enabled
-- schema re-exports such as `FilterConfig`, `FilterType`, and `FacetedFilterOption`
-- optional strict typed `es-fluent` localization for built-in bool faceted
-  labels and context-free table titles
-
-`bool` already implements `FilterValue` and `Filterable`, so faceted boolean
-filters work without extra glue code.
-
-## Feature Flags
-
-- `chrono` (default): enables `ToNaiveDate` conversions for date-range filters
-- `fluent`: localizes built-in bool faceted labels and table titles through
-  typed `es-fluent` resources; missing resources are hard failures
-- `rust_decimal`: enables `ToDecimal` conversions for numeric-range filters
-- `spacetimedb`: adds supported SpacetimeDB temporal conversions on top of the range helpers
-
-If you also need generated tables, GPUI runtime traits, or built-in filter UI,
-use `gpui-table` instead of depending on this crate directly.
-
-For implementation details and internal contracts, read the crate rustdocs and
-the focused tests in `src/filter`.
+- [Feature and crate guide](https://stayhydated.github.io/gpui-table/book/features.html)
+- [API documentation](https://docs.rs/gpui-table-core/)

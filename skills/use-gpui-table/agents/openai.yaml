@@ -1,4 +1,4 @@
 interface:
   display_name: "Use gpui-table"
-  short_description: "Build user-facing GPUI tables"
-  default_prompt: "Use $use-gpui-table to add a user-facing GPUI table with derived filters."
+  short_description: "Build and debug typed GPUI tables"
+  default_prompt: "Use $use-gpui-table to implement this application table with the repository's generated table and filter patterns."

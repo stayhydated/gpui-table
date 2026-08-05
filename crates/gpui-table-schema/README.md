@@ -1,50 +1,12 @@
 # gpui-table-schema
 
-`gpui-table-schema` contains the UI-neutral metadata shared across the
-`gpui-table` workspace: filter configuration, faceted option metadata, and the
-inventory-backed table-shape registry.
+`gpui-table-schema` defines UI-neutral filter metadata and the
+inventory-backed `GpuiTableShape` registry. Tooling can inspect table
+IDs, columns, filter categories, Rust type syntax, and component-shape usage
+without depending on GPUI.
 
-This crate is for tooling and integration work. Most application code should
-use `gpui-table`.
+Use this crate for metadata consumers and generators. Applications that derive
+or render tables should normally depend on `gpui-table`.
 
-## Use This Crate When
-
-- you are building tooling around table metadata
-- you want to inspect or transform `GpuiTableShape` inventory registrations
-- you want schema types without depending on GPUI runtime crates
-
-## Example
-
-```rs
-use gpui_table_schema::registry::{GpuiTableShape, inventory};
-
-for shape in inventory::iter::<GpuiTableShape>() {
-    println!(
-        "{} -> {} columns, {} filters",
-        shape.struct_name,
-        shape.columns.len(),
-        shape.filters.len()
-    );
-}
-```
-
-In normal application code, those registrations are produced by
-`#[derive(GpuiTable)]` with the `inventory` feature enabled on `gpui-table`.
-
-## What It Provides
-
-- `FilterConfig`, `FilterType`, `FacetedFilterOption`, and `FacetedFilterIcon`
-- `TableId`, `GpuiTableShape`, `ColumnVariant`, `FilterVariant`, `RegistryFilterType`, and `ColumnFixed`
-- `ComponentShapeUse`, `RustPath`, and `RustType` for field-to-filter-shape and Rust syntax metadata captured from macro-generated schema registrations
-- the `inventory` re-export for collecting and iterating registered shapes
-
-This crate intentionally does not depend on `gpui` or `gpui-component`.
-
-`TableId::new` accepts nonempty stable identifiers made from lowercase ASCII
-letters, digits, `_`, and `-`.
-
-If you need derives, loaders, rendering traits, or built-in filter UI, use
-`gpui-table` instead.
-
-For internal metadata contracts and dependency boundaries, read the crate
-rustdocs and the registry module.
+- [Feature and crate guide](https://stayhydated.github.io/gpui-table/book/features.html)
+- [API documentation](https://docs.rs/gpui-table-schema/)
