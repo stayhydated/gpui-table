@@ -46,7 +46,7 @@ fake = "5.1"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
-gpui-storybook = { path = "../gpui-storybook/crates/gpui-storybook" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "855141bc755f177cbec2fed96c12849c8d6925f2" }
 gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }

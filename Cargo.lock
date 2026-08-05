@@ -1598,7 +1598,7 @@ dependencies = [
 [[package]]
 name = "component-shape"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#804afd8a038a8ddf0efebd43d349102d9f4a2ab4"
+source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
 dependencies = [
  "derive_more 2.1.1",
  "heck 0.5.0",
@@ -1610,7 +1610,7 @@ dependencies = [
 [[package]]
 name = "component-shape-codegen"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#804afd8a038a8ddf0efebd43d349102d9f4a2ab4"
+source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
 dependencies = [
  "attribute-dsl",
  "component-shape",
@@ -1622,7 +1622,7 @@ dependencies = [
 [[package]]
 name = "component-shape-mcp"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#804afd8a038a8ddf0efebd43d349102d9f4a2ab4"
+source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
 dependencies = [
  "chrono",
  "component-shape",
@@ -1639,7 +1639,7 @@ dependencies = [
 [[package]]
 name = "component-shape-mcp-macros"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#804afd8a038a8ddf0efebd43d349102d9f4a2ab4"
+source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
 dependencies = [
  "proc-macro-crate 3.5.0",
  "proc-macro2",
@@ -3234,7 +3234,7 @@ dependencies = [
 [[package]]
 name = "es-fluent"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
@@ -3247,7 +3247,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-build"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-toml",
 ]
@@ -3255,7 +3255,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
@@ -3268,7 +3268,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "bon",
  "darling 0.23.0",
@@ -3287,7 +3287,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -3303,7 +3303,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-toml",
@@ -3317,7 +3317,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-shared",
  "fluent-bundle",
@@ -3336,7 +3336,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-embedded"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -3349,7 +3349,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-macros"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-shared",
@@ -3365,7 +3365,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-shared"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "anyhow",
  "camino",
@@ -3388,7 +3388,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-toml"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#057d06dfa9ec290092bf5b89d250c266f8579165"
+source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
 dependencies = [
  "bon",
  "es-fluent-shared",
@@ -4496,6 +4496,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "gpui",
  "gpui-es-fluent",
@@ -4514,6 +4515,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-components"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "gpui",
  "gpui-component",
@@ -4522,6 +4524,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-core"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "anyhow",
  "derive_more 2.1.1",
@@ -4549,6 +4552,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-macros"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "heck 0.5.0",
  "proc-macro2",
@@ -4559,6 +4563,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-preferences"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "fluent-langneg",
  "schemars",
@@ -4576,6 +4581,7 @@ dependencies = [
 [[package]]
 name = "gpui-storybook-toml"
 version = "0.5.0"
+source = "git+https://github.com/stayhydated/gpui-storybook?rev=855141bc755f177cbec2fed96c12849c8d6925f2#855141bc755f177cbec2fed96c12849c8d6925f2"
 dependencies = [
  "serde",
  "toml 1.1.4+spec-1.1.0",
