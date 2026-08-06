@@ -9,8 +9,8 @@ Most applications should enable the facade and component features:
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["mcp"] }
-gpui-table-component = { version = "0.5", features = ["mcp"] }
+gpui-table = { version = "0.6", features = ["mcp"] }
+gpui-table-component = { version = "0.6", features = ["mcp"] }
 ```
 
 Use this crate directly when implementing a custom server or lower-level table

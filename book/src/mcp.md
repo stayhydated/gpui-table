@@ -7,8 +7,8 @@ filter execution, and totals.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["mcp"] }
-gpui-table-component = { version = "0.5", features = ["mcp"] }
+gpui-table = { version = "0.6", features = ["mcp"] }
+gpui-table-component = { version = "0.6", features = ["mcp"] }
 serde = { version = "1", features = ["derive"] }
 ```
 

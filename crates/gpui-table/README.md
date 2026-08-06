@@ -10,8 +10,8 @@ in `gpui-table-component`.
 
 ```toml
 [dependencies]
-gpui-table = "0.5"
-gpui-table-component = "0.5"
+gpui-table = "0.6"
+gpui-table-component = "0.6"
 ```
 
 ```rust

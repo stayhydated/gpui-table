@@ -7,8 +7,8 @@ for its built-in controls.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.5", features = ["fluent"] }
-gpui-table-component = "0.5"
+gpui-table = { version = "0.6", features = ["fluent"] }
+gpui-table-component = "0.6"
 es-fluent = { git = "https://github.com/stayhydated/es-fluent" }
 ```
 

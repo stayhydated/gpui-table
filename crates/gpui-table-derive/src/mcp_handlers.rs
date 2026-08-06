@@ -126,7 +126,7 @@ fn parse_result_return_type(output: &ReturnType) -> syn::Result<(Type, Type)> {
         ));
     };
 
-    let Type::Path(TypePath { path, qself }) = ty.as_ref() else {
+    let Type::Path(TypePath { path, qself, .. }) = ty.as_ref() else {
         return Err(syn::Error::new(
             output.span(),
             "mcp_query handlers must return Result<T, E> for explicit MCP error handling",
@@ -249,7 +249,7 @@ fn infer_handler(item_fn: &ItemFn) -> syn::Result<(HandlerKind, Type, Type)> {
 }
 
 fn vec_inner_type(ty: &Type) -> Option<Type> {
-    let Type::Path(TypePath { path, qself }) = ty else {
+    let Type::Path(TypePath { path, qself, .. }) = ty else {
         return None;
     };
     if qself.is_some() {
@@ -265,7 +265,7 @@ fn vec_inner_type(ty: &Type) -> Option<Type> {
 }
 
 fn table_query_result_type(ty: &Type) -> Option<Type> {
-    let Type::Path(TypePath { path, qself }) = ty else {
+    let Type::Path(TypePath { path, qself, .. }) = ty else {
         return None;
     };
     if qself.is_some() {
@@ -281,7 +281,7 @@ fn table_query_result_type(ty: &Type) -> Option<Type> {
 }
 
 fn table_query_row_type(ty: &Type) -> Option<Type> {
-    let Type::Path(TypePath { path, qself }) = ty else {
+    let Type::Path(TypePath { path, qself, .. }) = ty else {
         return None;
     };
     if qself.is_some() {

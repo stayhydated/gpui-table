@@ -31,7 +31,11 @@ impl UserTableStory {
     fn new(window: &mut Window, cx: &mut Context<Self>) -> Self {
         let delegate = UserTableDelegate::new(vec![]);
         let table = cx.new(|cx| TableState::new(delegate, window, cx));
-        let filters = UserFilterEntities::build_for_table(table.clone(), cx);
+        let filters = UserFilterEntities::build_for_table_loader(
+            table.clone(),
+            window,
+            cx,
+        );
         let _subscription = cx.observe(&table, |_, _, cx| cx.notify());
         Self {
             table,

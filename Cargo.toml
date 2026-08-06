@@ -25,36 +25,36 @@ publish = true
 readme = "README.md"
 repository = "https://github.com/stayhydated/gpui-table"
 rust-version = "1.96"
-version = "0.5.0"
+version = "0.6.0"
 
 [workspace.dependencies]
 anyhow = "1.0"
 chrono = "0.4"
 clap = "4.6"
-component-shape = { git = "https://github.com/stayhydated/component-shape" }
-component-shape-codegen = { git = "https://github.com/stayhydated/component-shape" }
-component-shape-mcp = { git = "https://github.com/stayhydated/component-shape" }
-darling = "0.23"
+component-shape = { git = "https://github.com/stayhydated/component-shape", rev = "09ebec5af9fc3522e96b272d79036501b9116d60", version = "0.2.0" }
+component-shape-codegen = { git = "https://github.com/stayhydated/component-shape", rev = "09ebec5af9fc3522e96b272d79036501b9116d60", version = "0.2.0" }
+component-shape-mcp = { git = "https://github.com/stayhydated/component-shape", rev = "09ebec5af9fc3522e96b272d79036501b9116d60", version = "0.2.0" }
+darling = "0.24"
 derive_more = "2.1"
 dioxus = { default-features = false, version = "0.7" }
 env_logger = "0.11"
-es-fluent = { git = "https://github.com/stayhydated/es-fluent" }
-es-fluent-build = { git = "https://github.com/stayhydated/es-fluent" }
-es-fluent-lang = { git = "https://github.com/stayhydated/es-fluent" }
-es-fluent-manager-embedded = { git = "https://github.com/stayhydated/es-fluent" }
+es-fluent = { git = "https://github.com/stayhydated/es-fluent", rev = "be9ccf8d9fc5e417e2605af3b648a6199cb39f8d", version = "0.18.1" }
+es-fluent-build = { git = "https://github.com/stayhydated/es-fluent", rev = "be9ccf8d9fc5e417e2605af3b648a6199cb39f8d", version = "0.18.1" }
+es-fluent-lang = { git = "https://github.com/stayhydated/es-fluent", rev = "be9ccf8d9fc5e417e2605af3b648a6199cb39f8d", version = "0.18.1" }
+es-fluent-manager-embedded = { git = "https://github.com/stayhydated/es-fluent", rev = "be9ccf8d9fc5e417e2605af3b648a6199cb39f8d", version = "0.18.1" }
 fake = "5.1"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
-gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "855141bc755f177cbec2fed96c12849c8d6925f2" }
-gpui-table = { path = "crates/gpui-table", version = "0.5.0" }
-gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.5.0" }
-gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.5.0" }
-gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.5.0" }
-gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.5.0" }
-gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.5.0" }
-gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.5.0" }
-gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.5.0" }
+gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "b104b172c0e365d03a2e6c0d79fbcc78b171306f", version = "0.1.0" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "c4f6697abed0baeaaadc4a643715b96e1ac723c7", version = "0.5.0" }
+gpui-table = { path = "crates/gpui-table", version = "0.6.0" }
+gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.6.0" }
+gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.6.0" }
+gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.6.0" }
+gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.6.0" }
+gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.6.0" }
+gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.6.0" }
+gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.6.0" }
 gpui_platform = { branch = "linux-headless-renderer", features = [
   "font-kit",
   "x11",
@@ -67,11 +67,11 @@ insta = "1.48"
 inventory = "0.3"
 itertools = "0.15"
 jiff = "0.2"
-koruma = { git = "https://github.com/stayhydated/koruma" }
-koruma-collection = { git = "https://github.com/stayhydated/koruma" }
-koruma-derive-core = { git = "https://github.com/stayhydated/koruma" }
+koruma = { git = "https://github.com/stayhydated/koruma", rev = "0e92fde0b37f7caff376b8d95ed7fae1b18d3ed8", version = "0.11.0" }
+koruma-collection = { git = "https://github.com/stayhydated/koruma", rev = "0e92fde0b37f7caff376b8d95ed7fae1b18d3ed8", version = "0.11.0" }
+koruma-derive-core = { git = "https://github.com/stayhydated/koruma", rev = "0e92fde0b37f7caff376b8d95ed7fae1b18d3ed8", version = "0.11.0" }
 log = "0.4"
-prettyplease = "0.2"
+prettyplease = "0.3"
 proc-macro-crate = "3.5"
 proc-macro2 = "1.0"
 quote = "1.0"
@@ -83,11 +83,11 @@ rust_decimal = "1.42"
 serde = "1.0"
 serde_json = "1.0"
 spacetimedb-lib = "2.8"
-stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "3e63926d573ca52c14ad922a7711fc98865bab36" }
-stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "3e63926d573ca52c14ad922a7711fc98865bab36" }
-stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "3e63926d573ca52c14ad922a7711fc98865bab36" }
+stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "2b62be85c86ddfe616fc2081c1aeaa5c00decca6" }
+stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "2b62be85c86ddfe616fc2081c1aeaa5c00decca6" }
+stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "2b62be85c86ddfe616fc2081c1aeaa5c00decca6" }
 strum = "0.28"
-syn = "2.0"
+syn = "3.0"
 thiserror = "2.0"
 tokio = "1.53"
 tracing-subscriber = "0.3"

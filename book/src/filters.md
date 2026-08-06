@@ -7,8 +7,8 @@ numeric range filter, including one over an integer field:
 ```toml
 [dependencies]
 chrono = "0.4"
-gpui-table = { version = "0.5", features = ["rust_decimal"] }
-gpui-table-component = { version = "0.5", features = ["rust_decimal"] }
+gpui-table = { version = "0.6", features = ["rust_decimal"] }
+gpui-table-component = { version = "0.6", features = ["rust_decimal"] }
 ```
 
 Add `#[gpui_table(filters)]` and declare each filtered field's shape:

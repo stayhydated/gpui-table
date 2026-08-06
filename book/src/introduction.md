@@ -16,8 +16,8 @@ Start with the facade and component crates:
 
 ```toml
 [dependencies]
-gpui-table = "0.5"
-gpui-table-component = "0.5"
+gpui-table = "0.6"
+gpui-table-component = "0.6"
 ```
 
 Keep `gpui` and `gpui-component` as direct dependencies

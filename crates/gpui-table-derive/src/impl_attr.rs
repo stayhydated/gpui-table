@@ -47,7 +47,7 @@ fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<To
     // Get the type being implemented (clone to avoid borrow issues)
     let self_ty = impl_block.self_ty.clone();
 
-    let Some((_, ref trait_path, _)) = impl_block.trait_ else {
+    let Some((ref trait_path, _)) = impl_block.trait_ else {
         return Err(syn::Error::new_spanned(
             &impl_block.self_ty,
             "`#[gpui_table_impl]` must be applied to an `impl TableLoader for <Row>TableDelegate` block",
