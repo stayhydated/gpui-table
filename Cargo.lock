@@ -189,9 +189,9 @@ checksum = "683d7910e743518b0e34f1186f92494becacb047c7b6bf616c96772180fef923"
 
 [[package]]
 name = "android_system_properties"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "819e7219dbd41043ac279b19830f2efc897156490d7fd6ea916720117ee66311"
+checksum = "ae221649c9976a6f6c56ae1facf410f3ddb33cc661c4b7b61020a912d4237fbc"
 dependencies = [
  "libc",
 ]
@@ -930,9 +930,9 @@ dependencies = [
 
 [[package]]
 name = "blake3"
-version = "1.8.5"
+version = "1.8.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0aa83c34e62843d924f905e0f5c866eb1dd6545fc4d719e803d9ba6030371fce"
+checksum = "76ae7bad254120e9e4c63bafc385310756f90c484eac0e36b8317cf09cb92a77"
 dependencies = [
  "arrayref",
  "arrayvec",
@@ -1445,9 +1445,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.6.5"
+version = "4.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "301b56658598e48f3648647ac6fc887be7e7108eddfa4e9b63fcf3ec58c0cadf"
+checksum = "473c7e07f409a8d772161724aa8db6a765a2532a70f9667eeb7b49d3d02fbdca"
 dependencies = [
  "clap_builder",
  "clap_derive",
@@ -1455,9 +1455,9 @@ dependencies = [
 
 [[package]]
 name = "clap_builder"
-version = "4.6.5"
+version = "4.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "94a65403d1a1bd28f7dc68eb8506e8874808ee5eecb59298de588e2e1407a078"
+checksum = "7b48fea5a88e9ae728a2dcbedbfc0e730f7d60da42e1cb049a83c9fb8b789889"
 dependencies = [
  "anstream",
  "anstyle",
@@ -1598,7 +1598,7 @@ dependencies = [
 [[package]]
 name = "component-shape"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
+source = "git+https://github.com/stayhydated/component-shape#1cb0e8e209e17513641fc5d1fd0338faea3d0e43"
 dependencies = [
  "derive_more 2.1.1",
  "heck 0.5.0",
@@ -1610,7 +1610,7 @@ dependencies = [
 [[package]]
 name = "component-shape-codegen"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
+source = "git+https://github.com/stayhydated/component-shape#1cb0e8e209e17513641fc5d1fd0338faea3d0e43"
 dependencies = [
  "attribute-dsl",
  "component-shape",
@@ -1622,7 +1622,7 @@ dependencies = [
 [[package]]
 name = "component-shape-mcp"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
+source = "git+https://github.com/stayhydated/component-shape#1cb0e8e209e17513641fc5d1fd0338faea3d0e43"
 dependencies = [
  "chrono",
  "component-shape",
@@ -1639,7 +1639,7 @@ dependencies = [
 [[package]]
 name = "component-shape-mcp-macros"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/component-shape#5c073130b1b6afdfa74a637bef4d0375124ac428"
+source = "git+https://github.com/stayhydated/component-shape#1cb0e8e209e17513641fc5d1fd0338faea3d0e43"
 dependencies = [
  "proc-macro-crate 3.5.0",
  "proc-macro2",
@@ -2153,6 +2153,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "88490bf1b990d87eaaa7ac8aa887f629a08e7359765b4911faf63c3763347d23"
+dependencies = [
+ "darling_core 0.24.0",
+ "darling_macro 0.24.0",
+]
+
+[[package]]
 name = "darling_core"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2193,6 +2203,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "darling_core"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "084e274f91c482280130e1e34e0b8d6e66776a060d7b6de7b84289ca778868c4"
+dependencies = [
+ "ident_case",
+ "proc-macro2",
+ "quote",
+ "strsim",
+ "syn 3.0.3",
+]
+
+[[package]]
 name = "darling_macro"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2223,6 +2246,17 @@ dependencies = [
  "darling_core 0.23.0",
  "quote",
  "syn 2.0.119",
+]
+
+[[package]]
+name = "darling_macro"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68f5792fa0d41cd2325ce0ffa64f0a340eaebd4971a3a0c5e1ffd2cc488a355e"
+dependencies = [
+ "darling_core 0.24.0",
+ "quote",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -3234,7 +3268,7 @@ dependencies = [
 [[package]]
 name = "es-fluent"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-derive",
  "es-fluent-manager-core",
@@ -3247,7 +3281,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-build"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-toml",
 ]
@@ -3255,7 +3289,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "darling 0.23.0",
  "es-fluent-derive-core",
@@ -3268,7 +3302,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-derive-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "bon",
  "darling 0.23.0",
@@ -3287,7 +3321,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-lang-macro",
  "es-fluent-manager-core",
@@ -3303,7 +3337,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-lang-macro"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-toml",
@@ -3317,7 +3351,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-core"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-shared",
  "fluent-bundle",
@@ -3336,7 +3370,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-embedded"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-core",
@@ -3349,7 +3383,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-manager-macros"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "es-fluent-derive-core",
  "es-fluent-shared",
@@ -3365,7 +3399,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-shared"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "anyhow",
  "camino",
@@ -3388,7 +3422,7 @@ dependencies = [
 [[package]]
 name = "es-fluent-toml"
 version = "0.18.1"
-source = "git+https://github.com/stayhydated/es-fluent#ad651362ee81fc186cb835dcc0f44bd26db9fb2e"
+source = "git+https://github.com/stayhydated/es-fluent#8d60879af12daa559e2173da7222de8a07a95fa9"
 dependencies = [
  "bon",
  "es-fluent-shared",
@@ -4410,7 +4444,7 @@ dependencies = [
 [[package]]
 name = "gpui-component"
 version = "0.5.2"
-source = "git+https://github.com/longbridge/gpui-component#bbf7650abae59e3a984d48bd120a6f9094fed1f2"
+source = "git+https://github.com/longbridge/gpui-component#181cf147d1d68ff33bae60abb58a24917658142e"
 dependencies = [
  "aho-corasick",
  "anyhow",
@@ -4458,7 +4492,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-assets"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#bbf7650abae59e3a984d48bd120a6f9094fed1f2"
+source = "git+https://github.com/longbridge/gpui-component#181cf147d1d68ff33bae60abb58a24917658142e"
 dependencies = [
  "anyhow",
  "gpui",
@@ -4472,7 +4506,7 @@ dependencies = [
 [[package]]
 name = "gpui-component-macros"
 version = "0.5.1"
-source = "git+https://github.com/longbridge/gpui-component#bbf7650abae59e3a984d48bd120a6f9094fed1f2"
+source = "git+https://github.com/longbridge/gpui-component#181cf147d1d68ff33bae60abb58a24917658142e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -4482,7 +4516,7 @@ dependencies = [
 [[package]]
 name = "gpui-es-fluent"
 version = "0.1.0"
-source = "git+https://github.com/stayhydated/gpui-es-fluent#ad90423752181c1d575f0edb11e77ad411806370"
+source = "git+https://github.com/stayhydated/gpui-es-fluent#c755d7f1ad5617e5b2f111d4efcd0a0503f7614e"
 dependencies = [
  "es-fluent",
  "es-fluent-manager-embedded",
@@ -6301,7 +6335,7 @@ checksum = "a4933f3f57a8e9d9da04db23fb153356ecaf00cbd14aee46279c33dc80925c37"
 [[package]]
 name = "koruma"
 version = "0.10.0"
-source = "git+https://github.com/stayhydated/koruma#c1bfdb7cd8f4ad4c078c35a3dd1928eefc3f8af2"
+source = "git+https://github.com/stayhydated/koruma#7ca66d7dce4f550720247a0f898d2e08d3731e70"
 dependencies = [
  "koruma-core",
  "koruma-derive",
@@ -6310,7 +6344,7 @@ dependencies = [
 [[package]]
 name = "koruma-collection"
 version = "0.10.0"
-source = "git+https://github.com/stayhydated/koruma#c1bfdb7cd8f4ad4c078c35a3dd1928eefc3f8af2"
+source = "git+https://github.com/stayhydated/koruma#7ca66d7dce4f550720247a0f898d2e08d3731e70"
 dependencies = [
  "es-fluent-build",
  "koruma",
@@ -6319,12 +6353,12 @@ dependencies = [
 [[package]]
 name = "koruma-core"
 version = "0.10.0"
-source = "git+https://github.com/stayhydated/koruma#c1bfdb7cd8f4ad4c078c35a3dd1928eefc3f8af2"
+source = "git+https://github.com/stayhydated/koruma#7ca66d7dce4f550720247a0f898d2e08d3731e70"
 
 [[package]]
 name = "koruma-derive"
 version = "0.10.0"
-source = "git+https://github.com/stayhydated/koruma#c1bfdb7cd8f4ad4c078c35a3dd1928eefc3f8af2"
+source = "git+https://github.com/stayhydated/koruma#7ca66d7dce4f550720247a0f898d2e08d3731e70"
 dependencies = [
  "heck 0.5.0",
  "koruma-derive-core",
@@ -6337,7 +6371,7 @@ dependencies = [
 [[package]]
 name = "koruma-derive-core"
 version = "0.10.0"
-source = "git+https://github.com/stayhydated/koruma#c1bfdb7cd8f4ad4c078c35a3dd1928eefc3f8af2"
+source = "git+https://github.com/stayhydated/koruma#7ca66d7dce4f550720247a0f898d2e08d3731e70"
 dependencies = [
  "attribute-dsl",
  "heck 0.5.0",
@@ -7819,9 +7853,9 @@ dependencies = [
 
 [[package]]
 name = "open"
-version = "5.4.0"
+version = "5.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0b3d059e795d52b8a72fef45658620edd4d9c359b338564aa14391ffa511ed5"
+checksum = "f9cfef937e9c486488c7e3d949ae31c0f1d06bdacd75b99c086cb35356e30408"
 dependencies = [
  "is-wsl",
  "libc",
@@ -9243,11 +9277,10 @@ dependencies = [
 
 [[package]]
 name = "rmcp"
-version = "3.1.0"
+version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ad26b216c966e987e80e86daf784a455c039c43d98575ceed57b8faa259e5695"
+checksum = "094c075f6698deef5a657cf4df6b684dff65157d255978b92b552ec22503f17a"
 dependencies = [
- "async-trait",
  "base64 0.23.1",
  "chrono",
  "futures",
@@ -9266,15 +9299,15 @@ dependencies = [
 
 [[package]]
 name = "rmcp-macros"
-version = "3.1.0"
+version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "41bc748630c2be2a71b614c2f40d27bc0df0060696d224e1692c72345b7e0b79"
+checksum = "737d947bcfd946fae6a179a4ef6487be6dcf25c930c2393856b820f1386e52a6"
 dependencies = [
- "darling 0.23.0",
+ "darling 0.24.0",
  "proc-macro2",
  "quote",
  "serde_json",
- "syn 2.0.119",
+ "syn 3.0.3",
 ]
 
 [[package]]
@@ -10184,9 +10217,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedb-bindings-macro"
-version = "2.7.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a0dc702a13b6e59650e89eadd16662d9ced6465ed69ee1d81149998cb6925992"
+checksum = "fe146f4bf4886c2e9b7a876d5c4e32906ba1444bbc852af7886127c6fea58bf3"
 dependencies = [
  "heck 0.4.1",
  "humantime",
@@ -10198,9 +10231,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedb-lib"
-version = "2.7.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "33cbe183b0c344ebbcebc2b928b424f125bb0e46c94258b9674396e64617b980"
+checksum = "0799b90c8cd0304cc052aee71d9b9968f223fa4948bd6e3e24a10901f2c96742"
 dependencies = [
  "anyhow",
  "bitflags 2.13.1",
@@ -10222,9 +10255,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedb-metrics"
-version = "2.7.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "52d260daf59d4004cff47aba951204c300bc1fefe0041343553fd0baea1d9b94"
+checksum = "473e157b5d8dd4f9be91d85b6f637c40794c76e7c5af71a672c71bd881bb5164"
 dependencies = [
  "arrayvec",
  "itertools 0.12.1",
@@ -10234,9 +10267,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedb-primitives"
-version = "2.7.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "49b8567ae448b4ccc39f75be5813681725eaaeb7c566ab73a2b1ca91427df0ee"
+checksum = "da1d7771c310d289b33e15b1ad47a539fe28aff68dd2d8b6b68b0111cc61f6da"
 dependencies = [
  "bitflags 2.13.1",
  "either",
@@ -10247,9 +10280,9 @@ dependencies = [
 
 [[package]]
 name = "spacetimedb-sats"
-version = "2.7.1"
+version = "2.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ca26c1f95c8dbfb29621ea5709fcdc882a49eb6597f11e458cc7f6917bfd364b"
+checksum = "4a0ff38def7f143727c90b96a42485684e1fe8509b87268f39f64091e816b82f"
 dependencies = [
  "anyhow",
  "arrayvec",
@@ -13226,9 +13259,9 @@ checksum = "b9cc00251562a284751c9973bace760d86c0276c471b4be569fe6b068ee97a56"
 
 [[package]]
 name = "xml-rs"
-version = "0.8.28"
+version = "0.8.29"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3ae8337f8a065cfc972643663ea4279e04e7256de865aa66fe25cec5fb912d3f"
+checksum = "e450f9b2ed1dff33c94c12589a87338689467b9c4f5d8a5710bd09a847d2c8a7"
 
 [[package]]
 name = "xml5ever"
@@ -13533,18 +13566,18 @@ checksum = "6df3dc4292935e51816d896edcd52aa30bc297907c26167fec31e2b0c6a32524"
 
 [[package]]
 name = "zerocopy"
-version = "0.8.55"
+version = "0.8.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b5a105cd7b140f6eeec8acff2ea38135d3cab283ada58540f629fe51e46696eb"
+checksum = "556764e583adb45a9f8d413c2a147fa7e8d821e48e12b14fd560b607998b75eb"
 dependencies = [
  "zerocopy-derive",
 ]
 
 [[package]]
 name = "zerocopy-derive"
-version = "0.8.55"
+version = "0.8.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fe976fb70c78cd64cccfe3a6fc142244e8a77b70959b30faf9d0ac37ee228eb"
+checksum = "f2ab42fc20575779bd240faa45f94a74256f755c0fa9e89f0ede20d91d0cdfc1"
 dependencies = [
  "proc-macro2",
  "quote",
