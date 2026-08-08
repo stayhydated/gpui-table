@@ -45,8 +45,8 @@ es-fluent-manager-embedded = { git = "https://github.com/stayhydated/es-fluent",
 fake = "5.1"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/longbridge/gpui-component" }
-gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "71ae96cdf29d53b5434eb7aadd4036d3a25f9f70", version = "0.1.0" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "7dc9be9d4ef056ef9846d98a7bf0a46ee5100b67", version = "0.5.0" }
+gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "8d64313a33d3b5f08775b4846f9aca4655147831", version = "0.1.0" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "dd431cae1c9bfa2e84104ee20f758a00d4ed7718", version = "0.5.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.6.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.6.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.6.0" }
