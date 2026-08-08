@@ -5,6 +5,7 @@ use gpui::{
 };
 use gpui_component::v_flex;
 use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+#[derive(gpui_storybook::StoryControls)]
 #[gpui_storybook::story]
 pub struct ItemTableStory {
     table: Entity<TableState<ItemTableDelegate>>,
@@ -14,7 +15,7 @@ impl gpui_storybook::Story for ItemTableStory {
     fn title(cx: &gpui::App) -> String {
         gpui_table_component::i18n::localize_label::<Item>(cx)
     }
-    fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+    fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
     }
 }

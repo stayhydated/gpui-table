@@ -13,6 +13,7 @@ use crate::{
     number_range_filter::NumberRangeFilter, reset_filters::ResetFilters, text_filter::TextFilter,
 };
 
+#[derive(gpui_storybook::StoryControls)]
 #[gpui_storybook::story("Table Filters")]
 pub struct ResetFiltersStory {
     focus_handle: FocusHandle,
@@ -83,7 +84,7 @@ impl gpui_storybook::Story for ResetFiltersStory {
         false
     }
 
-    fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+    fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
     }
 }

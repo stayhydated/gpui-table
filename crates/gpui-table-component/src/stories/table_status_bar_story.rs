@@ -6,6 +6,7 @@ use gpui_component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_fle
 
 use crate::TableStatusBar;
 
+#[derive(gpui_storybook::StoryControls)]
 #[gpui_storybook::story("Table Filters")]
 pub struct TableStatusBarStory {
     focus_handle: FocusHandle,
@@ -44,7 +45,7 @@ impl gpui_storybook::Story for TableStatusBarStory {
         false
     }
 
-    fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+    fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
     }
 }
