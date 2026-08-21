@@ -28,6 +28,7 @@ impl TableLayout for StorybookLayout {
             #imports
 
             #[gpui_storybook::story]
+            #[derive(gpui_storybook::StoryControls)]
             pub struct #story_struct_ident {
                 #struct_fields
             }
@@ -37,7 +38,7 @@ impl TableLayout for StorybookLayout {
                     #title_expr
                 }
 
-                fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+                fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
                     Self::view(window, cx)
                 }
             }

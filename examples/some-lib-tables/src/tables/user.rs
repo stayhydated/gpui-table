@@ -10,6 +10,7 @@ use gpui_component::table::{DataTable, TableState};
 use gpui_component::{h_flex, v_flex};
 use some_lib::structs::user::*;
 #[gpui_storybook::story]
+#[derive(gpui_storybook::StoryControls)]
 pub struct UserTableStory {
     table: Entity<TableState<UserTableDelegate>>,
     filters: UserFilterEntities,
@@ -19,7 +20,7 @@ impl gpui_storybook::Story for UserTableStory {
     fn title(cx: &gpui::App) -> String {
         gpui_table_component::i18n::localize_label::<User>(cx)
     }
-    fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+    fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
     }
 }

@@ -7,6 +7,7 @@ use gpui_component::{StyledExt as _, v_flex};
 use crate::{TextFilterExt as _, text_filter::TextFilter};
 
 #[gpui_storybook::story("Table Filters")]
+#[derive(gpui_storybook::StoryControls)]
 pub struct TextFilterStory {
     focus_handle: FocusHandle,
     default_filter: Entity<TextFilter>,
@@ -85,7 +86,7 @@ impl gpui_storybook::Story for TextFilterStory {
         false
     }
 
-    fn new_view(window: &mut Window, cx: &mut App) -> Entity<impl Render + Focusable> {
+    fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
     }
 }
