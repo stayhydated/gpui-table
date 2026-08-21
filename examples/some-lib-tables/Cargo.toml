@@ -3,6 +3,7 @@
 name = "some-lib-tables"
 version.workspace = true
 edition.workspace = true
+rust-version.workspace = true
 license = "Unlicense"
 publish = false
 autobins = false

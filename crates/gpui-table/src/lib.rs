@@ -162,7 +162,7 @@ where
 
 #[cfg(test)]
 mod filter_preset_tests {
-    use super::{FilterPresetValue, filter};
+    use super::{FilterPresetValue as _, filter};
 
     #[test]
     fn typed_filter_values_round_trip_through_json() {
