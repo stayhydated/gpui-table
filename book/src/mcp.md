@@ -137,6 +137,11 @@ Manual table registration supports backend handlers, fixed rows, synchronous row
 sources, and asynchronous row sources through
 `table::<Row>(&mut server)`.
 
+Use `gpui_table::mcp::tool_registry()?` when a host assembles the
+inventory-discovered MCP definitions and handlers independently from the
+server. The MCP server continues serving its registry until EOF, cancellation,
+or another application-owned shutdown signal.
+
 Every registered table publishes descriptor and schema resources:
 
 - `gpui-table://tables/{tool_name}/descriptor`

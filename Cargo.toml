@@ -31,9 +31,9 @@ version = "0.6.0"
 anyhow = "1.0"
 chrono = "0.4"
 clap = "4.6"
-component-shape = { git = "https://github.com/stayhydated/component-shape", rev = "8b879b2150caea99284e98044cdf0488d613cbdb", version = "0.2.0" }
-component-shape-codegen = { git = "https://github.com/stayhydated/component-shape", rev = "8b879b2150caea99284e98044cdf0488d613cbdb", version = "0.2.0" }
-component-shape-mcp = { git = "https://github.com/stayhydated/component-shape", rev = "8b879b2150caea99284e98044cdf0488d613cbdb", version = "0.2.0" }
+component-shape = { git = "https://github.com/stayhydated/component-shape", rev = "8dd9335217121c089793c0106339ca5a8f61f4f7", version = "0.2.0" }
+component-shape-codegen = { git = "https://github.com/stayhydated/component-shape", rev = "8dd9335217121c089793c0106339ca5a8f61f4f7", version = "0.2.0" }
+component-shape-mcp = { git = "https://github.com/stayhydated/component-shape", rev = "8dd9335217121c089793c0106339ca5a8f61f4f7", version = "0.2.0" }
 darling = "0.24"
 derive_more = "2.1"
 dioxus = { default-features = false, version = "0.7" }
@@ -46,7 +46,7 @@ fake = "5.1"
 gpui = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed", version = "0.2.2" }
 gpui-component = { git = "https://github.com/stayhydated/gpui-component", rev = "33f25d368447a47ab5da2c674b2e833826c79fb1" }
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "f7fb536779286caaf2334cf9b56f2081841a86ff", version = "0.1.0" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "0cf64e41b329ddc226120e3f756baf119ff76f44", version = "0.5.0" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "e91f6b4b1970d7d61a04d8dd68478d8f00bb0310", version = "0.5.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.6.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.6.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.6.0" }

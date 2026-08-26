@@ -80,6 +80,10 @@ For MCP, keep query execution in application code. Local row sources return
 accept `TableQuery<Row>` and return
 `Result<TableQueryResult<Row>, E>`.
 
+Use `gpui_table::mcp::tool_registry()` when the host needs the
+inventory-discovered MCP definitions and handlers directly. Retain MCP servers
+for the host lifetime; query completion does not request shutdown.
+
 ## Load focused patterns
 
 Read [references/patterns.md](references/patterns.md) when implementation needs

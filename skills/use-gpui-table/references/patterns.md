@@ -214,3 +214,7 @@ Add `row_schema` and derive
 metadata. Use a `TableQuery<Row>` handler with
 `query.result(rows, total)` for backend-owned execution, or
 `query.filter_rows(rows)` for an in-memory collection.
+
+Use `gpui_table::mcp::tool_registry()` to obtain the inventory-discovered
+MCP definitions and handlers directly. MCP servers retain that registry across
+calls until the transport or application host is explicitly stopped.

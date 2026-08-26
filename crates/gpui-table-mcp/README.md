@@ -16,6 +16,11 @@ gpui-table-component = { version = "0.6", features = ["mcp"] }
 Use this crate directly when implementing a custom server or lower-level table
 registration. Query execution remains application-owned.
 
+`gpui_table::mcp::tool_registry()?` returns the inventory-discovered MCP
+definitions and handlers for hosts that assemble the registry independently.
+MCP servers retain that registry across calls until their transport or host is
+explicitly stopped.
+
 - [MCP query guide](https://stayhydated.github.io/gpui-table/book/mcp.html)
 - [Runnable MCP example](https://github.com/stayhydated/gpui-table/tree/master/examples/mcp-query)
 - [API documentation](https://docs.rs/gpui-table-mcp/)

@@ -3,6 +3,8 @@
 //! This crate intentionally keeps GPUI out of the query execution path. It
 //! owns table-specific filter decoding and query contracts while delegating
 //! shared MCP server and stdio serving mechanics to `component-shape-mcp`.
+//! MCP servers retain their shared query registry for the host lifetime;
+//! completing a query never requests shutdown.
 
 use std::{collections::BTreeSet, fmt, future::Future, marker::PhantomData, pin::Pin, sync::Arc};
 
@@ -20,7 +22,7 @@ pub use component_shape_mcp::{
     ContentBlock, MCP_PROTOCOL_VERSION, MCP_VALIDATION_PARAMS_NONE, McpAny, McpArguments,
     McpJsonSchema, McpPromptArgument, McpPromptResult, McpRange, McpSchema, McpSchemaProperties,
     McpServer, McpServerBuilder, McpToolAnnotations, McpToolArguments, McpToolCall, McpToolError,
-    McpToolInput, McpToolMetadata, McpToolValue, McpTypedTool, McpValidationIssue,
+    McpToolInput, McpToolMetadata, McpToolRegistry, McpToolValue, McpTypedTool, McpValidationIssue,
     McpValidationParam, McpValidationRule, McpValidationScope, McpValidationTypeArgMode,
     PromptDefinition, ResourceDefinition, ServeStdioResult, ToolCallResult, ToolDefinition,
     object_schema, serde, serde_json, validation_issues_error,
@@ -793,6 +795,11 @@ pub fn tool_name(source_module_path: &str, table_id: &str) -> String {
 /// Build a server containing every inventory-discovered table query handler.
 pub fn server() -> Result<McpServer, McpToolError> {
     builder().build()
+}
+
+/// Build the inventory-discovered table MCP tool registry.
+pub fn tool_registry() -> Result<McpToolRegistry, McpToolError> {
+    server().map(McpServer::into_tool_registry)
 }
 
 /// Serve every inventory-discovered table query handler over stdio.
