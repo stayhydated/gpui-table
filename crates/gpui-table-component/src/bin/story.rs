@@ -1,4 +1,4 @@
-use gpui_storybook::{Assets, ConsumerId, Gallery, StorybookOptions};
+use gpui_storybook::{Assets, ConsumerId, StorybookOptions, StorybookWindow};
 use gpui_table_component::i18n::{self, Languages};
 
 // bring the stories in scope for inventory
@@ -17,8 +17,6 @@ fn storybook_options() -> Result<StorybookOptions<Languages>, gpui_storybook::Co
 
 fn main() {
     let app = gpui_platform::application().with_assets(Assets);
-    let name_arg = std::env::args().nth(1);
-
     app.run(move |app_cx| {
         let options = match storybook_options() {
             Ok(options) => options,
@@ -49,11 +47,11 @@ fn main() {
 
                 cx.update(|app_cx| {
                     app_cx.activate(true);
-                    gpui_storybook::create_new_window(
+                    gpui_storybook::create_storybook_window(
                         &format!("{} - Stories", env!("CARGO_PKG_NAME")),
                         move |window, cx| {
                             let all_stories = gpui_storybook::generate_stories(window, cx);
-                            Gallery::view(all_stories, name_arg.as_deref(), window, cx)
+                            StorybookWindow::new(all_stories)
                         },
                         app_cx,
                     );

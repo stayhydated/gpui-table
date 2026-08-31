@@ -6,7 +6,7 @@ error[E0277]: table filter shape `TextFilter` does not support field value `bool
   |
   = note: implement `GpuiTableFilterShapeFor<bool>` for `TextFilter`, or choose a filter shape that supports the field type
 help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape/text.rs
   |
   | impl GpuiTableFilterShapeFor<String> for TextFilter {
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`
@@ -27,7 +27,7 @@ error[E0277]: table filter shape `TextFilter` does not support field value `bool
   |
   = note: implement `GpuiTableFilterShapeFor<bool>` for `TextFilter`, or choose a filter shape that supports the field type
 help: `TextFilter` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape/text.rs
   |
   | impl GpuiTableFilterShapeFor<String> for TextFilter {
   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `GpuiTableFilterShapeFor<std::string::String>`

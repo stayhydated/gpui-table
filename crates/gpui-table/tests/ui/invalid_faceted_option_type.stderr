@@ -6,7 +6,7 @@ error[E0277]: table filter shape `FacetedFilter<bool>` does not support field va
   |
   = note: implement `GpuiTableFilterShapeFor<Option<std::string::String>>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
 help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape/faceted.rs
   |
   | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
   | | where
@@ -41,7 +41,7 @@ error[E0277]: table filter shape `FacetedFilter<bool>` does not support field va
   |
   = note: implement `GpuiTableFilterShapeFor<Option<std::string::String>>` for `FacetedFilter<bool>`, or choose a filter shape that supports the field type
 help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
- --> $WORKSPACE/crates/gpui-table-component/src/shape.rs
+ --> $WORKSPACE/crates/gpui-table-component/src/shape/faceted.rs
   |
   | / impl<T> GpuiTableFilterShapeFor<T> for FacetedFilter<T>
   | | where

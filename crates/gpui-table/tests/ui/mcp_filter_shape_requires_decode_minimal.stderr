@@ -11,7 +11,7 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
    | ^^^^^^^^^^^^^^^^^^^^^^
    = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
 help: the following other types implement trait `McpFilterShape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
+  --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
    |   impl McpFilterShape for gpui_table_component::TextFilter {
    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
@@ -21,7 +21,7 @@ help: the following other types implement trait `McpFilterShape`
    | |     T: gpui_table_core::filter::Filterable,
    | |___________________________________________^ `FacetedFilter<T>`
 note: required by a bound in `McpTableFilter::for_shape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
+  --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
    |     pub const fn for_shape<Shape>(name: &'static str, field_type: RustType) -> Self
    |                  --------- required by a bound in this associated function
@@ -42,7 +42,7 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
    | ^^^^^^^^^^^^^^^^^^^^^^
    = note: derive `gpui_table::McpFilterShape` when the shape raw value implements gpui_table::mcp::McpToolValue, or implement `gpui_table::mcp::McpFilterShape` manually for custom decoding
 help: the following other types implement trait `McpFilterShape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
+  --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
    |   impl McpFilterShape for gpui_table_component::TextFilter {
    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`

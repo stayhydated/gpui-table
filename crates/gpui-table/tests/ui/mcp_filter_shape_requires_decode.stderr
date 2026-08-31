@@ -19,7 +19,7 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
              TextFilter
              TextFilterAdapter
 note: required by a bound in `McpTableFilter::for_shape`
-  --> $WORKSPACE/crates/gpui-table-mcp/src/lib.rs
+  --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
    |     pub const fn for_shape<Shape>(name: &'static str, field_type: RustType) -> Self
    |                  --------- required by a bound in this associated function
