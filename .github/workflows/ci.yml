@@ -40,7 +40,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.16.0"
 
       - name: Install Linux dependencies
         if: runner.os == 'Linux'
@@ -73,7 +75,9 @@ jobs:
           components: clippy
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.16.0"
 
       - name: Install Linux dependencies
         uses: ./.github/actions/install-linux-deps
@@ -90,7 +94,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.16.0"
 
       - name: Install Linux dependencies
         uses: ./.github/actions/install-linux-deps
@@ -107,7 +113,9 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.16.0"
 
       - name: Install Linux dependencies
         uses: ./.github/actions/install-linux-deps
@@ -135,7 +143,9 @@ jobs:
           components: rust-analyzer, rust-src
 
       - name: Setup sccache
-        uses: mozilla-actions/sccache-action@v0.0.10
+        uses: mozilla-actions/sccache-action@v0.0.11
+        with:
+          version: "v0.16.0"
 
       - name: Install Linux dependencies
         uses: ./.github/actions/install-linux-deps
