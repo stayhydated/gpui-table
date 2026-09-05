@@ -6,7 +6,7 @@
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
 `gpui-table` derives strongly typed
-[`gpui-component`](https://github.com/longbridge/gpui-component) tables
+[`gpui-kit`](https://github.com/longbridge/gpui-kit) tables
 from Rust row types. It generates column metadata and delegates, with opt-in
 typed filters, incremental loading, localization, registry metadata, and MCP
 query tools.
@@ -19,7 +19,7 @@ gpui-table = "0.6"
 gpui-table-component = "0.6"
 ```
 
-Keep `gpui` and `gpui-component` as direct dependencies
+Keep `gpui` and `gpui-kit` as direct dependencies
 using the source or versions selected by your application.
 
 ```rust
@@ -40,7 +40,7 @@ The derive creates `UserTableDelegate`,
 `UserTableColumn`, `UserFilterEntities`, and
 `UserFilterValues`. The application owns the rows, the
 `TableState`, and the layout around
-`gpui_component::table::DataTable`.
+`gpui_kit::component::table::DataTable`.
 
 ## Learn and explore
 

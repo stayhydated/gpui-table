@@ -3,7 +3,7 @@ use crate::DateRangeFilter;
 use crate::{FacetedFilter, FacetedFilterExt as _, TextFilter, TextFilterExt as _};
 #[cfg(feature = "rust_decimal")]
 use crate::{NumberRangeFilter, NumberRangeFilterExt as _};
-use gpui::{App, Entity, Window};
+use gpui_kit::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterType, Filterable, TextValue};
 use gpui_table_runtime::shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape,

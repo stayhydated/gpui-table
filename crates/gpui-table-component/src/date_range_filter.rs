@@ -1,16 +1,16 @@
 use crate::TableFilterComponent;
 use chrono::NaiveDate;
-use gpui::{
-    App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Window, div,
-    prelude::*, px,
-};
-use gpui_component::{
+use gpui_kit::component::{
     Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
     calendar::{Calendar, CalendarEvent, CalendarState, Date},
     popover::Popover,
     separator::Separator,
     v_flex,
+};
+use gpui_kit::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Window, div,
+    prelude::*, px,
 };
 use std::borrow::Borrow as _;
 use std::rc::Rc;
@@ -31,10 +31,10 @@ mod date_display {
     type DateFormatter = DateTimeFormatter<fieldsets::YMD>;
 
     fn formatter_preferences() -> DateTimeFormatterPreferences {
-        let raw = gpui_component::locale();
+        let raw = gpui_kit::component::locale();
         let normalized = raw.replace('_', "-");
         let locale = normalized.parse::<Locale>().unwrap_or_else(|error| {
-            panic!("gpui-component locale `{normalized}` is not a valid ICU locale: {error}")
+            panic!("gpui-kit locale `{normalized}` is not a valid ICU locale: {error}")
         });
         locale.into()
     }
@@ -310,7 +310,7 @@ impl Render for DateRangeFilter {
                             .rounded_sm()
                             .hover(|s| s.opacity(1.0))
                             .opacity(0.7)
-                            .on_mouse_down(gpui::MouseButton::Left, move |_, window, cx| {
+                            .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
                                 clear_view.update(cx, |this, cx| {
                                     this.clear(window, cx);
                                 });
@@ -413,7 +413,8 @@ impl DateRangeFilterExt for Entity<DateRangeFilter> {
 mod tests {
     use super::{DateRangeFilter, DateRangeFilterExt as _, format_date};
     use chrono::NaiveDate;
-    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use gpui_kit::gpui;
+    use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -422,7 +423,7 @@ mod tests {
         assert_eq!(format_date(date), "Jan 31, 2026");
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn range_display_and_configuration_cover_each_bound_shape(cx: &mut TestAppContext) {
         let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
         let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
@@ -473,9 +474,9 @@ mod tests {
         });
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn date_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
-        cx.update(gpui_component::init);
+        cx.update(gpui_kit::component::init);
         let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
         let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
         let changes = Rc::new(RefCell::new(Vec::new()));

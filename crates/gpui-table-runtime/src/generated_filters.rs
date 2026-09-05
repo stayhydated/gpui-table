@@ -1,4 +1,4 @@
-use gpui::{AnyElement, IntoElement, SharedString};
+use gpui_kit::{AnyElement, IntoElement, SharedString};
 use gpui_table_schema::{filter::FacetedFilterIcon, registry::RegistryFilterType};
 
 /// One generated filter rendered as sidebar-ready erased GPUI content.
@@ -148,35 +148,40 @@ pub trait FilterEntitiesExt {
     /// Individual wrapper fields can then be serialized with
     /// `gpui_table_component::QueryFilterValue` when their wrapped type
     /// supports query-string conversion.
-    fn read_values(&self, cx: &gpui::App) -> Self::Values;
+    fn read_values(&self, cx: &gpui_kit::App) -> Self::Values;
 
     /// Replace every generated filter from a typed preset and notify once.
-    fn apply_values(&self, values: Self::Values, window: &mut gpui::Window, cx: &mut gpui::App);
+    fn apply_values(
+        &self,
+        values: Self::Values,
+        window: &mut gpui_kit::Window,
+        cx: &mut gpui_kit::App,
+    );
 
     /// Build grouped, sidebar-ready render data for all generated filters.
-    fn filter_sidebar_data(&self, cx: &gpui::App) -> FilterSidebarData;
+    fn filter_sidebar_data(&self, cx: &gpui_kit::App) -> FilterSidebarData;
 
     /// Count generated filters that currently narrow the row set.
-    fn active_filter_count(&self, cx: &gpui::App) -> usize;
+    fn active_filter_count(&self, cx: &gpui_kit::App) -> usize;
 
     /// Reset every generated filter and notify the configured change callback once.
-    fn reset_filters(&self, window: &mut gpui::Window, cx: &mut gpui::App);
+    fn reset_filters(&self, window: &mut gpui_kit::Window, cx: &mut gpui_kit::App);
 }
 
-/// Convert a `gpui-component` icon token into UI-neutral filter metadata.
-pub fn icon_from_name(name: impl gpui_component::IconNamed) -> FacetedFilterIcon {
+/// Convert a `gpui-kit` icon token into UI-neutral filter metadata.
+pub fn icon_from_name(name: impl gpui_kit::component::IconNamed) -> FacetedFilterIcon {
     FacetedFilterIcon::from_path(name.path().to_string())
 }
 
 #[cfg(test)]
 mod tests {
     use super::{FilterSidebarData, FilterSidebarItem, icon_from_name};
-    use gpui::{SharedString, div};
+    use gpui_kit::{SharedString, div};
     use gpui_table_schema::registry::RegistryFilterType;
 
     struct TestIcon;
 
-    impl gpui_component::IconNamed for TestIcon {
+    impl gpui_kit::component::IconNamed for TestIcon {
         fn path(self) -> SharedString {
             "icons/test.svg".into()
         }

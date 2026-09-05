@@ -1,10 +1,10 @@
 use some_lib::structs::user::*;
-use gpui::{
+use gpui_kit::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement, Render,
     Styled, Subscription, Window,
 };
-use gpui_component::{h_flex, v_flex};
-use gpui_component::table::{DataTable, TableDelegate as _, TableState};
+use gpui_kit::component::{h_flex, v_flex};
+use gpui_kit::component::table::{DataTable, TableDelegate as _, TableState};
 #[gpui_storybook::story]
 #[derive(gpui_storybook::StoryControls)]
 pub struct UserTableStory {
@@ -13,7 +13,7 @@ pub struct UserTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for UserTableStory {
-    fn title(cx: &gpui::App) -> String {
+    fn title(cx: &gpui_kit::App) -> String {
         gpui_table_component::i18n::localize_label::<User>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
@@ -21,7 +21,7 @@ impl gpui_storybook::Story for UserTableStory {
     }
 }
 impl Focusable for UserTableStory {
-    fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
+    fn focus_handle(&self, cx: &gpui_kit::App) -> gpui_kit::FocusHandle {
         self.table.focus_handle(cx)
     }
 }

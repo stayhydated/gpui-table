@@ -16,7 +16,7 @@ fn storybook_options() -> Result<StorybookOptions<Languages>, gpui_storybook::Co
 }
 
 fn main() {
-    let app = gpui_platform::application().with_assets(Assets);
+    let app = gpui_kit::application().with_assets(Assets);
     app.run(move |app_cx| {
         let options = match storybook_options() {
             Ok(options) => options,
@@ -64,7 +64,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui::AppContext as _;
+    use gpui_kit::AppContext as _;
+    use gpui_kit::gpui;
 
     #[derive(Clone, Copy, es_fluent::EsFluent)]
     enum ResetFiltersFtl {
@@ -79,9 +80,9 @@ mod tests {
         assert_eq!(options.fallback_language, Languages::default());
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     async fn disabled_french_startup_applies_locales_and_generates_registered_stories(
-        cx: &mut gpui::TestAppContext,
+        cx: &mut gpui_kit::TestAppContext,
     ) {
         cx.executor().allow_parking();
         let readiness = cx.update(|cx| {
@@ -153,7 +154,7 @@ mod tests {
                     ]
                 );
 
-                cx.new(|_| gpui::EmptyView)
+                cx.new(|_| gpui_kit::EmptyView)
             })
             .expect("component Storybook should generate stories in a test window");
         });

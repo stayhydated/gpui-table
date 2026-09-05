@@ -1,8 +1,8 @@
 use es_fluent::EsFluent;
-use gpui::{
-    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
+use gpui_kit::component::{StyledExt as _, h_flex};
+use gpui_kit::{
+    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div, gpui,
 };
-use gpui_component::{StyledExt as _, h_flex};
 
 use crate::i18n::localize_message;
 
@@ -160,15 +160,16 @@ impl RenderOnce for TableStatusBar {
 #[cfg(test)]
 mod tests {
     use super::TableStatusBar;
-    use gpui::{
+    use gpui_kit::gpui;
+    use gpui_kit::{
         Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
         VisualTestContext,
     };
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn status_bar_builders_and_state_combinations_render(cx: &mut TestAppContext) {
         cx.update(|cx| {
-            gpui_component::init(cx);
+            gpui_kit::component::init(cx);
             crate::i18n::init(cx).expect("table status-bar localization should initialize");
         });
 

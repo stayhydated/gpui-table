@@ -10,7 +10,7 @@ license.workspace = true
 publish.workspace = true
 repository.workspace = true
 readme = "README.md"
-keywords = [ "gpui", "gpui-component", "table", "mcp" ]
+keywords = [ "gpui", "gpui-kit", "table", "mcp" ]
 
 [features]
 chrono = [ "component-shape-mcp/chrono", "gpui-table-core/chrono", "gpui-table-runtime/chrono" ]
@@ -34,7 +34,7 @@ serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
-gpui = { workspace = true }
+gpui-kit = { workspace = true }
 
 [lints]
 workspace = true

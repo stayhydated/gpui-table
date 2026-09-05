@@ -10,7 +10,7 @@ gpui-table = { version = "0.6", features = ["rust_decimal"] }
 gpui-table-component = "0.6"
 ```
 
-Keep `gpui` and `gpui-component` as direct dependencies
+Keep `gpui` and `gpui-kit` as direct dependencies
 using the application's existing source. Add `fluent`,
 `inventory`, `mcp`, or `spacetimedb` only for
 the corresponding workflow.
@@ -47,7 +47,7 @@ struct User {
 Construct state and filters in the owning GPUI view:
 
 ```rust
-use gpui_component::table::{DataTable, TableState};
+use gpui_kit::component::table::{DataTable, TableState};
 
 let delegate = UserTableDelegate::new(rows);
 let table = cx.new(|cx| TableState::new(delegate, window, cx));
@@ -118,8 +118,8 @@ Use `active_filter_count(cx)` for badges and
 Add `load_more` to the row and implement the generated delegate:
 
 ```rust
-use gpui::{Context, Window};
-use gpui_component::table::TableState;
+use gpui_kit::{Context, Window};
+use gpui_kit::component::table::TableState;
 use gpui_table::runtime::TableLoader;
 
 #[gpui_table::gpui_table_impl]
@@ -157,11 +157,11 @@ duration_ms: u64,
 fn render_duration(
     _row: &Event,
     value: &u64,
-    _window: &mut gpui::Window,
-    _cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
-    use gpui::ParentElement as _;
-    gpui::div().child(format!("{value} ms"))
+    _window: &mut gpui_kit::Window,
+    _cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
+    use gpui_kit::ParentElement as _;
+    gpui_kit::div().child(format!("{value} ms"))
 }
 ```
 
@@ -178,10 +178,10 @@ the application must compose generated and custom actions.
 
 With the facade's `fluent` feature, derive the application's
 `es-fluent` labels and initialize component localization after
-`gpui_component::init(cx)`:
+`gpui_kit::component::init(cx)`:
 
 ```rust
-gpui_component::init(cx);
+gpui_kit::component::init(cx);
 gpui_table_component::i18n::init(cx)?;
 ```
 

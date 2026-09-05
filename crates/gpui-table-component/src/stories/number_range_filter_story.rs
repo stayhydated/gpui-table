@@ -1,8 +1,8 @@
-use gpui::{
+use gpui_kit::component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_flex};
+use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, InteractiveElement as _,
     IntoElement, Render, StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
-use gpui_component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_flex};
 use rust_decimal::Decimal;
 
 use crate::{NumberRangeFilterExt as _, number_range_filter::NumberRangeFilter};
@@ -100,7 +100,7 @@ impl Focusable for NumberRangeFilterStory {
 }
 
 impl gpui_storybook::Story for NumberRangeFilterStory {
-    fn title(_: &gpui::App) -> String {
+    fn title(_: &gpui_kit::App) -> String {
         "Number Range Filter".into()
     }
 

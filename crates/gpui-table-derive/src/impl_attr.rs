@@ -67,7 +67,7 @@ fn gpui_table_impl_inner(attr: TokenStream, item: TokenStream) -> syn::Result<To
 fn generate_loader_delegate_impl(self_ty: &syn::Type, trait_path: &Path) -> TokenStream {
     quote! {
         impl gpui_table::__private::LoadMoreDelegate for #self_ty {
-            fn has_more(&self, _: &gpui::App) -> bool {
+            fn has_more(&self, _: &gpui_kit::App) -> bool {
                 if self.loading {
                     return false;
                 }
@@ -78,7 +78,7 @@ fn generate_loader_delegate_impl(self_ty: &syn::Type, trait_path: &Path) -> Toke
                 <Self as #trait_path>::THRESHOLD
             }
 
-            fn load_more(&mut self, window: &mut gpui::Window, cx: &mut gpui::Context<gpui_component::table::TableState<Self>>) {
+            fn load_more(&mut self, window: &mut gpui_kit::Window, cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>) {
                 <Self as #trait_path>::load_more(self, window, cx);
             }
         }

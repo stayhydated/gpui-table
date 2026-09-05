@@ -36,7 +36,7 @@ pub(super) fn generate_filter_entities(
             );
             quote! {
                 #[doc = #field_doc]
-                pub #field_ident: ::gpui::Entity<#filter_type_tokens>,
+                pub #field_ident: ::gpui_kit::Entity<#filter_type_tokens>,
             }
         })
         .collect();
@@ -109,7 +109,7 @@ pub(super) fn generate_filter_entities(
 
             quote! {
                 #[doc = #getter_doc]
-                pub fn #getter_name(&self, cx: &::gpui::App) -> #raw_value_type {
+                pub fn #getter_name(&self, cx: &::gpui_kit::App) -> #raw_value_type {
                     #raw_value_expr
                 }
             }
@@ -239,7 +239,7 @@ pub(super) fn generate_filter_entities(
         pub struct #filter_entities_name {
             #(#entity_field_defs)*
             __on_filter_change: Option<
-                std::rc::Rc<dyn Fn(&mut ::gpui::Window, &mut ::gpui::App) + 'static>,
+                std::rc::Rc<dyn Fn(&mut ::gpui_kit::Window, &mut ::gpui_kit::App) + 'static>,
             >,
         }
 
@@ -256,9 +256,9 @@ pub(super) fn generate_filter_entities(
             #[doc = #build_doc]
             pub fn build(
                 on_filter_change: Option<
-                    std::rc::Rc<dyn Fn(&mut ::gpui::Window, &mut ::gpui::App) + 'static>,
+                    std::rc::Rc<dyn Fn(&mut ::gpui_kit::Window, &mut ::gpui_kit::App) + 'static>,
                 >,
-                cx: &mut ::gpui::App,
+                cx: &mut ::gpui_kit::App,
             ) -> Self {
                 #(#filter_builders)*
 
@@ -270,15 +270,15 @@ pub(super) fn generate_filter_entities(
 
             #[doc = #build_for_table_doc]
             pub fn build_for_table(
-                table: ::gpui::Entity<::gpui_component::table::TableState<#delegate_name>>,
-                cx: &mut ::gpui::App,
+                table: ::gpui_kit::Entity<::gpui_kit::component::table::TableState<#delegate_name>>,
+                cx: &mut ::gpui_kit::App,
             ) -> Self {
                 let filters_slot: std::rc::Rc<std::cell::RefCell<Option<Self>>> =
                     std::rc::Rc::new(std::cell::RefCell::new(None));
                 let filters_slot_for_change = filters_slot.clone();
                 let table_for_change = table.clone();
 
-                let on_filter_change: std::rc::Rc<dyn Fn(&mut ::gpui::Window, &mut ::gpui::App) + 'static> =
+                let on_filter_change: std::rc::Rc<dyn Fn(&mut ::gpui_kit::Window, &mut ::gpui_kit::App) + 'static> =
                     std::rc::Rc::new(move |_window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
@@ -307,16 +307,16 @@ pub(super) fn generate_filter_entities(
 
             #[doc = #build_for_table_loader_doc]
             pub fn build_for_table_loader(
-                table: ::gpui::Entity<::gpui_component::table::TableState<#delegate_name>>,
-                window: &mut ::gpui::Window,
-                cx: &mut ::gpui::App,
+                table: ::gpui_kit::Entity<::gpui_kit::component::table::TableState<#delegate_name>>,
+                window: &mut ::gpui_kit::Window,
+                cx: &mut ::gpui_kit::App,
             ) -> Self {
                 let before_reload: std::rc::Rc<
                     dyn Fn(
                         &mut #delegate_name,
-                        &mut ::gpui::Window,
-                        &mut ::gpui::Context<
-                            ::gpui_component::table::TableState<#delegate_name>,
+                        &mut ::gpui_kit::Window,
+                        &mut ::gpui_kit::Context<
+                            ::gpui_kit::component::table::TableState<#delegate_name>,
                         >,
                     ) + 'static,
                 > = std::rc::Rc::new(|delegate, _window, _cx| {
@@ -329,16 +329,16 @@ pub(super) fn generate_filter_entities(
 
             #[doc = #build_for_table_loader_with_doc]
             pub fn build_for_table_loader_with(
-                table: ::gpui::Entity<::gpui_component::table::TableState<#delegate_name>>,
+                table: ::gpui_kit::Entity<::gpui_kit::component::table::TableState<#delegate_name>>,
                 before_reload: Option<std::rc::Rc<
                     dyn Fn(
                         &mut #delegate_name,
-                        &mut ::gpui::Window,
-                        &mut ::gpui::Context<::gpui_component::table::TableState<#delegate_name>>,
+                        &mut ::gpui_kit::Window,
+                        &mut ::gpui_kit::Context<::gpui_kit::component::table::TableState<#delegate_name>>,
                     ) + 'static,
                 >>,
-                window: &mut ::gpui::Window,
-                cx: &mut ::gpui::App,
+                window: &mut ::gpui_kit::Window,
+                cx: &mut ::gpui_kit::App,
             ) -> Self {
                 let filters_slot: std::rc::Rc<std::cell::RefCell<Option<Self>>> =
                     std::rc::Rc::new(std::cell::RefCell::new(None));
@@ -346,7 +346,7 @@ pub(super) fn generate_filter_entities(
                 let table_for_change = table.clone();
                 let before_reload_for_change = before_reload.clone();
 
-                let on_filter_change: std::rc::Rc<dyn Fn(&mut ::gpui::Window, &mut ::gpui::App) + 'static> =
+                let on_filter_change: std::rc::Rc<dyn Fn(&mut ::gpui_kit::Window, &mut ::gpui_kit::App) + 'static> =
                     std::rc::Rc::new(move |window, cx| {
                         let next_values = {
                             let filters = filters_slot_for_change.borrow();
@@ -390,7 +390,7 @@ pub(super) fn generate_filter_entities(
             }
 
             /// Reset all filters and invoke the filter-change callback once.
-            pub fn reset_filters(&self, window: &mut ::gpui::Window, cx: &mut ::gpui::App) {
+            pub fn reset_filters(&self, window: &mut ::gpui_kit::Window, cx: &mut ::gpui_kit::App) {
                 #(#reset_fields)*
 
                 if let Some(ref on_change) = self.__on_filter_change {
@@ -405,8 +405,8 @@ pub(super) fn generate_filter_entities(
             pub fn apply_values(
                 &self,
                 values: #filter_values_name,
-                window: &mut ::gpui::Window,
-                cx: &mut ::gpui::App,
+                window: &mut ::gpui_kit::Window,
+                cx: &mut ::gpui_kit::App,
             ) {
                 #(#apply_value_fields)*
 
@@ -429,7 +429,7 @@ pub(super) fn generate_filter_entities(
             #(#value_getters)*
 
             #[doc = #read_values_doc]
-            pub fn read_values(&self, cx: &::gpui::App) -> #filter_values_name {
+            pub fn read_values(&self, cx: &::gpui_kit::App) -> #filter_values_name {
                 #filter_values_name {
                     #(#read_values_fields)*
                 }
@@ -438,7 +438,7 @@ pub(super) fn generate_filter_entities(
             /// Build grouped, sidebar-ready render data for all generated filters.
             pub fn filter_sidebar_data(
                 &self,
-                cx: &::gpui::App,
+                cx: &::gpui_kit::App,
             ) -> gpui_table::runtime::FilterSidebarData {
                 let values = self.read_values(cx);
                 gpui_table::runtime::FilterSidebarData::new(vec![
@@ -447,7 +447,7 @@ pub(super) fn generate_filter_entities(
             }
 
             /// Count generated filters that currently narrow the row set.
-            pub fn active_filter_count(&self, cx: &::gpui::App) -> usize {
+            pub fn active_filter_count(&self, cx: &::gpui_kit::App) -> usize {
                 let values = self.read_values(cx);
                 0usize #(#active_filter_count_checks)*
             }
@@ -456,31 +456,31 @@ pub(super) fn generate_filter_entities(
         impl gpui_table::FilterEntitiesExt for #filter_entities_name {
             type Values = #filter_values_name;
 
-            fn read_values(&self, cx: &::gpui::App) -> Self::Values {
+            fn read_values(&self, cx: &::gpui_kit::App) -> Self::Values {
                 <#filter_entities_name>::read_values(self, cx)
             }
 
             fn apply_values(
                 &self,
                 values: Self::Values,
-                window: &mut ::gpui::Window,
-                cx: &mut ::gpui::App,
+                window: &mut ::gpui_kit::Window,
+                cx: &mut ::gpui_kit::App,
             ) {
                 <#filter_entities_name>::apply_values(self, values, window, cx);
             }
 
             fn filter_sidebar_data(
                 &self,
-                cx: &::gpui::App,
+                cx: &::gpui_kit::App,
             ) -> gpui_table::runtime::FilterSidebarData {
                 <#filter_entities_name>::filter_sidebar_data(self, cx)
             }
 
-            fn active_filter_count(&self, cx: &::gpui::App) -> usize {
+            fn active_filter_count(&self, cx: &::gpui_kit::App) -> usize {
                 <#filter_entities_name>::active_filter_count(self, cx)
             }
 
-            fn reset_filters(&self, window: &mut ::gpui::Window, cx: &mut ::gpui::App) {
+            fn reset_filters(&self, window: &mut ::gpui_kit::Window, cx: &mut ::gpui_kit::App) {
                 <#filter_entities_name>::reset_filters(self, window, cx);
             }
         }

@@ -50,7 +50,7 @@ localization module as the rest of the GPUI interface.
 
 ## Initialize and select the locale
 
-After `gpui_component::init(cx)`, initialize table localization from the active
+After `gpui_kit::component::init(cx)`, initialize table localization from the active
 component locale:
 
 ```rust,ignore

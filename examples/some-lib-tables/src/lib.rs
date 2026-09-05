@@ -1,4 +1,4 @@
-use gpui::Application;
+use gpui_kit::Application;
 use gpui_storybook::{ConsumerId, StorybookOptions, StorybookWindow};
 use some_lib::i18n::{self, Languages};
 
@@ -82,6 +82,7 @@ pub fn run_storybook(app: Application) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui_kit::gpui;
 
     #[derive(Clone, Copy)]
     enum ResetFiltersFtl {
@@ -130,9 +131,9 @@ mod tests {
         );
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     async fn disabled_french_startup_applies_domain_component_and_core_locales(
-        cx: &mut gpui::TestAppContext,
+        cx: &mut gpui_kit::TestAppContext,
     ) {
         cx.executor().allow_parking();
         let readiness = cx.update(|cx| {

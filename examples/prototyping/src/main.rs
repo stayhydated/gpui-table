@@ -34,7 +34,7 @@ impl TableLayout for StorybookLayout {
             }
 
             impl gpui_storybook::Story for #story_struct_ident {
-                fn title(cx: &gpui::App) -> String {
+                fn title(cx: &gpui_kit::App) -> String {
                     #title_expr
                 }
 
@@ -44,7 +44,7 @@ impl TableLayout for StorybookLayout {
             }
 
             impl Focusable for #story_struct_ident {
-                fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
+                fn focus_handle(&self, cx: &gpui_kit::App) -> gpui_kit::FocusHandle {
                     self.table.focus_handle(cx)
                 }
             }

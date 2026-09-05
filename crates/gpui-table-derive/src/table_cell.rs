@@ -96,7 +96,7 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 .collect::<syn::Result<Vec<_>>>()?;
 
                 quote! {
-                    use ::gpui::IntoElement;
+                    use ::gpui_kit::IntoElement;
                     match self {
                         #(#arms)*
                     }
@@ -115,9 +115,9 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
         impl gpui_table::runtime::TableCell for #name {
             fn draw(
                 &self,
-                window: &mut ::gpui::Window,
-                cx: &mut ::gpui::App
-            ) -> ::gpui::AnyElement {
+                window: &mut ::gpui_kit::Window,
+                cx: &mut ::gpui_kit::App
+            ) -> ::gpui_kit::AnyElement {
                 #draw_impl
             }
         }
@@ -134,11 +134,11 @@ impl TableCellRender {
     fn draw_tokens(&self) -> proc_macro2::TokenStream {
         match self {
             Self::Display => quote! {
-                use ::gpui::IntoElement;
+                use ::gpui_kit::IntoElement;
                 self.to_string().into_any_element()
             },
             Self::Format(formatter) => quote! {
-                use ::gpui::IntoElement;
+                use ::gpui_kit::IntoElement;
                 #formatter(self).to_string().into_any_element()
             },
         }

@@ -9,10 +9,10 @@ struct InvalidSkipStyle {
 fn render_name(
     _row: &InvalidSkipStyle,
     _value: &String,
-    _window: &mut gpui::Window,
-    _cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
-    gpui::div()
+    _window: &mut gpui_kit::Window,
+    _cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
+    gpui_kit::div()
 }
 
 fn main() {}

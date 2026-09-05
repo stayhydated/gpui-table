@@ -1,4 +1,6 @@
-use gpui_component::menu::PopupMenu;
+use gpui_kit::component::menu::PopupMenu;
+#[cfg(feature = "router")]
+use gpui_kit::gpui;
 #[cfg(feature = "router")]
 use std::fmt;
 
@@ -37,7 +39,7 @@ impl fmt::Display for UserRoute {
 }
 
 #[cfg(feature = "router")]
-#[derive(gpui::Action, Clone, serde::Deserialize, Eq, PartialEq)]
+#[derive(gpui_kit::Action, Clone, serde::Deserialize, Eq, PartialEq)]
 #[action(namespace = some_lib_user_context_menu, no_json)]
 pub struct OpenUserRoute(pub UserRoute);
 

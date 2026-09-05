@@ -17,7 +17,7 @@ pub enum Languages {}
 /// or a table localization context rejects the locale.
 pub fn apply_locale(
     language: Languages,
-    cx: &mut gpui::App,
+    cx: &mut gpui_kit::App,
 ) -> Result<(), gpui_table_component::i18n::LocaleError> {
     let _linked_module = &SOME_LIB_I18N_MODULE;
     let language: LanguageIdentifier = language.into();

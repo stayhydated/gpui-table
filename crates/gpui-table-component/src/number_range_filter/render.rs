@@ -50,7 +50,7 @@ impl Render for NumberRangeFilter {
             self.max_input.clone(),
             self.slider_state.clone(),
         ) else {
-            return gpui::div().into_any_element();
+            return gpui_kit::div().into_any_element();
         };
         let between = Self::between_text(cx);
         let trigger_style = self.trigger_style.clone();
@@ -79,14 +79,14 @@ impl Render for NumberRangeFilter {
             .outline()
             .refine_style(&trigger_style)
             .child(
-                gpui::div()
+                gpui_kit::div()
                     .id("clear-icon")
                     .when(has_value, |this| {
                         this.cursor_pointer()
                             .rounded_sm()
                             .hover(|s| s.opacity(1.0))
                             .opacity(0.7)
-                            .on_mouse_down(gpui::MouseButton::Left, move |_, window, cx| {
+                            .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
                                 clear_view.update(cx, |this, cx| {
                                     this.clear(window, cx);
                                 });
@@ -118,7 +118,7 @@ impl Render for NumberRangeFilter {
                             .items_center()
                             .refine_style(&inputs_row_style)
                             .child(
-                                gpui::div().w(px(input_width_px)).child(
+                                gpui_kit::div().w(px(input_width_px)).child(
                                     NumberInput::new(&min_input)
                                         .small()
                                         .w_full()
@@ -126,12 +126,12 @@ impl Render for NumberRangeFilter {
                                 ),
                             )
                             .child(
-                                gpui::div()
+                                gpui_kit::div()
                                     .w(px(between_width_px))
                                     .flex()
                                     .justify_center()
                                     .child(
-                                        gpui::div()
+                                        gpui_kit::div()
                                             .text_sm()
                                             .text_color(cx.theme().muted_foreground)
                                             .refine_style(&between_style)
@@ -139,7 +139,7 @@ impl Render for NumberRangeFilter {
                                     ),
                             )
                             .child(
-                                gpui::div().w(px(input_width_px)).child(
+                                gpui_kit::div().w(px(input_width_px)).child(
                                     NumberInput::new(&max_input)
                                         .small()
                                         .w_full()

@@ -4,7 +4,7 @@ use es_fluent::unic_langid::LanguageIdentifier;
 use es_fluent::{FluentLabel, FluentMessage};
 #[cfg(feature = "story")]
 use es_fluent_lang::es_fluent_language;
-use gpui::App;
+use gpui_kit::App;
 use std::borrow::Borrow;
 #[cfg(feature = "story")]
 use strum::EnumIter;
@@ -39,7 +39,7 @@ fn sync_core_locale(
     gpui_table_core::i18n::set_locale(language.to_string())
 }
 
-/// Initialize table component localization from the active `gpui-component` locale.
+/// Initialize table component localization from the active `gpui-kit` locale.
 ///
 /// # Errors
 ///
@@ -79,7 +79,7 @@ pub fn apply_locale(language: Languages, cx: &mut App) -> Result<(), LocaleError
     set_locale(cx, language.to_string())
 }
 
-/// Synchronize table component localization with the active `gpui-component` locale.
+/// Synchronize table component localization with the active `gpui-kit` locale.
 ///
 /// # Errors
 ///
@@ -124,19 +124,20 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use gpui_kit::gpui;
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn component_locale_initialization_and_synchronization_are_repeatable(cx: &mut App) {
-        gpui_component::init(cx);
+        gpui_kit::component::init(cx);
         assert!(init(cx).is_ok());
         assert!(set_locale(cx, "en").is_ok());
         assert!(sync_locale(cx).is_ok());
         assert_eq!(component_language().unwrap().to_string(), "en");
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn invalid_component_locale_is_a_typed_error(cx: &mut App) {
-        gpui_component::init(cx);
+        gpui_kit::component::init(cx);
         assert!(matches!(
             set_locale(cx, "not a locale"),
             Err(LocaleError::Component(ComponentLocaleError::InvalidLocale {

@@ -4,7 +4,7 @@ pub use component_shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInput, McpInputShape,
     McpPrimitiveKind, McpRangeBoundKind,
 };
-use gpui::{App, Entity, Window};
+use gpui_kit::{App, Entity, Window};
 use gpui_table_core::filter::FilterType;
 use gpui_table_schema::registry::RegistryFilterType;
 use std::marker::PhantomData;

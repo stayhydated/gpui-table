@@ -1,11 +1,11 @@
 use crate::TableFilterComponent;
 use es_fluent::EsFluent;
-use gpui::{
-    App, Context, Entity, IntoElement, Render, StyleRefinement, Task, Window, prelude::*, px,
-};
-use gpui_component::{
+use gpui_kit::component::{
     Icon, IconName, Sizable as _, StyledExt as _, h_flex,
     input::{Input, InputEvent, InputState},
+};
+use gpui_kit::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Task, Window, prelude::*, px,
 };
 use std::borrow::Borrow;
 use std::rc::Rc;
@@ -440,7 +440,8 @@ impl Render for TextFilter {
 #[cfg(test)]
 mod tests {
     use super::{TextFilter, TextFilterExt as _, validators};
-    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use gpui_kit::gpui;
+    use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
@@ -480,7 +481,7 @@ mod tests {
         assert_eq!(validator("ABC1", "OLD"), "OLD");
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn text_filter_constructors_and_configuration_preserve_state(cx: &mut TestAppContext) {
         let filter = cx.update(|cx| {
             TextFilter::new("Name", "Alice".into(), |_, _, _| {}, cx)
@@ -525,9 +526,9 @@ mod tests {
         );
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn text_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
-        cx.update(gpui_component::init);
+        cx.update(gpui_kit::component::init);
         let changes = Rc::new(RefCell::new(Vec::new()));
         let changes_for_callback = changes.clone();
         let filter = cx.update(|cx| {

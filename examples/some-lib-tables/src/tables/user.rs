@@ -1,13 +1,13 @@
 #[cfg(feature = "router")]
 use crate::route::{self, ExampleRoute, ExampleRouterState};
 #[cfg(feature = "router")]
-use gpui::InteractiveElement as _;
-use gpui::{
+use gpui_kit::InteractiveElement as _;
+use gpui_kit::component::table::{DataTable, TableState};
+use gpui_kit::component::{h_flex, v_flex};
+use gpui_kit::{
     App, AppContext as _, Context, Entity, Focusable, IntoElement, ParentElement as _, Render,
     Styled as _, Subscription, Window,
 };
-use gpui_component::table::{DataTable, TableState};
-use gpui_component::{h_flex, v_flex};
 use some_lib::structs::user::*;
 #[gpui_storybook::story]
 #[derive(gpui_storybook::StoryControls)]
@@ -17,7 +17,7 @@ pub struct UserTableStory {
     _subscription: Subscription,
 }
 impl gpui_storybook::Story for UserTableStory {
-    fn title(cx: &gpui::App) -> String {
+    fn title(cx: &gpui_kit::App) -> String {
         gpui_table_component::i18n::localize_label::<User>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
@@ -25,7 +25,7 @@ impl gpui_storybook::Story for UserTableStory {
     }
 }
 impl Focusable for UserTableStory {
-    fn focus_handle(&self, cx: &gpui::App) -> gpui::FocusHandle {
+    fn focus_handle(&self, cx: &gpui_kit::App) -> gpui_kit::FocusHandle {
         self.table.focus_handle(cx)
     }
 }
@@ -101,7 +101,7 @@ impl Render for UserTableStory {
 
         #[cfg(feature = "router")]
         let root = root.on_action(cx.listener(Self::on_open_user_route)).child(
-            gpui::div().text_sm().child(format!(
+            gpui_kit::div().text_sm().child(format!(
                 "Router location: {}",
                 ExampleRouterState::global(cx).route()
             )),

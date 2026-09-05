@@ -19,7 +19,7 @@ collection rather than generated `FilterEntities`. Initialize table
 component localization before rendering them.
 
 ```rust,ignore
-use gpui::{StyleRefinement, px};
+use gpui_kit::{StyleRefinement, px};
 use gpui_table_component::{TextFilter, TextFilterExt};
 
 let filter = TextFilter::new(

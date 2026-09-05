@@ -1,4 +1,4 @@
-use gpui::{ParentElement as _, Styled as _};
+use gpui_kit::{ParentElement as _, Styled as _};
 use gpui_table::{GpuiTable, TableRowMeta};
 
 #[derive(GpuiTable)]
@@ -11,11 +11,11 @@ struct StyledCellRow {
 fn render_score_cell(
     row: &StyledCellRow,
     value: &u8,
-    _window: &mut gpui::Window,
-    _cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
+    _window: &mut gpui_kit::Window,
+    _cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
     let _ = row;
-    gpui::div().child(format!("{value} points")).px_1()
+    gpui_kit::div().child(format!("{value} points")).px_1()
 }
 
 fn assert_table_row_style<T: gpui_table::runtime::TableRowStyle>() {}

@@ -1,4 +1,4 @@
-use gpui::{App, Global};
+use gpui_kit::{App, Global};
 use some_lib::structs::context_menu_common::UserRoute;
 use std::fmt;
 

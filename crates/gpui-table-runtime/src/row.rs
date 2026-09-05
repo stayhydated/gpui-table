@@ -1,5 +1,5 @@
-use gpui::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
-use gpui_component::{menu::PopupMenu, table::Column};
+use gpui_kit::component::{menu::PopupMenu, table::Column};
+use gpui_kit::{AnyElement, App, Div, InteractiveElement as _, IntoElement, Stateful, Window, div};
 use gpui_table_schema::{filter::FilterConfig, registry::TableId};
 
 use crate::TableCell;
@@ -101,7 +101,7 @@ pub fn default_render_row(row_ix: usize, _window: &mut Window, _cx: &mut App) ->
 mod tests {
     use super::TableRowMeta;
     use crate::TableCell;
-    use gpui_component::table::Column;
+    use gpui_kit::component::table::Column;
 
     struct Row;
 

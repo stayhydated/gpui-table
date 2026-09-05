@@ -1,6 +1,6 @@
-use gpui::{App, Context, TextAlign, Window};
-use gpui_component::menu::PopupMenu;
-use gpui_component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
+use gpui_kit::component::menu::PopupMenu;
+use gpui_kit::component::table::{Column, ColumnFixed, ColumnSort, TableDelegate as _, TableState};
+use gpui_kit::{App, Context, TextAlign, Window};
 use gpui_table::TableRowMeta;
 use gpui_table::runtime::TableLoader;
 use gpui_table::{GpuiTable, gpui_table_impl};

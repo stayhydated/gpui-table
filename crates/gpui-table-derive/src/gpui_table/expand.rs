@@ -255,10 +255,10 @@ pub(super) fn expand_gpui_table(
 
         let fixed_chain = match field.fixed.as_deref() {
             Some("left") => {
-                quote! { .fixed(::gpui_component::table::ColumnFixed::Left) }
+                quote! { .fixed(::gpui_kit::component::table::ColumnFixed::Left) }
             },
             Some("right") => {
-                quote! { .fixed(::gpui_component::table::ColumnFixed::Right) }
+                quote! { .fixed(::gpui_kit::component::table::ColumnFixed::Right) }
             },
             _ => quote! {},
         };
@@ -272,7 +272,7 @@ pub(super) fn expand_gpui_table(
         };
 
         columns_init.push(quote! {
-            ::gpui_component::table::Column::new(#key, #title_expr)
+            ::gpui_kit::component::table::Column::new(#key, #title_expr)
                 .width(#width)
                 #sortable_chain
                 #text_right_chain
@@ -343,10 +343,10 @@ pub(super) fn expand_gpui_table(
                         let a_val = &a.#ident;
                         let b_val = &b.#ident;
                         match sort {
-                            ::gpui_component::table::ColumnSort::Ascending => {
+                            ::gpui_kit::component::table::ColumnSort::Ascending => {
                                 a_val.partial_cmp(b_val).unwrap_or(std::cmp::Ordering::Equal)
                             },
-                            ::gpui_component::table::ColumnSort::Descending => {
+                            ::gpui_kit::component::table::ColumnSort::Descending => {
                                 b_val.partial_cmp(a_val).unwrap_or(std::cmp::Ordering::Equal)
                             },
                             _ => std::cmp::Ordering::Equal,
@@ -442,10 +442,10 @@ pub(super) fn expand_gpui_table(
                 fn render_table_cell(
                     &self,
                     col: Self::ColumnId,
-                    window: &mut ::gpui::Window,
-                    cx: &mut ::gpui::App,
-                ) -> ::gpui::AnyElement {
-                    use ::gpui::IntoElement as _;
+                    window: &mut ::gpui_kit::Window,
+                    cx: &mut ::gpui_kit::App,
+                ) -> ::gpui_kit::AnyElement {
+                    use ::gpui_kit::IntoElement as _;
                     gpui_table::runtime::default_render_cell(self, col.into(), window, cx).into_any_element()
                 }
             }
@@ -458,10 +458,10 @@ pub(super) fn expand_gpui_table(
                 fn render_table_cell(
                     &self,
                     col: Self::ColumnId,
-                    window: &mut ::gpui::Window,
-                    cx: &mut ::gpui::App,
-                ) -> ::gpui::AnyElement {
-                    use ::gpui::IntoElement as _;
+                    window: &mut ::gpui_kit::Window,
+                    cx: &mut ::gpui_kit::App,
+                ) -> ::gpui_kit::AnyElement {
+                    use ::gpui_kit::IntoElement as _;
 
                     match col {
                         #(#style_match_arms)*
@@ -482,10 +482,10 @@ pub(super) fn expand_gpui_table(
                     fn render_generated_table_context_menu(
                         &self,
                         _row_ix: usize,
-                        menu: ::gpui_component::menu::PopupMenu,
-                        _window: &mut ::gpui::Window,
-                        _cx: &mut ::gpui::App,
-                    ) -> ::gpui_component::menu::PopupMenu {
+                        menu: ::gpui_kit::component::menu::PopupMenu,
+                        _window: &mut ::gpui_kit::Window,
+                        _cx: &mut ::gpui_kit::App,
+                    ) -> ::gpui_kit::component::menu::PopupMenu {
                         let context_menu_value = &self.#context_menu_row_ident;
                         let href = #context_menu_href_expr;
                         let label = #context_menu_label_expr;
@@ -505,10 +505,10 @@ pub(super) fn expand_gpui_table(
                 fn render_table_context_menu(
                     &self,
                     row_ix: usize,
-                    menu: ::gpui_component::menu::PopupMenu,
-                    window: &mut ::gpui::Window,
-                    cx: &mut ::gpui::App,
-                ) -> ::gpui_component::menu::PopupMenu {
+                    menu: ::gpui_kit::component::menu::PopupMenu,
+                    window: &mut ::gpui_kit::Window,
+                    cx: &mut ::gpui_kit::App,
+                ) -> ::gpui_kit::component::menu::PopupMenu {
                     use gpui_table::runtime::TableRowGeneratedContextMenu as _;
                     self.render_generated_table_context_menu(row_ix, menu, window, cx)
                 }
@@ -593,7 +593,7 @@ pub(super) fn expand_gpui_table(
 
             #table_title_impl
 
-            fn table_columns() -> Vec<::gpui_component::table::Column> {
+            fn table_columns() -> Vec<::gpui_kit::component::table::Column> {
                 vec![
                     #(#columns_init),*
                 ]

@@ -24,12 +24,10 @@ path = "examples/demo.rs"
 router = [ "some-lib/router" ]
 
 [dependencies]
-gpui = { workspace = true }
-gpui-component = { workspace = true }
+gpui-kit = { workspace = true }
 gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
 gpui-table-component = { workspace = true }
-gpui_platform = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
@@ -41,7 +39,7 @@ wasm-bindgen = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 es-fluent = { workspace = true }
-gpui = { features = [ "test-support" ], workspace = true }
+gpui-kit = { features = [ "test-support" ], workspace = true }
 
 [lints]
 workspace = true

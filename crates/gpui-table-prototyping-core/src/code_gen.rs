@@ -12,26 +12,29 @@ use component_shape_codegen::imports::{Alias, ImportItem, ImportSet};
 /// Imports every generated table story needs regardless of configuration.
 const FRAMEWORK_IMPORTS: &[ImportItem] = &[
     // gpui core
-    ImportItem::path("gpui::App"),
-    ImportItem::aliased("gpui::AppContext", Alias::Anonymous),
-    ImportItem::path("gpui::Context"),
-    ImportItem::path("gpui::Entity"),
-    ImportItem::path("gpui::Focusable"),
-    ImportItem::path("gpui::IntoElement"),
-    ImportItem::path("gpui::ParentElement"),
-    ImportItem::path("gpui::Render"),
-    ImportItem::path("gpui::Styled"),
-    ImportItem::path("gpui::Subscription"),
-    ImportItem::path("gpui::Window"),
-    // gpui_component table
-    ImportItem::path("gpui_component::table::DataTable"),
-    ImportItem::path("gpui_component::table::TableState"),
-    ImportItem::aliased("gpui_component::table::TableDelegate", Alias::Anonymous),
-    ImportItem::path("gpui_component::v_flex"),
+    ImportItem::path("gpui_kit::App"),
+    ImportItem::aliased("gpui_kit::AppContext", Alias::Anonymous),
+    ImportItem::path("gpui_kit::Context"),
+    ImportItem::path("gpui_kit::Entity"),
+    ImportItem::path("gpui_kit::Focusable"),
+    ImportItem::path("gpui_kit::IntoElement"),
+    ImportItem::path("gpui_kit::ParentElement"),
+    ImportItem::path("gpui_kit::Render"),
+    ImportItem::path("gpui_kit::Styled"),
+    ImportItem::path("gpui_kit::Subscription"),
+    ImportItem::path("gpui_kit::Window"),
+    // gpui_kit::component table
+    ImportItem::path("gpui_kit::component::table::DataTable"),
+    ImportItem::path("gpui_kit::component::table::TableState"),
+    ImportItem::aliased(
+        "gpui_kit::component::table::TableDelegate",
+        Alias::Anonymous,
+    ),
+    ImportItem::path("gpui_kit::component::v_flex"),
 ];
 
 /// Extra imports needed when the table has filters.
-const FILTER_IMPORTS: &[ImportItem] = &[ImportItem::path("gpui_component::h_flex")];
+const FILTER_IMPORTS: &[ImportItem] = &[ImportItem::path("gpui_kit::component::h_flex")];
 
 #[derive(Debug, Error)]
 pub enum TableCodegenError {
@@ -71,7 +74,7 @@ pub trait TableShape {
 
     /// Generate story title expression.
     ///
-    /// Fluent-backed titles may reference a `cx: &gpui::App` parameter from
+    /// Fluent-backed titles may reference a `cx: &gpui_kit::App` parameter from
     /// the generated `gpui_storybook::Story::title` implementation.
     fn title_expr(&self) -> TokenStream;
 }
@@ -405,7 +408,7 @@ pub struct TableParts {
     /// Expression for the story title.
     ///
     /// For fluent-backed tables this expression expects to be emitted inside a
-    /// scope that provides `cx: &gpui::App`.
+    /// scope that provides `cx: &gpui_kit::App`.
     pub title_expr: TokenStream,
 }
 

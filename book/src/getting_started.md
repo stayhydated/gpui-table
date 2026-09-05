@@ -5,16 +5,16 @@ filter controls.
 
 ## Prerequisites
 
-Initialize `gpui-component` during application startup. If the table uses the
+Initialize `gpui-kit` during application startup. If the table uses the
 built-in filters from `gpui-table-component`, initialize their localization
 bridge after it:
 
 ```rust,ignore
-gpui_component::init(cx);
+gpui_kit::component::init(cx);
 gpui_table_component::i18n::init(cx)?;
 ```
 
-Your crate must directly depend on `gpui`, `gpui-component`, `gpui-table`, and
+Your crate must directly depend on `gpui`, `gpui-kit`, `gpui-table`, and
 `gpui-table-component`. See [Features and integration crates](features.md) when
 a row uses numeric range filters, Fluent labels, SpacetimeDB values, or MCP.
 
@@ -58,7 +58,7 @@ and build the generated filters against that state. Store the table entity and
 filter collection on the owning view:
 
 ```rust,ignore
-use gpui_component::table::{DataTable, TableState};
+use gpui_kit::component::table::{DataTable, TableState};
 
 let delegate = UserTableDelegate::new(rows);
 let table = cx.new(|cx| TableState::new(delegate, window, cx));

@@ -51,8 +51,7 @@ serde_json = { workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true }
-gpui = { workspace = true }
-gpui-component = { workspace = true }
+gpui-kit = { workspace = true }
 gpui-table-component = { features = [ "mcp", "rust_decimal", "spacetimedb" ], workspace = true }
 insta = { features = [ "yaml" ], workspace = true }
 koruma = { workspace = true }

@@ -1,9 +1,6 @@
 use crate::TableFilterComponent;
 use es_fluent::EsFluent;
-use gpui::{
-    App, Context, Entity, IntoElement, Render, StyleRefinement, Window, div, prelude::*, px,
-};
-use gpui_component::{
+use gpui_kit::component::{
     ActiveTheme as _, Icon, IconName, Sizable as _, StyledExt as _,
     button::{Button, ButtonVariants as _},
     checkbox::Checkbox,
@@ -13,6 +10,9 @@ use gpui_component::{
     separator::Separator,
     tag::Tag,
     v_flex,
+};
+use gpui_kit::{
+    App, Context, Entity, IntoElement, Render, StyleRefinement, Window, div, prelude::*, px,
 };
 use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
 use std::borrow::Borrow as _;
@@ -425,7 +425,7 @@ impl<T: FilterValue> Render for FacetedFilter<T> {
                             .rounded_sm()
                             .hover(|s| s.opacity(1.0))
                             .opacity(0.7)
-                            .on_mouse_down(gpui::MouseButton::Left, move |_, window, cx| {
+                            .on_mouse_down(gpui_kit::MouseButton::Left, move |_, window, cx| {
                                 clear_view.update(cx, |this, cx| {
                                     this.clear_filters(window, cx);
                                 });
@@ -699,7 +699,8 @@ fn group_options(options: &[FacetedFilterOption], search_query: &str) -> Vec<Fac
 #[cfg(test)]
 mod tests {
     use super::{FacetedFilter, FacetedFilterExt as _, display_option_label, group_options};
-    use gpui::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use gpui_kit::gpui;
+    use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
     use std::{cell::RefCell, collections::HashSet, rc::Rc};
 
@@ -782,7 +783,7 @@ mod tests {
         assert!(group_options(&options, "missing").is_empty());
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn constructors_selection_options_and_styles_preserve_state(cx: &mut TestAppContext) {
         let selected = HashSet::from([Status::Active]);
         let filter = cx.update(|cx| {
@@ -843,9 +844,9 @@ mod tests {
         });
     }
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn faceted_filter_toggle_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
-        cx.update(gpui_component::init);
+        cx.update(gpui_kit::component::init);
         let changes = Rc::new(RefCell::new(Vec::new()));
         let changes_for_callback = changes.clone();
         let filter = cx.update(|cx| {

@@ -7,8 +7,8 @@ generated delegate's `loading` and `eof` flags accurate.
 ## Implement load-more behavior
 
 ```rust,ignore
-use gpui::{Context, Window};
-use gpui_component::table::TableState;
+use gpui_kit::{Context, Window};
+use gpui_kit::component::table::TableState;
 use gpui_table::runtime::TableLoader;
 
 #[derive(Clone, gpui_table::GpuiTable)]
@@ -70,11 +70,11 @@ duration_ms: u64,
 fn render_duration(
     _row: &EventRow,
     value: &u64,
-    _window: &mut gpui::Window,
-    _cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
-    use gpui::{ParentElement as _, Styled as _};
-    gpui::div().px_2().child(format!("{value} ms"))
+    _window: &mut gpui_kit::Window,
+    _cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
+    use gpui_kit::{ParentElement as _, Styled as _};
+    gpui_kit::div().px_2().child(format!("{value} ms"))
 }
 ```
 

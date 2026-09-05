@@ -1,10 +1,10 @@
 use std::collections::HashSet;
 
-use gpui::{
+use gpui_kit::component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_flex};
+use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, InteractiveElement as _,
     IntoElement, Render, StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
-use gpui_component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_flex};
 
 use crate::{FacetedFilterExt as _, faceted_filter::FacetedFilter};
 
@@ -99,7 +99,7 @@ impl Focusable for FacetedFilterStory {
 }
 
 impl gpui_storybook::Story for FacetedFilterStory {
-    fn title(_: &gpui::App) -> String {
+    fn title(_: &gpui_kit::App) -> String {
         "Faceted Filter".into()
     }
 

@@ -1,4 +1,4 @@
-use gpui::Entity;
+use gpui_kit::Entity;
 use gpui_table::{
     GpuiTable,
     core::filter::{FilterType, TextValue},
@@ -22,15 +22,15 @@ impl GpuiTableFilterShape for LocalTextFilter {
     const FILTER_TYPE: RegistryFilterType = RegistryFilterType::Text;
 
     fn new_for(
-        _title: impl Fn(&gpui::App) -> String + 'static,
+        _title: impl Fn(&gpui_kit::App) -> String + 'static,
         _value: Self::RawValue,
-        _on_change: impl Fn(Self::RawValue, &mut gpui::Window, &mut gpui::App) + 'static,
-        _cx: &mut gpui::App,
+        _on_change: impl Fn(Self::RawValue, &mut gpui_kit::Window, &mut gpui_kit::App) + 'static,
+        _cx: &mut gpui_kit::App,
     ) -> Entity<Self::Component> {
         unimplemented!()
     }
 
-    fn read_value(_entity: &Entity<Self::Component>, _cx: &gpui::App) -> Self::RawValue {
+    fn read_value(_entity: &Entity<Self::Component>, _cx: &gpui_kit::App) -> Self::RawValue {
         String::new()
     }
 
@@ -40,8 +40,8 @@ impl GpuiTableFilterShape for LocalTextFilter {
 
     fn reset_silent(
         _entity: &Entity<Self::Component>,
-        _window: &mut gpui::Window,
-        _cx: &mut gpui::App,
+        _window: &mut gpui_kit::Window,
+        _cx: &mut gpui_kit::App,
     ) {
     }
 }

@@ -45,7 +45,7 @@ pub use shape::{NumberRangeFilterAdapter, NumberRangeFilterArgs, NumberRangeFilt
 pub use table_status_bar::TableStatusBar;
 pub use text_filter::{TextFilter, TextFilterExt};
 
-use gpui::{App, Entity, Window};
+use gpui_kit::{App, Entity, Window};
 use gpui_table_core::filter::{FacetedValue, FilterValue, RangeValue, SingleValue, TextValue};
 use std::collections::HashSet;
 

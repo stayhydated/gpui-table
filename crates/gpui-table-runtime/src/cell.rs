@@ -1,4 +1,4 @@
-use gpui::{AnyElement, App, IntoElement as _, Window};
+use gpui_kit::{AnyElement, App, IntoElement as _, Window};
 use std::fmt::Display;
 
 /// A value that can be displayed in a table cell.
@@ -78,10 +78,10 @@ mod datetime_format {
     type TimeFormatter = NoCalendarFormatter<fieldsets::T>;
 
     fn formatter_preferences() -> DateTimeFormatterPreferences {
-        let raw = gpui_component::locale();
+        let raw = gpui_kit::component::locale();
         let normalized = raw.replace('_', "-");
         let locale = normalized.parse::<Locale>().unwrap_or_else(|error| {
-            panic!("gpui-component locale `{normalized}` is not a valid ICU locale: {error}")
+            panic!("gpui-kit locale `{normalized}` is not a valid ICU locale: {error}")
         });
         locale.into()
     }
@@ -259,7 +259,7 @@ impl<T: TableCell> TableCell for Option<T> {
 
 impl<T: TableCell> TableCell for Vec<T> {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
-        use gpui::{ParentElement as _, Styled as _};
+        use gpui_kit::{ParentElement as _, Styled as _};
 
         let mut children = Vec::with_capacity(self.len().saturating_mul(2));
         for (index, value) in self.iter().enumerate() {
@@ -269,7 +269,7 @@ impl<T: TableCell> TableCell for Vec<T> {
             children.push(value.draw(window, cx));
         }
 
-        gpui::div()
+        gpui_kit::div()
             .flex()
             .items_center()
             .gap_1()

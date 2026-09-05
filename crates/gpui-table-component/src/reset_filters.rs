@@ -1,8 +1,8 @@
 use es_fluent::EsFluent;
-use gpui::{
-    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
+use gpui_kit::component::{Sizable as _, StyledExt as _, button::Button};
+use gpui_kit::{
+    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div, gpui,
 };
-use gpui_component::{Sizable as _, StyledExt as _, button::Button};
 use std::rc::Rc;
 
 #[derive(Clone, Copy, EsFluent)]
@@ -69,14 +69,15 @@ impl RenderOnce for ResetFilters {
 #[cfg(test)]
 mod tests {
     use super::ResetFilters;
-    use gpui::{
+    use gpui_kit::gpui;
+    use gpui_kit::{
         Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
         VisualTestContext,
     };
 
-    #[gpui::test]
+    #[gpui_kit::test]
     fn reset_control_builders_render_with_default_and_custom_ids(cx: &mut TestAppContext) {
-        cx.update(gpui_component::init);
+        cx.update(gpui_kit::component::init);
         cx.update(|cx| crate::i18n::init(cx).unwrap());
         let default = ResetFilters::new(|_, _| {});
         assert_eq!(default.button_id, "table-reset-filters");

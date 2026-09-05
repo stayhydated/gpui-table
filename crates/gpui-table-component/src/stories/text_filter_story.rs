@@ -1,8 +1,8 @@
-use gpui::{
+use gpui_kit::component::{StyledExt as _, v_flex};
+use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, InteractiveElement as _,
     IntoElement, Render, StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
-use gpui_component::{StyledExt as _, v_flex};
 
 use crate::{TextFilterExt as _, text_filter::TextFilter};
 
@@ -78,7 +78,7 @@ impl Focusable for TextFilterStory {
 }
 
 impl gpui_storybook::Story for TextFilterStory {
-    fn title(_: &gpui::App) -> String {
+    fn title(_: &gpui_kit::App) -> String {
         "Text Filter".into()
     }
 

@@ -21,8 +21,7 @@ spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]
 [dependencies]
 chrono = { optional = true, workspace = true }
 component-shape = { workspace = true }
-gpui = { workspace = true }
-gpui-component = { workspace = true }
+gpui-kit = { workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
 icu = { optional = true, workspace = true }

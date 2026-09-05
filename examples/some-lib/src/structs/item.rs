@@ -2,8 +2,8 @@ use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use fake::{Fake as _, Faker};
-use gpui::{Context, Window};
-use gpui_component::table::TableState;
+use gpui_kit::component::table::TableState;
+use gpui_kit::{Context, Window};
 use gpui_table::GpuiTable;
 use gpui_table::runtime::TableLoader;
 use std::time::Duration;
@@ -36,25 +36,25 @@ pub struct Item {
 fn render_color_cell(
     row: &Item,
     value: &str,
-    window: &mut gpui::Window,
-    cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
-    use gpui::Styled as _;
+    window: &mut gpui_kit::Window,
+    cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
+    use gpui_kit::Styled as _;
 
     let _ = (row, window, cx);
     let color_hex = value.trim_start_matches('#');
     let color_u32 = u32::from_str_radix(color_hex, 16).unwrap_or(0xFFFFFF);
 
-    gpui::div().bg(gpui::rgb(color_u32)).px_2().py_0p5()
+    gpui_kit::div().bg(gpui_kit::rgb(color_u32)).px_2().py_0p5()
 }
 
 fn render_weight_cell(
     row: &Item,
     value: &u8,
-    window: &mut gpui::Window,
-    cx: &mut gpui::App,
-) -> impl gpui::IntoElement {
-    use gpui::{ParentElement as _, Styled as _};
+    window: &mut gpui_kit::Window,
+    cx: &mut gpui_kit::App,
+) -> impl gpui_kit::IntoElement {
+    use gpui_kit::{ParentElement as _, Styled as _};
 
     let _ = (row, window, cx);
     let weight_ratio = (*value as f32) / 67.0;
@@ -63,30 +63,30 @@ fn render_weight_cell(
     let green = (255.0 * (1.0 - weight_ratio)) as u32;
     let blue = (255.0 * (1.0 - weight_ratio)) as u32;
     let hex_color = 0xFF0000 | (green << 8) | blue;
-    let bg_color = gpui::rgb(hex_color);
+    let bg_color = gpui_kit::rgb(hex_color);
 
     let (tag_label, tag_bg_color, tag_text_color) = if *value < 30 {
-        ("light", gpui::rgb(0x22c55e), gpui::white())
+        ("light", gpui_kit::rgb(0x22c55e), gpui_kit::white())
     } else if *value < 50 {
-        ("medium", gpui::rgb(0xeab308), gpui::white())
+        ("medium", gpui_kit::rgb(0xeab308), gpui_kit::white())
     } else {
-        ("heavy", gpui::rgb(0xef4444), gpui::white())
+        ("heavy", gpui_kit::rgb(0xef4444), gpui_kit::white())
     };
 
-    gpui::div()
+    gpui_kit::div()
         .flex()
         .items_center()
         .gap_2()
         .child(
-            gpui::div()
+            gpui_kit::div()
                 .child(format!("{value} kg"))
-                .text_color(gpui::black())
+                .text_color(gpui_kit::black())
                 .bg(bg_color)
                 .px_1()
                 .rounded_md(),
         )
         .child(
-            gpui::div()
+            gpui_kit::div()
                 .child(tag_label)
                 .text_xs()
                 .px_2()

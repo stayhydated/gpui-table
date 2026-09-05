@@ -1,7 +1,7 @@
 # Introduction
 
 `gpui-table` turns a Rust row struct into the delegate and column
-metadata required by `gpui-component`'s `DataTable`. Opt-in
+metadata required by `gpui-kit`'s `DataTable`. Opt-in
 attributes add typed filter controls, incremental loading, localized labels,
 registry metadata, and MCP query tools while the application keeps ownership of
 its rows and query execution.
@@ -20,10 +20,10 @@ gpui-table = "0.6"
 gpui-table-component = "0.6"
 ```
 
-Keep `gpui` and `gpui-component` as direct dependencies
+Keep `gpui` and `gpui-kit` as direct dependencies
 using the versions or source selected by your application. Generated table code
 refers to both crates by name, and applications render
-`gpui_component::table::DataTable` directly.
+`gpui_kit::component::table::DataTable` directly.
 
 ## Mental model
 

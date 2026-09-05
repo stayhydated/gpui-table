@@ -16,8 +16,7 @@ client = [
   "dep:es-fluent-lang",
   "dep:es-fluent-manager-embedded",
   "dep:fake",
-  "dep:gpui",
-  "dep:gpui-component",
+  "dep:gpui-kit",
   "dep:gpui-es-fluent",
   "dep:gpui-table",
   "dep:gpui-table-component",
@@ -42,8 +41,7 @@ fake = { features = [
   "chrono",
   "rust_decimal",
 ], optional = true, workspace = true }
-gpui = { optional = true, workspace = true }
-gpui-component = { optional = true, workspace = true }
+gpui-kit = { optional = true, workspace = true }
 gpui-es-fluent = { features = [ "component" ], optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",

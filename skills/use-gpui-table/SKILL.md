@@ -15,14 +15,14 @@ description: >-
 
 1. Inspect the application's manifest and an existing table before choosing
    features or syntax. Keep its `gpui` and
-   `gpui-component` dependency source unchanged.
+   `gpui-kit` dependency source unchanged.
 2. Use `gpui-table` as the facade. Add
    `gpui-table-component` when the table renders built-in filters or
    `TableStatusBar`.
 3. Derive `GpuiTable` on a named row struct. Configure columns and
    filters at the field, then construct the generated delegate and
    `TableState`.
-4. Render `gpui_component::table::DataTable` and place generated
+4. Render `gpui_kit::component::table::DataTable` and place generated
    filter elements in the application's existing layout.
 5. Add loading, localization, saved presets, or MCP only when the requested
    behavior needs them.

@@ -164,11 +164,11 @@ impl TableFilterShapeDerive {
                     <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::FILTER_TYPE;
 
                 fn new_for(
-                    title: impl Fn(&::gpui::App) -> String + 'static,
+                    title: impl Fn(&::gpui_kit::App) -> String + 'static,
                     value: Self::RawValue,
-                    on_change: impl Fn(Self::RawValue, &mut ::gpui::Window, &mut ::gpui::App) + 'static,
-                    cx: &mut ::gpui::App,
-                ) -> ::gpui::Entity<Self::Component> {
+                    on_change: impl Fn(Self::RawValue, &mut ::gpui_kit::Window, &mut ::gpui_kit::App) + 'static,
+                    cx: &mut ::gpui_kit::App,
+                ) -> ::gpui_kit::Entity<Self::Component> {
                     <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::new_for(
                         title,
                         (#into_base)(value),
@@ -180,8 +180,8 @@ impl TableFilterShapeDerive {
                 }
 
                 fn read_value(
-                    entity: &::gpui::Entity<Self::Component>,
-                    cx: &::gpui::App,
+                    entity: &::gpui_kit::Entity<Self::Component>,
+                    cx: &::gpui_kit::App,
                 ) -> Self::RawValue {
                     (#from_base)(
                         <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::read_value(
@@ -206,10 +206,10 @@ impl TableFilterShapeDerive {
                 }
 
                 fn set_silent(
-                    entity: &::gpui::Entity<Self::Component>,
+                    entity: &::gpui_kit::Entity<Self::Component>,
                     value: Self::RawValue,
-                    window: &mut ::gpui::Window,
-                    cx: &mut ::gpui::App,
+                    window: &mut ::gpui_kit::Window,
+                    cx: &mut ::gpui_kit::App,
                 ) {
                     <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::set_silent(
                         entity,
@@ -220,9 +220,9 @@ impl TableFilterShapeDerive {
                 }
 
                 fn reset_silent(
-                    entity: &::gpui::Entity<Self::Component>,
-                    window: &mut ::gpui::Window,
-                    cx: &mut ::gpui::App,
+                    entity: &::gpui_kit::Entity<Self::Component>,
+                    window: &mut ::gpui_kit::Window,
+                    cx: &mut ::gpui_kit::App,
                 ) {
                     <#base as #facade_crate::runtime::shape::GpuiTableFilterShape>::reset_silent(
                         entity,

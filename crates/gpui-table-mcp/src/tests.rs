@@ -278,15 +278,18 @@ impl GpuiTableFilterShape for RawRangeShape {
     const FILTER_TYPE: RegistryFilterType = RegistryFilterType::Text;
 
     fn new_for(
-        _title: impl Fn(&gpui::App) -> String + 'static,
+        _title: impl Fn(&gpui_kit::App) -> String + 'static,
         _value: Self::RawValue,
-        _on_change: impl Fn(Self::RawValue, &mut gpui::Window, &mut gpui::App) + 'static,
-        _cx: &mut gpui::App,
-    ) -> gpui::Entity<Self::Component> {
+        _on_change: impl Fn(Self::RawValue, &mut gpui_kit::Window, &mut gpui_kit::App) + 'static,
+        _cx: &mut gpui_kit::App,
+    ) -> gpui_kit::Entity<Self::Component> {
         unimplemented!("schema test does not instantiate GPUI state")
     }
 
-    fn read_value(_entity: &gpui::Entity<Self::Component>, _cx: &gpui::App) -> Self::RawValue {
+    fn read_value(
+        _entity: &gpui_kit::Entity<Self::Component>,
+        _cx: &gpui_kit::App,
+    ) -> Self::RawValue {
         unimplemented!("schema test does not read GPUI state")
     }
 
@@ -295,9 +298,9 @@ impl GpuiTableFilterShape for RawRangeShape {
     }
 
     fn reset_silent(
-        _entity: &gpui::Entity<Self::Component>,
-        _window: &mut gpui::Window,
-        _cx: &mut gpui::App,
+        _entity: &gpui_kit::Entity<Self::Component>,
+        _window: &mut gpui_kit::Window,
+        _cx: &mut gpui_kit::App,
     ) {
     }
 }

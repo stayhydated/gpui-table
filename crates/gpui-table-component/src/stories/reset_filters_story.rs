@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
 use chrono::NaiveDate;
-use gpui::{
+use gpui_kit::component::{StyledExt as _, v_flex};
+use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, IntoElement, Render,
     StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
-use gpui_component::{StyledExt as _, v_flex};
 use rust_decimal::Decimal;
 
 use crate::{
@@ -76,7 +76,7 @@ impl Focusable for ResetFiltersStory {
 }
 
 impl gpui_storybook::Story for ResetFiltersStory {
-    fn title(_: &gpui::App) -> String {
+    fn title(_: &gpui_kit::App) -> String {
         "Reset Filters".into()
     }
 

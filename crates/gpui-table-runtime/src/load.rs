@@ -1,5 +1,5 @@
-use gpui::{App, Context, Window};
-use gpui_component::table::{TableDelegate, TableState};
+use gpui_kit::component::table::{TableDelegate, TableState};
+use gpui_kit::{App, Context, Window};
 
 /// Internal trait implemented by `#[gpui_table_impl]` to provide loading behavior.
 ///
@@ -36,8 +36,8 @@ pub trait TableLoader: TableDelegate {
 #[cfg(test)]
 mod tests {
     use super::{LoadMoreDelegate, TableLoader};
-    use gpui::{App, Context, IntoElement, Window, div};
-    use gpui_component::table::{Column, TableDelegate, TableState};
+    use gpui_kit::component::table::{Column, TableDelegate, TableState};
+    use gpui_kit::{App, Context, IntoElement, Window, div};
 
     struct Delegate;
 
