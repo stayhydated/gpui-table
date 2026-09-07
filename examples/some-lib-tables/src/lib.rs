@@ -1,4 +1,4 @@
-use gpui_kit::Application;
+use gpui_kit::App;
 use gpui_storybook::{ConsumerId, StorybookOptions, StorybookWindow};
 use some_lib::i18n::{self, Languages};
 
@@ -21,62 +21,60 @@ fn storybook_options() -> Result<StorybookOptions<Languages>, gpui_storybook::Co
     Ok(options)
 }
 
-pub fn run_storybook(app: Application) {
-    app.run(move |app_cx| {
-        let options = match storybook_options() {
-            Ok(options) => options,
-            Err(error) => {
-                eprintln!("invalid table example Storybook consumer id: {error}");
-                app_cx.quit();
-                return;
-            },
-        };
-        let readiness = match gpui_storybook::init(app_cx, options) {
-            Ok(readiness) => readiness,
-            Err(error) => {
-                eprintln!("failed to initialize table example Storybook: {error}");
-                app_cx.quit();
-                return;
-            },
-        };
+pub fn launch_storybook(app_cx: &mut App) {
+    let options = match storybook_options() {
+        Ok(options) => options,
+        Err(error) => {
+            eprintln!("invalid table example Storybook consumer id: {error}");
+            app_cx.quit();
+            return;
+        },
+    };
+    let readiness = match gpui_storybook::init(app_cx, options) {
+        Ok(readiness) => readiness,
+        Err(error) => {
+            eprintln!("failed to initialize table example Storybook: {error}");
+            app_cx.quit();
+            return;
+        },
+    };
 
-        #[cfg(feature = "router")]
-        route::init(app_cx);
+    #[cfg(feature = "router")]
+    route::init(app_cx);
 
-        #[cfg(not(target_family = "wasm"))]
-        {
-            let http_client = std::sync::Arc::new(reqwest_client::ReqwestClient::new());
-            app_cx.set_http_client(http_client);
-        }
+    #[cfg(not(target_family = "wasm"))]
+    {
+        let http_client = std::sync::Arc::new(reqwest_client::ReqwestClient::new());
+        app_cx.set_http_client(http_client);
+    }
 
-        app_cx
-            .spawn(async move |cx| {
-                let ready = readiness.await;
-                if !ready.diagnostics.is_empty() {
-                    eprintln!(
-                        "table example Storybook preferences initialized with diagnostics: {:?}",
-                        ready.diagnostics
-                    );
-                }
+    app_cx
+        .spawn(async move |cx| {
+            let ready = readiness.await;
+            if !ready.diagnostics.is_empty() {
+                eprintln!(
+                    "table example Storybook preferences initialized with diagnostics: {:?}",
+                    ready.diagnostics
+                );
+            }
 
-                cx.update(|app_cx| {
-                    app_cx.activate(true);
-                    gpui_storybook::create_storybook_window(
-                        &format!("{} - Stories", env!("CARGO_PKG_NAME")),
-                        move |window, cx| {
-                            let stories = gpui_storybook::generate_stories(window, cx);
-                            assert!(
-                                !stories.is_empty(),
-                                "table example Storybook requires linked stories"
-                            );
-                            StorybookWindow::new(stories)
-                        },
-                        app_cx,
-                    );
-                });
-            })
-            .detach();
-    });
+            cx.update(|app_cx| {
+                app_cx.activate(true);
+                gpui_storybook::create_storybook_window(
+                    &format!("{} - Stories", env!("CARGO_PKG_NAME")),
+                    move |window, cx| {
+                        let stories = gpui_storybook::generate_stories(window, cx);
+                        assert!(
+                            !stories.is_empty(),
+                            "table example Storybook requires linked stories"
+                        );
+                        StorybookWindow::new(stories)
+                    },
+                    app_cx,
+                );
+            });
+        })
+        .detach();
 }
 
 #[cfg(test)]

@@ -35,6 +35,7 @@ env_logger = { workspace = true }
 reqwest_client = { workspace = true }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
+console_error_panic_hook = { workspace = true }
 wasm-bindgen = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
