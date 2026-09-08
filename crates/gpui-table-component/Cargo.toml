@@ -1,5 +1,6 @@
 [package]
 name = "gpui-table-component"
+description = "GPUI filter widgets and status-bar components for gpui-table."
 version.workspace = true
 rust-version.workspace = true
 edition.workspace = true
