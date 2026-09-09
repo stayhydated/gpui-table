@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml/badge.svg)](https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml)
 [![Codecov](https://codecov.io/github/stayhydated/gpui-table/graph/badge.svg)](https://codecov.io/github/stayhydated/gpui-table)
+[![Book](https://img.shields.io/badge/docs-book-black)](https://stayhydated.github.io/gpui-table/book/)
 [![Docs](https://docs.rs/gpui-table/badge.svg)](https://docs.rs/gpui-table/)
 [![Crates.io](https://img.shields.io/crates/v/gpui-table.svg)](https://crates.io/crates/gpui-table)
 
