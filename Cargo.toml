@@ -32,9 +32,9 @@ anyhow = "1.0"
 chrono = "0.4"
 clap = "4.6"
 console_error_panic_hook = "0.1"
-component-shape = { git = "https://github.com/stayhydated/component-shape", rev = "04cfd9a021dc3a9a2ee0dfadbf5242783ab54777", version = "0.2.0" }
-component-shape-codegen = { git = "https://github.com/stayhydated/component-shape", rev = "04cfd9a021dc3a9a2ee0dfadbf5242783ab54777", version = "0.2.0" }
-component-shape-mcp = { git = "https://github.com/stayhydated/component-shape", rev = "04cfd9a021dc3a9a2ee0dfadbf5242783ab54777", version = "0.2.0" }
+component-shape = "0.3.0"
+component-shape-codegen = "0.3.0"
+component-shape-mcp = "0.3.0"
 darling = "0.24"
 derive_more = "2.1"
 dioxus = { default-features = false, version = "0.7" }
@@ -44,7 +44,7 @@ es-fluent-build = { git = "https://github.com/stayhydated/es-fluent", rev = "94e
 es-fluent-lang = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
 es-fluent-manager-embedded = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
 fake = "5.1"
-gpui-kit = "0.6.0"
+gpui-kit = "0.6.1"
 gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "fab092a1d04f71fae011ac589cd080d3c6c842c1", version = "0.1.0" }
 gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "45a215f4642fe153ed1f262b0ed34a7f35073c69", version = "0.5.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.6.0" }
@@ -72,11 +72,11 @@ quote = "1.0"
 regex = "1.13"
 reqwest = "0.13"
 reqwest_client = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
-rmcp = "3.1"
-rust_decimal = "1.42"
+rmcp = "3.3"
+rust_decimal = "1.43"
 serde = "1.0"
 serde_json = "1.0"
-spacetimedb-lib = "2.8"
+spacetimedb-lib = "2.10"
 stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "809946144fe13b04a57ba17677c4c699143f4786" }
 stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "809946144fe13b04a57ba17677c4c699143f4786" }
 stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "809946144fe13b04a57ba17677c4c699143f4786" }
@@ -88,7 +88,7 @@ tracing-subscriber = "0.3"
 trybuild = "1.0"
 unicode-segmentation = "1.13"
 urlencoding = "2.1"
-uuid = "1.24"
+uuid = "1.26"
 wasm-bindgen = "0.2"
 web = { path = "web" }
 web-sys = { features = [ "Location", "Window" ], version = "0.3" }
