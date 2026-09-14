@@ -39,14 +39,14 @@ darling = "0.24"
 derive_more = "2.1"
 dioxus = { default-features = false, version = "0.7" }
 env_logger = "0.11"
-es-fluent = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
-es-fluent-build = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
-es-fluent-lang = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
-es-fluent-manager-embedded = { git = "https://github.com/stayhydated/es-fluent", rev = "94efb551ede72c9e7da4bbdf97d5eecb5ea09982", version = "0.18.1" }
+es-fluent = "0.19.0"
+es-fluent-build = "0.19.0"
+es-fluent-lang = "0.19.0"
+es-fluent-manager-embedded = "0.19.0"
 fake = "5.1"
 gpui-kit = "0.6.1"
-gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "fab092a1d04f71fae011ac589cd080d3c6c842c1", version = "0.1.0" }
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "45a215f4642fe153ed1f262b0ed34a7f35073c69", version = "0.5.0" }
+gpui-es-fluent = "0.2.0"
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "924b0ec6c61c960854e9a978536b72bc09122fea", version = "0.6.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.7.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.0" }
@@ -56,14 +56,14 @@ gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", ver
 gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.7.0" }
 gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.7.0" }
 heck = "0.5.0"
-icu = "2.2"
+icu = "2.3"
 insta = "1.48"
 inventory = "0.3"
 itertools = "0.15"
 jiff = "0.2"
-koruma = { git = "https://github.com/stayhydated/koruma", rev = "2ff495d8dc04794f0bcb2eb3c1a4a3c28e55a274", version = "0.11.0" }
-koruma-collection = { git = "https://github.com/stayhydated/koruma", rev = "2ff495d8dc04794f0bcb2eb3c1a4a3c28e55a274", version = "0.11.0" }
-koruma-derive-core = { git = "https://github.com/stayhydated/koruma", rev = "2ff495d8dc04794f0bcb2eb3c1a4a3c28e55a274", version = "0.11.0" }
+koruma = "0.12.0"
+koruma-collection = "0.12.0"
+koruma-derive-core = "0.12.0"
 log = "0.4"
 prettyplease = "0.3"
 proc-macro-crate = "3.5"
