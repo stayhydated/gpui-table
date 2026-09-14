@@ -65,7 +65,6 @@ fn main() {
 mod tests {
     use super::*;
     use gpui_kit::AppContext as _;
-    use gpui_kit::gpui;
 
     #[derive(Clone, Copy, es_fluent::EsFluent)]
     enum ResetFiltersFtl {

@@ -1,7 +1,7 @@
 use es_fluent::EsFluent;
 use gpui_kit::component::{StyledExt as _, h_flex};
 use gpui_kit::{
-    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div, gpui,
+    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
 };
 
 use crate::i18n::localize_message;
@@ -160,7 +160,6 @@ impl RenderOnce for TableStatusBar {
 #[cfg(test)]
 mod tests {
     use super::TableStatusBar;
-    use gpui_kit::gpui;
     use gpui_kit::{
         Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
         VisualTestContext,

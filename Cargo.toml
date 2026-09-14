@@ -46,7 +46,7 @@ es-fluent-manager-embedded = "0.19.0"
 fake = "5.1"
 gpui-kit = "0.6.1"
 gpui-es-fluent = "0.2.0"
-gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "924b0ec6c61c960854e9a978536b72bc09122fea", version = "0.6.0" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "1a8741c", version = "0.6.0" }
 gpui-table = { path = "crates/gpui-table", version = "0.7.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.0" }
@@ -71,7 +71,7 @@ proc-macro2 = "1.0"
 quote = "1.0"
 regex = "1.13"
 reqwest = "0.13"
-reqwest_client = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
+reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.5" }
 rmcp = "3.3"
 rust_decimal = "1.43"
 serde = "1.0"
@@ -92,11 +92,6 @@ uuid = "1.26"
 wasm-bindgen = "0.2"
 web = { path = "web" }
 web-sys = { features = [ "Location", "Window" ], version = "0.3" }
-
-[patch.crates-io]
-gpui-pre = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
-gpui-pre-platform = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
-gpui-pre-web = { branch = "linux-headless-renderer", git = "https://github.com/stayhydated/zed" }
 
 [profile.dev]
 codegen-units = 16
