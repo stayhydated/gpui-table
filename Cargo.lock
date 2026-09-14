@@ -4739,7 +4739,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "gpui-kit",
@@ -4762,7 +4762,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-component"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "component-shape",
@@ -4788,7 +4788,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-core"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "derive_more 2.1.1",
@@ -4803,7 +4803,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-derive"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "component-shape",
  "component-shape-codegen",
@@ -4818,7 +4818,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-mcp"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "component-shape",
  "component-shape-mcp",
@@ -4834,7 +4834,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-prototyping-core"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "component-shape-codegen",
  "gpui-table-schema",
@@ -4847,7 +4847,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-runtime"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "component-shape",
@@ -4862,7 +4862,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-schema"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "component-shape",
  "inventory",
@@ -6957,7 +6957,7 @@ dependencies = [
 
 [[package]]
 name = "mcp-query"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "gpui-kit",
@@ -8710,7 +8710,7 @@ dependencies = [
 
 [[package]]
 name = "prototyping"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "gpui-table",
@@ -10235,7 +10235,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "chrono",
  "es-fluent",
@@ -10255,7 +10255,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib-tables"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "console_error_panic_hook",
  "env_logger",
@@ -12059,7 +12059,7 @@ dependencies = [
 
 [[package]]
 name = "web"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "dioxus",
  "stayhydated-dioxus",
@@ -13235,7 +13235,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 
 [[package]]
 name = "xtask"
-version = "0.6.0"
+version = "0.7.0"
 dependencies = [
  "anyhow",
  "clap",
