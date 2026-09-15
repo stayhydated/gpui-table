@@ -1,5 +1,6 @@
 [package]
 name = "gpui-table-component"
+description = "Built-in GPUI table filters, adapter shapes, reset controls, and status bars"
 version.workspace = true
 rust-version.workspace = true
 edition.workspace = true
