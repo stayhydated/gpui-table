@@ -15,8 +15,8 @@ query tools.
 
 ```toml
 [dependencies]
-gpui-table = "0.6"
-gpui-table-component = "0.6"
+gpui-table = "0.7"
+gpui-table-component = "0.7"
 ```
 
 Keep `gpui` and `gpui-kit` as direct dependencies

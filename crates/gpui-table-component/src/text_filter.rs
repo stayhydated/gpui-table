@@ -440,7 +440,6 @@ impl Render for TextFilter {
 #[cfg(test)]
 mod tests {
     use super::{TextFilter, TextFilterExt as _, validators};
-    use gpui_kit::gpui;
     use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use std::{cell::RefCell, rc::Rc};
 

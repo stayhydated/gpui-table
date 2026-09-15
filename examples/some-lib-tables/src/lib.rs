@@ -80,7 +80,6 @@ pub fn launch_storybook(app_cx: &mut App) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui_kit::gpui;
 
     #[derive(Clone, Copy)]
     enum ResetFiltersFtl {

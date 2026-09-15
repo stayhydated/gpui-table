@@ -1,7 +1,7 @@
 use es_fluent::EsFluent;
 use gpui_kit::component::{Sizable as _, StyledExt as _, button::Button};
 use gpui_kit::{
-    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div, gpui,
+    App, IntoElement, ParentElement as _, RenderOnce, StyleRefinement, Styled, Window, div,
 };
 use std::rc::Rc;
 
@@ -69,7 +69,6 @@ impl RenderOnce for ResetFilters {
 #[cfg(test)]
 mod tests {
     use super::ResetFilters;
-    use gpui_kit::gpui;
     use gpui_kit::{
         Empty, IntoElement as _, RenderOnce as _, StyleRefinement, Styled as _, TestAppContext,
         VisualTestContext,

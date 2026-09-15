@@ -413,7 +413,6 @@ impl DateRangeFilterExt for Entity<DateRangeFilter> {
 mod tests {
     use super::{DateRangeFilter, DateRangeFilterExt as _, format_date};
     use chrono::NaiveDate;
-    use gpui_kit::gpui;
     use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use std::{cell::RefCell, rc::Rc};
 
