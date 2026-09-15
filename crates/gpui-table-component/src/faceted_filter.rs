@@ -699,7 +699,6 @@ fn group_options(options: &[FacetedFilterOption], search_query: &str) -> Vec<Fac
 #[cfg(test)]
 mod tests {
     use super::{FacetedFilter, FacetedFilterExt as _, display_option_label, group_options};
-    use gpui_kit::gpui;
     use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use gpui_table_core::filter::{FacetedFilterOption, FilterValue, Filterable};
     use std::{cell::RefCell, collections::HashSet, rc::Rc};

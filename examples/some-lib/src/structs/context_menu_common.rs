@@ -1,6 +1,5 @@
 use gpui_kit::component::menu::PopupMenu;
 #[cfg(feature = "router")]
-use gpui_kit::gpui;
 #[cfg(feature = "router")]
 use std::fmt;
 

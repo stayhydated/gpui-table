@@ -606,7 +606,6 @@ mod tests {
     use super::{
         BoundInput, LastChanged, NumberRangeFilter, NumberRangeFilterExt as _, format_decimal,
     };
-    use gpui_kit::gpui;
     use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
     use rust_decimal::Decimal;
     use std::{cell::RefCell, rc::Rc};

@@ -124,7 +124,6 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use gpui_kit::gpui;
 
     #[gpui_kit::test]
     fn component_locale_initialization_and_synchronization_are_repeatable(cx: &mut App) {
