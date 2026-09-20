@@ -6,14 +6,12 @@ Use only the section needed for the current application task.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.6", features = ["rust_decimal"] }
-gpui-table-component = "0.6"
+gpui-table = { version = "0.7", features = ["rust_decimal"] }
+gpui-table-component = "0.7"
 ```
 
-Keep `gpui` and `gpui-kit` as direct dependencies
-using the application's existing source. Add `fluent`,
-`inventory`, `mcp`, or `spacetimedb` only for
-the corresponding workflow.
+Keep `gpui-kit` as a direct dependency using the application's existing source.
+Add `fluent`, `inventory`, `mcp`, or `spacetimedb` for the corresponding workflow.
 
 ## Derive and render a table
 
@@ -176,18 +174,19 @@ the application must compose generated and custom actions.
 
 ## Initialize localization
 
-With the facade's `fluent` feature, derive the application's
-`es-fluent` labels and initialize component localization after
-`gpui_kit::component::init(cx)`:
+Initialize localization before rendering built-in table filters, including
+when row labels use plain strings:
 
 ```rust
 gpui_kit::component::init(cx);
 gpui_table_component::i18n::init(cx)?;
 ```
 
-Use `#[filter(fluent)]` on faceted enums and
-`#[gpui_table(fluent = "label")]` on localized row types. Apply later
-locale changes with `gpui_table_component::i18n::set_locale`.
+For typed row labels, enable the facade's `fluent` feature and derive the
+application's `es-fluent` labels. Use `#[filter(fluent)]` on faceted enums and
+`#[gpui_table(fluent = "label")]` on localized row types. Apply later locale
+changes with `gpui_table_component::i18n::set_locale` and synchronize the
+application's resource manager to the same language.
 
 ## Expose rows through MCP
 

@@ -20,7 +20,7 @@ row declares a built-in filter shape.
 
 ## Choose an integration crate
 
-Most application code should not depend on the lower-level crates directly:
+Use the lower-level crates for reusable integrations and tooling:
 
 | Crate | Use it when |
 |---|---|

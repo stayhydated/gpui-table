@@ -1,4 +1,7 @@
-# Examples
+# gpui-table examples
+
+These runnable workspace packages demonstrate derived GPUI tables, built-in
+components, MCP queries, and inventory-driven table generation.
 
 Run these commands from the workspace root:
 

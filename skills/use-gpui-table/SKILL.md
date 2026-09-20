@@ -1,12 +1,10 @@
 ---
 name: use-gpui-table
 description: >-
-  Add, change, debug, or explain user-facing Rust GPUI tables built with
-  gpui-table. Use whenever application code involves #[derive(GpuiTable)],
-  #[derive(Filterable)], #[derive(TableCell)], #[gpui_table_impl], generated
-  delegates or filter entities/values, DataTable composition, built-in filters,
-  saved filter presets, loading, custom cells, row context menus, Fluent
-  localization, table feature flags, or generated MCP query tools.
+  Build, debug, or explain application tables using gpui-table derives,
+  generated filter state, DataTable composition, loading, localization, or MCP
+  queries. For custom filter shape implementations, use
+  use-gpui-table-component-shapes.
 ---
 
 # Use gpui-table
@@ -14,8 +12,8 @@ description: >-
 ## Workflow
 
 1. Inspect the application's manifest and an existing table before choosing
-   features or syntax. Keep its `gpui` and
-   `gpui-kit` dependency source unchanged.
+   features or syntax. Generated code uses `gpui_kit` directly; preserve the
+   application's existing `gpui-kit` dependency source.
 2. Use `gpui-table` as the facade. Add
    `gpui-table-component` when the table renders built-in filters or
    `TableStatusBar`.
@@ -81,8 +79,8 @@ accept `TableQuery<Row>` and return
 `Result<TableQueryResult<Row>, E>`.
 
 Use `gpui_table::mcp::tool_registry()` when the host needs the
-inventory-discovered MCP definitions and handlers directly. Retain MCP servers
-for the host lifetime; query completion does not request shutdown.
+inventory-discovered MCP definitions and handlers directly. Keep the server
+running for the host's intended session lifetime.
 
 ## Load focused patterns
 
