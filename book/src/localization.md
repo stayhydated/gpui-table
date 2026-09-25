@@ -9,7 +9,7 @@ for its built-in controls.
 [dependencies]
 gpui-table = { version = "0.7", features = ["fluent"] }
 gpui-table-component = "0.7"
-es-fluent = "0.19"
+es-fluent = "0.20.3"
 ```
 
 ## Derive localized labels
