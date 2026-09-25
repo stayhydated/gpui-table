@@ -1,243 +1,85 @@
-# AGENTS.md
+# Working in gpui-table
 
-This is the working guide for contributors and coding agents in the
-`gpui-table` workspace. Use it to decide where a change belongs, which docs,
-examples, generated outputs, fixtures, and guidance must move with it, and
-which validation command proves the edited surface.
+Start with `crates/gpui-table` for application-facing API changes,
+`examples/README.md` for runnable examples, and `just --list` for local commands.
 
-Start here:
+## Where changes belong
 
-- `crates/gpui-table` for most application-facing API, facade, and feature-gate
-  work.
-- `crates/gpui-table-component` for direct control of the built-in filter
-  widgets or `TableStatusBar`.
-- `crates/gpui-table-prototyping-core` and `examples/prototyping` for
-  inventory-backed story or scaffold generation.
-- `book/src/SUMMARY.md` for user-guide routing and `web/src/lib.rs` for the
-  public catalog.
-- `just --list` for the maintained local command index.
+| Surface | Ownership |
+|---|---|
+| `crates/gpui-table` | Public facade, macro re-exports, and feature gates |
+| `crates/gpui-table-component` | Built-in filter widgets, adapters, reset controls, and `TableStatusBar` |
+| `crates/gpui-table-core` | UI-neutral typed filter values and matching semantics |
+| `crates/gpui-table-runtime` | GPUI row, cell, loading, filter-shape, and generated-filter contracts |
+| `crates/gpui-table-schema` | UI-neutral filter metadata and table-shape registry consumed by tooling |
+| `crates/gpui-table-derive` | Table, cell, filter, and MCP macro expansion and diagnostics |
+| `crates/gpui-table-mcp` | Public query contracts, schemas, registration, and server composition |
+| `crates/gpui-table-prototyping-core` | Syntax-tree generation from registered table metadata |
+| `examples/some-lib` | Canonical row models, localization, loading, and context-menu examples |
+| `examples/some-lib-tables` | Native and Wasm Storybook views that compose those rows and filters |
+| `examples/mcp-query` | Runnable stdio MCP query example |
+| `examples/prototyping` | Generator and checked-in table-story output |
+| `book/src`, `skills/` | User workflows and application-agent guidance |
+| `web/src/lib.rs`, `xtask` | Public catalog and book, demo, and Pages build orchestration |
 
-## Project Summary
+The default `cargo run` target is `some-lib-tables`. Its
+`examples/demo.rs` entry point discovers the same stories on native and Wasm
+targets. Built-in widget previews live in `crates/gpui-table-component/src/stories`.
 
-`gpui-table` is a Rust workspace for strongly typed GPUI tables. Its public
-surface combines derive macros, typed filter values, GPUI runtime helpers,
-UI-neutral registry metadata, MCP query integration, and prototyping/codegen
-helpers.
+## Keep related surfaces aligned
 
-## Quick Decision Flow
+- When derive syntax, feature gates, generated filter behavior, MCP queries,
+  localization, or another public contract changes, update the owning source
+  and affected rustdocs, root and crate READMEs, `book/src` chapters, examples,
+  and repository skills. Update `web/src/lib.rs` when its catalog description
+  changes and this guide when routing or validation changes.
+- Use `skills/use-gpui-table` for table composition guidance and
+  `skills/use-gpui-table-component-shapes` for adapter and custom-shape guidance.
+- When generated contracts change, check the facade, derive, runtime, schema,
+  and affected component or MCP crates together. Keep the corresponding
+  `crates/gpui-table/tests/ui` fixtures and
+  `crates/gpui-table/tests/snapshots` expectations aligned. Review `.stderr`
+  and snapshot diffs before accepting them.
+- When built-in filters or query values change, update their component stories
+  and affected `some-lib` row models and `some-lib-tables` views.
+- When Fluent behavior changes, update the affected `i18n.toml`, `i18n/*.ftl`,
+  localized examples, and user guidance together.
+- Keep internal contracts near their source, tests, fixtures, and generator
+  inputs. Use the book and skills for the application workflows they describe.
 
-Before editing, classify the change:
+## Generated output and build ownership
 
-1. Find the surface in the workspace map and use its audience label to decide
-   how much public explanation the change needs.
-2. Place documentation by content. User-facing workflows belong in READMEs,
-   `book/src`, examples, rustdocs, or in-repository `skills/*` guidance when
-   those surfaces already cover the workflow. Internal contracts belong near
-   the code, tests, snapshots, generated fixtures, or this routing guide.
-3. Sync public workflow changes. If derive syntax, generated filter behavior,
-   MCP query shape, registry metadata, feature flags, generated output,
-   localization, or recommended usage changes, update the owning source,
-   affected docs, examples, generated output, fixtures, and guidance together.
-4. Validate narrowly with the command that covers the edited crate, example,
-   docs surface, generated output, or fixture.
+Regenerate `examples/prototyping/output` with `cargo run -p prototyping` when
+inventory, code generation, table-shape metadata, `ComponentShapeUse`,
+`ColumnVariant`, `FilterVariant`, or the prototyping layout changes. Edit the
+owning metadata or generator instead of the generated files.
 
-## Audience Labels
+Build the published book, `llms.txt` files, GPUI demo, and catalog through
+`cargo xtask`. Their sources are `book/src`, `web/src`, and
+`examples/some-lib-tables`; the build writes into `web/public` and `web/dist`.
 
-- **User-facing**: normal entry points for application developers.
-- **Public integration**: crates meant for extensions, tooling, generated flows,
-  or deeper customization.
-- **Generated**: generated outputs or sources that own generated outputs.
-- **Validation**: tests, fixtures, snapshots, or CI surfaces that encode
-  expected behavior.
-- **Internal**: maintenance tooling and workspace plumbing.
+Linux setup has separate owners: `.cargo/config.toml` controls local environment
+settings, `.github/actions/install-linux-deps` installs GPUI system packages,
+and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
+`.github/workflows/gh-pages.yml`. Change the surface that owns the build requirement.
 
-## Synchronization Rules
+## Validate the edited surface
 
-When a substantive change modifies a public workflow, feature-flag story,
-derive syntax, generated filter behavior, MCP query contract, registry metadata
-shape, localization, or other user-visible API shape:
-
-1. Update the owning implementation and rustdocs when they describe the
-   affected contract.
-2. Update the root `README.md` and affected crate `README.md` files.
-3. Update `examples/README.md` and the relevant example crates when the
-   behavior is demonstrated there.
-4. Update `skills/use-gpui-table` or
-   `skills/use-gpui-table-component-shapes` when application-developer guidance
-   changes.
-5. Update matching `book/src` chapters and `web/src/lib.rs` when the public
-   guide or catalog description changes.
-6. Update this guide when it names the changed routing, ownership, validation,
-   or sync boundary.
-
-`examples/some-lib` and `examples/some-lib-tables` are the canonical
-end-to-end usage examples. Keep them aligned with root and crate README changes
-that affect the derive, filter, localization, context-menu, or storybook flows.
-
-`examples/prototyping/output` is generated by `cargo run -p prototyping`.
-Regenerate it instead of hand-editing it when inventory, codegen, table-shape
-metadata, `ComponentShapeUse`, `ColumnVariant`, `FilterVariant`, or the
-prototyping layout changes.
-
-When `fluent` behavior changes, update the affected `i18n.toml`, `i18n/*.ftl`,
-README, example, and generated-output surfaces.
-
-Linux build setup has separate owners: `.cargo/config.toml` controls local
-environment settings, `.github/workflows/ci.yml` owns CI jobs, and
-`.github/actions/install-linux-deps` owns Linux package installation for GPUI
-builds. `.github/workflows/gh-pages.yml` owns book, demo, and site deployment.
-Update the file that owns the changed build requirement.
-
-Build `web/public/book`, `web/public/llms*`, `web/public/gpui-demo`, and
-`web/dist` through `cargo xtask`; their sources are `book/src`, `web/src`, and
-`examples/some-lib-tables`.
-
-## Workspace Map
-
-### Main User-Facing Entry Points
-
-- `crates/gpui-table`
-  Audience: **User-facing**
-  Role: workspace facade, default entry point, and public feature-gate surface.
-  Re-exports core and runtime namespaces and, with `derive`, the proc macros.
-
-- `crates/gpui-table-component`
-  Audience: **User-facing**
-  Role: built-in GPUI filter widgets, adapters, `ResetFilters`, and
-  `TableStatusBar` for direct UI composition.
-
-### Public Integration Crates
-
-- `crates/gpui-table-core`
-  Audience: **Public integration**
-  Role: pure filter semantics, typed filter values, and feature-gated
-  conversion helpers.
-
-- `crates/gpui-table-runtime`
-  Audience: **Public integration**
-  Role: GPUI-facing row traits, default cell rendering, load-more support, and
-  the generated-filter runtime facade.
-
-- `crates/gpui-table-schema`
-  Audience: **Public integration**
-  Role: UI-neutral filter metadata and inventory-backed table-shape registry
-  types used by tooling and generated flows.
-
-- `crates/gpui-table-derive`
-  Audience: **Public integration**
-  Role: proc macros for `GpuiTable`, `Filterable`, `TableCell`,
-  `GpuiTableFilterShape`, `McpFilterShape`, `mcp_query`, and
-  `gpui_table_impl`.
-
-- `crates/gpui-table-mcp`
-  Audience: **Public integration**
-  Role: experimental MCP query registry, stdio serving, descriptors, schemas,
-  prompt templates, and JSON filter decoding for generated table filter values.
-
-- `crates/gpui-table-prototyping-core`
-  Audience: **Public integration**
-  Role: code-generation helpers that consume `GpuiTableShape` inventory
-  metadata to generate GPUI table stories and scaffolding.
-
-### Examples and Generated Surfaces
-
-- `examples/README.md`
-  Audience: **User-facing**
-  Role: canonical index of runnable examples and files to read first.
-
-- `examples/some-lib` and `examples/some-lib-tables`
-  Audience: **User-facing**
-  Role: shared domain types plus the native and WebAssembly Storybook gallery.
-  The `demo` example runs on either target and discovers the same table stories
-  as the native binary. `cargo run` from the workspace root launches
-  `examples/some-lib-tables`.
-
-- `crates/gpui-table-component` storybook
-  Audience: **User-facing**
-  Role: built-in filter and status-bar preview app. Run with
+- Choose the affected crate, example, or documentation check from `just --list`.
+  `just check` and `just clippy` exclude `some-lib` and `some-lib-tables`; use
+  direct Cargo commands when those examples need validation.
+- Run built-in widget previews with
   `cargo run -p gpui-table-component --bin story --features story`.
+- For book edits, run `cargo xtask build book` and
+  `cargo xtask build llms-txt`. For the nightly Wasm demo, use
+  `cargo xtask build gpui-demo`; for the catalog, use `cargo xtask build web`.
+  `just web-build` runs the complete publication pipeline.
+- `just test` runs workspace tests with all features. `just cov` measures all
+  targets and features except the prototyping generator, GUI application, and
+  publication tooling.
+- CI also checks formatting, Clippy, rustdocs, package contents, coverage,
+  Fluent resources, and unused dependencies. Read `.github/workflows/ci.yml`
+  when matching its full checks; local recipes intentionally cover different
+  scopes.
 
-- `examples/mcp-query`
-  Audience: **User-facing**
-  Role: stdio MCP proof-of-concept for querying in-memory rows with generated
-  filter arguments.
-
-- `examples/prototyping`
-  Audience: **Generated**
-  Role: inventory-driven generator that writes story modules into
-  `examples/prototyping/output`.
-
-### Validation Surfaces
-
-- `crates/gpui-table/tests/ui`
-  Audience: **Validation**
-  Role: `trybuild` coverage for derive diagnostics and feature-gated macro
-  behavior. Keep `.stderr` fixtures aligned with intentional diagnostic
-  changes.
-
-- `crates/gpui-table/tests/snapshots`
-  Audience: **Validation**
-  Role: `insta` snapshots for table-rendering structures. Review snapshot
-  diffs when generated table metadata changes.
-
-### Documentation, Demo, and Publishing
-
-- `book/src`
-  Audience: **User-facing**
-  Role: mdBook source for columns, filters, loading, localization, MCP, and
-  feature workflows.
-
-- `examples/some-lib-tables/examples/demo.rs`
-  Audience: **User-facing**
-  Role: native and nightly Trunk entry point for the full `some-lib-tables`
-  Storybook gallery.
-
-- `web`
-  Audience: **User-facing**
-  Role: Dioxus catalog for the book, GPUI demo, API docs, and source.
-
-- `xtask`
-  Audience: **Internal**
-  Role: book, `llms.txt`, GPUI demo, and Pages-site build orchestration.
-
-## Validation and Editing Rules
-
-- Run the narrowest command that proves the edited behavior for the affected
-  crate, docs surface, example, generated output, or fixture.
-- Use `just --list` first when looking for local recipes. Use CI-equivalent
-  direct `cargo` commands when matching CI matters or when a `justfile` recipe
-  excludes the edited example.
-- `just check` and `just clippy` exclude `some-lib` and `some-lib-tables`; use
-  direct `cargo` commands or example runs when those examples are the edited
-  surface.
-- `just cov` measures all targets and features for the eight publishable
-  library crates, the MCP query example, and the shared example library. It
-  excludes the prototyping generator, GUI demos, and publication tooling so the
-  report centers on testable library and integration contracts.
-- Use `cargo xtask build book` and `cargo xtask build llms-txt` for book
-  changes, `cargo xtask build gpui-demo` for the nightly Wasm demo, and
-  `cargo xtask build web` for the catalog. `just web-build` runs the complete
-  publication pipeline.
-- Match CI explicitly when needed: `.github/workflows/ci.yml` runs
-  `cargo fmt --check`, `cargo clippy --workspace --all-features`,
-  `cargo test --workspace --all-features`,
-  `cargo doc --workspace --all-features --no-deps --locked`,
-  `cargo package --workspace --list`, `cargo llvm-cov` with Cobertura output,
-  the es-fluent FTL action, and the `bnjbvr/cargo-machete` action.
-- For dependency changes, keep shared versions in the workspace root
-  `Cargo.toml`; member crates use `workspace = true` for workspace-managed
-  dependencies.
-- When generated code contracts change, keep `gpui-table`,
-  `gpui-table-derive`, `gpui-table-runtime`, `gpui-table-schema`, and affected
-  component or MCP crates aligned with matching README, rustdoc, example,
-  `trybuild`, and snapshot updates.
-- For intentional `trybuild` diagnostic changes, update the checked-in
-  `.stderr` fixtures under `crates/gpui-table/tests/ui`; generated artifacts
-  under ignored `crates/gpui-table/wip` are scratch output to review, not a
-  source surface.
-- If built-in filter behavior or query-value behavior changes, update
-  `crates/gpui-table-component` stories and affected example tables in
-  `examples/some-lib-tables`.
-- If validation cannot be run, state why and what remains unvalidated. Do not
-  claim a change works unless it was validated or the remaining risk is
-  explicitly documented.
+Report the commands actually run, their results, and any checks left unrun.

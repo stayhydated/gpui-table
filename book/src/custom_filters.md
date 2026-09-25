@@ -1,9 +1,8 @@
 # Filter components and custom shapes
 
-Choose the least custom filter path that models the field. Built-in shapes cover
-ordinary strings, facets, numeric ranges, and date ranges. Adapter shapes let
-domain value types reuse those widgets. Implement a new runtime shape only when
-the component or matching semantics are genuinely different.
+Use a built-in shape for supported strings, facets, numeric ranges, and date
+ranges. Adapter shapes let domain value types reuse those widgets. Implement a
+new runtime shape when the widget or matching semantics need to change.
 
 | Need | Use |
 |---|---|
@@ -114,9 +113,9 @@ filter category, construction, value reading, wrapping, reset, and field
 matching. Inactive filter values must match every row.
 
 Generated saved presets require the typed filter value to implement
-`gpui_table::FilterPresetValue`. Override `unwrap_value` and
-`set_silent` so applying a preset restores a non-default value without
-firing each component callback.
+`gpui_table::FilterPresetValue`. Override `unwrap_value` and `set_silent` so
+applying a preset restores the value without firing each component callback.
+The default `unwrap_value` panics; the default `set_silent` resets the component.
 
 For MCP tables, derive `gpui_table::McpFilterShape` when the raw value
 implements `McpToolValue`, or implement `McpFilterShape`

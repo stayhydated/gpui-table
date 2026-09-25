@@ -107,7 +107,7 @@ that codec for a new value type.
 Override `GpuiTableFilterShape::unwrap_value` and
 `set_silent` so `FilterEntities::apply_values(...)` can
 restore a complete snapshot without firing individual callbacks. The default
-implementation rejects non-default application and resets the component.
+`unwrap_value` panics; the default `set_silent` resets the component.
 
 ## Support MCP arguments
 

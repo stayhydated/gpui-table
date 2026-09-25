@@ -5,18 +5,28 @@ filter controls.
 
 ## Prerequisites
 
-Initialize `gpui-kit` during application startup. If the table uses the
-built-in filters from `gpui-table-component`, initialize their localization
-bridge after it:
+Use Rust 1.98 or later. Add the table crates alongside the application's
+`gpui-kit` dependency:
+
+```toml
+[dependencies]
+gpui-kit = "0.6.6"
+gpui-table = "0.7"
+gpui-table-component = "0.7"
+```
+
+Generated table code refers to `gpui_kit` directly, so keep it as a direct
+dependency using the version or source selected by the application. See
+[Features and integration crates](features.md) when a row uses numeric range
+filters, Fluent labels, SpacetimeDB values, or MCP.
+
+Initialize `gpui-kit` during application startup, then initialize localization
+for the built-in table filters:
 
 ```rust,ignore
 gpui_kit::component::init(cx);
 gpui_table_component::i18n::init(cx)?;
 ```
-
-Your crate must directly depend on `gpui`, `gpui-kit`, `gpui-table`, and
-`gpui-table-component`. See [Features and integration crates](features.md) when
-a row uses numeric range filters, Fluent labels, SpacetimeDB values, or MCP.
 
 ## Define the rows
 

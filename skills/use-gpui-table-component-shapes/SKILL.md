@@ -1,12 +1,10 @@
 ---
 name: use-gpui-table-component-shapes
 description: >-
-  Select, adapt, implement, or debug gpui-table filter component shapes. Use
-  whenever code involves #[gpui_table(filter(...))] compatibility,
-  TextFilterAdapter, NumberRangeFilterAdapter, DateRangeFilterAdapter,
-  GpuiTableFilterShape, GpuiTableFilterShapeFor, configured shape builders,
-  saved-preset support, custom MCP filter schemas or decoding, Koruma newtype
-  filters, or component-shape metadata consumed by table prototyping.
+  Adapt or implement gpui-table filter shapes for domain field types, custom
+  widgets, saved presets, or MCP arguments. Use for built-in adapters,
+  GpuiTableFilterShape, and field compatibility; ordinary table composition
+  belongs in use-gpui-table.
 ---
 
 # Use gpui-table component shapes
@@ -16,7 +14,7 @@ description: >-
 1. Identify the table field type, desired widget, component-facing raw value,
    typed matching value, and whether UI, presets, MCP, or inventory metadata are
    required.
-2. Choose the least custom option that satisfies those requirements.
+2. Select a built-in shape, adapter, or custom shape using the table below.
 3. Confirm the facade and component feature flags before writing trait
    implementations.
 4. Declare the shape explicitly in `#[gpui_table(filter(...))]` and

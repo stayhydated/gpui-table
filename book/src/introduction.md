@@ -12,17 +12,8 @@ This guide is for Rust application developers who already have a GPUI
 application, window, and view. It assumes familiarity with GPUI entities and
 render methods.
 
-Start with the facade and component crates:
-
-```toml
-[dependencies]
-gpui-table = "0.7"
-gpui-table-component = "0.7"
-```
-
-Keep `gpui` and `gpui-kit` as direct dependencies
-using the versions or source selected by your application. Generated table code
-refers to both crates by name, and applications render
+Use the `gpui-table` facade for derives and table contracts, and
+`gpui-table-component` for built-in filter widgets. Applications render
 `gpui_kit::component::table::DataTable` directly.
 
 ## Mental model
