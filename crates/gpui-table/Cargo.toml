@@ -52,7 +52,14 @@ serde_json = { workspace = true }
 [dev-dependencies]
 chrono = { workspace = true }
 gpui-kit = { workspace = true }
-gpui-table-component = { features = [ "mcp", "rust_decimal", "spacetimedb" ], workspace = true }
+# Path-only dev-dependency: cargo prunes versionless dev-dependencies when
+# packaging, avoiding a crates.io resolution failure while release-plz
+# publishes gpui-table before gpui-table-component.
+gpui-table-component = { default-features = false, features = [
+  "mcp",
+  "rust_decimal",
+  "spacetimedb",
+], path = "../gpui-table-component" }
 insta = { features = [ "yaml" ], workspace = true }
 koruma = { workspace = true }
 koruma-collection = { workspace = true }
