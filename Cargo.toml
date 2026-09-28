@@ -25,16 +25,16 @@ publish = true
 readme = "README.md"
 repository = "https://github.com/stayhydated/gpui-table"
 rust-version = "1.98"
-version = "0.7.1"
+version = "0.7.2"
 
 [workspace.dependencies]
 anyhow = "1.0"
 chrono = "0.4"
 clap = "4.6"
 console_error_panic_hook = "0.1"
-component-shape = "0.3.2"
-component-shape-codegen = "0.3.2"
-component-shape-mcp = "0.3.2"
+component-shape = "0.3.3"
+component-shape-codegen = "0.3.3"
+component-shape-mcp = "0.3.3"
 darling = "0.24"
 derive_more = "2.1"
 dioxus = { default-features = false, version = "0.7" }
@@ -44,17 +44,17 @@ es-fluent-build = "0.20.3"
 es-fluent-lang = "0.20.3"
 es-fluent-manager-embedded = "0.20.3"
 fake = "5.1"
-gpui-kit = "0.6.6"
-gpui-es-fluent = "0.2.2"
-gpui-storybook = "0.6.2"
-gpui-table = { path = "crates/gpui-table", version = "0.7.1" }
-gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.1" }
-gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.1" }
-gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.7.1" }
-gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.7.1" }
-gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.7.1" }
-gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.7.1" }
-gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.7.1" }
+gpui-kit = "0.7.0"
+gpui-es-fluent = "0.2.3"
+gpui-storybook = "0.6.3"
+gpui-table = { path = "crates/gpui-table", version = "0.7.2" }
+gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.2" }
+gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.2" }
+gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.7.2" }
+gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.7.2" }
+gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.7.2" }
+gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.7.2" }
+gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.7.2" }
 heck = "0.5.0"
 icu = "2.3"
 insta = "1.48"
@@ -71,15 +71,15 @@ proc-macro2 = "1.0"
 quote = "1.0"
 regex = "1.13"
 reqwest = "0.13"
-reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.6" }
-rmcp = "3.4.1"
+reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.7" }
+rmcp = "3.5.0"
 rust_decimal = "1.43"
 serde = "1.0"
 serde_json = "1.0"
 spacetimedb-lib = "2.10"
-stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "14df45a56f8fa847f816cf297c7b36dffb77ea1e" }
-stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "14df45a56f8fa847f816cf297c7b36dffb77ea1e" }
-stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "14df45a56f8fa847f816cf297c7b36dffb77ea1e" }
+stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "125e20e910e17d23a874399f6b88084830ac679d" }
+stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "125e20e910e17d23a874399f6b88084830ac679d" }
+stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "125e20e910e17d23a874399f6b88084830ac679d" }
 strum = "0.28"
 syn = "3.0"
 thiserror = "2.0"
