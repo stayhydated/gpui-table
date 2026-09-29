@@ -4950,9 +4950,9 @@ checksum = "829258540ea51bb9ea4a71686beffe5c99586901ba9f39944d06e4a180ab63fe"
 
 [[package]]
 name = "gpui-storybook"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9d2454b5376b039867269157a099949eeb5c41b1782915e82dc84320affa6790"
+checksum = "c7034d4c769397ae9de3b9b2b83705f2cddf265738a8c78eeae19c7d8bb9bd1a"
 dependencies = [
  "gpui-es-fluent",
  "gpui-kit",
@@ -4970,9 +4970,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-core"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6eb28ab00c905f35274f0a0d5c62b7d3217d47b04595d03b346dc16976f88c14"
+checksum = "a06961764df73f3a8b085026a6c14046dd6bb96f5d65725bb2b6476b7e743e06"
 dependencies = [
  "anyhow",
  "base64 0.23.1",
@@ -5001,9 +5001,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-macros"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1689e2f680da03c958c2a6c81bf0e167064f0fe87d3e7f924a2e608da67d7388"
+checksum = "cce72b82e30d08efb6599dbf88c8c472fdba485e150bbfbaa91abcaf566d9926"
 dependencies = [
  "darling 0.24.1",
  "heck 0.5.0",
@@ -5014,9 +5014,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-preferences"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1ba039aa987fea98646b5822a0d9c86997362befb92d5ca039cdc1327311dec5"
+checksum = "a083707f1c9e67efec2a6e3f4ee69964a285c802abdfcf662ecedb78327ebd03"
 dependencies = [
  "fluent-langneg 0.14.2",
  "schemars",
@@ -5033,9 +5033,9 @@ dependencies = [
 
 [[package]]
 name = "gpui-storybook-toml"
-version = "0.6.3"
+version = "0.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a02bc446ca448966cf7d10eb5c8d90c9830b70c04413a9704f9d93747a32d1e8"
+checksum = "4827aeb26da5c41eb5a5d751a367248734f6c62d4f209a9826400ce343554f6c"
 dependencies = [
  "serde",
  "toml 1.1.6+spec-1.1.0",
@@ -5043,7 +5043,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "gpui-kit",
@@ -5066,7 +5066,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-component"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "component-shape",
@@ -5092,7 +5092,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-core"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "derive_more 2.1.1",
@@ -5107,7 +5107,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-derive"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "component-shape",
  "component-shape-codegen",
@@ -5122,7 +5122,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-mcp"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "component-shape",
  "component-shape-mcp",
@@ -5138,7 +5138,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-prototyping-core"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "component-shape-codegen",
  "gpui-table-schema",
@@ -5151,7 +5151,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-runtime"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "component-shape",
@@ -5166,7 +5166,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-table-schema"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "component-shape",
  "inventory",
@@ -7024,7 +7024,7 @@ dependencies = [
 
 [[package]]
 name = "mcp-query"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "gpui-kit",
@@ -8740,7 +8740,7 @@ dependencies = [
 
 [[package]]
 name = "prototyping"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "gpui-table",
@@ -10244,7 +10244,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "chrono",
  "es-fluent",
@@ -10264,7 +10264,7 @@ dependencies = [
 
 [[package]]
 name = "some-lib-tables"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "console_error_panic_hook",
  "env_logger",
@@ -12017,7 +12017,7 @@ dependencies = [
 
 [[package]]
 name = "web"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "dioxus",
  "stayhydated-dioxus",
@@ -13282,7 +13282,7 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 
 [[package]]
 name = "xtask"
-version = "0.7.2"
+version = "0.7.3"
 dependencies = [
  "anyhow",
  "clap",

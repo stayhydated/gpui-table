@@ -25,7 +25,7 @@ publish = true
 readme = "README.md"
 repository = "https://github.com/stayhydated/gpui-table"
 rust-version = "1.98"
-version = "0.7.2"
+version = "0.7.3"
 
 [workspace.dependencies]
 anyhow = "1.0"
@@ -46,15 +46,15 @@ es-fluent-manager-embedded = "0.20.3"
 fake = "5.1"
 gpui-kit = "0.7.0"
 gpui-es-fluent = "0.2.3"
-gpui-storybook = "0.6.3"
-gpui-table = { path = "crates/gpui-table", version = "0.7.2" }
-gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.2" }
-gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.2" }
-gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.7.2" }
-gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.7.2" }
-gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.7.2" }
-gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.7.2" }
-gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.7.2" }
+gpui-storybook = "0.6.4"
+gpui-table = { path = "crates/gpui-table", version = "0.7.3" }
+gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.7.3" }
+gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.7.3" }
+gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.7.3" }
+gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.7.3" }
+gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", version = "0.7.3" }
+gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.7.3" }
+gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.7.3" }
 heck = "0.5.0"
 icu = "2.3"
 insta = "1.48"
