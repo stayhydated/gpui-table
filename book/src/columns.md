@@ -44,6 +44,15 @@ Common field options are:
 `ascending` and `descending` cannot be combined. Use `sortable` with either
 initial direction so the generated delegate also handles later sort changes.
 
+## Date and time cells
+
+Built-in Chrono cells use localized date and time formatting through Jiff and ICU.
+Timezone-aware values normally render in the system timezone. If Jiff cannot
+represent a value, such as a date outside its year range or a leap second, the
+cell uses the original Chrono `Display` representation, including its original
+offset. This preserves the value without clamping or normalizing it. Date filter
+labels use the same fallback for dates outside Jiff's range.
+
 ## Render application value objects
 
 `#[derive(TableCell)]` delegates a single-field wrapper to the inner field's

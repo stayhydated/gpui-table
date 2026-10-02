@@ -44,13 +44,13 @@ mod date_display {
             .unwrap_or_else(|error| panic!("failed to create ICU date formatter: {error:?}"))
     }
 
-    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> civil::Date {
-        let month = i8::try_from(value.month()).expect("chrono months fit jiff values");
-        let day = i8::try_from(value.day()).expect("chrono days fit jiff values");
-        let year = i16::try_from(value.year()).unwrap_or_else(|error| {
-            panic!("chrono date `{value}` is outside jiff's year range: {error}")
-        });
-        civil::Date::new(year, month, day).expect("valid chrono date should remain valid in jiff")
+    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
+        civil::Date::new(
+            i16::try_from(value.year()).ok()?,
+            i8::try_from(value.month()).ok()?,
+            i8::try_from(value.day()).ok()?,
+        )
+        .ok()
     }
 
     fn to_icu_date(value: civil::Date) -> Date<Iso> {
@@ -62,7 +62,10 @@ mod date_display {
     }
 
     pub(super) fn format_date(value: NaiveDate) -> String {
-        let date = to_icu_date(chrono_naive_date_to_jiff(&value));
+        let Some(date) = chrono_naive_date_to_jiff(&value) else {
+            return value.to_string();
+        };
+        let date = to_icu_date(date);
         date_formatter().format(&date).to_string()
     }
 }
@@ -420,6 +423,18 @@ mod tests {
     fn formats_dates_with_icu4x() {
         let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
         assert_eq!(format_date(date), "Jan 31, 2026");
+    }
+
+    #[test]
+    fn dates_outside_jiff_range_preserve_original_display() {
+        for date in [
+            NaiveDate::MIN,
+            NaiveDate::MAX,
+            NaiveDate::from_ymd_opt(-10_000, 1, 1).unwrap(),
+            NaiveDate::from_ymd_opt(10_000, 12, 31).unwrap(),
+        ] {
+            assert_eq!(format_date(date), date.to_string());
+        }
     }
 
     #[gpui_kit::test]
