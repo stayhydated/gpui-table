@@ -40,7 +40,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.11
@@ -54,13 +54,16 @@ jobs:
       - name: Run tests
         run: cargo test --workspace --all-features
 
+      - name: Check default-feature diagnostics
+        run: cargo test -p gpui-table --test ui_compile_fail --locked
+
   fmt:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: rustfmt
 
@@ -73,7 +76,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: clippy
 
@@ -94,7 +97,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.11
@@ -113,7 +116,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.11
@@ -141,7 +144,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
         with:
           components: rust-analyzer, rust-src
 
@@ -197,7 +200,7 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@1.99.0
 
       - name: Setup sccache
         uses: mozilla-actions/sccache-action@v0.0.11
