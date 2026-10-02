@@ -11,11 +11,10 @@ from Rust row types for GPUI application developers. It generates column
 metadata and delegates, with opt-in typed filters, incremental loading,
 localization, registry metadata, and MCP query tools.
 
-Requires Rust 1.99 or newer. The workspace and CI use Rust 1.99.0.
+Requires Rust 1.99 or newer.
 
 Chrono cells and date filters preserve out-of-range dates through their original
-`Display` representation; cells also preserve leap seconds. See the
-[date rendering contract](book/src/columns.md#date-and-time-cells).
+`Display` representation; cells also preserve leap seconds.
 
 ## Crates
 
