@@ -76,6 +76,18 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   direct Cargo commands when those examples need validation.
 - For cell rendering or filter widgets, start with
   `cargo test -p gpui-table-runtime -p gpui-table-component --all-features --locked`.
+- Pure filter properties live in `gpui-table-core/tests/filter_properties.rs`;
+  pagination properties live in `gpui-table-mcp/tests/query_properties.rs`.
+  Run `cargo test -p gpui-table-core -p gpui-table-mcp --all-features --locked`.
+  Keep generators bounded and retain minimized failures as regression tests or
+  reviewed proptest regression files.
+- Compile the text-filter benchmark with
+  `cargo bench -p gpui-table-core --bench text_filter --no-default-features --no-run --locked`.
+  Smoke-test every workload with
+  `cargo bench -p gpui-table-core --bench text_filter --no-default-features --locked -- --test`.
+  For measurements, use a quiet machine and `-- --save-baseline <name>`;
+  compare equivalent workloads with `-- --baseline <name>`. Benchmarks are
+  manual performance evidence; shared CI timing is not a pass/fail gate.
 - For derive diagnostics, run
   `cargo test -p gpui-table --test ui_compile_fail --locked` and repeat with
   `--all-features`. The fixtures select different expectations by feature set,
