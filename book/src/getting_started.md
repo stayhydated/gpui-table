@@ -5,7 +5,7 @@ filter controls.
 
 ## Prerequisites
 
-Use Rust 1.98 or later. Add the table crates alongside the application's
+Use Rust 1.99 or later. Add the table crates alongside the application's
 `gpui-kit` dependency:
 
 ```toml

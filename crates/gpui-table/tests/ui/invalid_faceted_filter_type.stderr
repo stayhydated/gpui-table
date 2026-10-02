@@ -16,7 +16,7 @@ help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
   | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
-  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<T>>`
+  | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<T>>`
 ...
   | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
   | | where
@@ -26,7 +26,7 @@ help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
   | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
-  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<Vec<T>>>`
+  | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<Vec<T>>>`
 note: required by a bound in `__gpui_table_assert_name_filter_shape_field_support`
  --> tests/ui/invalid_faceted_filter_type.rs:8:25
   |
@@ -51,7 +51,7 @@ help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
   | / impl<T> GpuiTableFilterShapeFor<Option<T>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
-  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<T>>`
+  | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<T>>`
 ...
   | / impl<T> GpuiTableFilterShapeFor<Vec<T>> for FacetedFilter<T>
   | | where
@@ -61,4 +61,4 @@ help: `FacetedFilter<T>` implements trait `GpuiTableFilterShapeFor<Field>`
   | / impl<T> GpuiTableFilterShapeFor<Option<Vec<T>>> for FacetedFilter<T>
   | | where
   | |     T: gpui_table_core::filter::Filterable,
-  | |___________________________________________^ `GpuiTableFilterShapeFor<Option<Vec<T>>>`
+  | |___________________________________________^ `GpuiTableFilterShapeFor<std::option::Option<Vec<T>>>`
