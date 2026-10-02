@@ -58,6 +58,10 @@ jobs:
       - name: Check default-feature diagnostics
         run: cargo test -p gpui-table --test ui_compile_fail --locked
 
+      - name: Smoke-test text-filter benchmark
+        if: runner.os == 'Linux'
+        run: cargo bench -p gpui-table-core --bench text_filter --no-default-features --locked -- --test
+
   fmt:
     runs-on: ubuntu-latest
 

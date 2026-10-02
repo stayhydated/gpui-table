@@ -42,6 +42,12 @@ targets. Built-in widget previews live in `crates/gpui-table-component/src/stori
   and snapshot diffs before accepting them.
 - When built-in filters or query values change, update their component stories
   and affected `some-lib` row models and `some-lib-tables` views.
+- Keep Chrono conversion behavior aligned between
+  `crates/gpui-table-runtime/src/cell.rs` and
+  `crates/gpui-table-component/src/date_range_filter.rs`. Values Jiff cannot
+  represent retain Chrono's original `Display` output; cell fallback also preserves leap seconds
+  and the original timezone offset. Keep the boundary tests and
+  `book/src/columns.md` aligned with this contract.
 - When Fluent behavior changes, update the affected `i18n.toml`, `i18n/*.ftl`,
   localized examples, and user guidance together.
 - Keep internal contracts near their source, tests, fixtures, and generator
@@ -68,6 +74,26 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
 - Choose the affected crate, example, or documentation check from `just --list`.
   `just check` and `just clippy` exclude `some-lib` and `some-lib-tables`; use
   direct Cargo commands when those examples need validation.
+- For cell rendering or filter widgets, start with
+  `cargo test -p gpui-table-runtime -p gpui-table-component --all-features --locked`.
+- Pure filter properties live in `gpui-table-core/tests/filter_properties.rs`;
+  pagination properties live in `gpui-table-mcp/tests/query_properties.rs`.
+  Run `cargo test -p gpui-table-core -p gpui-table-mcp --all-features --locked`.
+  Keep generators bounded and retain minimized failures as regression tests or
+  reviewed proptest regression files.
+- Compile the text-filter benchmark with
+  `cargo bench -p gpui-table-core --bench text_filter --no-default-features --no-run --locked`.
+  Smoke-test every workload with
+  `cargo bench -p gpui-table-core --bench text_filter --no-default-features --locked -- --test`.
+  For measurements, use a quiet machine and `-- --save-baseline <name>`;
+  compare equivalent workloads with `-- --baseline <name>`. Benchmarks are
+  manual performance evidence; shared CI timing is not a pass/fail gate.
+- For derive diagnostics, run
+  `cargo test -p gpui-table --test ui_compile_fail --locked` and repeat with
+  `--all-features`. The fixtures select different expectations by feature set,
+  so one configuration does not cover both paths.
+- README Rust examples need separate compilation checks against the owning
+  crates; `cargo doc` renders rustdoc and does not test those fences.
 - Run built-in widget previews with
   `cargo run -p gpui-table-component --bin story --features story`.
 - For book edits, run `cargo xtask build book` and
