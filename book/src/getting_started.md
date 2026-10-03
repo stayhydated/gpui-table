@@ -10,9 +10,9 @@ Use Rust 1.99 or later. Add the table crates alongside the application's
 
 ```toml
 [dependencies]
-gpui-kit = "0.6.6"
-gpui-table = "0.7"
-gpui-table-component = "0.7"
+gpui-kit = "0.7.0"
+gpui-table = "0.8"
+gpui-table-component = "0.8"
 ```
 
 Generated table code refers to `gpui_kit` directly, so keep it as a direct

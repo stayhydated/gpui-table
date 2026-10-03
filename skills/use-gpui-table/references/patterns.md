@@ -6,8 +6,8 @@ Use only the section needed for the current application task.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.7", features = ["rust_decimal"] }
-gpui-table-component = "0.7"
+gpui-table = { version = "0.8", features = ["rust_decimal"] }
+gpui-table-component = "0.8"
 ```
 
 Keep `gpui-kit` as a direct dependency using the application's existing source.
