@@ -71,6 +71,9 @@ Declare every filter with an explicit shape or configured shape expression.
 Use `#[gpui_table(filters)]` for rendered filters, or
 `#[gpui_table(mcp)]` when the filters exist only as MCP arguments.
 
+The generated table-wired filter builders retain weak handles. Keep the returned
+filter collection in the owning view; queued callbacks ignore a closed table.
+
 Keep loader flags coherent: set `loading` before starting work, clear
 it on completion, and set `eof` only when no later page exists.
 Initialize `gpui_table_component::i18n` before rendering localized
