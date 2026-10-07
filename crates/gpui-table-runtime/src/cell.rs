@@ -397,6 +397,13 @@ impl TableCell for jiff::civil::Time {
     }
 }
 
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb_lib::TimeDuration {
+    fn draw(&self, _: &mut Window, _: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::{DisplayCell, FormattedCell};
@@ -531,12 +538,5 @@ mod tests {
             format_chrono_datetime(&zoned),
             "2016-12-31 23:59:60.500 UTC"
         );
-    }
-}
-
-#[cfg(feature = "spacetimedb")]
-impl TableCell for spacetimedb_lib::TimeDuration {
-    fn draw(&self, _: &mut Window, _: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
     }
 }
