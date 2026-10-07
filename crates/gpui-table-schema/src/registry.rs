@@ -143,7 +143,12 @@ impl RegistryFilterType {
 
 /// Metadata for a single column in a table.
 #[derive(Debug)]
+#[non_exhaustive]
 pub struct ColumnVariant {
+    /// Stable public column key, independent of the Rust field name.
+    pub key: &'static str,
+    /// Whether ordering uses a caller-provided calculated key.
+    pub calculated: bool,
     pub field_name: &'static str,
     pub field_type: RustType,
     pub title: &'static str,
@@ -153,6 +158,15 @@ pub struct ColumnVariant {
 }
 
 impl ColumnVariant {
+    pub const fn with_key(mut self, key: &'static str) -> Self {
+        self.key = key;
+        self
+    }
+    pub const fn with_calculated(mut self, calculated: bool) -> Self {
+        self.calculated = calculated;
+        self
+    }
+
     pub const fn new(
         field_name: &'static str,
         field_type: RustType,
@@ -162,6 +176,8 @@ impl ColumnVariant {
         fixed: ColumnFixed,
     ) -> Self {
         Self {
+            key: field_name,
+            calculated: false,
             field_name,
             field_type,
             title,

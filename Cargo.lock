@@ -5214,6 +5214,7 @@ dependencies = [
  "gpui-table-schema",
  "proptest",
  "rust_decimal",
+ "serde",
  "spacetimedb-lib",
  "thiserror 2.0.21",
 ]
@@ -5225,6 +5226,7 @@ dependencies = [
  "component-shape",
  "component-shape-codegen",
  "darling 0.24.1",
+ "gpui-table-core",
  "heck 0.5.0",
  "koruma-derive-core",
  "proc-macro-crate",

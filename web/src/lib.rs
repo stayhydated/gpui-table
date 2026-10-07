@@ -3,7 +3,7 @@ use stayhydated_dioxus::{Project, ProjectSite, StayhydatedEmbeddedDemoProjectApp
 
 const PROJECT: Project = Project::new(
     "gpui-table",
-    "Derive typed GPUI tables, filters, and query contracts from row models.",
+    "Derive typed GPUI tables, filters, ordered sorting, and query contracts from row models.",
 )
 .with_skill_command("npx skills add stayhydated/gpui-table");
 const SITE_URL: &str = "https://stayhydated.github.io/gpui-table/";

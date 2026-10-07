@@ -40,9 +40,11 @@ Common field options are:
 | `text_right` | Right-aligns cell text |
 | `resizable = false` or `movable = false` | Disables that interaction |
 | `style = path::to_fn` | Replaces the default renderer for this field |
+| `sort_key = path::to_fn` | Supplies a typed optional calculated ordering key |
 
-`ascending` and `descending` cannot be combined. Use `sortable` with either
-initial direction so the generated delegate also handles later sort changes.
+`ascending` and `descending` cannot be combined. Initial directions also enable sorting. See
+[Order rows and calculated keys](ordering.md) for multiple keys, stable row
+identity, null placement and calculated keys.
 
 ## Date and time cells
 

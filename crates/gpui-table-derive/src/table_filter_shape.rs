@@ -503,7 +503,7 @@ fn validate_unique_fields(fields: &[Type]) -> Result<()> {
 
 fn resolve_crate_path(package_name: &str, fallback: &str) -> Path {
     let path = match crate_name(package_name) {
-        Ok(FoundCrate::Itself) => "crate".to_string(),
+        Ok(FoundCrate::Itself) => fallback.to_string(),
         Ok(FoundCrate::Name(name)) => format!("::{name}"),
         Err(_) => fallback.to_string(),
     };

@@ -8,6 +8,9 @@
 
 use std::{collections::BTreeSet, fmt, future::Future, marker::PhantomData, pin::Pin, sync::Arc};
 
+pub use gpui_table_core::sort::{
+    NullPlacement, SortClause, SortDirection, SortError, SortOrder, SortableRow,
+};
 pub use gpui_table_runtime::shape::ComponentShapeMetadata;
 use gpui_table_runtime::shape::GpuiTableFilterShape;
 use gpui_table_schema::registry::{RegistryFilterType, RustPath, RustType};

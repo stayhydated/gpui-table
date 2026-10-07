@@ -533,3 +533,10 @@ mod tests {
         );
     }
 }
+
+#[cfg(feature = "spacetimedb")]
+impl TableCell for spacetimedb_lib::TimeDuration {
+    fn draw(&self, _: &mut Window, _: &mut App) -> AnyElement {
+        self.to_string().into_any_element()
+    }
+}

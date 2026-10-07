@@ -51,7 +51,7 @@ serde_json = { workspace = true }
 
 [dev-dependencies]
 chrono = { workspace = true }
-gpui-kit = { workspace = true }
+gpui-kit = { features = [ "test-support" ], workspace = true }
 # Path-only dev-dependency: cargo prunes versionless dev-dependencies when
 # packaging, avoiding a crates.io resolution failure while release-plz
 # publishes gpui-table before gpui-table-component.
@@ -69,3 +69,7 @@ trybuild = { workspace = true }
 
 [lints]
 workspace = true
+
+[[example]]
+name = "ordered_sort"
+required-features = [ "mcp", "rust_decimal", "spacetimedb" ]

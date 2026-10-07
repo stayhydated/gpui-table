@@ -1,12 +1,16 @@
 use super::*;
 
-pub(super) fn input_schema_for_filters(filters: &[McpTableFilter]) -> McpSchema {
+pub(super) fn input_schema_for_filters(
+    filters: &[McpTableFilter],
+    sort_columns: &[&str],
+) -> McpSchema {
     let mut properties = McpSchemaProperties::new();
 
     for filter in filters {
         properties.insert(filter.name().to_string(), schema_for_filter(*filter));
     }
 
+    properties.insert("sort".to_string(), sort_order_input_schema(sort_columns));
     properties.insert(
         "limit".to_string(),
         McpSchema::integer().with_minimum(0_u64),
@@ -70,4 +74,30 @@ where
     Row: McpJsonSchema,
 {
     table_query_output_schema(Some(Row::json_schema()))
+}
+
+/// Schema for ordered clauses accepted by this table's query handler.
+pub fn sort_order_input_schema(columns: &[&str]) -> McpSchema {
+    let column = if columns.is_empty() {
+        McpSchema::string()
+    } else {
+        McpSchema::string().with_enum_values(columns.iter().copied())
+    };
+    let mut properties = McpSchemaProperties::new();
+    properties.insert("column".into(), column);
+    properties.insert(
+        "direction".into(),
+        McpSchema::string().with_enum_values(["ascending", "descending"]),
+    );
+    properties.insert(
+        "nulls".into(),
+        McpSchema::string().with_enum_values(["first", "last"]),
+    );
+    McpSchema::array(object_schema(properties, ["column", "direction"])).with_max_items(
+        if columns.is_empty() {
+            0
+        } else {
+            gpui_table_core::sort::MAX_SORT_CLAUSES
+        },
+    )
 }

@@ -4,3 +4,5 @@ mod number_range_filter_story;
 mod reset_filters_story;
 mod table_status_bar_story;
 mod text_filter_story;
+
+mod sort_editor_story;

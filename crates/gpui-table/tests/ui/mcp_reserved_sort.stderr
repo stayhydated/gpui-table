@@ -1,0 +1,5 @@
+error: MCP table filters cannot be named `limit`, `offset` or `sort`; those argument names are reserved for query controls
+ --> tests/ui/mcp_reserved_sort.rs:6:5
+  |
+6 |     sort: String,
+  |     ^^^^

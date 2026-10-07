@@ -12,7 +12,8 @@ Most applications use the `mcp` feature on `gpui-table` and
 `gpui-table-component`.
 
 Use this crate directly when implementing a custom server or lower-level table
-registration. Query execution remains application-owned.
+registration. Queries carry validated ordered sort clauses. Local sources order all matches
+before pagination; backend execution remains application-owned.
 
 `gpui_table::mcp::tool_registry()?` returns the inventory-discovered MCP
 definitions and handlers for hosts that assemble the registry independently.

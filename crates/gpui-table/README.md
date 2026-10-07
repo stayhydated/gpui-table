@@ -4,7 +4,7 @@
 [![crates.io: gpui-table][crate-badge]][crate]
 
 `gpui-table` is the application-facing facade for strongly typed
-GPUI tables. It re-exports the table derives, core filter semantics, runtime
+GPUI tables. It re-exports the table derives, core filter and ordering semantics, runtime
 traits, schema types, and optional MCP integration. Built-in filter widgets live
 in `gpui-table-component`.
 

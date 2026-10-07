@@ -150,6 +150,7 @@ mod tests {
                         "gpui-table-component-ResetFiltersStory",
                         "gpui-table-component-TableStatusBarStory",
                         "gpui-table-component-TextFilterStory",
+                        "gpui-table-component-SortEditorStory",
                     ]
                 );
 

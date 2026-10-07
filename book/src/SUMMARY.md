@@ -3,6 +3,7 @@
 - [Introduction](introduction.md)
 - [Getting started](getting_started.md)
 - [Columns and rows](columns.md)
+- [Order rows and calculated keys](ordering.md)
 - [Typed filters](filters.md)
 - [Filter components and custom shapes](custom_filters.md)
 - [Loading and custom cells](loading.md)

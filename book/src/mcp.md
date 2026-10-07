@@ -1,7 +1,7 @@
 # MCP query tools
 
 The experimental `mcp` feature exposes application-owned rows through
-typed MCP query tools. Generated code validates and decodes filter and
+typed MCP query tools. Generated code validates and decodes filter, ordering and
 pagination arguments; the application still owns data access, authorization,
 filter execution, and totals.
 
@@ -49,7 +49,7 @@ fn main() -> gpui_table::mcp::ServeStdioResult {
 it does not also need struct-level `filters`. A zero-argument
 `Vec<Row>` or `Result<Vec<Row>, E>` handler is called for
 each query. The generated tool accepts the declared filter field names plus
-optional `limit` and `offset`.
+optional `sort`, `limit` and `offset`.
 
 Rows must implement `serde::Serialize`. The `row_schema`
 option additionally requires `McpJsonSchema` and publishes the
@@ -74,7 +74,10 @@ async fn rows(
 The backend must apply the decoded query and return the total number of matching
 rows with the requested page. Use `query.filter_rows(rows)` instead
 when the application supplies an in-memory collection and wants generated
-filtering, offset, and limit.
+filtering, ordering, offset and limit. This returns
+`Result<TableQueryResult<Row>, SortError>`. The backend must execute
+`query.ordering` over all matches before pagination and use a cursor consistent
+with that order. See [Order rows and calculated keys](ordering.md).
 
 ## Describe the tool
 
@@ -166,3 +169,27 @@ The example exposes `mcp_query_issues` and returns `rows`,
 fails, check for duplicate tool names. If a built-in filter shape fails its MCP
 trait bound, enable the component crate's `mcp` feature in addition
 to the facade feature.
+
+## Send ordered clauses
+
+```json
+{
+  "sort": [
+    { "column": "category_key", "direction": "ascending" },
+    { "column": "score", "direction": "descending", "nulls": "last" }
+  ],
+  "offset": 20,
+  "limit": 10
+}
+```
+
+The schema enumerates sortable column keys. Unknown, unsortable, duplicate or
+malformed clauses fail before the query handler runs. An empty order retains
+source order. Local row sources filter, sort all matches, then page; custom
+backends receive the same validated order and own its execution. Query a
+calculated key only when that backend implements its declared semantics.
+
+Construct manual queries with `TableQuery::new(filters, limit, offset)` and
+`with_ordering(ordering)`. Manual MCP row implementations also implement the
+UI-neutral `SortableRow` contract and publish their sortable keys on the
+descriptor with `with_sort_columns(...)`.
