@@ -333,6 +333,7 @@ pub(super) fn generate_delegate(
             ordering: gpui_table::sort::SortOrder,
             allowed_sort_columns: Option<Vec<String>>,
             resolved_sort_columns: gpui_table::sort::ResolvedSortColumns<#struct_name>,
+            resolved_table_columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>,
             sort_error: std::cell::RefCell<Option<gpui_table::sort::SortError>>,
             #filter_delegate_fields
         }
@@ -352,6 +353,7 @@ pub(super) fn generate_delegate(
                     ordering: gpui_table::sort::SortOrder::new(vec![#(#initial_sort),*]).expect("validated initial column order"),
                     allowed_sort_columns: None,
                     resolved_sort_columns: Default::default(),
+                    resolved_table_columns: Vec::new(),
                     sort_error: std::cell::RefCell::new(None),
                     #filter_delegate_init
                 }
@@ -409,6 +411,9 @@ pub(super) fn generate_delegate(
                 &mut self,
                 columns: gpui_table::sort::ResolvedSortColumns<#struct_name>,
             ) -> Result<(), gpui_table::sort::SortError> {
+                for presentation in &self.resolved_table_columns {
+                    columns.validate(&gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(presentation.column().key.to_string(), gpui_table::sort::SortDirection::Ascending)])?)?;
+                }
                 if let Some(allowed) = &self.allowed_sort_columns {
                     for key in allowed {
                         columns.validate(&gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(key, gpui_table::sort::SortDirection::Ascending)])?)?;
@@ -424,6 +429,23 @@ pub(super) fn generate_delegate(
             /// Current executable source-owned additions to native row keys.
             pub fn resolved_sort_columns(&self) -> &gpui_table::sort::ResolvedSortColumns<#struct_name> { &self.resolved_sort_columns }
 
+            /// Append presentation only for executable resolved keys, without shadowing native columns.
+            pub fn set_resolved_table_columns(&mut self, columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>) -> Result<(), gpui_table::sort::SortError> {
+                let mut keys = std::collections::BTreeSet::new();
+                for column in &columns {
+                    let key = column.column().key.as_ref();
+                    if self.columns.iter().any(|native| native.key.as_ref() == key) || !keys.insert(key.to_owned()) {
+                        return Err(gpui_table::sort::SortError::DuplicateColumn(key.to_owned()));
+                    }
+                    if !self.resolved_sort_columns.keys().any(|resolved| resolved == key) {
+                        return Err(gpui_table::sort::SortError::UnsupportedColumn(key.to_owned()));
+                    }
+                }
+                self.resolved_table_columns = columns;
+                Ok(())
+            }
+            pub fn resolved_table_columns(&self) -> &[gpui_table::runtime::ResolvedTableColumn<#struct_name>] { &self.resolved_table_columns }
+
             /// A refreshed row may invalidate a previously valid calculated key.
             pub fn sort_error(&self) -> Option<gpui_table::sort::SortError> {
                 self.ensure_filter_cache();
@@ -437,10 +459,14 @@ pub(super) fn generate_delegate(
                 #delegate_name::set_resolved_sort_columns(self, columns)
             }
         }
+        impl gpui_table::runtime::ResolvedTableDelegate<#struct_name> for #delegate_name {
+            fn resolved_table_columns(&self) -> &[gpui_table::runtime::ResolvedTableColumn<#struct_name>] { #delegate_name::resolved_table_columns(self) }
+            fn set_resolved_table_columns(&mut self, columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>) -> Result<(), gpui_table::sort::SortError> { #delegate_name::set_resolved_table_columns(self, columns) }
+        }
 
         impl gpui_kit::component::table::TableDelegate for #delegate_name {
             fn columns_count(&self, _: &gpui_kit::App) -> usize {
-                self.columns.len()
+                self.columns.len() + self.resolved_table_columns.len()
             }
 
             #rows_count_impl
@@ -449,6 +475,7 @@ pub(super) fn generate_delegate(
                 let mut column = self.columns
                     .get(col_ix)
                     .cloned()
+                    .or_else(|| self.resolved_table_columns.get(col_ix.saturating_sub(self.columns.len())).map(|column| column.column().clone()))
                     .expect("Invalid column index");
                 if let Some(fresh_column) = <#struct_name as gpui_table::TableRowMeta>::table_columns()
                     .into_iter()
@@ -479,6 +506,9 @@ pub(super) fn generate_delegate(
             ) -> impl gpui_kit::IntoElement {
                 use gpui_table::runtime::TableRowStyle;
                 #render_row_index_map
+                if let Some(column) = col_ix.checked_sub(self.columns.len()).and_then(|ix| self.resolved_table_columns.get(ix)) {
+                    return column.render(&self.rows[row_ix], window, cx);
+                }
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
             }
 
@@ -524,7 +554,7 @@ pub(super) fn generate_delegate(
                 window: &mut gpui_kit::Window,
                 cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
             ) {
-                let column: Option<&str> = match col_ix { #(#sort_arms)* _ => None };
+                let column: Option<&str> = match col_ix { #(#sort_arms)* _ => col_ix.checked_sub(self.columns.len()).and_then(|ix| self.resolved_table_columns.get(ix)).map(|column| column.column().key.as_ref()) };
                 let Some(column) = column else { return; };
                 let direction = match sort {
                     gpui_kit::component::table::ColumnSort::Ascending => Some(gpui_table::sort::SortDirection::Ascending),

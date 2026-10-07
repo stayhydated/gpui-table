@@ -43,3 +43,9 @@ backend readiness before supplying keys.
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table
 [crate-badge]: https://img.shields.io/crates/v/gpui-table.svg?label=gpui-table
 [crate]: https://crates.io/crates/gpui-table
+
+`ResolvedTableColumn<Row>` appends caller-rendered presentation for an executable
+resolved key. Generated delegates validate presentation keys and route both cells
+and column-header sorting through that retained typed context. Use
+`set_table_resolved_columns` to refresh presentation while retaining the selected
+record. Renderers read each current row; formatting remains caller-owned.

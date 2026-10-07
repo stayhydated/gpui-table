@@ -338,6 +338,130 @@ fn resolved_order() -> SortOrder {
     .unwrap()
 }
 
+#[gpui_kit::test]
+fn resolved_presentation_and_header_use_the_executable_current_row_key(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::{
+        Root,
+        table::{Column, ColumnSort, TableDelegate as _, TableState},
+        v_flex,
+    };
+    use gpui_kit::test::{TestSupportExt as _, TestWindowExt as _};
+    use gpui_kit::{
+        AppContext as _, Context, InteractiveElement as _, IntoElement, ParentElement as _, Render,
+        StatefulInteractiveElement as _, Styled as _, Window, div, px, size,
+    };
+    use gpui_table::runtime::ResolvedTableColumn;
+    struct Preview {
+        table: gpui_kit::Entity<TableState<RecordTableDelegate>>,
+    }
+    impl Render for Preview {
+        fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let cells = self.table.update(cx, |table, cx| {
+                let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+                (0..table.delegate().rows_count(cx))
+                    .map(|row| {
+                        table
+                            .delegate_mut()
+                            .render_td(row, native_count, window, cx)
+                            .into_any_element()
+                    })
+                    .collect::<Vec<_>>()
+            });
+            v_flex().size_full().children(cells)
+        }
+    }
+    cx.update(gpui_kit::init);
+    let presentation = || {
+        ResolvedTableColumn::new(
+            Column::new("resolved_score", "Resolved score").sortable(),
+            |row: &Record, _, _| {
+                let value = row
+                    .optional
+                    .map(|value| value * 2 + row.adjustment)
+                    .map_or_else(|| "missing".to_owned(), |value| value.to_string());
+                div()
+                    .id(format!("resolved-current-{}", row.id))
+                    .test_support()
+                    .aria_label(value.clone())
+                    .child(value)
+                    .into_any_element()
+            },
+        )
+        .unwrap()
+    };
+    let mut table_handle = None;
+    let mut preview_handle = None;
+    let window = cx.open_window(size(px(640.), px(480.)), |window, cx| {
+        let mut delegate = RecordTableDelegate::new(records());
+        assert_eq!(
+            delegate.set_resolved_table_columns(vec![presentation()]),
+            Err(SortError::UnsupportedColumn("resolved_score".into()))
+        );
+        delegate
+            .set_resolved_sort_columns(resolved_columns(2))
+            .unwrap();
+        delegate
+            .set_resolved_table_columns(vec![presentation()])
+            .unwrap();
+        delegate.set_ordering(resolved_order()).unwrap();
+        let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+        assert_eq!(delegate.columns_count(cx), native_count + 1);
+        assert_eq!(
+            delegate.column(native_count, cx).name.as_ref(),
+            "Resolved score"
+        );
+        assert_eq!(
+            delegate.column(native_count, cx).sort,
+            Some(ColumnSort::Descending)
+        );
+        assert_eq!(
+            delegate.set_resolved_table_columns(vec![presentation(), presentation()]),
+            Err(SortError::DuplicateColumn("resolved_score".into()))
+        );
+        let table = cx.new(|cx| TableState::new(delegate, window, cx));
+        table_handle = Some(table.clone());
+        let preview = cx.new(|_| Preview { table });
+        preview_handle = Some(preview.clone());
+        Root::new(preview, window, cx)
+    });
+    let table = table_handle.unwrap();
+    let preview = preview_handle.unwrap();
+    cx.update_window(window.into(), |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("resolved-current-2").label(), Some("14"));
+        assert_eq!(window.find("resolved-current-3").label(), Some("missing"));
+        table.update(cx, |table, cx| {
+            table.delegate_mut().rows[2].adjustment = 40;
+            table.delegate().refresh_filtered_rows();
+            cx.notify();
+        });
+        preview.update(cx, |_, cx| cx.notify());
+        window.render_frame(cx);
+        assert_eq!(window.find("resolved-current-1").label(), Some("42"));
+        assert_eq!(visible_ids(table.read(cx).delegate()), [3, 1, 2]);
+        let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+        table.update(cx, |table, cx| {
+            table
+                .delegate_mut()
+                .perform_sort(native_count, ColumnSort::Ascending, window, cx)
+        });
+    })
+    .unwrap();
+    cx.run_until_parked();
+    table.read_with(cx, |table, _| {
+        assert_eq!(
+            table.delegate().ordering().clauses()[0].column(),
+            "resolved_score"
+        )
+    });
+    assert_eq!(
+        table.read_with(cx, |table, _| visible_ids(table.delegate())),
+        [2, 1, 3]
+    );
+}
+
 #[test]
 fn resolved_columns_execute_typed_context_with_native_keys_nulls_and_stable_identities() {
     let mut delegate = RecordTableDelegate::new(records());

@@ -1,7 +1,7 @@
 //! Ordering application and selection snapshots for generated table delegates.
 
-use gpui_kit::Context;
-use gpui_kit::component::table::{TableDelegate, TableSelection, TableState};
+use gpui_kit::component::table::{Column, TableDelegate, TableSelection, TableState};
+use gpui_kit::{AnyElement, App, Context, Window};
 use gpui_table_core::sort::{ResolvedSortColumns, SortError, SortOrder, SortableRow};
 
 /// Ordering of the delegate's loaded rows. Backend ordering remains caller-owned.
@@ -22,6 +22,78 @@ pub trait ResolvedOrderedTableDelegate<R: SortableRow>: OrderedTableDelegate {
         &mut self,
         columns: ResolvedSortColumns<R>,
     ) -> Result<(), SortError>;
+}
+
+type ResolvedCell<R> = dyn Fn(&R, &mut Window, &mut App) -> AnyElement;
+
+/// Presentation for an executable resolved key, rendered from the current typed row.
+/// The caller keeps formatting separate from the comparison extractor.
+pub struct ResolvedTableColumn<R> {
+    column: Column,
+    render: std::rc::Rc<ResolvedCell<R>>,
+}
+impl<R> Clone for ResolvedTableColumn<R> {
+    fn clone(&self) -> Self {
+        Self {
+            column: self.column.clone(),
+            render: self.render.clone(),
+        }
+    }
+}
+impl<R> ResolvedTableColumn<R> {
+    pub fn new(
+        column: Column,
+        render: impl Fn(&R, &mut Window, &mut App) -> AnyElement + 'static,
+    ) -> Result<Self, SortError> {
+        SortOrder::new(vec![gpui_table_core::sort::SortClause::new(
+            column.key.to_string(),
+            gpui_table_core::sort::SortDirection::Ascending,
+        )])?;
+        Ok(Self {
+            column,
+            render: std::rc::Rc::new(render),
+        })
+    }
+    pub fn column(&self) -> &Column {
+        &self.column
+    }
+    pub fn render(&self, row: &R, window: &mut Window, cx: &mut App) -> AnyElement {
+        (self.render)(row, window, cx)
+    }
+}
+
+/// Controlled presentation columns attached to the same resolved-key context.
+pub trait ResolvedTableDelegate<R: SortableRow>: ResolvedOrderedTableDelegate<R> {
+    fn resolved_table_columns(&self) -> &[ResolvedTableColumn<R>];
+    fn set_resolved_table_columns(
+        &mut self,
+        columns: Vec<ResolvedTableColumn<R>>,
+    ) -> Result<(), SortError>;
+}
+
+/// Refresh presentation while retaining the selected record's stable identity.
+pub fn set_table_resolved_columns<R: SortableRow, D: ResolvedTableDelegate<R>>(
+    table: &mut TableState<D>,
+    columns: Vec<ResolvedTableColumn<R>>,
+    cx: &mut Context<TableState<D>>,
+) -> Result<(), SortError> {
+    let mut selected = TableRowSelection::capture(table);
+    let column_key = match selected.selection {
+        TableSelection::Cell(_, column) => Some(table.delegate().column(column, cx).key),
+        _ => None,
+    };
+    table.delegate_mut().set_resolved_table_columns(columns)?;
+    if let (Some(key), TableSelection::Cell(row, _)) = (column_key, selected.selection) {
+        selected.selection = (0..table.delegate().columns_count(cx))
+            .find(|column| table.delegate().column(*column, cx).key == key)
+            .map_or(TableSelection::Row(row), |column| {
+                TableSelection::Cell(row, column)
+            });
+    }
+    table.refresh(cx);
+    selected.restore(table, cx);
+    cx.notify();
+    Ok(())
 }
 
 /// Capture before changing rows or ordering, then restore by stable row identity.

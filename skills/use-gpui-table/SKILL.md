@@ -119,3 +119,9 @@ Read [references/patterns.md](references/patterns.md) when implementation needs
 copyable patterns for table setup, generated filters, loading, cells,
 localization, or MCP. Use `use-gpui-table-component-shapes` for
 adapter shapes, custom shape contracts, or custom MCP filter decoding.
+
+For a displayed resolved key, attach `ResolvedTableColumn<Row>` through the
+validated generated delegate or `set_table_resolved_columns`. Its key must have
+an executable `ResolvedSortColumn<Row>` in the retained context. Render current
+typed rows in the caller callback and preserve formatting independently of the
+comparison extractor. Remove retired presentation before removing its key.
