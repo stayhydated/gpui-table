@@ -17,6 +17,10 @@ cell, filter, and MCP query contracts.
 - `#[gpui_table_impl]`
 - `#[mcp_query]` with the `mcp` feature
 
+Generated delegates retain native ordering and executable `ResolvedSortColumns`.
+Their resolved-context setter validates capabilities and visible values before
+applying a replacement.
+
 Application crates should depend on `gpui-table` and use its macro
 re-exports. Depend on this proc-macro crate directly only when integrating the
 macros without the facade.

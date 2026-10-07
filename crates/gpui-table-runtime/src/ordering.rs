@@ -2,7 +2,7 @@
 
 use gpui_kit::Context;
 use gpui_kit::component::table::{TableDelegate, TableSelection, TableState};
-use gpui_table_core::sort::{SortError, SortOrder};
+use gpui_table_core::sort::{ResolvedSortColumns, SortError, SortOrder, SortableRow};
 
 /// Ordering of the delegate's loaded rows. Backend ordering remains caller-owned.
 pub trait OrderedTableDelegate: TableDelegate {
@@ -11,6 +11,17 @@ pub trait OrderedTableDelegate: TableDelegate {
     fn set_ordering(&mut self, ordering: SortOrder) -> Result<(), SortError>;
     fn visible_row_id(&self, row_ix: usize) -> Option<Self::RowId>;
     fn visible_row_position(&self, id: &Self::RowId) -> Option<usize>;
+}
+
+/// A source-owned executable resolved-column context for the delegate's typed rows.
+pub trait ResolvedOrderedTableDelegate<R: SortableRow>: OrderedTableDelegate {
+    /// Current executable additions to native row keys.
+    fn resolved_sort_columns(&self) -> &ResolvedSortColumns<R>;
+    /// Atomically validate and replace the retained comparison context.
+    fn set_resolved_sort_columns(
+        &mut self,
+        columns: ResolvedSortColumns<R>,
+    ) -> Result<(), SortError>;
 }
 
 /// Capture before changing rows or ordering, then restore by stable row identity.
@@ -69,6 +80,20 @@ pub fn set_table_ordering<D: OrderedTableDelegate>(
 ) -> Result<(), SortError> {
     let selected = TableRowSelection::capture(table);
     table.delegate_mut().set_ordering(ordering)?;
+    table.refresh(cx);
+    selected.restore(table, cx);
+    cx.notify();
+    Ok(())
+}
+
+/// Replace the resolved comparison context while retaining selection by stable identity.
+pub fn set_table_resolved_sort_columns<R: SortableRow, D: ResolvedOrderedTableDelegate<R>>(
+    table: &mut TableState<D>,
+    columns: ResolvedSortColumns<R>,
+    cx: &mut Context<TableState<D>>,
+) -> Result<(), SortError> {
+    let selected = TableRowSelection::capture(table);
+    table.delegate_mut().set_resolved_sort_columns(columns)?;
     table.refresh(cx);
     selected.restore(table, cx);
     cx.notify();

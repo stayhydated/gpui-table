@@ -17,6 +17,10 @@ tables should normally use the `gpui-table` facade.
 Paged callers can clone the snapshot, inspect `row_id()`, and retain it until
 that record is visible again before restoring it through the table state.
 
+`ResolvedOrderedTableDelegate` retains executable source-resolved columns.
+`set_table_resolved_sort_columns` replaces that context atomically and preserves
+row or cell selection by identity.
+
 Chrono cells use localized formatting for values representable by Jiff. Dates
 outside Jiff's range and leap seconds fall back to the original Chrono `Display`
 value, including its original offset for timezone-aware values.

@@ -41,6 +41,7 @@ description: >-
 | Control visible rows | generated delegate filter and row-scope methods |
 | Order loaded rows | `runtime::set_table_ordering`, `sort::SortOrder` and `SortEditor` |
 | Sort calculated values | `sort_key = path` paired with the same calculation in `style` |
+| Resolve source-owned columns | `sort::ResolvedSortColumn`, `ResolvedSortColumns`, and `runtime::set_table_resolved_sort_columns` |
 | Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
 | Save filter state | generated `FilterValues` JSON methods |
 | Expose rows over MCP | `#[gpui_table(mcp)]` and `#[mcp_query]` |
@@ -104,6 +105,11 @@ when inputs can fail. Capture/restore `TableRowSelection` around source changes.
 Configure `set_allowed_sort_columns` on a generated delegate when its source
 declares a subset of stable ordering keys. It constrains header affordances and
 direct setters atomically; an empty list disables ordering.
+Supply immutable `ResolvedSortColumns` when the application has resolved additional
+source keys. Use the same typed extraction in cells and ordering; native/resolved
+key collisions and context replacement failures are atomic. The application owns
+authorization/readiness and complete-result backend execution. Retire a resolved
+key after clearing orders and capability restrictions that use it.
 Use existing UI composition for `SortEditor`; it emits controlled changes and
 owns no persistence, backend or formula language.
 

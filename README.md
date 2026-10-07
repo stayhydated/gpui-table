@@ -9,7 +9,7 @@
 [`gpui-kit`](https://github.com/longbridge/gpui-kit) tables
 from Rust row types for GPUI application developers. It generates column
 metadata and delegates, with opt-in typed filters, incremental loading,
-localization, registry metadata, ordered sorting, calculated keys, and MCP query tools.
+localization, registry metadata, ordered sorting, source-resolved calculated keys, and MCP query tools.
 
 Requires Rust 1.99 or newer.
 

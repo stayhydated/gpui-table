@@ -105,3 +105,44 @@ presenting a generated delegate when the source supports a subset of its sortabl
 keys. Excluded headers become unsortable and direct order changes reject excluded
 keys. An empty list disables ordering. Unknown keys, duplicate keys, and a
 restriction excluding the current order fail atomically.
+
+## Resolve application-owned columns
+
+Use `sort::ResolvedSortColumn::new(key, extract)` for a source-resolved key.
+The extractor returns `Result<Option<Key>, SortError>` with `Key: PartialOrd`.
+Keep the same extractor available to the owning cell renderer. The application
+resolves the definition, source readiness, units and permissions before supplying
+this context.
+
+```rust
+use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns, SortError};
+
+fn scaled_score(row: &Record) -> Result<Option<i64>, SortError> {
+    row.score.map(|score| score.checked_mul(2).ok_or_else(|| SortError::Calculation {
+        column: "scaled_score".into(),
+        message: "overflow".into(),
+    })).transpose()
+}
+
+let columns = ResolvedSortColumns::new([
+    ResolvedSortColumn::new("scaled_score", scaled_score)?,
+])?;
+let mut delegate = RecordTableDelegate::new(Vec::new());
+delegate.set_resolved_sort_columns(columns)?;
+delegate.set_allowed_sort_columns(["category_key", "scaled_score"])?;
+# Ok::<(), SortError>(())
+```
+
+Resolved keys are distinct from native keys and from each other. The retained
+context validates empty sources, preflights single-row errors and compares only
+included rows. Native and resolved clauses share null placement, direction,
+identity tie-breaking and atomic error handling. `ResolvedSortColumns` also
+provides complete-source `sorted_indices`, `sort_indices` and `sort_rows` for
+application query owners.
+
+Use `runtime::set_table_resolved_sort_columns(table, columns, cx)` for a generated
+table state. It preserves selection by stable row identity. Context replacement
+checks the current order, source capability restriction and visible values before
+applying the change. Clear an order and its capability restriction before retiring
+keys that it uses. Remote query owners execute the same resolved calculation over
+the complete source before pagination.
