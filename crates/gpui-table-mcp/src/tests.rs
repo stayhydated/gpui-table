@@ -368,11 +368,7 @@ impl super::McpTable for TypedTable {
             .unwrap_or(0);
         arguments.finish()?;
 
-        Ok(super::TableQuery {
-            filters: EmptyFilters,
-            limit,
-            offset,
-        })
+        Ok(super::TableQuery::new(EmptyFilters, limit, offset))
     }
 }
 
@@ -534,4 +530,17 @@ fn raw_filter_shape_decode_and_prompt_helpers_cover_private_composition() {
     super::push_descriptor_prompt_specs(&mut seen, &mut specs, descriptor).unwrap();
     super::push_descriptor_prompt_specs(&mut seen, &mut specs, descriptor).unwrap();
     assert_eq!(specs.len(), 1);
+}
+
+impl super::SortableRow for TypedTable {
+    fn sortable_columns() -> &'static [&'static str] {
+        &[]
+    }
+    fn compare_sort_clause(
+        &self,
+        _other: &Self,
+        clause: &super::SortClause,
+    ) -> Result<std::cmp::Ordering, super::SortError> {
+        Err(super::SortError::UnsupportedColumn(clause.column().into()))
+    }
 }

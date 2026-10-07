@@ -8,8 +8,8 @@ Start with `crates/gpui-table` for application-facing API changes,
 | Surface | Ownership |
 |---|---|
 | `crates/gpui-table` | Public facade, macro re-exports, and feature gates |
-| `crates/gpui-table-component` | Built-in filter widgets, adapters, reset controls, and `TableStatusBar` |
-| `crates/gpui-table-core` | UI-neutral typed filter values and matching semantics |
+| `crates/gpui-table-component` | Built-in filters, adapters, controlled sort editor, reset controls and status bar |
+| `crates/gpui-table-core` | UI-neutral typed filtering and fallible ordering semantics |
 | `crates/gpui-table-runtime` | GPUI row, cell, loading, filter-shape, and generated-filter contracts |
 | `crates/gpui-table-schema` | UI-neutral filter metadata and table-shape registry consumed by tooling |
 | `crates/gpui-table-derive` | Table, cell, filter, and MCP macro expansion and diagnostics |
@@ -76,6 +76,10 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   direct Cargo commands when those examples need validation.
 - For cell rendering or filter widgets, start with
   `cargo test -p gpui-table-runtime -p gpui-table-component --all-features --locked`.
+- Ordering contracts and SpacetimeDB integration live in
+  `crates/gpui-table/tests/ordered_sorting.rs` and
+  `crates/gpui-table/tests/spacetimedb_ordering.rs`. Run
+  `cargo test -p gpui-table --test ordered_sorting --test spacetimedb_ordering --all-features --locked`.
 - Pure filter properties live in `gpui-table-core/tests/filter_properties.rs`;
   pagination properties live in `gpui-table-mcp/tests/query_properties.rs`.
   Run `cargo test -p gpui-table-core -p gpui-table-mcp --all-features --locked`.

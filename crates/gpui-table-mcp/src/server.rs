@@ -69,7 +69,9 @@ where
             + 'static,
     {
         self.query(move |query| -> Result<TableQueryResult<Table>, String> {
-            Ok(query.filter_rows(rows.clone()))
+            query
+                .filter_rows(rows.clone())
+                .map_err(|error| error.to_string())
         })
     }
 
@@ -86,8 +88,8 @@ where
     {
         let source = Arc::new(source);
         self.query(move |query| {
-            let rows = source()?;
-            Ok::<TableQueryResult<Table>, Error>(query.filter_rows(rows))
+            let rows = source().map_err(|error| error.to_string())?;
+            query.filter_rows(rows).map_err(|error| error.to_string())
         })
     }
 
@@ -108,8 +110,8 @@ where
         self.query_async(move |query| {
             let source = Arc::clone(&source);
             async move {
-                let rows = source().await?;
-                Ok::<TableQueryResult<Table>, Error>(query.filter_rows(rows))
+                let rows = source().await.map_err(|error| error.to_string())?;
+                query.filter_rows(rows).map_err(|error| error.to_string())
             }
         })
     }

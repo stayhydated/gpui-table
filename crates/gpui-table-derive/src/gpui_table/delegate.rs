@@ -3,14 +3,25 @@ use crate::gpui_table::meta::FilterFieldMeta;
 use quote::quote;
 use syn::Ident;
 
+pub(super) struct DelegateOrdering<'a> {
+    pub(super) sort_arms: Vec<proc_macro2::TokenStream>,
+    pub(super) row_identity: Option<&'a (Ident, syn::Type)>,
+    pub(super) initial_sort: Vec<proc_macro2::TokenStream>,
+}
+
 pub(super) fn generate_delegate(
     struct_name: &Ident,
     column_enum_name: &Ident,
-    sort_arms: Vec<proc_macro2::TokenStream>,
     loading: Option<Ident>,
     load_more: bool,
     filter_fields: &[FilterFieldMeta],
+    ordering: DelegateOrdering<'_>,
 ) -> proc_macro2::TokenStream {
+    let DelegateOrdering {
+        sort_arms,
+        row_identity,
+        initial_sort,
+    } = ordering;
     let delegate_name = Ident::new(&format!("{}TableDelegate", struct_name), struct_name.span());
     let has_filters = !filter_fields.is_empty();
     let filter_values_name =
@@ -127,14 +138,14 @@ pub(super) fn generate_delegate(
             row_scope: std::cell::RefCell::new(None),
             active_filters: std::cell::RefCell::new(None),
             filter_cache_rows_len: std::cell::Cell::new(rows_len),
-            filter_cache_dirty: std::cell::Cell::new(false),
+            filter_cache_dirty: std::cell::Cell::new(true),
         }
     } else {
         quote! {
             filtered_row_indices: std::cell::RefCell::new((0..rows_len).collect()),
             row_scope: std::cell::RefCell::new(None),
             filter_cache_rows_len: std::cell::Cell::new(rows_len),
-            filter_cache_dirty: std::cell::Cell::new(false),
+            filter_cache_dirty: std::cell::Cell::new(true),
         }
     };
     let filter_delegate_methods = if has_filters {
@@ -165,6 +176,7 @@ pub(super) fn generate_delegate(
                     }
                 }
 
+                *self.sort_error.borrow_mut() = self.ordering.sort_indices(&self.rows, &mut indices).err();
                 self.filter_cache_rows_len.set(self.rows.len());
                 self.filter_cache_dirty.set(false);
             }
@@ -239,6 +251,7 @@ pub(super) fn generate_delegate(
                     row_scope.as_ref().map_or(true, |scope| scope(row)).then_some(row_ix)
                 }));
 
+                *self.sort_error.borrow_mut() = self.ordering.sort_indices(&self.rows, &mut indices).err();
                 self.filter_cache_rows_len.set(self.rows.len());
                 self.filter_cache_dirty.set(false);
             }
@@ -297,8 +310,13 @@ pub(super) fn generate_delegate(
     let context_menu_row_index_map = quote! {
         let row_ix = self.map_row_index(row_ix);
     };
-    let sort_filter_refresh = quote! {
-        self.filter_cache_dirty.set(true);
+
+    let (row_id_type, row_id_expr) = match row_identity {
+        Some((field, ty)) => (
+            quote! { #ty },
+            quote! { std::clone::Clone::clone(&self.rows[source_ix].#field) },
+        ),
+        None => (quote! { usize }, quote! { source_ix }),
     };
 
     quote! {
@@ -312,6 +330,8 @@ pub(super) fn generate_delegate(
             pub eof: bool,
             pub loading: bool,
             pub full_loading: bool,
+            ordering: gpui_table::sort::SortOrder,
+            sort_error: std::cell::RefCell<Option<gpui_table::sort::SortError>>,
             #filter_delegate_fields
         }
 
@@ -327,11 +347,31 @@ pub(super) fn generate_delegate(
                     eof: false,
                     loading: false,
                     full_loading: false,
+                    ordering: gpui_table::sort::SortOrder::new(vec![#(#initial_sort),*]).expect("validated initial column order"),
+                    sort_error: std::cell::RefCell::new(None),
                     #filter_delegate_init
                 }
             }
 
             #filter_delegate_methods
+
+            /// Order the loaded source. Use the runtime helper to retain table selection.
+            pub fn set_ordering(&mut self, ordering: gpui_table::sort::SortOrder) -> Result<(), gpui_table::sort::SortError> {
+                let mut indices = self.visible_row_indices();
+                ordering.sort_indices(&self.rows, &mut indices)?;
+                self.ordering = ordering;
+                self.filter_cache_dirty.set(true);
+                self.ensure_filter_cache();
+                Ok(())
+            }
+
+            pub fn ordering(&self) -> &gpui_table::sort::SortOrder { &self.ordering }
+
+            /// A refreshed row may invalidate a previously valid calculated key.
+            pub fn sort_error(&self) -> Option<gpui_table::sort::SortError> {
+                self.ensure_filter_cache();
+                self.sort_error.borrow().clone()
+            }
         }
 
         impl gpui_kit::component::table::TableDelegate for #delegate_name {
@@ -351,6 +391,12 @@ pub(super) fn generate_delegate(
                     .find(|fresh_column| fresh_column.key == column.key)
                 {
                     column.name = fresh_column.name;
+                }
+                if column.sort.is_some() {
+                    column.sort = Some(self.ordering.clauses().iter().find(|clause| clause.column() == column.key.as_ref()).map_or(gpui_kit::component::table::ColumnSort::Default, |clause| match clause.direction() {
+                        gpui_table::sort::SortDirection::Ascending => gpui_kit::component::table::ColumnSort::Ascending,
+                        gpui_table::sort::SortDirection::Descending => gpui_kit::component::table::ColumnSort::Descending,
+                    }));
                 }
                 column
             }
@@ -406,15 +452,44 @@ pub(super) fn generate_delegate(
                 &mut self,
                 col_ix: usize,
                 sort: gpui_kit::component::table::ColumnSort,
-                _: &mut gpui_kit::Window,
-                _: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
+                window: &mut gpui_kit::Window,
+                cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
             ) {
-                match col_ix {
-                    #(#sort_arms)*
-                    _ => {}
-                }
+                let column: Option<&str> = match col_ix { #(#sort_arms)* _ => None };
+                let Some(column) = column else { return; };
+                let direction = match sort {
+                    gpui_kit::component::table::ColumnSort::Ascending => Some(gpui_table::sort::SortDirection::Ascending),
+                    gpui_kit::component::table::ColumnSort::Descending => Some(gpui_table::sort::SortDirection::Descending),
+                    _ => None,
+                };
+                let clauses = direction.map(|direction| gpui_table::sort::SortClause::new(column, direction)).into_iter().collect();
+                let ordering = gpui_table::sort::SortOrder::new(clauses).expect("generated column key");
+                cx.defer_in(window, move |table, _, cx| {
+                    if let Err(error) = gpui_table::runtime::set_table_ordering(table, ordering, cx) {
+                        *table.delegate_mut().sort_error.borrow_mut() = Some(error);
+                    }
+                    cx.notify();
+                });
+            }
+        }
 
-                #sort_filter_refresh
+        impl gpui_table::runtime::OrderedTableDelegate for #delegate_name {
+            type RowId = #row_id_type;
+            fn ordering(&self) -> &gpui_table::sort::SortOrder { &self.ordering }
+            fn set_ordering(&mut self, ordering: gpui_table::sort::SortOrder) -> Result<(), gpui_table::sort::SortError> {
+                Self::set_ordering(self, ordering)
+            }
+            fn visible_row_id(&self, row_ix: usize) -> Option<Self::RowId> {
+                self.ensure_filter_cache();
+                let source_ix = *self.filtered_row_indices.borrow().get(row_ix)?;
+                Some(#row_id_expr)
+            }
+            fn visible_row_position(&self, id: &Self::RowId) -> Option<usize> {
+                self.ensure_filter_cache();
+                self.filtered_row_indices.borrow().iter().position(|source_ix| {
+                    let source_ix = *source_ix;
+                    &(#row_id_expr) == id
+                })
             }
         }
 

@@ -38,11 +38,14 @@
 //!
 //! These are validated during macro expansion with direct compile-time errors.
 
+extern crate self as gpui_table;
+
 #[cfg(feature = "derive")]
 pub use gpui_table_derive::*;
 
 pub use gpui_table_core as core;
 pub use gpui_table_core::filter;
+pub use gpui_table_core::sort;
 #[cfg(feature = "mcp")]
 pub use gpui_table_mcp as mcp;
 pub use gpui_table_runtime as runtime;

@@ -3,7 +3,7 @@
 [![Codecov: gpui-table-core][codecov-badge]][codecov]
 [![crates.io: gpui-table-core][crate-badge]][crate]
 
-`gpui-table-core` provides typed filter values and matching semantics
+`gpui-table-core` provides typed filter values, matching semantics and fallible ordering
 without depending on GPUI for shared client/server filtering, non-UI query
 logic, and generic code over `Matchable<F>` in the [`gpui-table`][project]
 ecosystem.

@@ -24,6 +24,8 @@ mod mcp;
 #[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
+pub mod sort_editor;
+pub use sort_editor::{SortColumnOption, SortEditor};
 mod shape;
 #[cfg(feature = "story")]
 mod stories;

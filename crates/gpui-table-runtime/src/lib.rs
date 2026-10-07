@@ -8,7 +8,9 @@
 mod cell;
 pub mod generated_filters;
 mod load;
+pub mod ordering;
 mod row;
+pub use ordering::{OrderedTableDelegate, TableRowSelection, set_table_ordering};
 pub mod shape;
 
 pub use cell::{DisplayCell, FormattedCell, TableCell};

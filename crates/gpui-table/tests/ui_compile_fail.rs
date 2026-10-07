@@ -91,3 +91,13 @@ fn ui_compile_fail() {
     #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
     t.pass("tests/ui/spacetimedb_requires_feature.rs");
 }
+
+#[test]
+fn ordering_diagnostics() {
+    let tests = trybuild::TestCases::new();
+    tests.compile_fail("tests/ui/sort_key_requires_sortable.rs");
+    tests.compile_fail("tests/ui/unknown_row_id.rs");
+    tests.compile_fail("tests/ui/duplicate_column_key.rs");
+    #[cfg(feature = "mcp")]
+    tests.compile_fail("tests/ui/mcp_reserved_sort.rs");
+}

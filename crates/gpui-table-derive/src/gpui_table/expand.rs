@@ -1,4 +1,4 @@
-use crate::gpui_table::delegate::generate_delegate;
+use crate::gpui_table::delegate::{DelegateOrdering, generate_delegate};
 use crate::gpui_table::filter_codegen::get_filter_type_expr;
 #[cfg(feature = "inventory")]
 use crate::gpui_table::filter_codegen::get_registry_filter_type;
@@ -27,6 +27,7 @@ pub(super) fn expand_gpui_table(
         data,
         id,
         title,
+        row_id,
         delegate,
         custom_context_menu,
         context_menu_row_id,
@@ -207,6 +208,31 @@ pub(super) fn expand_gpui_table(
 
     let column_enum_name = Ident::new(&format!("{}TableColumn", struct_name), struct_name.span());
 
+    let row_identity = row_id
+        .as_ref()
+        .map(|name| {
+            fields
+                .iter()
+                .find(|field| field.ident.as_ref().is_some_and(|id| id == name))
+                .map(|field| (field.ident.clone().unwrap(), field.ty.clone()))
+                .ok_or_else(|| {
+                    syn::Error::new(
+                        struct_name.span(),
+                        format!("row_id field `{name}` was not found"),
+                    )
+                })
+        })
+        .transpose()?;
+    let identity_comparison = row_identity.as_ref().map(|(id, _)| quote! {
+        fn compare_sort_identity(&self, other: &Self) -> Result<std::cmp::Ordering, gpui_table::sort::SortError> {
+            self.#id.partial_cmp(&other.#id).ok_or_else(|| gpui_table::sort::SortError::UnorderedColumn(stringify!(#id).into()))
+        }
+    });
+    let mut initial_sort = Vec::new();
+    let mut column_keys = std::collections::BTreeSet::new();
+    let mut sortable_keys = Vec::new();
+    let mut compare_arms = Vec::new();
+    let mut column_key_arms = Vec::new();
     let active_fields: Vec<_> = fields.into_iter().filter(|f| !f.skip).enumerate().collect();
 
     for (i, field) in active_fields {
@@ -214,6 +240,26 @@ pub(super) fn expand_gpui_table(
         let style = field.style.clone();
         let key = field.col.unwrap_or_else(|| ident.to_string());
         let width = field.width.unwrap_or(100.0);
+        if key.is_empty() || key.trim() != key {
+            return Err(syn::Error::new(
+                ident.span(),
+                "column keys must be nonempty and have no surrounding whitespace",
+            ));
+        }
+        if !column_keys.insert(key.clone()) {
+            return Err(syn::Error::new(
+                ident.span(),
+                format!("duplicate table column key `{key}`"),
+            ));
+        }
+        if field.ascending || field.descending {
+            let direction = if field.descending {
+                quote! { Descending }
+            } else {
+                quote! { Ascending }
+            };
+            initial_sort.push(quote! { gpui_table::sort::SortClause::new(#key, gpui_table::sort::SortDirection::#direction) });
+        }
 
         if field.ascending && field.descending {
             return Err(syn::Error::new(
@@ -336,30 +382,40 @@ pub(super) fn expand_gpui_table(
             }
         }
 
-        if field.sortable {
-            sort_match_arms.push(quote! {
-                #i => {
-                    self.rows.sort_by(|a, b| {
-                        let a_val = &a.#ident;
-                        let b_val = &b.#ident;
-                        match sort {
-                            ::gpui_kit::component::table::ColumnSort::Ascending => {
-                                a_val.partial_cmp(b_val).unwrap_or(std::cmp::Ordering::Equal)
-                            },
-                            ::gpui_kit::component::table::ColumnSort::Descending => {
-                                b_val.partial_cmp(a_val).unwrap_or(std::cmp::Ordering::Equal)
-                            },
-                            _ => std::cmp::Ordering::Equal,
-                        }
-                    });
-                }
-            });
+        if field.sortable || field.ascending || field.descending {
+            sortable_keys.push(key.clone());
+            let (left, right) = if let Some(sort_key) = field.sort_key.as_ref() {
+                (
+                    quote! { gpui_table::sort::IntoSortKey::into_sort_key((#sort_key)(self))? },
+                    quote! { gpui_table::sort::IntoSortKey::into_sort_key((#sort_key)(other))? },
+                )
+            } else if matches!(&field.ty, syn::Type::Path(path) if path.path.segments.last().is_some_and(|segment| segment.ident == "Option"))
+            {
+                (
+                    quote! { self.#ident.as_ref() },
+                    quote! { other.#ident.as_ref() },
+                )
+            } else {
+                (
+                    quote! { Some(&self.#ident) },
+                    quote! { Some(&other.#ident) },
+                )
+            };
+            let compare = if field.sort_key.is_some() {
+                quote! { gpui_table::sort::compare_values(left.as_ref(), right.as_ref(), clause) }
+            } else {
+                quote! { gpui_table::sort::compare_values(left, right, clause) }
+            };
+            compare_arms
+                .push(quote! { #key => { let left = #left; let right = #right; #compare } });
+            sort_match_arms.push(quote! { #i => Some(#key), });
         }
 
         let variant_name = ident.to_string().to_pascal_case();
         let variant_ident = Ident::new(&variant_name, ident.span());
 
         column_variants.push(quote! { #variant_ident });
+        column_key_arms.push(quote! { Self::#variant_ident => #key, });
 
         from_usize_arms.push(quote! { #i => #column_enum_name::#variant_ident, });
         into_usize_arms.push(quote! { #column_enum_name::#variant_ident => #i, });
@@ -374,6 +430,7 @@ pub(super) fn expand_gpui_table(
 
         #[cfg(feature = "inventory")]
         {
+            let calculated = field.sort_key.is_some();
             let field_name_str = ident.to_string();
             let field_type_str = field.ty.to_token_stream().to_string();
             let title_str = field
@@ -385,7 +442,7 @@ pub(super) fn expand_gpui_table(
                 Some("right") => quote! { gpui_table::schema::registry::ColumnFixed::Right },
                 _ => quote! { gpui_table::schema::registry::ColumnFixed::None },
             };
-            let sortable = field.sortable;
+            let sortable = field.sortable || field.ascending || field.descending;
             column_variant_constructions.push(quote! {
                 gpui_table::schema::registry::ColumnVariant::new(
                     #field_name_str,
@@ -394,11 +451,17 @@ pub(super) fn expand_gpui_table(
                     #width,
                     #sortable,
                     #fixed_variant,
-                )
+                ).with_key(#key).with_calculated(#calculated)
             });
         }
     }
 
+    if initial_sort.len() > gpui_table_core::sort::MAX_SORT_CLAUSES {
+        return Err(syn::Error::new(
+            struct_name.span(),
+            "initial ordering exceeds the maximum sort-clause count",
+        ));
+    }
     let table_title_impl = match &fluent {
         Some(Override::Explicit(_)) | Some(Override::Inherit) => {
             quote! {
@@ -414,6 +477,12 @@ pub(super) fn expand_gpui_table(
         #[derive(Clone, Copy, Debug, Eq, PartialEq)]
         pub enum #column_enum_name {
             #(#column_variants),*
+        }
+
+        impl #column_enum_name {
+            pub const fn key(self) -> &'static str {
+                match self { #(#column_key_arms)* }
+            }
         }
 
         impl From<usize> for #column_enum_name {
@@ -522,10 +591,14 @@ pub(super) fn expand_gpui_table(
         generate_delegate(
             &struct_name,
             &column_enum_name,
-            sort_match_arms,
             loading,
             load_more,
             &filter_fields,
+            DelegateOrdering {
+                sort_arms: sort_match_arms,
+                row_identity: row_identity.as_ref(),
+                initial_sort,
+            },
         )
     } else {
         quote! {}
@@ -586,6 +659,17 @@ pub(super) fn expand_gpui_table(
         #(#filter_shape_type_checks)*
 
         #column_enum
+
+        impl gpui_table::sort::SortableRow for #struct_name {
+            fn sortable_columns() -> &'static [&'static str] { &[#(#sortable_keys),*] }
+            fn compare_sort_clause(&self, other: &Self, clause: &gpui_table::sort::SortClause) -> Result<std::cmp::Ordering, gpui_table::sort::SortError> {
+                match clause.column() {
+                    #(#compare_arms)*
+                    column => Err(gpui_table::sort::SortError::UnsupportedColumn(column.into())),
+                }
+            }
+            #identity_comparison
+        }
 
         impl gpui_table::TableRowMeta for #struct_name {
             const TABLE_ID: &'static str = #table_id;

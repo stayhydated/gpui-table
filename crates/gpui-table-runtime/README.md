@@ -5,7 +5,7 @@
 
 `gpui-table-runtime` contains the GPUI-facing contracts targeted by
 generated table code: row metadata and rendering, cell rendering, loading, filter
-shapes, and generic helpers for generated filter collections in the
+shapes, selection-preserving ordering, and generic helpers for generated filter collections in the
 [`gpui-table`][project] ecosystem.
 
 Depend on this crate directly when writing reusable integrations over

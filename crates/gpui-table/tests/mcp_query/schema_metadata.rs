@@ -102,13 +102,15 @@ fn facade_mcp_tool_input_derive_is_reusable_schema() {
 }
 
 #[test]
-fn descriptor_for_no_filter_row_includes_only_pagination_arguments() {
+fn descriptor_for_no_filter_row_includes_ordering_and_pagination_arguments() {
     let schema = NoFilterQueryRow::descriptor().input_schema();
 
     let properties = schema["properties"]
         .as_object()
         .expect("input schema should have properties");
-    assert_eq!(properties.len(), 2);
+    assert_eq!(properties.len(), 3);
+    assert_eq!(schema["properties"]["sort"]["type"], "array");
+    assert_eq!(schema["properties"]["sort"]["maxItems"], 0);
     assert_eq!(schema["properties"]["limit"]["type"], "integer");
     assert_eq!(schema["properties"]["offset"]["type"], "integer");
     assert!(schema["properties"]["name"].is_null());

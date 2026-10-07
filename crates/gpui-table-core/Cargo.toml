@@ -19,6 +19,7 @@ rust_decimal = [ "dep:rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono" ]
 
 [dependencies]
+serde = { features = [ "derive" ], workspace = true }
 chrono = { optional = true, workspace = true }
 derive_more = { features = [ "full" ], workspace = true }
 es-fluent = { optional = true, workspace = true }

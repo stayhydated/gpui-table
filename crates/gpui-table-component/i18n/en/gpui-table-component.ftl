@@ -25,3 +25,15 @@ table_status_bar_ftl-Loading = Loading...
 table_status_bar_ftl-Idle = Idle
 table_status_bar_ftl-AllDataLoaded = All data loaded
 table_status_bar_ftl-ScrollForMore = Scroll for more
+
+## SortEditorFtl
+
+sort_editor_ftl-AddKey = Add sort key…
+sort_editor_ftl-Ascending = Ascending
+sort_editor_ftl-Descending = Descending
+sort_editor_ftl-NullsFirst = Nulls first
+sort_editor_ftl-NullsLast = Nulls last
+sort_editor_ftl-MoveUp = Move up
+sort_editor_ftl-MoveDown = Move down
+sort_editor_ftl-Remove = Remove
+sort_editor_ftl-Empty = No sort keys

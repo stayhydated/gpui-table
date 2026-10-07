@@ -25,14 +25,16 @@ pub(super) fn generate_mcp_impl(
     mcp_tool_options: Option<&McpToolOptions>,
     original_input: &DeriveInput,
 ) -> syn::Result<proc_macro2::TokenStream> {
-    if let Some(field) = filter_fields
-        .iter()
-        .find(|field| matches!(field.field_ident.to_string().as_str(), "limit" | "offset"))
-    {
+    if let Some(field) = filter_fields.iter().find(|field| {
+        matches!(
+            field.field_ident.to_string().as_str(),
+            "limit" | "offset" | "sort"
+        )
+    }) {
         let field_ident = &field.field_ident;
         return Err(syn::Error::new(
             field_ident.span(),
-            "MCP table filters cannot be named `limit` or `offset`; those argument names are reserved for pagination",
+            "MCP table filters cannot be named `limit`, `offset` or `sort`; those argument names are reserved for query controls",
         ));
     }
 
@@ -108,6 +110,7 @@ pub(super) fn generate_mcp_impl(
                     #filters_const_ident,
                     #tool_metadata,
                 )
+                .with_sort_columns(<Self as #facade_crate::sort::SortableRow>::sortable_columns())
                 #row_schema_descriptor_chain
             }
 
@@ -122,15 +125,14 @@ pub(super) fn generate_mcp_impl(
                     __gpui_table_arguments
                         .take_present_tool_value::<usize>("offset")?
                         .unwrap_or(0);
+                let __gpui_table_ordering = #facade_crate::mcp::decode_sort_order::<Self>(&mut __gpui_table_arguments)?;
                 #(#filter_decoders)*
 
                 __gpui_table_arguments.finish()?;
 
-                Ok(#facade_crate::mcp::TableQuery {
-                    filters: __gpui_table_filters,
-                    limit: __gpui_table_limit,
-                    offset: __gpui_table_offset,
-                })
+                Ok(#facade_crate::mcp::TableQuery::new(
+                    __gpui_table_filters, __gpui_table_limit, __gpui_table_offset,
+                ).with_ordering(__gpui_table_ordering))
             }
         }
 

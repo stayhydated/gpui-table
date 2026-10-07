@@ -39,6 +39,9 @@ description: >-
 | Load more rows | `TableLoader` plus `#[gpui_table_impl]` |
 | Render a custom cell | field-level `style = path` |
 | Control visible rows | generated delegate filter and row-scope methods |
+| Order loaded rows | `runtime::set_table_ordering`, `sort::SortOrder` and `SortEditor` |
+| Sort calculated values | `sort_key = path` paired with the same calculation in `style` |
+| Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
 | Save filter state | generated `FilterValues` JSON methods |
 | Expose rows over MCP | `#[gpui_table(mcp)]` and `#[mcp_query]` |
 | Adapt or implement a filter shape | `use-gpui-table-component-shapes` |
@@ -81,6 +84,22 @@ accept `TableQuery<Row>` and return
 Use `gpui_table::mcp::tool_registry()` when the host needs the
 inventory-discovered MCP definitions and handlers directly. Keep the server
 running for the host's intended session lifetime.
+
+## Ordering contracts
+
+Use stable public column keys, including `col` overrides, in `SortOrder`.
+Declare `row_id = "id"` for stable tie-breaking and record selection. Apply
+controlled orders through `runtime::set_table_ordering`; delegate sorting
+covers loaded rows. Remote sources must order the complete result before
+pagination. Local MCP `filter_rows` returns a `Result` after filtering, ordering
+and pagination. Backend handlers receive `query.ordering` and own execution.
+
+A calculated `sort_key` returns `Option<Key>` or `Result<Option<Key>, SortError>`.
+Reuse its calculation in the cell `style` renderer. Refresh the ordered view
+with `refresh_filtered_rows()` after in-place changes and inspect `sort_error()`
+when inputs can fail. Capture/restore `TableRowSelection` around source changes.
+Use existing UI composition for `SortEditor`; it emits controlled changes and
+owns no persistence, backend or formula language.
 
 ## Load focused patterns
 

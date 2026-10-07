@@ -15,6 +15,10 @@ pub(super) struct TableMeta {
     #[darling(default)]
     pub(super) title: Option<String>,
 
+    /// Stable identity field for ordering ties and selection restoration.
+    #[darling(default)]
+    pub(super) row_id: Option<String>,
+
     #[darling(default = "default_delegate")]
     pub(super) delegate: bool,
 
@@ -175,6 +179,8 @@ pub(super) struct TableColumn {
     pub(super) resizable: Option<bool>,
     pub(super) movable: Option<bool>,
     pub(super) style: Option<syn::Path>,
+    /// Typed optional calculated key: fn(&Row) -> Option<Key>.
+    pub(super) sort_key: Option<syn::Path>,
     pub(super) skip: bool,
     /// Explicit filter shape path or configured filter shape expression.
     /// Example: `filter(gpui_table_component::TextFilter.numeric_only())`
@@ -202,6 +208,7 @@ impl FromField for TableColumn {
             resizable: None,
             movable: None,
             style: None,
+            sort_key: None,
             skip: false,
             filter: None,
             validation: None,
@@ -291,6 +298,13 @@ impl FromField for TableColumn {
                         "style",
                         meta.path.span(),
                     )
+                } else if meta.path.is_ident("sort_key") {
+                    set_option(
+                        &mut column.sort_key,
+                        parse_path_value(&meta)?,
+                        "sort_key",
+                        meta.path.span(),
+                    )
                 } else if meta.path.is_ident("skip") {
                     set_flag(
                         &mut column.skip,
@@ -317,6 +331,15 @@ impl FromField for TableColumn {
                 }
             })
             .map_err(DarlingError::from)?;
+        }
+
+        if let Some(key) = column.sort_key.as_ref()
+            && (column.skip || !(column.sortable || column.ascending || column.descending))
+        {
+            return Err(DarlingError::from(syn::Error::new(
+                key.span(),
+                "`sort_key` requires an active sortable column",
+            )));
         }
 
         if column.skip

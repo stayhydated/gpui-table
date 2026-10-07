@@ -88,6 +88,7 @@ pub struct McpTableDescriptor {
     filters: &'static [McpTableFilter],
     tool_metadata: McpToolMetadata,
     row_schema: Option<McpTableRowSchemaFn>,
+    sort_columns: &'static [&'static str],
 }
 
 impl McpTableDescriptor {
@@ -107,7 +108,17 @@ impl McpTableDescriptor {
             filters,
             tool_metadata,
             row_schema: None,
+            sort_columns: &[],
         }
+    }
+
+    pub const fn with_sort_columns(mut self, columns: &'static [&'static str]) -> Self {
+        self.sort_columns = columns;
+        self
+    }
+
+    pub const fn sort_columns(self) -> &'static [&'static str] {
+        self.sort_columns
     }
 
     pub const fn with_row_schema(mut self, schema: McpTableRowSchemaFn) -> Self {
@@ -174,7 +185,7 @@ impl McpTableDescriptor {
     }
 
     pub fn input_schema(self) -> McpSchema {
-        input_schema_for_filters(self.filters)
+        input_schema_for_filters(self.filters, self.sort_columns)
     }
 
     pub fn output_schema(self) -> McpSchema {

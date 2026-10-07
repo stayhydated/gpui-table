@@ -187,9 +187,9 @@ pub(super) fn table_prompt_text(
     let resources = table_resource_uris(descriptor);
     let mut text = format!(
         "Query gpui-table `{table_name}` through MCP tool `{tool_name}`.\n\
-         Read `{descriptor_uri}` for table metadata, filter field types, validation rules, and per-filter schemas.\n\
+         Read `{descriptor_uri}` for table metadata, filter field types, sortable columns, validation rules, and per-filter schemas.\n\
          Read `{schema_uri}` for the query argument JSON Schema.\n\
-         Return a JSON object that can be used as `arguments` for `{tool_name}`; include only filters to apply plus optional `limit` and `offset`.",
+         Return a JSON object that can be used as `arguments` for `{tool_name}`; include only filters to apply plus optional `sort`, `limit` and `offset`.",
         table_name = descriptor.table_name(),
         tool_name = descriptor.tool_name(),
         descriptor_uri = resources.descriptor,

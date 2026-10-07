@@ -4,7 +4,7 @@
 [![crates.io: gpui-table-component][crate-badge]][crate]
 
 `gpui-table-component` provides the built-in GPUI table filters,
-adapter shapes, reset control, and `TableStatusBar` for applications using
+adapter shapes, controlled `SortEditor`, reset control, and `TableStatusBar` for applications using
 the [`gpui-table`][project] derive workflow.
 
 Use the same components directly when the application owns the filter layout.

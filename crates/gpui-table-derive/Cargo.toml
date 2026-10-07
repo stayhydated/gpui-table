@@ -23,6 +23,7 @@ rust_decimal = [  ]
 spacetimedb = [  ]
 
 [dependencies]
+gpui-table-core = { default-features = false, workspace = true }
 component-shape = { workspace = true }
 component-shape-codegen = { workspace = true }
 darling = { workspace = true }

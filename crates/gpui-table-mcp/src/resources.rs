@@ -60,6 +60,7 @@ pub fn table_descriptor_resource_value(descriptor: McpTableDescriptor) -> Value 
         },
         "output_schema": output_schema,
         "row_schema": row_schema,
+        "sortable_columns": descriptor.sort_columns(),
         "filters": descriptor
             .filters()
             .iter()

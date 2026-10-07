@@ -149,7 +149,7 @@ fn parse_result_return_type(output: &ReturnType) -> syn::Result<(Type, Type)> {
 
 pub(crate) fn resolve_crate_path(package_name: &str, fallback: &str) -> syn::Path {
     let path = match crate_name(package_name) {
-        Ok(FoundCrate::Itself) => "crate".to_string(),
+        Ok(FoundCrate::Itself) => fallback.to_string(),
         Ok(FoundCrate::Name(name)) => format!("::{name}"),
         Err(_) => fallback.to_string(),
     };
