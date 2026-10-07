@@ -170,10 +170,18 @@ fn controlled_sort_and_refresh_keep_row_and_cell_selection_on_stable_ids(
         selection.restore(table, cx);
         assert_eq!(table.selection(), TableSelection::Cell(3, 1));
         let selection = TableRowSelection::capture(table);
+        assert_eq!(selection.row_id(), Some(&2));
         table.delegate_mut().rows.retain(|row| row.id != 2);
         table.delegate().refresh_filtered_rows();
-        selection.restore(table, cx);
+        selection.clone().restore(table, cx);
         assert_eq!(table.selection(), TableSelection::None);
+        table
+            .delegate_mut()
+            .rows
+            .extend(records().into_iter().filter(|row| row.id == 2));
+        table.delegate().refresh_filtered_rows();
+        selection.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Cell(3, 1));
     });
 }
 
@@ -253,4 +261,51 @@ fn calculated_cell_presentation_uses_the_same_key_and_refreshes(cx: &mut gpui_ki
         assert_eq!(window.find("calculated-score-1").label(), Some("43"));
     })
     .unwrap();
+}
+
+#[gpui_kit::test]
+fn declared_ordering_capabilities_constrain_headers_and_direct_changes_atomically(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::TableDelegate;
+    cx.update(|cx| {
+        let mut delegate = RecordTableDelegate::new(records());
+        assert!(delegate.column(1, cx).sort.is_some());
+        delegate
+            .set_allowed_sort_columns(["category_key", "optional"])
+            .unwrap();
+        assert!(delegate.column(0, cx).sort.is_some());
+        assert!(delegate.column(1, cx).sort.is_none());
+        assert_eq!(
+            delegate.set_ordering(order()),
+            Err(SortError::UnsupportedColumn("score".into()))
+        );
+        assert!(delegate.ordering().is_empty());
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["label"]),
+            Err(SortError::UnsupportedColumn("label".into()))
+        );
+        assert!(delegate.column(1, cx).sort.is_none());
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["optional", "optional"]),
+            Err(SortError::DuplicateColumn("optional".into()))
+        );
+        delegate
+            .set_ordering(
+                SortOrder::new(vec![SortClause::new("optional", SortDirection::Descending)])
+                    .unwrap(),
+            )
+            .unwrap();
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["category_key"]),
+            Err(SortError::UnsupportedColumn("optional".into()))
+        );
+        assert!(delegate.column(2, cx).sort.is_some());
+        delegate.set_ordering(SortOrder::default()).unwrap();
+        delegate
+            .set_allowed_sort_columns(std::iter::empty::<String>())
+            .unwrap();
+        assert!(delegate.column(0, cx).sort.is_none());
+        assert!(delegate.column(2, cx).sort.is_none());
+    });
 }
