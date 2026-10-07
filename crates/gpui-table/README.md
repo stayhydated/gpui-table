@@ -28,6 +28,11 @@ struct User {
 }
 ```
 
+Generated delegates expose `set_allowed_sort_columns` to restrict ordering to a
+source's declared stable keys. The restriction disables excluded header controls
+and rejects excluded direct ordering changes atomically. Pass an empty list to
+disable ordering; configure the restriction before presenting a delegate.
+
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table
 [crate-badge]: https://img.shields.io/crates/v/gpui-table.svg?label=gpui-table
