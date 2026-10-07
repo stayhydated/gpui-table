@@ -170,10 +170,18 @@ fn controlled_sort_and_refresh_keep_row_and_cell_selection_on_stable_ids(
         selection.restore(table, cx);
         assert_eq!(table.selection(), TableSelection::Cell(3, 1));
         let selection = TableRowSelection::capture(table);
+        assert_eq!(selection.row_id(), Some(&2));
         table.delegate_mut().rows.retain(|row| row.id != 2);
         table.delegate().refresh_filtered_rows();
-        selection.restore(table, cx);
+        selection.clone().restore(table, cx);
         assert_eq!(table.selection(), TableSelection::None);
+        table
+            .delegate_mut()
+            .rows
+            .extend(records().into_iter().filter(|row| row.id == 2));
+        table.delegate().refresh_filtered_rows();
+        selection.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Cell(3, 1));
     });
 }
 
