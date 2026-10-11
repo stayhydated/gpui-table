@@ -23,10 +23,10 @@ rust_decimal = [  ]
 spacetimedb = [  ]
 
 [dependencies]
-gpui-table-core = { default-features = false, workspace = true }
 component-shape = { workspace = true }
 component-shape-codegen = { workspace = true }
 darling = { workspace = true }
+gpui-table-core = { default-features = false, workspace = true }
 heck = { workspace = true }
 koruma-derive-core = { workspace = true }
 proc-macro-crate = { workspace = true }

@@ -107,7 +107,14 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
 - `just test` runs workspace tests with all features. `just cov` measures all
   targets and features except the prototyping generator, GUI application, and
   publication tooling.
-- CI also checks formatting, Clippy, rustdocs, package contents, coverage,
+- Run `bash .github/scripts/check-quality.sh` for formatting, spelling, workflow
+  and shell validation with the pinned tool versions in CI.
+- Run `bash .github/scripts/check-features.sh` for isolated facade consumers and
+  `bash .github/scripts/check-scaffolds.sh` for scaffold drift and repeatability.
+- Verify the publishable release graph with
+  `cargo publish --workspace --dry-run --locked`; check dependency advisories and
+  approved sources with `cargo deny --locked --all-features check advisories sources`.
+- CI also checks formatting, strict all-target Clippy, rustdocs, package builds, coverage,
   Fluent resources, and unused dependencies. Read `.github/workflows/ci.yml`
   when matching its full checks; local recipes intentionally cover different
   scopes.
