@@ -120,3 +120,7 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   scopes.
 
 Report the commands actually run, their results, and any checks left unrun.
+
+Dependency advisory and source checks inspect the complete locked graph.
+Unmaintained notices apply to immediate workspace dependencies. Local workflow
+checks use actionlint 1.7.12, matching the CI image.
