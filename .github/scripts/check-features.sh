@@ -33,6 +33,7 @@ mcp = []
 
 [dependencies]
 gpui-table = { path = "$repo_root/crates/gpui-table", default-features = $defaults, features = [$feature_list] }
+gpui-kit = "0.7"
 spacetimedb-lib = { version = "2.10", optional = true }
 EOF
     # Seed each independent graph with workspace versions. Metadata only adjusts
