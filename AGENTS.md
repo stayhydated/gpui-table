@@ -107,7 +107,7 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
 - `just test` runs workspace tests with all features. `just cov` measures all
   targets and features except the prototyping generator, GUI application, and
   publication tooling.
-- Run `bash .github/scripts/check-quality.sh` for formatting, spelling, workflow
+- Run `just quality` for formatting, spelling, workflow
   and shell validation with the pinned tool versions in CI.
 - Run `bash .github/scripts/check-features.sh` for isolated facade consumers and
   `bash .github/scripts/check-scaffolds.sh` for scaffold drift and repeatability.
