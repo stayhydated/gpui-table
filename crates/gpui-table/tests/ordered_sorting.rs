@@ -198,7 +198,7 @@ fn score_cell(
     _: &mut gpui_kit::Window,
     _: &mut gpui_kit::App,
 ) -> gpui_kit::AnyElement {
-    use gpui_kit::test::TestSupportExt;
+    use gpui_kit::test::TestSupportExt as _;
     use gpui_kit::{
         InteractiveElement as _, IntoElement as _, ParentElement as _,
         StatefulInteractiveElement as _,
@@ -218,7 +218,7 @@ fn score_cell(
 #[gpui_kit::test]
 fn calculated_cell_presentation_uses_the_same_key_and_refreshes(cx: &mut gpui_kit::TestAppContext) {
     use gpui_kit::component::{Root, v_flex};
-    use gpui_kit::test::TestWindowExt;
+    use gpui_kit::test::TestWindowExt as _;
     use gpui_kit::{
         AppContext as _, Context, IntoElement, ParentElement as _, Render, Styled as _, Window, px,
         size,
