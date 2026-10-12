@@ -19,8 +19,6 @@ before pagination; backend execution remains application-owned.
 
 `gpui_table_mcp::tool_registry()?` returns the inventory-discovered MCP
 definitions and handlers for hosts that assemble the registry independently.
-MCP servers retain that registry across calls until their transport or host is
-explicitly stopped.
 
 The [MCP example][mcp-example]
 shows a complete stdio server with an in-memory row source.

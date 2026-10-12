@@ -10,8 +10,6 @@ the [`gpui-table`][facade] derive workflow.
 Requires Rust 1.99 or newer. Uses `gpui-kit` 0.7.
 
 Use the same components directly when the application owns the filter layout.
-The default features enable date and numeric range filters; enable `mcp`
-when those shapes are used by MCP query tables.
 
 Date filter labels use localized formatting for dates representable by Jiff.
 Dates outside that range retain their original Chrono `Display` representation.

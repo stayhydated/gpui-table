@@ -43,7 +43,7 @@ fn main() {
 }
 ```
 
-The [API reference][api] owns the filter and fallible ordering contracts.
+See the [API reference][api] for matching and fallible ordering semantics.
 
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table-core
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table

@@ -11,14 +11,9 @@ shapes, selection-preserving ordering, and generic helpers for generated filter 
 Requires Rust 1.99 or newer. Uses `gpui-kit` 0.7.
 
 Depend on this crate directly when writing reusable integrations over
-`TableRowMeta`, `TableLoader`,
+[`TableCell`][cell], `TableRowMeta`, `TableLoader`,
 `GpuiTableFilterShape`, or `FilterEntitiesExt`. Application
 tables should normally use the [`gpui-table`][facade] facade.
-
-Chrono cells use localized formatting for values representable by Jiff. Dates
-outside Jiff's range and leap seconds fall back to the original Chrono `Display`
-value, including its original offset for timezone-aware values. See
-[`TableCell`][cell] for rendering contracts and supported cell types.
 
 ## Features
 
