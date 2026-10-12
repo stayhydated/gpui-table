@@ -8,17 +8,34 @@ generated table code: row metadata and rendering, cell rendering, loading, filte
 shapes, selection-preserving ordering, and generic helpers for generated filter collections in the
 [`gpui-table`][project] ecosystem.
 
+Requires Rust 1.99 or newer. Uses `gpui-kit` 0.7.
+
 Depend on this crate directly when writing reusable integrations over
 `TableRowMeta`, `TableLoader`,
 `GpuiTableFilterShape`, or `FilterEntitiesExt`. Application
-tables should normally use the `gpui-table` facade.
+tables should normally use the [`gpui-table`][facade] facade.
 
 Chrono cells use localized formatting for values representable by Jiff. Dates
 outside Jiff's range and leap seconds fall back to the original Chrono `Display`
-value, including its original offset for timezone-aware values.
+value, including its original offset for timezone-aware values. See
+[`TableCell`][cell] for rendering contracts and supported cell types.
+
+## Features
+
+The default feature set is `chrono`, which also enables `jiff`.
+
+| Feature | Default | Purpose |
+| --- | --- | --- |
+| `default` | Yes | Enables `chrono`. |
+| `chrono` | Yes | Enables Chrono cells, core date conversions, and `jiff` formatting. |
+| `jiff` | Yes | Enables Jiff cells and ICU-based localized date/time formatting. |
+| `rust_decimal` | No | Enables decimal cells and core numeric conversions. |
+| `spacetimedb` | No | Enables `chrono`, SpacetimeDB cells, and core temporal conversions. |
 
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table-runtime
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table
 [crate-badge]: https://img.shields.io/crates/v/gpui-table-runtime.svg?label=gpui-table-runtime
 [crate]: https://crates.io/crates/gpui-table-runtime
 [project]: https://github.com/stayhydated/gpui-table
+[facade]: https://github.com/stayhydated/gpui-table/blob/master/crates/gpui-table/README.md
+[cell]: https://docs.rs/gpui-table-runtime/latest/gpui_table_runtime/trait.TableCell.html
