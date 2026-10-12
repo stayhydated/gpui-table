@@ -9,14 +9,25 @@ fmt:
     taplo fmt
     rumdl fmt .
 
+# Use actionlint 1.7.12 locally, matching the CI image.
+quality:
+    cargo fmt --all --check
+    rustfmt --check --edition 2024 .github/feature-smoke.rs
+    cargo sort-derives --check
+    taplo fmt --check
+    rumdl check .
+    typos
+    actionlint
+    git ls-files -z '*.sh' '*.bash' | xargs -0 --no-run-if-empty shellcheck
+
 clippy:
-    cargo clippy --workspace --all-features --exclude some-lib --exclude some-lib-tables
+    cargo clippy --workspace --all-features --all-targets --locked --exclude some-lib --exclude some-lib-tables -- -D warnings
 
 check:
-    cargo check --workspace --all-features --exclude some-lib --exclude some-lib-tables
+    cargo check --workspace --all-features --locked --exclude some-lib --exclude some-lib-tables
 
 test:
-    cargo test --workspace --all-features
+    cargo test --workspace --all-features --locked
 
 cov:
     cargo llvm-cov --workspace --all-features --all-targets \
@@ -26,7 +37,7 @@ cov:
         --exclude web
 
 test-publish:
-    cargo publish --workspace --dry-run --allow-dirty
+    cargo publish --workspace --dry-run --locked --allow-dirty
 
 book:
     mdbook serve book

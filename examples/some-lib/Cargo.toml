@@ -41,8 +41,8 @@ fake = { features = [
   "chrono",
   "rust_decimal",
 ], optional = true, workspace = true }
-gpui-kit = { optional = true, workspace = true }
 gpui-es-fluent = { features = [ "component" ], optional = true, workspace = true }
+gpui-kit = { optional = true, workspace = true }
 gpui-table = { features = [
   "fluent",
   "inventory",

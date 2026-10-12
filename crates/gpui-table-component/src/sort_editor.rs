@@ -289,7 +289,7 @@ impl RenderOnce for SortEditor {
 mod tests {
     use super::*;
     use gpui_kit::component::Root;
-    use gpui_kit::test::TestWindowExt;
+    use gpui_kit::test::TestWindowExt as _;
     use gpui_kit::{AppContext as _, Context, Entity, Render, TestAppContext, px, size};
 
     struct Harness {
