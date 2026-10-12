@@ -13,6 +13,10 @@ Depend on this crate directly when writing reusable integrations over
 `GpuiTableFilterShape`, or `FilterEntitiesExt`. Application
 tables should normally use the `gpui-table` facade.
 
+`TableRowSelection` captures a row or cell selection by stable identity.
+Paged callers can clone the snapshot, inspect `row_id()`, and retain it until
+that record is visible again before restoring it through the table state.
+
 Chrono cells use localized formatting for values representable by Jiff. Dates
 outside Jiff's range and leap seconds fall back to the original Chrono `Display`
 value, including its original offset for timezone-aware values.

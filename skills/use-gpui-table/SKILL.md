@@ -71,6 +71,9 @@ Declare every filter with an explicit shape or configured shape expression.
 Use `#[gpui_table(filters)]` for rendered filters, or
 `#[gpui_table(mcp)]` when the filters exist only as MCP arguments.
 
+The generated table-wired filter builders retain weak handles. Keep the returned
+filter collection in the owning view; queued callbacks ignore a closed table.
+
 Keep loader flags coherent: set `loading` before starting work, clear
 it on completion, and set `eof` only when no later page exists.
 Initialize `gpui_table_component::i18n` before rendering localized
@@ -98,6 +101,9 @@ A calculated `sort_key` returns `Option<Key>` or `Result<Option<Key>, SortError>
 Reuse its calculation in the cell `style` renderer. Refresh the ordered view
 with `refresh_filtered_rows()` after in-place changes and inspect `sort_error()`
 when inputs can fail. Capture/restore `TableRowSelection` around source changes.
+Configure `set_allowed_sort_columns` on a generated delegate when its source
+declares a subset of stable ordering keys. It constrains header affordances and
+direct setters atomically; an empty list disables ordering.
 Use existing UI composition for `SortEditor`; it emits controlled changes and
 owns no persistence, backend or formula language.
 

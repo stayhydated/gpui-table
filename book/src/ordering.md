@@ -97,3 +97,11 @@ Use a stable editor ID. Clause controls use stable column keys, so changing
 priority retains their identity. `disabled(true)` prevents editing. Place the
 component in the existing toolbar, panel or sheet; it owns no query, dialog,
 persistence or authorization. Initialize the component's i18n as for filters.
+
+## Declare source capabilities
+
+Call `delegate.set_allowed_sort_columns(["name", "created_at"])` before
+presenting a generated delegate when the source supports a subset of its sortable
+keys. Excluded headers become unsortable and direct order changes reject excluded
+keys. An empty list disables ordering. Unknown keys, duplicate keys, and a
+restriction excluding the current order fail atomically.

@@ -331,6 +331,7 @@ pub(super) fn generate_delegate(
             pub loading: bool,
             pub full_loading: bool,
             ordering: gpui_table::sort::SortOrder,
+            allowed_sort_columns: Option<Vec<String>>,
             sort_error: std::cell::RefCell<Option<gpui_table::sort::SortError>>,
             #filter_delegate_fields
         }
@@ -348,6 +349,7 @@ pub(super) fn generate_delegate(
                     loading: false,
                     full_loading: false,
                     ordering: gpui_table::sort::SortOrder::new(vec![#(#initial_sort),*]).expect("validated initial column order"),
+                    allowed_sort_columns: None,
                     sort_error: std::cell::RefCell::new(None),
                     #filter_delegate_init
                 }
@@ -357,6 +359,13 @@ pub(super) fn generate_delegate(
 
             /// Order the loaded source. Use the runtime helper to retain table selection.
             pub fn set_ordering(&mut self, ordering: gpui_table::sort::SortOrder) -> Result<(), gpui_table::sort::SortError> {
+                if let Some(allowed) = &self.allowed_sort_columns {
+                    for clause in ordering.clauses() {
+                        if !allowed.iter().any(|column| column == clause.column()) {
+                            return Err(gpui_table::sort::SortError::UnsupportedColumn(clause.column().to_owned()));
+                        }
+                    }
+                }
                 let mut indices = self.visible_row_indices();
                 ordering.sort_indices(&self.rows, &mut indices)?;
                 self.ordering = ordering;
@@ -366,6 +375,32 @@ pub(super) fn generate_delegate(
             }
 
             pub fn ordering(&self) -> &gpui_table::sort::SortOrder { &self.ordering }
+
+            /// Restrict ordering to declared stable keys, including column-header actions.
+            ///
+            /// An empty list disables ordering. Unknown or duplicate keys and a restriction
+            /// that excludes the current order are rejected without changing capabilities.
+            pub fn set_allowed_sort_columns(
+                &mut self,
+                columns: impl IntoIterator<Item = impl Into<String>>,
+            ) -> Result<(), gpui_table::sort::SortError> {
+                let columns = columns.into_iter().map(Into::into).collect::<Vec<String>>();
+                for (index, column) in columns.iter().enumerate() {
+                    if columns[..index].contains(column) {
+                        return Err(gpui_table::sort::SortError::DuplicateColumn(column.clone()));
+                    }
+                    gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(
+                        column.clone(), gpui_table::sort::SortDirection::Ascending,
+                    )])?.validate::<#struct_name>()?;
+                }
+                for clause in self.ordering.clauses() {
+                    if !columns.iter().any(|column| column == clause.column()) {
+                        return Err(gpui_table::sort::SortError::UnsupportedColumn(clause.column().to_owned()));
+                    }
+                }
+                self.allowed_sort_columns = Some(columns);
+                Ok(())
+            }
 
             /// A refreshed row may invalidate a previously valid calculated key.
             pub fn sort_error(&self) -> Option<gpui_table::sort::SortError> {
@@ -391,6 +426,11 @@ pub(super) fn generate_delegate(
                     .find(|fresh_column| fresh_column.key == column.key)
                 {
                     column.name = fresh_column.name;
+                }
+                if self.allowed_sort_columns.as_ref().is_some_and(|allowed|
+                    !allowed.iter().any(|key| key == column.key.as_ref())
+                ) {
+                    column.sort = None;
                 }
                 if column.sort.is_some() {
                     column.sort = Some(self.ordering.clauses().iter().find(|clause| clause.column() == column.key.as_ref()).map_or(gpui_kit::component::table::ColumnSort::Default, |clause| match clause.direction() {

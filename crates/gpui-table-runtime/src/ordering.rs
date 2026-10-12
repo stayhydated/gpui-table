@@ -14,12 +14,18 @@ pub trait OrderedTableDelegate: TableDelegate {
 }
 
 /// Capture before changing rows or ordering, then restore by stable row identity.
+#[derive(Clone)]
 pub struct TableRowSelection<Id> {
     row: Option<Id>,
     selection: TableSelection,
 }
 
 impl<Id: Clone + Eq> TableRowSelection<Id> {
+    /// Selected row identity, available to callers retaining a paged selection.
+    pub fn row_id(&self) -> Option<&Id> {
+        self.row.as_ref()
+    }
+
     pub fn capture<D: OrderedTableDelegate<RowId = Id>>(table: &TableState<D>) -> Self {
         let selection = table.selection();
         let row_ix = match selection {
