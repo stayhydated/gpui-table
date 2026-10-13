@@ -46,7 +46,7 @@ es-fluent-lang = "0.21.0"
 es-fluent-manager-embedded = "0.21.0"
 fake = "5.1"
 gpui-es-fluent = "0.3.0"
-gpui-kit = "0.7.0"
+gpui-kit = "0.7.3"
 gpui-storybook = "0.7.0"
 gpui-table = { path = "crates/gpui-table", version = "0.8.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.8.0" }
@@ -73,7 +73,7 @@ proptest = { default-features = false, features = [ "std" ], version = "1.11" }
 quote = "1.0"
 regex = "1.13"
 reqwest = "0.13"
-reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.7" }
+reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.9" }
 rmcp = "3.5.0"
 rust_decimal = "1.43"
 serde = "1.0"
