@@ -9,6 +9,10 @@ publish = false
 autobins = false
 autolib = false
 
+[package.metadata.cargo-machete]
+# Selects the browser backend for fake's transitive randomness.
+ignored = [ "getrandom" ]
+
 [[bin]]
 name = "some-lib-tables"
 path = "src/main.rs"
@@ -36,6 +40,7 @@ reqwest_client = { workspace = true }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 console_error_panic_hook = { workspace = true }
+getrandom = { features = [ "wasm_js" ], version = "0.4" }
 wasm-bindgen = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
