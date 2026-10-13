@@ -11,48 +11,49 @@ from Rust row types for GPUI application developers. It generates column
 metadata and delegates, with opt-in typed filters, incremental loading,
 localization, registry metadata, ordered sorting, calculated keys, and MCP query tools.
 
-Requires Rust 1.99 or newer.
+Requires Rust 1.99 or newer for all public crates. Generated UI code uses
+`gpui-kit` 0.7 directly, so applications must expose it as a direct dependency.
 
-Chrono cells and date filters preserve out-of-range dates through their original
-`Display` representation; cells also preserve leap seconds.
+Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
+[`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.
 
 ## Crates
 
-| Crate | Purpose | Source |
-| --- | --- | --- |
-| `gpui-table` | Application-facing facade and derive re-exports | [README][gpui-table-readme] |
-| `gpui-table-component` | Built-in filter widgets and table support components | [README][gpui-table-component-readme] |
-| `gpui-table-core` | UI-neutral filter values and matching semantics | [README][gpui-table-core-readme] |
-| `gpui-table-derive` | Proc macros for tables, cells, filters, and MCP queries | [README][gpui-table-derive-readme] |
-| `gpui-table-mcp` | Typed MCP query contracts and server composition | [README][gpui-table-mcp-readme] |
-| `gpui-table-prototyping-core` | Rust syntax generation from registered table metadata | [README][gpui-table-prototyping-core-readme] |
-| `gpui-table-runtime` | GPUI row, cell, loading, and filter-shape contracts | [README][gpui-table-runtime-readme] |
-| `gpui-table-schema` | UI-neutral table and filter registry metadata | [README][gpui-table-schema-readme] |
+| Crate | Purpose |
+| --- | --- |
+| [`gpui-table`][gpui-table-readme] | Application-facing facade and derive re-exports |
+| [`gpui-table-component`][gpui-table-component-readme] | Built-in filter widgets and table support components |
+| [`gpui-table-core`][gpui-table-core-readme] | UI-neutral filter values and matching semantics |
+| [`gpui-table-derive`][gpui-table-derive-readme] | Proc macros for tables, cells, filters, and MCP queries |
+| [`gpui-table-mcp`][gpui-table-mcp-readme] | Typed MCP query contracts and server composition |
+| [`gpui-table-prototyping-core`][gpui-table-prototyping-core-readme] | Rust syntax generation from registered table metadata |
+| [`gpui-table-runtime`][gpui-table-runtime-readme] | GPUI row, cell, loading, and filter-shape contracts |
+| [`gpui-table-schema`][gpui-table-schema-readme] | UI-neutral table and filter registry metadata |
 
 ## Example
+
+With the facade's default `derive` feature and a direct `gpui-kit` dependency,
+this row declaration generates `UserTableDelegate` and `UserTableColumn`:
 
 ```rust
 use gpui_table::GpuiTable;
 
 #[derive(Clone, GpuiTable)]
-#[gpui_table(filters)]
 struct User {
-    #[gpui_table(
-        sortable,
-        filter(gpui_table_component::TextFilter)
-    )]
+    #[gpui_table(sortable, width = 180.)]
     name: String,
+}
+
+fn main() {
+    let delegate = UserTableDelegate::new(vec![User { name: "Ada".into() }]);
+    assert_eq!(delegate.rows.len(), 1);
 }
 ```
 
-The derive creates `UserTableDelegate`,
-`UserTableColumn`, `UserFilterEntities`, and
-`UserFilterValues`. The application owns the rows, the
-`TableState`, and the layout around
-`gpui_kit::component::table::DataTable`.
-
-See the [runnable examples](examples/README.md) for complete table views,
-filter controls, loading, and MCP query tools.
+The application supplies its GPUI window, `TableState`, and layout around
+`gpui_kit::component::table::DataTable`. The [complete table view][table-view]
+composes those values with filters and loading; the [runnable examples][examples]
+cover additional table and MCP workflows.
 
 [ci-badge]: https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml/badge.svg?branch=master
 [ci]: https://github.com/stayhydated/gpui-table/actions/workflows/ci.yml
@@ -70,3 +71,5 @@ filter controls, loading, and MCP query tools.
 [gpui-table-prototyping-core-readme]: crates/gpui-table-prototyping-core/README.md
 [gpui-table-runtime-readme]: crates/gpui-table-runtime/README.md
 [gpui-table-schema-readme]: crates/gpui-table-schema/README.md
+[table-view]: https://github.com/stayhydated/gpui-table/blob/master/examples/some-lib-tables/src/tables/user.rs
+[examples]: https://github.com/stayhydated/gpui-table/blob/master/examples/README.md
