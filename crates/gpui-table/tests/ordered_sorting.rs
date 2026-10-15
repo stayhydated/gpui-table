@@ -711,7 +711,14 @@ fn filtered_replacement_retains_record_and_presentation_column_identity(
         )
         .unwrap();
         assert_eq!(table.selection(), TableSelection::Column(native + 1));
+        let retained_column = TableRowSelection::capture(table);
+        table.set_selected_cell(0, native + 1, cx);
+        let retained_cell = TableRowSelection::capture(table);
         set_table_resolved_columns(table, vec![presentation("resolved_score")], cx).unwrap();
+        assert_eq!(table.selection(), TableSelection::Row(0));
+        retained_cell.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Row(0));
+        retained_column.restore(table, cx);
         assert_eq!(table.selection(), TableSelection::None);
         for selection in [TableSelection::Row(99), TableSelection::Cell(99, 0)] {
             table.set_selection(selection, cx);

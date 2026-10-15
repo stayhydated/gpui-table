@@ -171,3 +171,6 @@ before changing the source. `row_id()` identifies the retained record. Restoring
 while it is absent clears the visible selection; retain another clone and
 restore it once the record returns. Table-wired client filters preserve visible
 record selection and clear it when the selected record is filtered out.
+Snapshots retain column positions; use `set_table_resolved_columns` to follow
+column keys during a presentation change. Restoring a snapshot whose column no
+longer exists selects its row for a cell snapshot or clears a column snapshot.

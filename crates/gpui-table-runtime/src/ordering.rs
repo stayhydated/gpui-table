@@ -108,6 +108,8 @@ pub fn set_table_resolved_columns<R: SortableRow, D: ResolvedTableDelegate<R>>(
 
 /// Capture before changing rows or ordering, then restore by stable row identity.
 /// Generated delegates need an explicit `row_id` when source positions change.
+/// Column positions are retained, not column keys. Use
+/// [`set_table_resolved_columns`] to follow column keys during replacement.
 #[derive(Clone)]
 pub struct TableRowSelection<Id> {
     row: Option<Id>,
@@ -150,6 +152,12 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
                 .unwrap_or_default(),
             (None, TableSelection::Row(_) | TableSelection::Cell(_, _)) => TableSelection::None,
             (_, selection) => selection,
+        };
+        let columns = table.delegate().columns_count(cx);
+        let selection = match selection {
+            TableSelection::Cell(row, column) if column >= columns => TableSelection::Row(row),
+            TableSelection::Column(column) if column >= columns => TableSelection::None,
+            selection => selection,
         };
         table.set_selection(selection, cx);
     }
