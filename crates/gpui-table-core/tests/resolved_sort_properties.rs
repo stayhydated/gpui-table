@@ -36,7 +36,17 @@ proptest! {
         descending in any::<bool>(),
         nulls_first in any::<bool>(),
     ) {
-        let rows = values.into_iter().enumerate().map(|(id, value)| Row { id, value }).collect::<Vec<_>>();
+        let count = values.len();
+        let rows = values.into_iter().enumerate().map(|(index, value)| Row { id: count - index, value }).collect::<Vec<_>>();
+        // Bounded values permit an independent tuple oracle, including descending keys.
+        let reference_key = |row: &Row| {
+            let null_rank = if row.value.is_none() {
+                u8::from(!nulls_first)
+            } else {
+                u8::from(nulls_first)
+            };
+            (null_rank, row.value.map(|value| if descending { -value } else { value }), row.id)
+        };
         let direction = if descending { SortDirection::Descending } else { SortDirection::Ascending };
         let nulls = if nulls_first { NullPlacement::First } else { NullPlacement::Last };
         let native_order = SortOrder::new(vec![SortClause::new("native", direction).with_nulls(nulls)]).unwrap();
@@ -46,13 +56,19 @@ proptest! {
         ]).unwrap();
         let mut native = (0..rows.len()).filter(|index| index % 2 == 0).collect::<Vec<_>>();
         let mut resolved = native.clone();
+        let mut expected = native.clone();
+        expected.sort_by_key(|index| reference_key(&rows[*index]));
         native_order.sort_indices(&rows, &mut native).unwrap();
         context.sort_indices(&resolved_order, &rows, &mut resolved).unwrap();
-        prop_assert_eq!(resolved, native);
+        prop_assert_eq!(&native, &expected);
+        prop_assert_eq!(resolved, expected);
+        let mut expected_rows = rows.clone();
+        expected_rows.sort_by_key(reference_key);
         let mut native_rows = rows.clone();
         let mut resolved_rows = rows;
         native_order.sort_rows(&mut native_rows).unwrap();
         context.sort_rows(&resolved_order, &mut resolved_rows).unwrap();
-        prop_assert_eq!(resolved_rows, native_rows);
+        prop_assert_eq!(&native_rows, &expected_rows);
+        prop_assert_eq!(resolved_rows, expected_rows);
     }
 }
