@@ -23,7 +23,6 @@ features when deriving tables with date, numeric, SpacetimeDB, or MCP shapes.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `default` | Yes | Enables `chrono` and `rust_decimal`. |
 | `chrono` | Yes | Provides date-range widgets and adapters, with Chrono, Jiff, ICU formatting, and matching runtime/core support. |
 | `rust_decimal` | Yes | Provides numeric range widgets and adapters for decimal, integer, and float fields. |
 | `mcp` | No | Implements MCP schemas and decoding for built-in filter shapes. |

@@ -28,26 +28,26 @@ rust-version = "1.99"
 version = "0.8.0"
 
 [workspace.dependencies]
-anyhow = "1.0"
-chrono = "0.4"
-clap = "4.6"
+anyhow = "1.0.104"
+chrono = "0.4.45"
+clap = "4.6.7"
 component-shape = "0.3.4"
 component-shape-codegen = "0.3.4"
 component-shape-mcp = "0.3.4"
-console_error_panic_hook = "0.1"
+console_error_panic_hook = "0.1.7"
 criterion = { default-features = false, features = [ "cargo_bench_support" ], version = "0.8.2" }
-darling = "0.24"
-derive_more = "2.1"
-dioxus = { default-features = false, version = "0.7" }
-env_logger = "0.11"
+darling = "0.24.1"
+derive_more = "2.1.1"
+dioxus = { default-features = false, version = "0.7.10" }
+env_logger = "0.11.11"
 es-fluent = "0.21.0"
 es-fluent-build = "0.21.0"
 es-fluent-lang = "0.21.0"
 es-fluent-manager-embedded = "0.21.0"
-fake = "5.1"
+fake = "5.1.0"
 gpui-es-fluent = "0.3.0"
 gpui-kit = "0.7.3"
-gpui-storybook = "0.7.0"
+gpui-storybook = "0.7.1"
 gpui-table = { path = "crates/gpui-table", version = "0.8.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.8.0" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.8.0" }
@@ -57,43 +57,43 @@ gpui-table-prototyping-core = { path = "crates/gpui-table-prototyping-core", ver
 gpui-table-runtime = { default-features = false, path = "crates/gpui-table-runtime", version = "0.8.0" }
 gpui-table-schema = { path = "crates/gpui-table-schema", version = "0.8.0" }
 heck = "0.5.0"
-icu = "2.3"
-insta = "1.49"
-inventory = "0.3"
-itertools = "0.15"
-jiff = "0.2"
+icu = "2.3.1"
+insta = "1.49.0"
+inventory = "0.3.25"
+itertools = "0.15.0"
+jiff = "0.2.38"
 koruma = "0.13.0"
 koruma-collection = "0.13.0"
 koruma-derive-core = "0.13.0"
-log = "0.4"
-prettyplease = "0.3"
-proc-macro-crate = "3.5"
-proc-macro2 = "1.0"
-proptest = { default-features = false, features = [ "std" ], version = "1.11" }
-quote = "1.0"
-regex = "1.13"
-reqwest = "0.13"
+log = "0.4.34"
+prettyplease = "0.3.0"
+proc-macro-crate = "3.5.0"
+proc-macro2 = "1.0.107"
+proptest = { default-features = false, features = [ "std" ], version = "1.12.0" }
+quote = "1.0.47"
+regex = "1.13.1"
+reqwest = "0.13.5"
 reqwest_client = { package = "gpui-pre-reqwest-client", version = "=0.3.9" }
-rmcp = "3.5.0"
-rust_decimal = "1.43"
-serde = "1.0"
-serde_json = "1.0"
-spacetimedb-lib = "2.10"
-stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "d9c54bbb850b58b822458a6a15eb75ba64034a31" }
-stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "d9c54bbb850b58b822458a6a15eb75ba64034a31" }
-stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "d9c54bbb850b58b822458a6a15eb75ba64034a31" }
-strum = "0.28"
-syn = "3.0"
-thiserror = "2.0"
-tokio = "1.53"
-tracing-subscriber = "0.3"
-trybuild = "1.0"
-unicode-segmentation = "1.13"
-urlencoding = "2.1"
-uuid = "1.27"
-wasm-bindgen = "0.2"
+rmcp = "3.5.1"
+rust_decimal = "1.43.0"
+serde = "1.0.229"
+serde_json = "1.0.154"
+spacetimedb-lib = "2.12.0"
+stayhydated-dioxus = { git = "https://github.com/stayhydated/shared", rev = "3136b369bb54312096ad83ba74735aab29109835" }
+stayhydated-site = { git = "https://github.com/stayhydated/shared", rev = "3136b369bb54312096ad83ba74735aab29109835" }
+stayhydated-xtask = { git = "https://github.com/stayhydated/shared", rev = "3136b369bb54312096ad83ba74735aab29109835" }
+strum = "0.28.0"
+syn = "3.0.9"
+thiserror = "2.0.21"
+tokio = "1.53.3"
+tracing-subscriber = "0.3.23"
+trybuild = "1.0.122"
+unicode-segmentation = "1.13.3"
+urlencoding = "2.1.3"
+uuid = "1.28.0"
+wasm-bindgen = "0.2.129"
 web = { path = "web" }
-web-sys = { features = [ "Location", "Window" ], version = "0.3" }
+web-sys = { features = [ "Location", "Window" ], version = "0.3.106" }
 
 [profile.dev]
 codegen-units = 16

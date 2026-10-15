@@ -21,7 +21,6 @@ The default feature set is `chrono`.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `default` | Yes | Enables `chrono`. |
 | `chrono` | Yes | Provides Chrono date conversions and the `DateRange` filter category. |
 | `fluent` | No | Provides Fluent labels and localization initialization for filter categories. |
 | `rust_decimal` | No | Provides decimal numeric conversions and the `NumberRange` filter category. |

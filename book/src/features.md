@@ -34,3 +34,32 @@ Use the lower-level crates for reusable integrations and tooling:
 Filter-shape feature errors identify the field and missing facade capability.
 Match the facade feature first, then match the corresponding component feature
 when the shape is implemented by `gpui-table-component`.
+
+## Generate table stories from metadata
+
+Use `gpui-table-schema` and `gpui-table-prototyping-core` when a tool needs
+Rust scaffolding for registered row types. Enable the facade's `inventory`
+feature on the row-model crate and link that crate into the generator so its
+`GpuiTableShape` registrations are available.
+
+The [reference generator](https://github.com/stayhydated/gpui-table/blob/master/examples/prototyping/src/main.rs)
+implements `TableLayout` to assemble `TableParts` into a Storybook view. It
+passes each registered shape to `TableShapeAdapter::new(shape, true)` and
+calls `try_generate_file(&layout)`. Use `try_parts()` instead when the tool
+needs individual fragments for its own template. Handle `TableCodegenError`
+for invalid identifiers, source paths, or imports instead of using the
+panicking convenience methods.
+
+From a repository checkout with the example's dependencies available, run:
+
+```sh
+cargo run -p prototyping --locked
+```
+
+This replaces generated Rust stories in `examples/prototyping/output` and
+writes their module index. Preserve any manual work before running it; make
+lasting changes in the row metadata or `StorybookLayout`, then regenerate.
+Successful output names each generated file and ends with
+`Table story generation complete.` Compile the application that consumes the
+generated files to check their imports and feature requirements; generating a
+syntax tree alone does not prove that its referenced types are available.

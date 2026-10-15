@@ -21,7 +21,6 @@ The default feature set is `chrono`, which also enables `jiff`.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `default` | Yes | Enables `chrono`. |
 | `chrono` | Yes | Enables Chrono cells, core date conversions, and `jiff` formatting. |
 | `jiff` | Yes | Enables Jiff cells and ICU-based localized date/time formatting. |
 | `rust_decimal` | No | Enables decimal cells and core numeric conversions. |

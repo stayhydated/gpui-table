@@ -80,8 +80,8 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   `crates/gpui-table/tests/ordered_sorting.rs` and
   `crates/gpui-table/tests/spacetimedb_ordering.rs`. Run
   `cargo test -p gpui-table --test ordered_sorting --test spacetimedb_ordering --all-features --locked`.
-- Pure filter properties live in `gpui-table-core/tests/filter_properties.rs`;
-  pagination properties live in `gpui-table-mcp/tests/query_properties.rs`.
+- Pure filter properties live in `crates/gpui-table-core/tests/filter_properties.rs`;
+  pagination properties live in `crates/gpui-table-mcp/tests/query_properties.rs`.
   Run `cargo test -p gpui-table-core -p gpui-table-mcp --all-features --locked`.
   Keep generators bounded and retain minimized failures as regression tests or
   reviewed proptest regression files.
@@ -100,8 +100,8 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   crates; `cargo doc` renders rustdoc and does not test those fences.
 - Run built-in widget previews with
   `cargo run -p gpui-table-component --bin story --features story`.
-- For book edits, run `cargo xtask build book` and
-  `cargo xtask build llms-txt`. For the nightly Wasm demo, use
+- For book edits, run `MDBOOK_BUILD__CREATE_MISSING=false cargo xtask build book`
+  and `cargo xtask build llms-txt`. For the nightly Wasm demo, use
   `cargo xtask build gpui-demo`; for the catalog, use `cargo xtask build web`.
   `just web-build` runs the complete publication pipeline.
 - `just test` runs workspace tests with all features. `just cov` measures all

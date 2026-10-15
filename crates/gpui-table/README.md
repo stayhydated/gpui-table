@@ -19,7 +19,6 @@ corresponding shapes.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `default` | Yes | Enables `derive` and `chrono`. |
 | `derive` | Yes | Re-exports the table, cell, filter, and supporting proc macros. |
 | `chrono` | Yes | Enables Chrono cell rendering and date-filter support across core, derive, runtime, and an enabled MCP integration. |
 | `fluent` | No | Enables typed Fluent labels in core and generated tables and facets. |

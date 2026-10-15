@@ -40,7 +40,7 @@ reqwest_client = { workspace = true }
 
 [target.'cfg(target_family = "wasm")'.dependencies]
 console_error_panic_hook = { workspace = true }
-getrandom = { features = [ "wasm_js" ], version = "0.4" }
+getrandom = { features = [ "wasm_js" ], version = "0.4.3" }
 wasm-bindgen = { workspace = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]

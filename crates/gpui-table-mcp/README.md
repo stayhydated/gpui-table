@@ -30,7 +30,6 @@ and built-in components when using generated query tools.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `default` | Yes | Enables `chrono`. |
 | `chrono` | Yes | Enables Chrono query values and corresponding core/runtime conversions. |
 | `rust_decimal` | No | Enables decimal query values and numeric core/runtime conversions. |
 | `spacetimedb` | No | Enables `chrono` and supported SpacetimeDB temporal conversions. |
