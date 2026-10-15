@@ -86,20 +86,6 @@ fn invalid_keys_are_rejected_on_an_empty_source() {
 
 #[test]
 fn comparison_error_does_not_partially_reorder_the_source() {
-    #[derive(Debug, PartialEq)]
-    struct FloatRow(f64);
-    impl SortableRow for FloatRow {
-        fn sortable_columns() -> &'static [&'static str] {
-            &["value"]
-        }
-        fn compare_sort_clause(
-            &self,
-            other: &Self,
-            clause: &SortClause,
-        ) -> Result<Ordering, SortError> {
-            compare_values(Some(&self.0), Some(&other.0), clause)
-        }
-    }
     let mut rows = vec![FloatRow(3.), FloatRow(f64::NAN), FloatRow(1.)];
     let order = SortOrder::new(vec![SortClause::new("value", SortDirection::Ascending)]).unwrap();
     assert_eq!(
@@ -109,4 +95,46 @@ fn comparison_error_does_not_partially_reorder_the_source() {
     assert_eq!(rows[0].0, 3.);
     assert!(rows[1].0.is_nan());
     assert_eq!(rows[2].0, 1.);
+}
+
+#[derive(Debug, PartialEq)]
+struct FloatRow(f64);
+impl SortableRow for FloatRow {
+    fn sortable_columns() -> &'static [&'static str] {
+        &["value"]
+    }
+    fn compare_sort_clause(
+        &self,
+        other: &Self,
+        clause: &SortClause,
+    ) -> Result<Ordering, SortError> {
+        compare_values(Some(&self.0), Some(&other.0), clause)
+    }
+}
+
+#[test]
+fn selected_indices_do_not_compare_excluded_unordered_rows() {
+    let rows = [FloatRow(3.), FloatRow(f64::NAN), FloatRow(1.)];
+    let order = SortOrder::new(vec![SortClause::new("value", SortDirection::Ascending)]).unwrap();
+    let mut indices = [0, 2];
+
+    order.sort_indices(&rows, &mut indices).unwrap();
+
+    assert_eq!(indices, [2, 0]);
+}
+
+#[test]
+fn invalid_selected_indices_leave_selection_unchanged_even_without_ordering() {
+    let rows = [FloatRow(3.), FloatRow(1.)];
+    for order in [
+        SortOrder::default(),
+        SortOrder::new(vec![SortClause::new("value", SortDirection::Ascending)]).unwrap(),
+    ] {
+        let mut indices = [1, 0, usize::MAX];
+        assert_eq!(
+            order.sort_indices(&rows, &mut indices),
+            Err(SortError::InvalidRowIndex(usize::MAX))
+        );
+        assert_eq!(indices, [1, 0, usize::MAX]);
+    }
 }
