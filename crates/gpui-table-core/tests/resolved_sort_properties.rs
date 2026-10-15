@@ -5,7 +5,7 @@ use gpui_table_core::sort::{
 use proptest::prelude::*;
 use std::cmp::Ordering;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, Eq, PartialEq)]
 struct Row {
     id: usize,
     value: Option<i64>,
