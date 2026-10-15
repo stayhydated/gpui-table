@@ -41,6 +41,7 @@ description: >-
 | Control visible rows | generated delegate filter and row-scope methods |
 | Order loaded rows | `runtime::set_table_ordering`, `sort::SortOrder` and `SortEditor` |
 | Sort calculated values | `sort_key = path` paired with the same calculation in `style` |
+| Resolve source-owned columns | `sort::ResolvedSortColumn`, `ResolvedSortColumns`, and `runtime::set_table_resolved_sort_columns` |
 | Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
 | Save filter state | generated `FilterValues` JSON methods |
 | Expose rows over MCP | `#[gpui_table(mcp)]` and `#[mcp_query]` |
@@ -71,6 +72,9 @@ Declare every filter with an explicit shape or configured shape expression.
 Use `#[gpui_table(filters)]` for rendered filters, or
 `#[gpui_table(mcp)]` when the filters exist only as MCP arguments.
 
+The generated table-wired filter builders retain weak handles. Keep the returned
+filter collection in the owning view; queued callbacks ignore a closed table.
+
 Keep loader flags coherent: set `loading` before starting work, clear
 it on completion, and set `eof` only when no later page exists.
 Initialize `gpui_table_component::i18n` before rendering localized
@@ -98,6 +102,14 @@ A calculated `sort_key` returns `Option<Key>` or `Result<Option<Key>, SortError>
 Reuse its calculation in the cell `style` renderer. Refresh the ordered view
 with `refresh_filtered_rows()` after in-place changes and inspect `sort_error()`
 when inputs can fail. Capture/restore `TableRowSelection` around source changes.
+Configure `set_allowed_sort_columns` on a generated delegate when its source
+declares a subset of stable ordering keys. It constrains header affordances and
+direct setters atomically; an empty list disables ordering.
+Supply immutable `ResolvedSortColumns` when the application has resolved additional
+source keys. Use the same typed extraction in cells and ordering; native/resolved
+key collisions and context replacement failures are atomic. The application owns
+authorization/readiness and complete-result backend execution. Retire a resolved
+key after clearing orders and capability restrictions that use it.
 Use existing UI composition for `SortEditor`; it emits controlled changes and
 owns no persistence, backend or formula language.
 
@@ -107,3 +119,9 @@ Read [references/patterns.md](references/patterns.md) when implementation needs
 copyable patterns for table setup, generated filters, loading, cells,
 localization, or MCP. Use `use-gpui-table-component-shapes` for
 adapter shapes, custom shape contracts, or custom MCP filter decoding.
+
+For a displayed resolved key, attach `ResolvedTableColumn<Row>` through the
+validated generated delegate or `set_table_resolved_columns`. Its key must have
+an executable `ResolvedSortColumn<Row>` in the retained context. Render current
+typed rows in the caller callback and preserve formatting independently of the
+comparison extractor. Remove retired presentation before removing its key.
