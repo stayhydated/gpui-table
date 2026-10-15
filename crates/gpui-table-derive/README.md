@@ -25,6 +25,12 @@ integration tooling; generated code still requires the `gpui-table` facade
 paths and its matching integration features. The [macro API reference][api]
 documents the available derives and attributes.
 
+Generated delegates validate source sort restrictions and retain executable
+`ResolvedSortColumns`. Context replacement validates the current order,
+capabilities, presentation keys, and visible values before applying a change.
+Table-wired filter builders retain weak handles; keep the returned filters in
+the owning view so they remain available.
+
 ## Features
 
 No features are enabled by default. Applications normally select these through

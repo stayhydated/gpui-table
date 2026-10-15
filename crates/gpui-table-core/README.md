@@ -44,6 +44,10 @@ fn main() {
 
 See the [API reference][api] for matching and fallible ordering semantics.
 
+`sort::ResolvedSortColumn` and `ResolvedSortColumns` execute application-resolved
+keys through the same fallible ordering as native fields, including null policy,
+stable identity ties and atomic calculation failures.
+
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table-core
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table
 [crate-badge]: https://img.shields.io/crates/v/gpui-table-core.svg?label=gpui-table-core

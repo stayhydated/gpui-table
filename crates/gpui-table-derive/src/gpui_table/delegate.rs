@@ -176,7 +176,7 @@ pub(super) fn generate_delegate(
                     }
                 }
 
-                *self.sort_error.borrow_mut() = self.ordering.sort_indices(&self.rows, &mut indices).err();
+                *self.sort_error.borrow_mut() = self.resolved_sort_columns.sort_indices(&self.ordering, &self.rows, &mut indices).err();
                 self.filter_cache_rows_len.set(self.rows.len());
                 self.filter_cache_dirty.set(false);
             }
@@ -251,7 +251,7 @@ pub(super) fn generate_delegate(
                     row_scope.as_ref().map_or(true, |scope| scope(row)).then_some(row_ix)
                 }));
 
-                *self.sort_error.borrow_mut() = self.ordering.sort_indices(&self.rows, &mut indices).err();
+                *self.sort_error.borrow_mut() = self.resolved_sort_columns.sort_indices(&self.ordering, &self.rows, &mut indices).err();
                 self.filter_cache_rows_len.set(self.rows.len());
                 self.filter_cache_dirty.set(false);
             }
@@ -331,6 +331,9 @@ pub(super) fn generate_delegate(
             pub loading: bool,
             pub full_loading: bool,
             ordering: gpui_table::sort::SortOrder,
+            allowed_sort_columns: Option<Vec<String>>,
+            resolved_sort_columns: gpui_table::sort::ResolvedSortColumns<#struct_name>,
+            resolved_table_columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>,
             sort_error: std::cell::RefCell<Option<gpui_table::sort::SortError>>,
             #filter_delegate_fields
         }
@@ -348,6 +351,9 @@ pub(super) fn generate_delegate(
                     loading: false,
                     full_loading: false,
                     ordering: gpui_table::sort::SortOrder::new(vec![#(#initial_sort),*]).expect("validated initial column order"),
+                    allowed_sort_columns: None,
+                    resolved_sort_columns: Default::default(),
+                    resolved_table_columns: Vec::new(),
                     sort_error: std::cell::RefCell::new(None),
                     #filter_delegate_init
                 }
@@ -357,8 +363,15 @@ pub(super) fn generate_delegate(
 
             /// Order the loaded source. Use the runtime helper to retain table selection.
             pub fn set_ordering(&mut self, ordering: gpui_table::sort::SortOrder) -> Result<(), gpui_table::sort::SortError> {
+                if let Some(allowed) = &self.allowed_sort_columns {
+                    for clause in ordering.clauses() {
+                        if !allowed.iter().any(|column| column == clause.column()) {
+                            return Err(gpui_table::sort::SortError::UnsupportedColumn(clause.column().to_owned()));
+                        }
+                    }
+                }
                 let mut indices = self.visible_row_indices();
-                ordering.sort_indices(&self.rows, &mut indices)?;
+                self.resolved_sort_columns.sort_indices(&ordering, &self.rows, &mut indices)?;
                 self.ordering = ordering;
                 self.filter_cache_dirty.set(true);
                 self.ensure_filter_cache();
@@ -367,6 +380,72 @@ pub(super) fn generate_delegate(
 
             pub fn ordering(&self) -> &gpui_table::sort::SortOrder { &self.ordering }
 
+            /// Restrict ordering to declared stable keys, including column-header actions.
+            ///
+            /// An empty list disables ordering. Unknown or duplicate keys and a restriction
+            /// that excludes the current order are rejected without changing capabilities.
+            pub fn set_allowed_sort_columns(
+                &mut self,
+                columns: impl IntoIterator<Item = impl Into<String>>,
+            ) -> Result<(), gpui_table::sort::SortError> {
+                let columns = columns.into_iter().map(Into::into).collect::<Vec<String>>();
+                for (index, column) in columns.iter().enumerate() {
+                    if columns[..index].contains(column) {
+                        return Err(gpui_table::sort::SortError::DuplicateColumn(column.clone()));
+                    }
+                    self.resolved_sort_columns.validate(&gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(
+                        column.clone(), gpui_table::sort::SortDirection::Ascending,
+                    )])?)?;
+                }
+                for clause in self.ordering.clauses() {
+                    if !columns.iter().any(|column| column == clause.column()) {
+                        return Err(gpui_table::sort::SortError::UnsupportedColumn(clause.column().to_owned()));
+                    }
+                }
+                self.allowed_sort_columns = Some(columns);
+                Ok(())
+            }
+
+            /// Replace resolved executable columns atomically against the current order and visible rows.
+            pub fn set_resolved_sort_columns(
+                &mut self,
+                columns: gpui_table::sort::ResolvedSortColumns<#struct_name>,
+            ) -> Result<(), gpui_table::sort::SortError> {
+                for presentation in &self.resolved_table_columns {
+                    columns.validate(&gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(presentation.column().key.to_string(), gpui_table::sort::SortDirection::Ascending)])?)?;
+                }
+                if let Some(allowed) = &self.allowed_sort_columns {
+                    for key in allowed {
+                        columns.validate(&gpui_table::sort::SortOrder::new(vec![gpui_table::sort::SortClause::new(key, gpui_table::sort::SortDirection::Ascending)])?)?;
+                    }
+                }
+                let mut indices = self.visible_row_indices();
+                columns.sort_indices(&self.ordering, &self.rows, &mut indices)?;
+                self.resolved_sort_columns = columns;
+                self.filter_cache_dirty.set(true);
+                self.ensure_filter_cache();
+                Ok(())
+            }
+            /// Current executable source-owned additions to native row keys.
+            pub fn resolved_sort_columns(&self) -> &gpui_table::sort::ResolvedSortColumns<#struct_name> { &self.resolved_sort_columns }
+
+            /// Append presentation only for executable resolved keys, without shadowing native columns.
+            pub fn set_resolved_table_columns(&mut self, columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>) -> Result<(), gpui_table::sort::SortError> {
+                let mut keys = std::collections::BTreeSet::new();
+                for column in &columns {
+                    let key = column.column().key.as_ref();
+                    if self.columns.iter().any(|native| native.key.as_ref() == key) || !keys.insert(key.to_owned()) {
+                        return Err(gpui_table::sort::SortError::DuplicateColumn(key.to_owned()));
+                    }
+                    if !self.resolved_sort_columns.keys().any(|resolved| resolved == key) {
+                        return Err(gpui_table::sort::SortError::UnsupportedColumn(key.to_owned()));
+                    }
+                }
+                self.resolved_table_columns = columns;
+                Ok(())
+            }
+            pub fn resolved_table_columns(&self) -> &[gpui_table::runtime::ResolvedTableColumn<#struct_name>] { &self.resolved_table_columns }
+
             /// A refreshed row may invalidate a previously valid calculated key.
             pub fn sort_error(&self) -> Option<gpui_table::sort::SortError> {
                 self.ensure_filter_cache();
@@ -374,9 +453,20 @@ pub(super) fn generate_delegate(
             }
         }
 
+        impl gpui_table::runtime::ResolvedOrderedTableDelegate<#struct_name> for #delegate_name {
+            fn resolved_sort_columns(&self) -> &gpui_table::sort::ResolvedSortColumns<#struct_name> { #delegate_name::resolved_sort_columns(self) }
+            fn set_resolved_sort_columns(&mut self, columns: gpui_table::sort::ResolvedSortColumns<#struct_name>) -> Result<(), gpui_table::sort::SortError> {
+                #delegate_name::set_resolved_sort_columns(self, columns)
+            }
+        }
+        impl gpui_table::runtime::ResolvedTableDelegate<#struct_name> for #delegate_name {
+            fn resolved_table_columns(&self) -> &[gpui_table::runtime::ResolvedTableColumn<#struct_name>] { #delegate_name::resolved_table_columns(self) }
+            fn set_resolved_table_columns(&mut self, columns: Vec<gpui_table::runtime::ResolvedTableColumn<#struct_name>>) -> Result<(), gpui_table::sort::SortError> { #delegate_name::set_resolved_table_columns(self, columns) }
+        }
+
         impl gpui_kit::component::table::TableDelegate for #delegate_name {
             fn columns_count(&self, _: &gpui_kit::App) -> usize {
-                self.columns.len()
+                self.columns.len() + self.resolved_table_columns.len()
             }
 
             #rows_count_impl
@@ -385,12 +475,18 @@ pub(super) fn generate_delegate(
                 let mut column = self.columns
                     .get(col_ix)
                     .cloned()
+                    .or_else(|| self.resolved_table_columns.get(col_ix.saturating_sub(self.columns.len())).map(|column| column.column().clone()))
                     .expect("Invalid column index");
                 if let Some(fresh_column) = <#struct_name as gpui_table::TableRowMeta>::table_columns()
                     .into_iter()
                     .find(|fresh_column| fresh_column.key == column.key)
                 {
                     column.name = fresh_column.name;
+                }
+                if self.allowed_sort_columns.as_ref().is_some_and(|allowed|
+                    !allowed.iter().any(|key| key == column.key.as_ref())
+                ) {
+                    column.sort = None;
                 }
                 if column.sort.is_some() {
                     column.sort = Some(self.ordering.clauses().iter().find(|clause| clause.column() == column.key.as_ref()).map_or(gpui_kit::component::table::ColumnSort::Default, |clause| match clause.direction() {
@@ -410,6 +506,9 @@ pub(super) fn generate_delegate(
             ) -> impl gpui_kit::IntoElement {
                 use gpui_table::runtime::TableRowStyle;
                 #render_row_index_map
+                if let Some(column) = col_ix.checked_sub(self.columns.len()).and_then(|ix| self.resolved_table_columns.get(ix)) {
+                    return column.render(&self.rows[row_ix], window, cx);
+                }
                 self.rows[row_ix].render_table_cell(#column_enum_name::from(col_ix), window, cx)
             }
 
@@ -455,7 +554,7 @@ pub(super) fn generate_delegate(
                 window: &mut gpui_kit::Window,
                 cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
             ) {
-                let column: Option<&str> = match col_ix { #(#sort_arms)* _ => None };
+                let column: Option<&str> = match col_ix { #(#sort_arms)* _ => col_ix.checked_sub(self.columns.len()).and_then(|ix| self.resolved_table_columns.get(ix)).map(|column| column.column().key.as_ref()) };
                 let Some(column) = column else { return; };
                 let direction = match sort {
                     gpui_kit::component::table::ColumnSort::Ascending => Some(gpui_table::sort::SortDirection::Ascending),

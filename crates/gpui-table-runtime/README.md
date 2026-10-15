@@ -15,6 +15,16 @@ Depend on this crate directly when writing reusable integrations over
 `GpuiTableFilterShape`, or `FilterEntitiesExt`. Application
 tables should normally use the [`gpui-table`][facade] facade.
 
+`TableRowSelection` captures row or cell identity. Clone a snapshot and inspect
+`row_id()` to retain a paged selection until its record becomes visible again.
+Use an explicit `row_id` when source positions can change.
+
+`ResolvedOrderedTableDelegate` retains typed executable keys. Apply replacements
+with `set_table_resolved_sort_columns` to preserve row or cell selection.
+`ResolvedTableColumn<Row>` supplies caller-rendered cells for these keys;
+`set_table_resolved_columns` preserves selected row and column identities when
+presentation columns move or disappear.
+
 ## Features
 
 The default feature set is `chrono`, which also enables `jiff`.
