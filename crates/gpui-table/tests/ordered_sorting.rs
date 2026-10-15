@@ -4,11 +4,15 @@ use gpui_table::{
 };
 
 #[derive(Clone, GpuiTable)]
-#[gpui_table(row_id = "id")]
+#[gpui_table(filters, row_id = "id")]
 struct Record {
     #[gpui_table(skip)]
     id: u64,
-    #[gpui_table(sortable, col = "category_key")]
+    #[gpui_table(
+        sortable,
+        col = "category_key",
+        filter(gpui_table_component::TextFilterAdapter)
+    )]
     category: String,
     #[gpui_table(sortable, sort_key = calculated_score, style = score_cell)]
     score: i64,
@@ -170,10 +174,18 @@ fn controlled_sort_and_refresh_keep_row_and_cell_selection_on_stable_ids(
         selection.restore(table, cx);
         assert_eq!(table.selection(), TableSelection::Cell(3, 1));
         let selection = TableRowSelection::capture(table);
+        assert_eq!(selection.row_id(), Some(&2));
         table.delegate_mut().rows.retain(|row| row.id != 2);
         table.delegate().refresh_filtered_rows();
-        selection.restore(table, cx);
+        selection.clone().restore(table, cx);
         assert_eq!(table.selection(), TableSelection::None);
+        table
+            .delegate_mut()
+            .rows
+            .extend(records().into_iter().filter(|row| row.id == 2));
+        table.delegate().refresh_filtered_rows();
+        selection.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Cell(3, 1));
     });
 }
 
@@ -253,4 +265,573 @@ fn calculated_cell_presentation_uses_the_same_key_and_refreshes(cx: &mut gpui_ki
         assert_eq!(window.find("calculated-score-1").label(), Some("43"));
     })
     .unwrap();
+}
+
+#[gpui_kit::test]
+fn declared_ordering_capabilities_constrain_headers_and_direct_changes_atomically(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::TableDelegate as _;
+    cx.update(|cx| {
+        let mut delegate = RecordTableDelegate::new(records());
+        assert!(delegate.column(1, cx).sort.is_some());
+        delegate
+            .set_allowed_sort_columns(["category_key", "optional"])
+            .unwrap();
+        assert!(delegate.column(0, cx).sort.is_some());
+        assert!(delegate.column(1, cx).sort.is_none());
+        assert_eq!(
+            delegate.set_ordering(order()),
+            Err(SortError::UnsupportedColumn("score".into()))
+        );
+        assert!(delegate.ordering().is_empty());
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["label"]),
+            Err(SortError::UnsupportedColumn("label".into()))
+        );
+        assert!(delegate.column(1, cx).sort.is_none());
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["optional", "optional"]),
+            Err(SortError::DuplicateColumn("optional".into()))
+        );
+        delegate
+            .set_ordering(
+                SortOrder::new(vec![SortClause::new("optional", SortDirection::Descending)])
+                    .unwrap(),
+            )
+            .unwrap();
+        assert_eq!(
+            delegate.set_allowed_sort_columns(["category_key"]),
+            Err(SortError::UnsupportedColumn("optional".into()))
+        );
+        assert!(delegate.column(2, cx).sort.is_some());
+        delegate.set_ordering(SortOrder::default()).unwrap();
+        delegate
+            .set_allowed_sort_columns(std::iter::empty::<String>())
+            .unwrap();
+        assert!(delegate.column(0, cx).sort.is_none());
+        assert!(delegate.column(2, cx).sort.is_none());
+    });
+}
+
+fn resolved_columns(factor: i64) -> gpui_table::sort::ResolvedSortColumns<Record> {
+    use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns};
+    ResolvedSortColumns::new([
+        ResolvedSortColumn::new("resolved_score", move |row: &Record| {
+            row.optional
+                .map(|value| {
+                    value
+                        .checked_mul(factor)
+                        .and_then(|value| value.checked_add(row.adjustment))
+                        .ok_or_else(|| SortError::Calculation {
+                            column: "resolved_score".into(),
+                            message: "overflow".into(),
+                        })
+                })
+                .transpose()
+        })
+        .unwrap(),
+    ])
+    .unwrap()
+}
+fn resolved_order() -> SortOrder {
+    SortOrder::new(vec![
+        SortClause::new("resolved_score", SortDirection::Descending)
+            .with_nulls(NullPlacement::First),
+    ])
+    .unwrap()
+}
+
+#[gpui_kit::test]
+fn resolved_presentation_and_header_use_the_executable_current_row_key(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::{
+        Root,
+        table::{Column, ColumnSort, TableDelegate as _, TableState},
+        v_flex,
+    };
+    use gpui_kit::test::{TestSupportExt as _, TestWindowExt as _};
+    use gpui_kit::{
+        AppContext as _, Context, InteractiveElement as _, IntoElement, ParentElement as _, Render,
+        StatefulInteractiveElement as _, Styled as _, Window, div, px, size,
+    };
+    use gpui_table::runtime::ResolvedTableColumn;
+    struct Preview {
+        table: gpui_kit::Entity<TableState<RecordTableDelegate>>,
+    }
+    impl Render for Preview {
+        fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let cells = self.table.update(cx, |table, cx| {
+                let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+                (0..table.delegate().rows_count(cx))
+                    .map(|row| {
+                        table
+                            .delegate_mut()
+                            .render_td(row, native_count, window, cx)
+                            .into_any_element()
+                    })
+                    .collect::<Vec<_>>()
+            });
+            v_flex().size_full().children(cells)
+        }
+    }
+    cx.update(gpui_kit::init);
+    let presentation = || {
+        ResolvedTableColumn::new(
+            Column::new("resolved_score", "Resolved score").sortable(),
+            |row: &Record, _, _| {
+                let value = row
+                    .optional
+                    .map(|value| value * 2 + row.adjustment)
+                    .map_or_else(|| "missing".to_owned(), |value| value.to_string());
+                div()
+                    .id(format!("resolved-current-{}", row.id))
+                    .test_support()
+                    .aria_label(value.clone())
+                    .child(value)
+                    .into_any_element()
+            },
+        )
+        .unwrap()
+    };
+    let mut table_handle = None;
+    let mut preview_handle = None;
+    let window = cx.open_window(size(px(640.), px(480.)), |window, cx| {
+        let mut delegate = RecordTableDelegate::new(records());
+        assert_eq!(
+            delegate.set_resolved_table_columns(vec![presentation()]),
+            Err(SortError::UnsupportedColumn("resolved_score".into()))
+        );
+        delegate
+            .set_resolved_sort_columns(resolved_columns(2))
+            .unwrap();
+        delegate
+            .set_resolved_table_columns(vec![presentation()])
+            .unwrap();
+        delegate.set_ordering(resolved_order()).unwrap();
+        let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+        assert_eq!(delegate.columns_count(cx), native_count + 1);
+        assert_eq!(
+            delegate.column(native_count, cx).name.as_ref(),
+            "Resolved score"
+        );
+        assert_eq!(
+            delegate.column(native_count, cx).sort,
+            Some(ColumnSort::Descending)
+        );
+        assert_eq!(
+            delegate.set_resolved_table_columns(vec![presentation(), presentation()]),
+            Err(SortError::DuplicateColumn("resolved_score".into()))
+        );
+        let table = cx.new(|cx| TableState::new(delegate, window, cx));
+        table_handle = Some(table.clone());
+        let preview = cx.new(|_| Preview { table });
+        preview_handle = Some(preview.clone());
+        Root::new(preview, window, cx)
+    });
+    let table = table_handle.unwrap();
+    let preview = preview_handle.unwrap();
+    cx.update_window(window.into(), |_, window, cx| {
+        window.render_frame(cx);
+        assert_eq!(window.find("resolved-current-2").label(), Some("14"));
+        assert_eq!(window.find("resolved-current-3").label(), Some("missing"));
+        table.update(cx, |table, cx| {
+            table.delegate_mut().rows[2].adjustment = 40;
+            table.delegate().refresh_filtered_rows();
+            cx.notify();
+        });
+        preview.update(cx, |_, cx| cx.notify());
+        window.render_frame(cx);
+        assert_eq!(window.find("resolved-current-1").label(), Some("42"));
+        assert_eq!(visible_ids(table.read(cx).delegate()), [3, 1, 2]);
+        let native_count = <Record as gpui_table::TableRowMeta>::table_columns().len();
+        table.update(cx, |table, cx| {
+            table
+                .delegate_mut()
+                .perform_sort(native_count, ColumnSort::Ascending, window, cx)
+        });
+    })
+    .unwrap();
+    cx.run_until_parked();
+    table.read_with(cx, |table, _| {
+        assert_eq!(
+            table.delegate().ordering().clauses()[0].column(),
+            "resolved_score"
+        )
+    });
+    assert_eq!(
+        table.read_with(cx, |table, _| visible_ids(table.delegate())),
+        [2, 1, 3]
+    );
+}
+
+#[test]
+fn resolved_columns_execute_typed_context_with_native_keys_nulls_and_stable_identities() {
+    let mut delegate = RecordTableDelegate::new(records());
+    assert_eq!(
+        delegate.set_ordering(resolved_order()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    delegate
+        .set_resolved_sort_columns(resolved_columns(2))
+        .unwrap();
+    delegate
+        .set_allowed_sort_columns(["resolved_score", "category_key"])
+        .unwrap();
+    delegate.set_ordering(resolved_order()).unwrap();
+    assert_eq!(visible_ids(&delegate), [3, 2, 1]);
+    delegate.rows[2].optional = Some(7);
+    delegate.rows[2].adjustment = 0;
+    delegate.rows[1].adjustment = 0;
+    delegate.refresh_filtered_rows();
+    assert_eq!(visible_ids(&delegate), [3, 1, 2]);
+    let before = visible_ids(&delegate);
+    assert_eq!(
+        delegate.set_resolved_sort_columns(Default::default()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    assert_eq!(visible_ids(&delegate), before);
+    assert_eq!(
+        delegate.resolved_sort_columns().keys().collect::<Vec<_>>(),
+        ["resolved_score"]
+    );
+    delegate.set_ordering(SortOrder::default()).unwrap();
+    delegate.set_allowed_sort_columns(["category_key"]).unwrap();
+    delegate
+        .set_resolved_sort_columns(Default::default())
+        .unwrap();
+    assert_eq!(
+        delegate.set_ordering(resolved_order()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+}
+
+#[test]
+fn resolved_capabilities_reject_shadowed_duplicate_unknown_and_failed_keys_atomically() {
+    use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns};
+    assert!(
+        matches!(ResolvedSortColumns::new([ResolvedSortColumn::new("score", |row: &Record| Ok(Some(row.score))).unwrap()]), Err(SortError::DuplicateColumn(key)) if key == "score")
+    );
+    assert!(matches!(ResolvedSortColumns::new([
+        ResolvedSortColumn::new("extra", |row: &Record| Ok(Some(row.score))).unwrap(),
+        ResolvedSortColumn::new("extra", |row: &Record| Ok(Some(row.adjustment))).unwrap(),
+    ]), Err(SortError::DuplicateColumn(key)) if key == "extra"));
+    assert!(ResolvedSortColumn::<Record>::new(" ", |row| Ok(Some(row.id))).is_err());
+    let mut empty = RecordTableDelegate::new(Vec::new());
+    assert_eq!(
+        empty.set_ordering(resolved_order()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    empty
+        .set_resolved_sort_columns(resolved_columns(2))
+        .unwrap();
+    empty.set_ordering(resolved_order()).unwrap();
+    let mut delegate = RecordTableDelegate::new(records());
+    delegate
+        .set_resolved_sort_columns(resolved_columns(2))
+        .unwrap();
+    delegate.set_ordering(resolved_order()).unwrap();
+    let before = visible_ids(&delegate);
+    let failed =
+        ResolvedSortColumns::new([ResolvedSortColumn::new("resolved_score", |_row: &Record| {
+            Err::<Option<i64>, _>(SortError::Calculation {
+                column: "resolved_score".into(),
+                message: "unavailable".into(),
+            })
+        })
+        .unwrap()])
+        .unwrap();
+    assert!(matches!(
+        delegate.set_resolved_sort_columns(failed),
+        Err(SortError::Calculation { .. })
+    ));
+    assert_eq!(visible_ids(&delegate), before);
+    delegate.rows[1].optional = Some(i64::MAX);
+    delegate.refresh_filtered_rows();
+    assert!(matches!(
+        delegate.sort_error(),
+        Some(SortError::Calculation { .. })
+    ));
+    delegate.set_row_scope(|row| row.id != 2);
+    assert_eq!(delegate.sort_error(), None);
+    assert_eq!(visible_ids(&delegate), [3, 1]);
+}
+
+#[test]
+fn resolved_source_keys_preserve_exact_large_values_and_preflight_single_row_errors() {
+    use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns};
+    let mut source = records();
+    source[0].optional = Some(9_007_199_254_740_993);
+    source[1].optional = Some(9_007_199_254_740_994);
+    source[2].optional = Some(9_007_199_254_740_995);
+    for row in &mut source {
+        row.adjustment = 0;
+    }
+    let context = resolved_columns(1);
+    let order = resolved_order();
+    let indices = context.sorted_indices(&order, &source).unwrap();
+    assert_eq!(
+        indices.iter().map(|ix| source[*ix].id).collect::<Vec<_>>(),
+        [1, 2, 3]
+    );
+    source[1].optional = None;
+    assert_eq!(context.sorted_indices(&order, &source).unwrap(), [1, 2, 0]);
+    let unordered =
+        ResolvedSortColumns::new([ResolvedSortColumn::new("value", |_row: &Record| {
+            Ok(Some(f64::NAN))
+        })
+        .unwrap()])
+        .unwrap();
+    let order = SortOrder::new(vec![SortClause::new("value", SortDirection::Ascending)]).unwrap();
+    assert_eq!(
+        unordered.sorted_indices(&order, &source[..1]),
+        Err(SortError::UnorderedColumn("value".into()))
+    );
+    let mut indices = [0usize];
+    assert_eq!(
+        unordered.sort_indices(&order, &source, &mut indices),
+        Err(SortError::UnorderedColumn("value".into()))
+    );
+    assert_eq!(indices, [0]);
+}
+
+#[gpui_kit::test]
+fn runtime_resolved_context_changes_preserve_real_table_selection(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::{TableSelection, TableState};
+    use gpui_kit::{AppContext as _, Empty};
+    use gpui_table::runtime::{set_table_ordering, set_table_resolved_sort_columns};
+    cx.update(gpui_kit::init);
+    let window = cx.add_window(|_, _| Empty);
+    let table = window
+        .update(cx, |_, window, cx| {
+            cx.new(|cx| TableState::new(RecordTableDelegate::new(records()), window, cx))
+        })
+        .unwrap();
+    table.update(cx, |table, cx| {
+        table.set_selected_row(2, cx);
+        set_table_resolved_sort_columns(table, resolved_columns(2), cx).unwrap();
+        set_table_ordering(table, resolved_order(), cx).unwrap();
+        assert_eq!(table.selection(), TableSelection::Row(2));
+        set_table_resolved_sort_columns(table, resolved_columns(-20), cx).unwrap();
+        assert_eq!(table.selection(), TableSelection::Row(1));
+        let before = table.selection();
+        assert!(set_table_resolved_sort_columns(table, Default::default(), cx).is_err());
+        assert_eq!(table.selection(), before);
+    });
+}
+
+fn presentation(key: &'static str) -> gpui_table::runtime::ResolvedTableColumn<Record> {
+    use gpui_kit::{IntoElement as _, ParentElement as _};
+    gpui_table::runtime::ResolvedTableColumn::new(
+        gpui_kit::component::table::Column::new(key, key).sortable(),
+        |row: &Record, _, _| gpui_kit::div().child(row.id.to_string()).into_any_element(),
+    )
+    .unwrap()
+}
+
+#[gpui_kit::test]
+fn filtered_replacement_retains_record_and_presentation_column_identity(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::{TableSelection, TableState};
+    use gpui_kit::{AppContext as _, Empty};
+    use gpui_table::runtime::{
+        TableRowSelection, set_table_ordering, set_table_resolved_columns,
+        set_table_resolved_sort_columns,
+    };
+    use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns};
+    cx.update(gpui_kit::init);
+    let window = cx.add_window(|_, _| Empty);
+    let table = window
+        .update(cx, |_, window, cx| {
+            let mut delegate = RecordTableDelegate::new(records());
+            delegate
+                .set_resolved_sort_columns(
+                    ResolvedSortColumns::new([
+                        ResolvedSortColumn::new("resolved_score", |row: &Record| Ok(row.optional))
+                            .unwrap(),
+                        ResolvedSortColumn::new("other", |row: &Record| Ok(Some(row.id))).unwrap(),
+                    ])
+                    .unwrap(),
+                )
+                .unwrap();
+            delegate
+                .set_resolved_table_columns(vec![
+                    presentation("resolved_score"),
+                    presentation("other"),
+                ])
+                .unwrap();
+            cx.new(|cx| TableState::new(delegate, window, cx))
+        })
+        .unwrap();
+    table.update(cx, |table, cx| {
+        let native = <Record as gpui_table::TableRowMeta>::table_columns().len();
+        table.set_selected_cell(2, native, cx); // id 1
+        let retained = TableRowSelection::capture(table);
+        assert_eq!(retained.row_id(), Some(&1));
+        table.delegate_mut().set_filter_values(RecordFilterValues {
+            category: "a".into(),
+        });
+        retained.clone().restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Cell(1, native));
+        set_table_ordering(
+            table,
+            SortOrder::new(vec![SortClause::new(
+                "resolved_score",
+                SortDirection::Ascending,
+            )])
+            .unwrap(),
+            cx,
+        )
+        .unwrap();
+        assert_eq!(visible_ids(table.delegate()), [1, 3]);
+        assert_eq!(table.selection(), TableSelection::Cell(0, native));
+        set_table_resolved_sort_columns(
+            table,
+            ResolvedSortColumns::new([
+                ResolvedSortColumn::new("resolved_score", |row: &Record| Ok(Some(-row.score)))
+                    .unwrap(),
+                ResolvedSortColumn::new("other", |row: &Record| Ok(Some(row.id))).unwrap(),
+            ])
+            .unwrap(),
+            cx,
+        )
+        .unwrap();
+        assert_eq!(visible_ids(table.delegate()), [3, 1]);
+        assert_eq!(table.selection(), TableSelection::Cell(1, native));
+        set_table_resolved_columns(
+            table,
+            vec![presentation("other"), presentation("resolved_score")],
+            cx,
+        )
+        .unwrap();
+        assert_eq!(table.selection(), TableSelection::Cell(1, native + 1));
+        assert!(set_table_resolved_sort_columns(table, Default::default(), cx).is_err());
+        assert_eq!(table.selection(), TableSelection::Cell(1, native + 1));
+        set_table_resolved_columns(table, vec![presentation("other")], cx).unwrap();
+        assert_eq!(table.selection(), TableSelection::Row(1));
+
+        // Retain the original snapshot across a different page and changed row order.
+        table.delegate_mut().rows = records().into_iter().filter(|row| row.id == 2).collect();
+        table.delegate().refresh_filtered_rows();
+        retained.clone().restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::None);
+        table.delegate_mut().rows = records().into_iter().rev().collect();
+        table.delegate_mut().clear_filter_values();
+        table.delegate().refresh_filtered_rows();
+        retained.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Cell(1, native));
+        assert_eq!(TableRowSelection::capture(table).row_id(), Some(&1));
+
+        table.set_selection(TableSelection::Column(native), cx);
+        set_table_resolved_columns(
+            table,
+            vec![presentation("resolved_score"), presentation("other")],
+            cx,
+        )
+        .unwrap();
+        assert_eq!(table.selection(), TableSelection::Column(native + 1));
+        let retained_column = TableRowSelection::capture(table);
+        table.set_selected_cell(0, native + 1, cx);
+        let retained_cell = TableRowSelection::capture(table);
+        set_table_resolved_columns(table, vec![presentation("resolved_score")], cx).unwrap();
+        assert_eq!(table.selection(), TableSelection::Row(0));
+        retained_cell.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::Row(0));
+        retained_column.restore(table, cx);
+        assert_eq!(table.selection(), TableSelection::None);
+        for selection in [TableSelection::Row(99), TableSelection::Cell(99, 0)] {
+            table.set_selection(selection, cx);
+            let stale = TableRowSelection::capture(table);
+            assert_eq!(stale.row_id(), None);
+            stale.restore(table, cx);
+            assert_eq!(table.selection(), TableSelection::None);
+        }
+    });
+}
+
+#[test]
+fn resolved_replacement_keeps_presentation_and_allowed_keys_valid_without_visible_rows() {
+    let mut delegate = RecordTableDelegate::new(records());
+    delegate.set_row_scope(|_| false);
+    delegate
+        .set_resolved_sort_columns(resolved_columns(2))
+        .unwrap();
+    delegate
+        .set_resolved_table_columns(vec![presentation("resolved_score")])
+        .unwrap();
+    assert_eq!(
+        delegate.set_resolved_sort_columns(Default::default()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    assert_eq!(
+        delegate.resolved_table_columns()[0].column().key.as_ref(),
+        "resolved_score"
+    );
+    delegate.set_resolved_table_columns(Vec::new()).unwrap();
+    delegate
+        .set_allowed_sort_columns(["resolved_score"])
+        .unwrap();
+    assert_eq!(
+        delegate.set_resolved_sort_columns(Default::default()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    delegate.set_ordering(resolved_order()).unwrap();
+    delegate.clear_row_scope();
+    assert_eq!(visible_ids(&delegate), [3, 2, 1]);
+    delegate.rows.clear();
+    delegate.refresh_filtered_rows();
+    assert_eq!(
+        delegate.set_resolved_sort_columns(Default::default()),
+        Err(SortError::UnsupportedColumn("resolved_score".into()))
+    );
+    assert_eq!(delegate.ordering(), &resolved_order());
+    assert_eq!(
+        delegate.resolved_sort_columns().keys().collect::<Vec<_>>(),
+        ["resolved_score"]
+    );
+}
+
+#[gpui_kit::test]
+fn excluded_header_action_cannot_change_filtered_order_or_selection(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::{ColumnSort, TableDelegate as _, TableSelection, TableState};
+    use gpui_kit::{AppContext as _, Empty};
+    cx.update(gpui_kit::init);
+    let window = cx.add_window(|_, _| Empty);
+    let table = window
+        .update(cx, |_, window, cx| {
+            let mut delegate = RecordTableDelegate::new(records());
+            delegate.set_filter_values(RecordFilterValues {
+                category: "a".into(),
+            });
+            delegate.set_allowed_sort_columns(["category_key"]).unwrap();
+            cx.new(|cx| TableState::new(delegate, window, cx))
+        })
+        .unwrap();
+    window
+        .update(cx, |_, window, cx| {
+            table.update(cx, |table, cx| {
+                table.set_selected_row(1, cx);
+                assert!(table.delegate().column(1, cx).sort.is_none());
+                table
+                    .delegate_mut()
+                    .perform_sort(1, ColumnSort::Ascending, window, cx);
+            });
+        })
+        .unwrap();
+    cx.run_until_parked();
+    table.read_with(cx, |table, _| {
+        assert_eq!(
+            table.delegate().sort_error(),
+            Some(SortError::UnsupportedColumn("score".into()))
+        );
+        assert!(table.delegate().ordering().is_empty());
+        assert_eq!(visible_ids(table.delegate()), [3, 1]);
+        assert_eq!(table.selection(), TableSelection::Row(1));
+    });
 }

@@ -11,6 +11,17 @@ in [`gpui-table-component`][components].
 Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.7 directly,
 so the application must expose it as a direct dependency.
 
+Generated delegates expose `set_allowed_sort_columns` to restrict both header
+controls and direct ordering to source-supported keys. An empty list disables
+ordering; configure restrictions before presenting a delegate.
+
+`sort::ResolvedSortColumns` binds application-resolved keys to typed extraction.
+`runtime::set_table_resolved_sort_columns` applies a replacement while preserving
+selection. Attach `runtime::ResolvedTableColumn<Row>` for caller-rendered cells
+and use `runtime::set_table_resolved_columns` when replacing their presentation.
+The application owns calculation definitions, formatting, permissions, and
+complete-result backend ordering.
+
 ## Features
 
 The default feature set is `derive` and `chrono`. Macro re-exports require
