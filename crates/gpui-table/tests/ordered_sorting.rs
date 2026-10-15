@@ -677,7 +677,30 @@ fn filtered_replacement_retains_record_and_presentation_column_identity(
         });
         retained.clone().restore(table, cx);
         assert_eq!(table.selection(), TableSelection::Cell(1, native));
-        set_table_ordering(table, resolved_order(), cx).unwrap();
+        set_table_ordering(
+            table,
+            SortOrder::new(vec![SortClause::new(
+                "resolved_score",
+                SortDirection::Ascending,
+            )])
+            .unwrap(),
+            cx,
+        )
+        .unwrap();
+        assert_eq!(visible_ids(table.delegate()), [1, 3]);
+        assert_eq!(table.selection(), TableSelection::Cell(0, native));
+        set_table_resolved_sort_columns(
+            table,
+            ResolvedSortColumns::new([
+                ResolvedSortColumn::new("resolved_score", |row: &Record| Ok(Some(-row.score)))
+                    .unwrap(),
+                ResolvedSortColumn::new("other", |row: &Record| Ok(Some(row.id))).unwrap(),
+            ])
+            .unwrap(),
+            cx,
+        )
+        .unwrap();
+        assert_eq!(visible_ids(table.delegate()), [3, 1]);
         assert_eq!(table.selection(), TableSelection::Cell(1, native));
         set_table_resolved_columns(
             table,
@@ -700,7 +723,7 @@ fn filtered_replacement_retains_record_and_presentation_column_identity(
         table.delegate_mut().clear_filter_values();
         table.delegate().refresh_filtered_rows();
         retained.restore(table, cx);
-        assert_eq!(table.selection(), TableSelection::Cell(2, native));
+        assert_eq!(table.selection(), TableSelection::Cell(1, native));
         assert_eq!(TableRowSelection::capture(table).row_id(), Some(&1));
 
         table.set_selection(TableSelection::Column(native), cx);
