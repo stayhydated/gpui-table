@@ -46,7 +46,7 @@ es-fluent-lang = "0.21.0"
 es-fluent-manager-embedded = "0.21.0"
 fake = "5.1.0"
 gpui-es-fluent = "0.3.0"
-gpui-kit = "0.7.3"
+gpui-kit = "0.8.0"
 gpui-storybook = "0.7.1"
 gpui-table = { path = "crates/gpui-table", version = "0.8.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.8.0" }

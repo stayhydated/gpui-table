@@ -7,7 +7,7 @@
 the [`gpui-table`][facade] facade for developers integrating generated table,
 cell, filter, and MCP query contracts.
 
-Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.7 directly.
+Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.8.0 directly.
 
 ## Overview
 

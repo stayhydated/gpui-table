@@ -8,7 +8,7 @@ GPUI tables. It re-exports the table derives, core filter and ordering semantics
 traits, schema types, and optional MCP integration. Built-in filter widgets live
 in [`gpui-table-component`][components].
 
-Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.7 directly,
+Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.8.0 directly,
 so the application must expose it as a direct dependency.
 
 ## Features

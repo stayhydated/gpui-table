@@ -12,7 +12,7 @@ metadata and delegates, with opt-in typed filters, incremental loading,
 localization, registry metadata, ordered sorting, calculated keys, and MCP query tools.
 
 Requires Rust 1.99 or newer for all public crates. Generated UI code uses
-`gpui-kit` 0.7 directly, so applications must expose it as a direct dependency.
+`gpui-kit` 0.8.0 directly, so applications must expose it as a direct dependency.
 
 Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
 [`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.

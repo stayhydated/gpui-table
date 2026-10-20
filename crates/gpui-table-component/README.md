@@ -7,7 +7,7 @@
 adapter shapes, controlled `SortEditor`, reset control, and `TableStatusBar` for applications using
 the [`gpui-table`][facade] derive workflow.
 
-Requires Rust 1.99 or newer. Uses `gpui-kit` 0.7.
+Requires Rust 1.99 or newer. Uses `gpui-kit` 0.8.0.
 
 Use the same components directly when the application owns the filter layout.
 
