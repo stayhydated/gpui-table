@@ -97,3 +97,80 @@ Use a stable editor ID. Clause controls use stable column keys, so changing
 priority retains their identity. `disabled(true)` prevents editing. Place the
 component in the existing toolbar, panel or sheet; it owns no query, dialog,
 persistence or authorization. Initialize the component's i18n as for filters.
+
+## Declare source capabilities
+
+Call `delegate.set_allowed_sort_columns(["category_key", "score"])` before
+presenting a generated delegate when the source supports a subset of its sortable
+keys. Excluded headers become unsortable and direct order changes reject excluded
+keys. An empty list disables ordering. Unknown keys, duplicate keys, and a
+restriction excluding the current order fail atomically.
+
+## Resolve application-owned columns
+
+Use `sort::ResolvedSortColumn::new(key, extract)` for a source-resolved key.
+The extractor returns `Result<Option<Key>, SortError>` with `Key: PartialOrd`.
+Keep the same extractor available to the owning cell renderer. The application
+resolves the definition, source readiness, units and permissions before supplying
+this context.
+
+```rust
+use gpui_table::sort::{ResolvedSortColumn, ResolvedSortColumns, SortError};
+use gpui_table::GpuiTable;
+
+#[derive(Clone, GpuiTable)]
+#[gpui_table(row_id = "id")]
+struct Record {
+    #[gpui_table(skip)]
+    id: u64,
+    #[gpui_table(sortable, col = "category_key")]
+    category: String,
+    score: Option<i64>,
+}
+
+fn scaled_score(row: &Record) -> Result<Option<i64>, SortError> {
+    row.score.map(|score| score.checked_mul(2).ok_or_else(|| SortError::Calculation {
+        column: "scaled_score".into(),
+        message: "overflow".into(),
+    })).transpose()
+}
+
+let columns = ResolvedSortColumns::new([
+    ResolvedSortColumn::new("scaled_score", scaled_score)?,
+])?;
+let mut delegate = RecordTableDelegate::new(Vec::new());
+delegate.set_resolved_sort_columns(columns)?;
+delegate.set_allowed_sort_columns(["category_key", "scaled_score"])?;
+# Ok::<(), SortError>(())
+```
+
+Resolved keys are distinct from native sortable keys and from each other. The retained
+context validates empty sources, preflights single-row errors and compares only
+included rows. Native and resolved clauses share null placement, direction,
+identity tie-breaking and atomic error handling. `ResolvedSortColumns` also
+provides complete-source `sorted_indices`, `sort_indices` and `sort_rows` for
+application query owners.
+
+Use `runtime::set_table_resolved_sort_columns(table, columns, cx)` for a generated
+table state. It preserves selection by stable row identity. Context replacement
+checks the current order, source capability restriction and visible values before
+applying the change. Clear an order and its capability restriction before retiring
+keys that it uses. Remote query owners execute the same resolved calculation over
+the complete source before pagination.
+
+Attach `runtime::ResolvedTableColumn<Record>` to display a resolved key. Pass a
+`gpui_kit::component::table::Column` with that key and a renderer reading the
+current `&Record`. Use the same calculation as the comparison extractor and
+keep formatting separate. `runtime::set_table_resolved_columns` replaces these
+presentation columns while following selected column keys; removing a selected
+cell's column leaves its row selected, and removing a selected column clears it.
+Remove presentation before retiring its executable key.
+
+For temporary filtering or pagination, clone `TableRowSelection::capture(table)`
+before changing the source. `row_id()` identifies the retained record. Restoring
+while it is absent clears the visible selection; retain another clone and
+restore it once the record returns. Table-wired client filters preserve visible
+record selection and clear it when the selected record is filtered out.
+Snapshots retain column positions; use `set_table_resolved_columns` to follow
+column keys during a presentation change. Restoring a snapshot whose column no
+longer exists selects its row for a cell snapshot or clears a column snapshot.
