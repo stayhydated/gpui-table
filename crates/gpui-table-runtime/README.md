@@ -8,7 +8,7 @@ generated table code: row metadata and rendering, cell rendering, loading, filte
 shapes, selection-preserving ordering, and generic helpers for generated filter collections in the
 [`gpui-table`][project] ecosystem.
 
-Requires Rust 1.99 or newer. Uses `gpui-kit` 0.7.
+Requires Rust 1.99 or newer. Uses `gpui-kit` 0.8.0.
 
 Depend on this crate directly when writing reusable integrations over
 [`TableCell`][cell], `TableRowMeta`, `TableLoader`,

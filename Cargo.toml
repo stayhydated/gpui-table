@@ -46,7 +46,7 @@ es-fluent-lang = "0.21.0"
 es-fluent-manager-embedded = "0.21.0"
 fake = "5.1.0"
 gpui-es-fluent = "0.3.0"
-gpui-kit = "0.7.3"
+gpui-kit = "0.8.0"
 gpui-storybook = "0.7.1"
 gpui-table = { path = "crates/gpui-table", version = "0.8.0" }
 gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.8.0" }
@@ -134,3 +134,16 @@ type_complexity = "allow"
 uninlined_format_args = "allow"
 unused_trait_names = "warn"
 useless_conversion = "warn"
+
+# Use the reviewed GPUI Kit 0.8 companion commits until compatible releases are available.
+[patch.crates-io]
+component-shape = { git = "https://github.com/stayhydated/component-shape", rev = "520e91ec37b52b3ef48a098fb7b12a52453366fe" }
+component-shape-codegen = { git = "https://github.com/stayhydated/component-shape", rev = "520e91ec37b52b3ef48a098fb7b12a52453366fe" }
+component-shape-mcp = { git = "https://github.com/stayhydated/component-shape", rev = "520e91ec37b52b3ef48a098fb7b12a52453366fe" }
+component-shape-mcp-macros = { git = "https://github.com/stayhydated/component-shape", rev = "520e91ec37b52b3ef48a098fb7b12a52453366fe" }
+gpui-es-fluent = { git = "https://github.com/stayhydated/gpui-es-fluent", rev = "031353b82729dcf84023c84205a2f462a670f1a5" }
+gpui-storybook = { git = "https://github.com/stayhydated/gpui-storybook", rev = "df5dd9b9595621448c0cce746b5ba1996b8ca84c" }
+gpui-storybook-core = { git = "https://github.com/stayhydated/gpui-storybook", rev = "df5dd9b9595621448c0cce746b5ba1996b8ca84c" }
+gpui-storybook-macros = { git = "https://github.com/stayhydated/gpui-storybook", rev = "df5dd9b9595621448c0cce746b5ba1996b8ca84c" }
+gpui-storybook-preferences = { git = "https://github.com/stayhydated/gpui-storybook", rev = "df5dd9b9595621448c0cce746b5ba1996b8ca84c" }
+gpui-storybook-toml = { git = "https://github.com/stayhydated/gpui-storybook", rev = "df5dd9b9595621448c0cce746b5ba1996b8ca84c" }
