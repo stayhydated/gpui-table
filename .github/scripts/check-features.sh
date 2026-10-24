@@ -34,7 +34,7 @@ mcp = []
 [dependencies]
 gpui-table = { path = "$repo_root/crates/gpui-table", default-features = $defaults, features = [$feature_list] }
 gpui-kit = "0.8.0"
-spacetimedb-lib = { version = "2.10", optional = true }
+spacetimedb-lib = { version = "2.13.0", optional = true }
 EOF
     # Each temporary workspace is a Cargo root, so dependency source patches
     # must accompany the lockfile rather than being inherited from the facade.
