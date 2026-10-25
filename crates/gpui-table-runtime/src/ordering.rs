@@ -1,8 +1,8 @@
 //! Ordering application and selection snapshots for generated table delegates.
 
-use gpui_kit::Context;
-use gpui_kit::component::table::{TableDelegate, TableSelection, TableState};
-use gpui_table_core::sort::{SortError, SortOrder};
+use gpui_kit::component::table::{Column, TableDelegate, TableSelection, TableState};
+use gpui_kit::{AnyElement, App, Context, Window};
+use gpui_table_core::sort::{ResolvedSortColumns, SortError, SortOrder, SortableRow};
 
 /// Ordering of the delegate's loaded rows. Backend ordering remains caller-owned.
 pub trait OrderedTableDelegate: TableDelegate {
@@ -13,13 +13,115 @@ pub trait OrderedTableDelegate: TableDelegate {
     fn visible_row_position(&self, id: &Self::RowId) -> Option<usize>;
 }
 
+/// A source-owned executable resolved-column context for the delegate's typed rows.
+pub trait ResolvedOrderedTableDelegate<R: SortableRow>: OrderedTableDelegate {
+    /// Current executable additions to native row keys.
+    fn resolved_sort_columns(&self) -> &ResolvedSortColumns<R>;
+    /// Atomically validate and replace the retained comparison context.
+    fn set_resolved_sort_columns(
+        &mut self,
+        columns: ResolvedSortColumns<R>,
+    ) -> Result<(), SortError>;
+}
+
+type ResolvedCell<R> = dyn Fn(&R, &mut Window, &mut App) -> AnyElement;
+
+/// Presentation for an executable resolved key, rendered from the current typed row.
+/// The caller keeps formatting separate from the comparison extractor.
+pub struct ResolvedTableColumn<R> {
+    column: Column,
+    render: std::rc::Rc<ResolvedCell<R>>,
+}
+impl<R> Clone for ResolvedTableColumn<R> {
+    fn clone(&self) -> Self {
+        Self {
+            column: self.column.clone(),
+            render: self.render.clone(),
+        }
+    }
+}
+impl<R> ResolvedTableColumn<R> {
+    /// Bind a stable column key to a renderer. The delegate validates that its
+    /// comparison context contains this key before accepting the presentation.
+    pub fn new(
+        column: Column,
+        render: impl Fn(&R, &mut Window, &mut App) -> AnyElement + 'static,
+    ) -> Result<Self, SortError> {
+        SortOrder::new(vec![gpui_table_core::sort::SortClause::new(
+            column.key.to_string(),
+            gpui_table_core::sort::SortDirection::Ascending,
+        )])?;
+        Ok(Self {
+            column,
+            render: std::rc::Rc::new(render),
+        })
+    }
+    pub fn column(&self) -> &Column {
+        &self.column
+    }
+    pub fn render(&self, row: &R, window: &mut Window, cx: &mut App) -> AnyElement {
+        (self.render)(row, window, cx)
+    }
+}
+
+/// Controlled presentation columns attached to the same resolved-key context.
+pub trait ResolvedTableDelegate<R: SortableRow>: ResolvedOrderedTableDelegate<R> {
+    fn resolved_table_columns(&self) -> &[ResolvedTableColumn<R>];
+    fn set_resolved_table_columns(
+        &mut self,
+        columns: Vec<ResolvedTableColumn<R>>,
+    ) -> Result<(), SortError>;
+}
+
+/// Refresh presentation while retaining the selected record's stable identity.
+pub fn set_table_resolved_columns<R: SortableRow, D: ResolvedTableDelegate<R>>(
+    table: &mut TableState<D>,
+    columns: Vec<ResolvedTableColumn<R>>,
+    cx: &mut Context<TableState<D>>,
+) -> Result<(), SortError> {
+    let mut selected = TableRowSelection::capture(table);
+    let column_key = match selected.selection {
+        TableSelection::Cell(_, column) | TableSelection::Column(column)
+            if column < table.delegate().columns_count(cx) =>
+        {
+            Some(table.delegate().column(column, cx).key)
+        },
+        _ => None,
+    };
+    table.delegate_mut().set_resolved_table_columns(columns)?;
+    let column = column_key.and_then(|key| {
+        (0..table.delegate().columns_count(cx))
+            .find(|column| table.delegate().column(*column, cx).key == key)
+    });
+    selected.selection = match selected.selection {
+        TableSelection::Cell(row, _) => column.map_or(TableSelection::Row(row), |column| {
+            TableSelection::Cell(row, column)
+        }),
+        TableSelection::Column(_) => column.map_or(TableSelection::None, TableSelection::Column),
+        selection => selection,
+    };
+    table.refresh(cx);
+    selected.restore(table, cx);
+    cx.notify();
+    Ok(())
+}
+
 /// Capture before changing rows or ordering, then restore by stable row identity.
+/// Generated delegates need an explicit `row_id` when source positions change.
+/// Column positions are retained, not column keys. Use
+/// [`set_table_resolved_columns`] to follow column keys during replacement.
+#[derive(Clone)]
 pub struct TableRowSelection<Id> {
     row: Option<Id>,
     selection: TableSelection,
 }
 
 impl<Id: Clone + Eq> TableRowSelection<Id> {
+    /// Selected row identity, available to callers retaining a paged selection.
+    pub fn row_id(&self) -> Option<&Id> {
+        self.row.as_ref()
+    }
+
     pub fn capture<D: OrderedTableDelegate<RowId = Id>>(table: &TableState<D>) -> Self {
         let selection = table.selection();
         let row_ix = match selection {
@@ -48,7 +150,14 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
                 .visible_row_position(&id)
                 .map(|ix| TableSelection::Cell(ix, col))
                 .unwrap_or_default(),
+            (None, TableSelection::Row(_) | TableSelection::Cell(_, _)) => TableSelection::None,
             (_, selection) => selection,
+        };
+        let columns = table.delegate().columns_count(cx);
+        let selection = match selection {
+            TableSelection::Cell(row, column) if column >= columns => TableSelection::Row(row),
+            TableSelection::Column(column) if column >= columns => TableSelection::None,
+            selection => selection,
         };
         table.set_selection(selection, cx);
     }
@@ -63,6 +172,20 @@ pub fn set_table_ordering<D: OrderedTableDelegate>(
 ) -> Result<(), SortError> {
     let selected = TableRowSelection::capture(table);
     table.delegate_mut().set_ordering(ordering)?;
+    table.refresh(cx);
+    selected.restore(table, cx);
+    cx.notify();
+    Ok(())
+}
+
+/// Replace the resolved comparison context while retaining selection by stable identity.
+pub fn set_table_resolved_sort_columns<R: SortableRow, D: ResolvedOrderedTableDelegate<R>>(
+    table: &mut TableState<D>,
+    columns: ResolvedSortColumns<R>,
+    cx: &mut Context<TableState<D>>,
+) -> Result<(), SortError> {
+    let selected = TableRowSelection::capture(table);
+    table.delegate_mut().set_resolved_sort_columns(columns)?;
     table.refresh(cx);
     selected.restore(table, cx);
     cx.notify();
