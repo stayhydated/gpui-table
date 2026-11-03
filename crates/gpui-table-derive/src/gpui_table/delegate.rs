@@ -504,7 +504,13 @@ pub(super) fn generate_delegate(
                 cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
             ) -> gpui_kit::Stateful<gpui_kit::Div> {
                 use gpui_table::runtime::TableRowStyle as _;
-                let row = self.rows[self.map_row_index(row_ix)].render_table_row(row_ix, window, cx);
+                self.ensure_filter_cache();
+                let source_ix = self.filtered_row_indices.borrow().get(row_ix).copied();
+                let Some(source_ix) = source_ix else {
+                    // Native striped tables request filler rows beyond the data range.
+                    return gpui_table::runtime::default_render_row(row_ix, window, cx);
+                };
+                let row = self.rows[source_ix].render_table_row(row_ix, window, cx);
                 gpui_table::runtime::selection::decorate_row(row, row_ix, &self.row_selection, window, cx)
             }
 

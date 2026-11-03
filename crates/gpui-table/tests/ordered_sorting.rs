@@ -856,7 +856,7 @@ fn delegate_selection_handles_native_modifiers_keys_and_reordering(
         fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
             selection::selection_container(&self.0, window, cx)
                 .size_full()
-                .child(DataTable::new(&self.0))
+                .child(DataTable::new(&self.0).stripe(true))
         }
     }
     cx.update(gpui_kit::init);
