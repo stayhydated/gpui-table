@@ -76,14 +76,13 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                         syn::Fields::Unit => {
                             let render_unit_variant = if use_fluent_for_unit_variants {
                                 quote! {
-                                    gpui_table::core::i18n::localize_message(self)
-                                        .into_any_element()
+                                    gpui_table::runtime::text_cell(gpui_table::core::i18n::localize_message(self))
                                 }
                             } else if use_display_for_unit_variants {
-                                quote! { self.to_string().into_any_element() }
+                                quote! { gpui_table::runtime::text_cell(self.to_string()) }
                             } else {
                                 let variant_name = v_ident.to_string();
-                                quote! { #variant_name.into_any_element() }
+                                quote! { gpui_table::runtime::text_cell(#variant_name) }
                             };
                             Ok(quote! { Self::#v_ident => #render_unit_variant, })
                         }
@@ -96,7 +95,6 @@ fn expand_derive_table_cell(input: DeriveInput) -> syn::Result<proc_macro2::Toke
                 .collect::<syn::Result<Vec<_>>>()?;
 
                 quote! {
-                    use ::gpui_kit::IntoElement;
                     match self {
                         #(#arms)*
                     }
@@ -134,12 +132,10 @@ impl TableCellRender {
     fn draw_tokens(&self) -> proc_macro2::TokenStream {
         match self {
             Self::Display => quote! {
-                use ::gpui_kit::IntoElement;
-                self.to_string().into_any_element()
+                gpui_table::runtime::text_cell(self.to_string())
             },
             Self::Format(formatter) => quote! {
-                use ::gpui_kit::IntoElement;
-                #formatter(self).to_string().into_any_element()
+                gpui_table::runtime::text_cell(#formatter(self).to_string())
             },
         }
     }

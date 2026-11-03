@@ -323,6 +323,7 @@ pub(super) fn generate_delegate(
 
         /// Table delegate generated for this row type.
         pub struct #delegate_name {
+            row_selection: gpui_table::runtime::selection::RowSelectionState,
             pub rows: Vec<#struct_name>,
             columns: Vec<gpui_kit::component::table::Column>,
             pub visible_rows: std::ops::Range<usize>,
@@ -343,6 +344,7 @@ pub(super) fn generate_delegate(
             pub fn new(rows: Vec<#struct_name>) -> Self {
                 #precompute_rows_len
                 Self {
+                    row_selection: Default::default(),
                     rows,
                     columns: #columns_init_expr,
                     visible_rows: Default::default(),
@@ -497,6 +499,15 @@ pub(super) fn generate_delegate(
                 column
             }
 
+            fn render_tr(
+                &mut self, row_ix: usize, window: &mut gpui_kit::Window,
+                cx: &mut gpui_kit::Context<gpui_kit::component::table::TableState<Self>>,
+            ) -> gpui_kit::Stateful<gpui_kit::Div> {
+                use gpui_table::runtime::TableRowStyle as _;
+                let row = self.rows[self.map_row_index(row_ix)].render_table_row(row_ix, window, cx);
+                gpui_table::runtime::selection::decorate_row(row, row_ix, &self.row_selection, window, cx)
+            }
+
             fn render_td(
                 &mut self,
                 row_ix: usize,
@@ -574,6 +585,8 @@ pub(super) fn generate_delegate(
 
         impl gpui_table::runtime::OrderedTableDelegate for #delegate_name {
             type RowId = #row_id_type;
+            fn row_selection(&self) -> Option<&gpui_table::runtime::selection::RowSelectionState> { Some(&self.row_selection) }
+            fn row_selection_mut(&mut self) -> Option<&mut gpui_table::runtime::selection::RowSelectionState> { Some(&mut self.row_selection) }
             fn ordering(&self) -> &gpui_table::sort::SortOrder { &self.ordering }
             fn set_ordering(&mut self, ordering: gpui_table::sort::SortOrder) -> Result<(), gpui_table::sort::SortError> {
                 Self::set_ordering(self, ordering)

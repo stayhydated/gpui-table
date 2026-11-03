@@ -5,10 +5,13 @@
 //! Applications supply concrete filter widgets through the public shape contracts.
 
 mod cell;
+mod text;
+pub use text::text_cell;
 pub mod generated_filters;
 mod load;
 pub mod ordering;
 mod row;
+pub mod selection;
 pub use ordering::{
     OrderedTableDelegate, ResolvedOrderedTableDelegate, ResolvedTableColumn, ResolvedTableDelegate,
     TableRowSelection, set_table_ordering, set_table_resolved_columns,

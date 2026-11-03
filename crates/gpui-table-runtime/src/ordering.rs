@@ -6,6 +6,12 @@ use gpui_table_core::sort::{ResolvedSortColumns, SortError, SortOrder, SortableR
 
 /// Ordering of the delegate's loaded rows. Backend ordering remains caller-owned.
 pub trait OrderedTableDelegate: TableDelegate {
+    fn row_selection(&self) -> Option<&crate::selection::RowSelectionState> {
+        None
+    }
+    fn row_selection_mut(&mut self) -> Option<&mut crate::selection::RowSelectionState> {
+        None
+    }
     type RowId: Clone + Eq;
     fn ordering(&self) -> &SortOrder;
     fn set_ordering(&mut self, ordering: SortOrder) -> Result<(), SortError>;
@@ -113,13 +119,73 @@ pub fn set_table_resolved_columns<R: SortableRow, D: ResolvedTableDelegate<R>>(
 #[derive(Clone)]
 pub struct TableRowSelection<Id> {
     row: Option<Id>,
+    rows: Vec<Id>,
+    cursor: Option<Id>,
+    anchor: Option<Id>,
+    revision: u64,
     selection: TableSelection,
 }
 
 impl<Id: Clone + Eq> TableRowSelection<Id> {
-    /// Selected row identity, available to callers retaining a paged selection.
+    /// Current selected cursor identity, or the selected cell’s record.
     pub fn row_id(&self) -> Option<&Id> {
         self.row.as_ref()
+    }
+
+    /// Exact selected row identities, including a selected cell's record.
+    pub fn row_ids(&self) -> &[Id] {
+        &self.rows
+    }
+
+    /// The explicit input revision captured before a source refresh.
+    pub fn selection_revision(&self) -> u64 {
+        self.revision
+    }
+
+    pub fn all_rows_visible<D: OrderedTableDelegate<RowId = Id>>(&self, delegate: &D) -> bool {
+        self.rows
+            .iter()
+            .all(|id| delegate.visible_row_position(id).is_some())
+    }
+
+    /// Additive input retains previously selected records outside the loaded view.
+    pub fn preserve_unavailable<D: OrderedTableDelegate<RowId = Id>>(
+        &mut self,
+        old: &Self,
+        delegate: &D,
+    ) {
+        for id in &old.rows {
+            if delegate.visible_row_position(id).is_none() && !self.rows.contains(id) {
+                self.rows.push(id.clone());
+            }
+        }
+        if !self.rows.is_empty() && self.selection == TableSelection::None {
+            self.selection = TableSelection::Row(0);
+        }
+    }
+
+    /// Authoritative deletion removes only that identity, including a parked record.
+    pub fn remove_row_id(&mut self, id: &Id) {
+        self.rows.retain(|row| row != id);
+        if self.row.as_ref() == Some(id) {
+            self.row = self.rows.first().cloned();
+        }
+        {
+            if self.cursor.as_ref() == Some(id) {
+                self.cursor = None;
+            }
+            if self.anchor.as_ref() == Some(id) {
+                self.anchor = None;
+            }
+        }
+        if self.rows.is_empty()
+            && matches!(
+                self.selection,
+                TableSelection::Row(_) | TableSelection::Cell(_, _)
+            )
+        {
+            self.selection = TableSelection::None;
+        }
     }
 
     pub fn capture<D: OrderedTableDelegate<RowId = Id>>(table: &TableState<D>) -> Self {
@@ -128,8 +194,23 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
             TableSelection::Row(ix) | TableSelection::Cell(ix, _) => Some(ix),
             _ => None,
         };
+        let row = row_ix.and_then(|ix| table.delegate().visible_row_id(ix));
+        let rows = if matches!(selection, TableSelection::Cell(_, _)) {
+            row.iter().cloned().collect()
+        } else {
+            crate::selection::selected_rows(table)
+                .into_iter()
+                .filter_map(|ix| table.delegate().visible_row_id(ix))
+                .collect()
+        };
         Self {
-            row: row_ix.and_then(|ix| table.delegate().visible_row_id(ix)),
+            row,
+            rows,
+            cursor: crate::selection::row_selection_cursor(table)
+                .and_then(|ix| table.delegate().visible_row_id(ix)),
+            anchor: crate::selection::row_selection_anchor(table)
+                .and_then(|ix| table.delegate().visible_row_id(ix)),
+            revision: crate::selection::selection_revision(table),
             selection,
         }
     }
@@ -139,6 +220,21 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
         table: &mut TableState<D>,
         cx: &mut Context<TableState<D>>,
     ) {
+        if matches!(self.selection, TableSelection::Row(_)) {
+            let rows = self
+                .rows
+                .iter()
+                .filter_map(|id| table.delegate().visible_row_position(id))
+                .collect();
+            let cursor = self
+                .cursor
+                .and_then(|id| table.delegate().visible_row_position(&id));
+            let anchor = self
+                .anchor
+                .and_then(|id| table.delegate().visible_row_position(&id));
+            crate::selection::restore_rows(table, rows, cursor, anchor, cx);
+            return;
+        }
         let selection = match (self.row, self.selection) {
             (Some(id), TableSelection::Row(_)) => table
                 .delegate()

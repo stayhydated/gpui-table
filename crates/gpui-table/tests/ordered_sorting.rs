@@ -835,3 +835,90 @@ fn excluded_header_action_cannot_change_filtered_order_or_selection(
         assert_eq!(table.selection(), TableSelection::Row(1));
     });
 }
+
+#[gpui_kit::test]
+fn delegate_selection_handles_native_modifiers_keys_and_reordering(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::{
+        Root,
+        table::{DataTable, TableState},
+    };
+    use gpui_kit::test::TestWindowExt as _;
+    use gpui_kit::{
+        AppContext as _, Context, Entity, IntoElement, ParentElement as _, Render, Styled as _,
+        Window,
+    };
+    use gpui_kit::{InputEvent as _, Modifiers, MouseButton, MouseDownEvent, MouseUpEvent};
+    use gpui_table::runtime::{TableRowSelection, selection, set_table_ordering};
+    struct Preview(Entity<TableState<RecordTableDelegate>>);
+    impl Render for Preview {
+        fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            selection::selection_container(&self.0, window, cx)
+                .size_full()
+                .child(DataTable::new(&self.0))
+        }
+    }
+    cx.update(gpui_kit::init);
+    let mut table = None;
+    let window = cx.open_window(
+        gpui_kit::size(gpui_kit::px(700.), gpui_kit::px(500.)),
+        |window, cx| {
+            let state = cx.new(|cx| {
+                selection::new_multi_row_table(RecordTableDelegate::new(records()), window, cx)
+            });
+            table = Some(state.clone());
+            let preview = cx.new(|_| Preview(state));
+            Root::new(preview, window, cx)
+        },
+    );
+    let table = table.unwrap();
+    let mut visual = gpui_kit::VisualTestContext::from_window(window.into(), cx);
+    visual.update(|window, cx| {
+        window.render_frame(cx);
+        for (row, modifiers) in [
+            (0_usize, Modifiers::none()),
+            (2_usize, Modifiers::secondary_key(cx)),
+        ] {
+            let position = window.find(("row", row)).bounds().center();
+            window.dispatch_event(
+                MouseDownEvent {
+                    button: MouseButton::Left,
+                    position,
+                    modifiers,
+                    click_count: 1,
+                    first_mouse: false,
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.dispatch_event(
+                MouseUpEvent {
+                    button: MouseButton::Left,
+                    position,
+                    modifiers,
+                    click_count: 1,
+                }
+                .to_platform_input(),
+                cx,
+            );
+            window.render_frame(cx);
+        }
+        assert_eq!(selection::selected_rows(table.read(cx)), [0, 2]);
+    });
+    visual.simulate_keystrokes("shift-up");
+    visual.update(|_, cx| {
+        assert_eq!(selection::selected_rows(table.read(cx)), [1, 2]);
+        table.update(cx, |table, cx| {
+            let ids = TableRowSelection::capture(table).row_ids().to_vec();
+            set_table_ordering(table, order(), cx).unwrap();
+            let mut after = TableRowSelection::capture(table).row_ids().to_vec();
+            after.sort_unstable();
+            let mut ids = ids;
+            ids.sort_unstable();
+            assert_eq!(after, ids);
+        });
+    });
+    visual.simulate_keystrokes("escape");
+    visual.update(|_, cx| assert!(selection::selected_rows(table.read(cx)).is_empty()));
+}

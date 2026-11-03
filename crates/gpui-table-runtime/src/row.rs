@@ -94,7 +94,7 @@ pub fn default_render_cell<R: TableRowMeta + ?Sized>(
 
 /// Default implementation for rendering a row.
 pub fn default_render_row(row_ix: usize, _window: &mut Window, _cx: &mut App) -> Stateful<Div> {
-    div().id(row_ix)
+    div().id(("row", row_ix))
 }
 
 #[cfg(test)]

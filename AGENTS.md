@@ -8,7 +8,7 @@ Start with `crates/gpui-table` for application-facing API changes,
 | Surface | Ownership |
 |---|---|
 | `crates/gpui-table` | Public facade, macro re-exports, and feature gates |
-| `examples/components` | Unpublished reference filters and gallery support |
+| `examples/components` | Unpublished reference filters used by runnable examples |
 | `crates/gpui-table-core` | UI-neutral typed filtering and fallible ordering semantics |
 | `crates/gpui-table-runtime` | GPUI row, cell, loading, filter-shape, and generated-filter contracts |
 | `crates/gpui-table-schema` | UI-neutral filter metadata and table-shape registry consumed by tooling |
@@ -24,7 +24,8 @@ Start with `crates/gpui-table` for application-facing API changes,
 
 The default `cargo run` target is `some-lib-tables`. Its
 `examples/demo.rs` entry point discovers the same stories on native and Wasm
-targets. Built-in widget previews live in `examples/components/src/stories`.
+targets. Reference filters live in `examples/components`; their executable consumer is
+`examples/some-lib-tables`.
 
 ## Keep related surfaces aligned
 
