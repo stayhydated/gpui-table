@@ -14,6 +14,8 @@ readme = "README.md"
 [features]
 chrono = [ "dep:chrono", "gpui-table-core/chrono", "jiff" ]
 default = [ "chrono" ]
+# Requires a host-provided GPUI component with native multi-row selection.
+multi-row-selection = []
 jiff = [ "dep:icu", "dep:jiff" ]
 rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]

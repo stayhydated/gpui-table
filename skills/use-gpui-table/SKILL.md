@@ -125,3 +125,12 @@ validated generated delegate or `set_table_resolved_columns`. Its key must have
 an executable `ResolvedSortColumn<Row>` in the retained context. Render current
 typed rows in the caller callback and preserve formatting independently of the
 comparison extractor. Remove retired presentation before removing its key.
+
+For a host that patches gpui-component with native multi-row selection, opt in
+with `multi-row-selection` and enable the table's native mode. Capture the full
+`TableRowSelection::row_ids()` plus cursor/anchor before row or order changes.
+Keep unavailable IDs in the paged owner, fenced by its source/session identity.
+Restore does not count as user input; explicit selection (including Escape)
+replaces the retained snapshot. Call `remove_row_id()` for authoritative deletion,
+while eviction preserves the ID. Do not enable this feature against an
+unmodified GPUI Kit component.

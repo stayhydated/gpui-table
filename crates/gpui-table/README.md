@@ -49,3 +49,8 @@ resolved key. Generated delegates validate presentation keys and route both cell
 and column-header sorting through that retained typed context. Use
 `set_table_resolved_columns` to refresh presentation while retaining the selected
 record. Renderers read each current row; formatting remains caller-owned.
+
+`multi-row-selection` opts into stable-ID snapshots for a host-provided native
+GPUI component multi-selection extension. It requires that component patch;
+ordinary consumers keep the existing default features. See the
+[runtime contract](../gpui-table-runtime/README.md) for retention and restoration.

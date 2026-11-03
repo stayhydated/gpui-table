@@ -23,6 +23,7 @@ default = [ "derive", "chrono" ]
 derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 inventory = [ "gpui-table-derive/inventory" ]
+multi-row-selection = [ "gpui-table-runtime/multi-row-selection" ]
 mcp = [ "dep:gpui-table-mcp", "inventory", "gpui-table-derive?/mcp" ]
 rust_decimal = [
   "dep:rust_decimal",

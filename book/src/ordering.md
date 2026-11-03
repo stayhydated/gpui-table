@@ -146,3 +146,13 @@ checks the current order, source capability restriction and visible values befor
 applying the change. Clear an order and its capability restriction before retiring
 keys that it uses. Remote query owners execute the same resolved calculation over
 the complete source before pagination.
+
+With a host-provided TableState multi-selection extension, enable
+`gpui-table`'s `multi-row-selection` feature and the table's native opt-in.
+`TableRowSelection::row_ids()` captures the complete set, including the cursor
+and range anchor by stable ID. Restore renders the currently available subset;
+the paged owner retains unavailable IDs until they return. Keep an unchanged
+input revision across source restoration. Explicit selection replaces the old
+snapshot, including an empty selection. Remove an authoritative deletion with
+`remove_row_id()`; retention eviction does not assert deletion. The feature
+requires the host's gpui-component patch; default consumers retain single selection.

@@ -96,17 +96,88 @@ pub fn set_table_resolved_columns<R: SortableRow, D: ResolvedTableDelegate<R>>(
     Ok(())
 }
 
-/// Capture before changing rows or ordering, then restore by stable row identity.
+/// Capture before changing rows or ordering, then restore all selected stable identities.
 #[derive(Clone)]
 pub struct TableRowSelection<Id> {
     row: Option<Id>,
+    rows: Vec<Id>,
+    #[cfg(feature = "multi-row-selection")]
+    cursor: Option<Id>,
+    #[cfg(feature = "multi-row-selection")]
+    anchor: Option<Id>,
+    #[cfg(feature = "multi-row-selection")]
+    revision: u64,
     selection: TableSelection,
 }
 
 impl<Id: Clone + Eq> TableRowSelection<Id> {
-    /// Selected row identity, available to callers retaining a paged selection.
+    /// Current selected cursor identity (or selected cell), retained for compatibility.
     pub fn row_id(&self) -> Option<&Id> {
         self.row.as_ref()
+    }
+
+    /// Exact selected row identities, including a selected cell's record.
+    pub fn row_ids(&self) -> &[Id] {
+        &self.rows
+    }
+
+    /// The explicit input revision captured before a source refresh.
+    pub fn selection_revision(&self) -> u64 {
+        #[cfg(feature = "multi-row-selection")]
+        {
+            self.revision
+        }
+        #[cfg(not(feature = "multi-row-selection"))]
+        {
+            0
+        }
+    }
+
+    pub fn all_rows_visible<D: OrderedTableDelegate<RowId = Id>>(&self, delegate: &D) -> bool {
+        self.rows
+            .iter()
+            .all(|id| delegate.visible_row_position(id).is_some())
+    }
+
+    /// Additive input retains previously selected records outside the loaded view.
+    pub fn preserve_unavailable<D: OrderedTableDelegate<RowId = Id>>(
+        &mut self,
+        old: &Self,
+        delegate: &D,
+    ) {
+        for id in &old.rows {
+            if delegate.visible_row_position(id).is_none() && !self.rows.contains(id) {
+                self.rows.push(id.clone());
+            }
+        }
+        if !self.rows.is_empty() && self.selection == TableSelection::None {
+            self.selection = TableSelection::Row(0);
+        }
+    }
+
+    /// Authoritative deletion removes only that identity, including a parked record.
+    pub fn remove_row_id(&mut self, id: &Id) {
+        self.rows.retain(|row| row != id);
+        if self.row.as_ref() == Some(id) {
+            self.row = self.rows.first().cloned();
+        }
+        #[cfg(feature = "multi-row-selection")]
+        {
+            if self.cursor.as_ref() == Some(id) {
+                self.cursor = None;
+            }
+            if self.anchor.as_ref() == Some(id) {
+                self.anchor = None;
+            }
+        }
+        if self.rows.is_empty()
+            && matches!(
+                self.selection,
+                TableSelection::Row(_) | TableSelection::Cell(_, _)
+            )
+        {
+            self.selection = TableSelection::None;
+        }
     }
 
     pub fn capture<D: OrderedTableDelegate<RowId = Id>>(table: &TableState<D>) -> Self {
@@ -115,8 +186,32 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
             TableSelection::Row(ix) | TableSelection::Cell(ix, _) => Some(ix),
             _ => None,
         };
+        let row = row_ix.and_then(|ix| table.delegate().visible_row_id(ix));
+        #[cfg(not(feature = "multi-row-selection"))]
+        let rows = row.iter().cloned().collect();
+        #[cfg(feature = "multi-row-selection")]
+        let rows = if matches!(selection, TableSelection::Cell(_, _)) {
+            row.iter().cloned().collect()
+        } else {
+            table
+                .selected_rows()
+                .iter()
+                .filter_map(|ix| table.delegate().visible_row_id(*ix))
+                .collect()
+        };
         Self {
-            row: row_ix.and_then(|ix| table.delegate().visible_row_id(ix)),
+            row,
+            rows,
+            #[cfg(feature = "multi-row-selection")]
+            cursor: table
+                .row_selection_cursor()
+                .and_then(|ix| table.delegate().visible_row_id(ix)),
+            #[cfg(feature = "multi-row-selection")]
+            anchor: table
+                .row_selection_anchor()
+                .and_then(|ix| table.delegate().visible_row_id(ix)),
+            #[cfg(feature = "multi-row-selection")]
+            revision: table.selection_revision(),
             selection,
         }
     }
@@ -126,6 +221,22 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
         table: &mut TableState<D>,
         cx: &mut Context<TableState<D>>,
     ) {
+        #[cfg(feature = "multi-row-selection")]
+        if matches!(self.selection, TableSelection::Row(_)) {
+            let rows = self
+                .rows
+                .iter()
+                .filter_map(|id| table.delegate().visible_row_position(id))
+                .collect();
+            let cursor = self
+                .cursor
+                .and_then(|id| table.delegate().visible_row_position(&id));
+            let anchor = self
+                .anchor
+                .and_then(|id| table.delegate().visible_row_position(&id));
+            table.restore_row_selection(rows, cursor, anchor, cx);
+            return;
+        }
         let selection = match (self.row, self.selection) {
             (Some(id), TableSelection::Row(_)) => table
                 .delegate()
@@ -139,6 +250,9 @@ impl<Id: Clone + Eq> TableRowSelection<Id> {
                 .unwrap_or_default(),
             (_, selection) => selection,
         };
+        #[cfg(feature = "multi-row-selection")]
+        table.restore_selection(selection, cx);
+        #[cfg(not(feature = "multi-row-selection"))]
         table.set_selection(selection, cx);
     }
 }

@@ -70,3 +70,8 @@ filter controls, loading, and MCP query tools.
 [gpui-table-prototyping-core-readme]: crates/gpui-table-prototyping-core/README.md
 [gpui-table-runtime-readme]: crates/gpui-table-runtime/README.md
 [gpui-table-schema-readme]: crates/gpui-table-schema/README.md
+
+`multi-row-selection` opts into stable-ID snapshots for a host-provided native
+GPUI component multi-selection extension. It requires that component patch;
+ordinary consumers keep the existing default features. See the
+[runtime contract](crates/gpui-table-runtime/README.md) for retention and restoration.

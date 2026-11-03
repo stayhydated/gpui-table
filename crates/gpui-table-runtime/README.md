@@ -13,9 +13,17 @@ Depend on this crate directly when writing reusable integrations over
 `GpuiTableFilterShape`, or `FilterEntitiesExt`. Application
 tables should normally use the `gpui-table` facade.
 
-`TableRowSelection` captures a row or cell selection by stable identity.
-Paged callers can clone the snapshot, inspect `row_id()`, and retain it until
-that record is visible again before restoring it through the table state.
+`TableRowSelection` captures selected record IDs and a cell's record identity.
+`row_ids()` exposes the complete snapshot; `row_id()` keeps the current selected
+cursor/cell API. Paged callers retain the snapshot until its records are visible;
+`all_rows_visible()` checks availability and `remove_row_id()` handles an
+authoritative deletion independently of retention eviction.
+
+The opt-in `multi-row-selection` feature uses the host's native TableState
+multi-selection extension: selected rows, cursor, range anchor and input revision
+are captured by stable ID. Restore shows the available subset without treating a
+source refresh as input. It requires the host to patch gpui-component with this
+extension; ordinary GPUI Kit 0.7 consumers use the unchanged default feature set.
 
 `ResolvedOrderedTableDelegate` retains executable source-resolved columns.
 `set_table_resolved_sort_columns` replaces that context atomically and preserves

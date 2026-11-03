@@ -618,3 +618,46 @@ fn runtime_resolved_context_changes_preserve_real_table_selection(
         assert_eq!(table.selection(), before);
     });
 }
+
+#[cfg(feature = "multi-row-selection")]
+#[gpui_kit::test]
+fn multiple_selected_identities_and_anchor_survive_calculated_order_and_source_changes(
+    cx: &mut gpui_kit::TestAppContext,
+) {
+    use gpui_kit::component::table::TableState;
+    use gpui_kit::{AppContext as _, Empty, Modifiers};
+    use gpui_table::runtime::{TableRowSelection, set_table_ordering};
+    cx.update(gpui_kit::init);
+    let window = cx.add_window(|_, _| Empty);
+    let table = window
+        .update(cx, |_, window, cx| {
+            cx.new(|cx| {
+                TableState::new(RecordTableDelegate::new(records()), window, cx)
+                    .multi_row_selection(true)
+            })
+        })
+        .unwrap();
+    table.update(cx, |table, cx| {
+        table.set_selected_row(0, cx);
+        table.select_row_with_modifiers(2, Modifiers::secondary_key(), cx);
+        let revision = table.selection_revision();
+        set_table_ordering(table, order(), cx).unwrap();
+        assert_eq!(TableRowSelection::capture(table).row_ids(), [1, 3]);
+        assert_eq!(table.row_selection_cursor(), Some(0));
+        assert_eq!(table.row_selection_anchor(), Some(0));
+        assert_eq!(table.selection_revision(), revision);
+        let mut selection = TableRowSelection::capture(table);
+        table.delegate_mut().set_row_scope(|row| row.id != 1);
+        selection.clone().restore(table, cx);
+        assert_eq!(TableRowSelection::capture(table).row_ids(), [3]);
+        assert!(!selection.all_rows_visible(table.delegate()));
+        table.delegate_mut().clear_row_scope();
+        selection.clone().restore(table, cx);
+        assert_eq!(TableRowSelection::capture(table).row_ids(), [1, 3]);
+        selection.remove_row_id(&3);
+        table.delegate_mut().rows.retain(|row| row.id != 3);
+        table.delegate().refresh_filtered_rows();
+        selection.restore(table, cx);
+        assert_eq!(TableRowSelection::capture(table).row_ids(), [1]);
+    });
+}
