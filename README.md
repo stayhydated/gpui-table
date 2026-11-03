@@ -12,10 +12,13 @@ metadata and delegates, with opt-in typed filters, incremental loading,
 localization, registry metadata, ordered sorting, calculated keys, and MCP query tools.
 
 Requires Rust 1.99 or newer for all public crates. Generated UI code uses
-`gpui-kit` 0.8.0 directly, so applications must expose it as a direct dependency.
+`gpui-kit` 0.9.0 directly, so applications must expose it as a direct dependency.
 
 Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
 [`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.
+
+The upcoming gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
+The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
 
 ## Crates
 
