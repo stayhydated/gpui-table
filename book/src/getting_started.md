@@ -3,7 +3,7 @@
 This path produces a `DataTable` backed by typed application rows and generated
 filter controls.
 
-The upcoming gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
+The gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
 The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
 
 ## Prerequisites

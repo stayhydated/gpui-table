@@ -17,7 +17,7 @@ Requires Rust 1.99 or newer for all public crates. Generated UI code uses
 Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
 [`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.
 
-The upcoming gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
+The gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
 The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
 
 ## Crates
