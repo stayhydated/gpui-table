@@ -3,6 +3,9 @@
 This path produces a `DataTable` backed by typed application rows and generated
 filter controls.
 
+The upcoming gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
+The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
+
 ## Prerequisites
 
 Use Rust 1.99 or later. Add the table crates alongside the application's
@@ -10,9 +13,9 @@ Use Rust 1.99 or later. Add the table crates alongside the application's
 
 ```toml
 [dependencies]
-gpui-kit = "0.8.0"
-gpui-table = "0.8"
-gpui-table-component = "0.8"
+gpui-kit = "0.9.0"
+gpui-table = "0.9"
+gpui-table-component = "0.9"
 ```
 
 Generated table code refers to `gpui_kit` directly, so keep it as a direct

@@ -7,9 +7,9 @@ for its built-in controls.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.8", features = ["fluent"] }
-gpui-table-component = "0.8"
-es-fluent = "0.21.0"
+gpui-table = { version = "0.9", features = ["fluent"] }
+gpui-table-component = "0.9"
+es-fluent = "0.21.2"
 ```
 
 ## Derive localized labels
