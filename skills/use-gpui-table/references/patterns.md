@@ -7,9 +7,11 @@ Use only the section needed for the current application task.
 ```toml
 [dependencies]
 gpui-table = { version = "0.9", features = ["rust_decimal"] }
-gpui-table-example-component = "0.9"
+my-table-components = { path = "../my-table-components" }
 ```
 
+`my-table-components` represents the application-owned filter integration.
+Use unpublished `examples/components` as a reference for its implementation.
 Keep `gpui-kit` as a direct dependency using the application's existing source.
 Add `fluent`, `inventory`, `mcp`, or `spacetimedb` for the corresponding workflow.
 
@@ -30,13 +32,13 @@ struct User {
     #[gpui_table(
         sortable,
         width = 160.,
-        filter(gpui_table_example_component::TextFilter)
+        filter(my_table_components::TextFilter)
     )]
     name: String,
 
     #[gpui_table(
         width = 120.,
-        filter(gpui_table_example_component::FacetedFilter::<UserStatus>.searchable(true))
+        filter(my_table_components::FacetedFilter::<UserStatus>.searchable(true))
     )]
     status: UserStatus,
 }
@@ -63,20 +65,20 @@ erased element.
 ## Configure built-in filters
 
 ```rust
-#[gpui_table(filter(gpui_table_example_component::TextFilter.alphanumeric_only()))]
+#[gpui_table(filter(my_table_components::TextFilter.alphanumeric_only()))]
 code: String,
 
 #[gpui_table(filter(
-    gpui_table_example_component::NumberRangeFilter.range(min, max).step(step)
+    my_table_components::NumberRangeFilter.range(min, max).step(step)
 ))]
 amount: u32,
 
 #[gpui_table(
-    filter(gpui_table_example_component::FacetedFilter::<Status>.searchable(true))
+    filter(my_table_components::FacetedFilter::<Status>.searchable(true))
 )]
 status: Status,
 
-#[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
+#[gpui_table(filter(my_table_components::DateRangeFilter))]
 created_at: chrono::DateTime<chrono::Utc>,
 ```
 
@@ -179,13 +181,13 @@ when row labels use plain strings:
 
 ```rust
 gpui_kit::component::init(cx);
-gpui_table_example_component::i18n::init(cx)?;
+my_table_components::i18n::init(cx)?;
 ```
 
 For typed row labels, enable the facade's `fluent` feature and derive the
 application's `es-fluent` labels. Use `#[filter(fluent)]` on faceted enums and
 `#[gpui_table(fluent = "label")]` on localized row types. Apply later locale
-changes with `gpui_table_example_component::i18n::set_locale` and synchronize the
+changes with `my_table_components::i18n::set_locale` and synchronize the
 application's resource manager to the same language.
 
 ## Expose rows through MCP
@@ -194,7 +196,7 @@ application's resource manager to the same language.
 #[derive(Clone, gpui_table::GpuiTable, serde::Serialize)]
 #[gpui_table(mcp)]
 struct User {
-    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
+    #[gpui_table(filter(my_table_components::TextFilter))]
     name: String,
 }
 

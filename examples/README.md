@@ -1,14 +1,14 @@
 # gpui-table examples
 
-These runnable workspace packages demonstrate derived GPUI tables, built-in
-components, MCP queries, and inventory-driven table generation.
+These runnable workspace packages demonstrate derived GPUI tables, reference
+filters, MCP queries, and inventory-driven table generation. The filter package
+in `components` is an unpublished example consumed by `some-lib-tables`.
 
 Run these commands from the workspace root:
 
 | Command | Purpose |
 |---|---|
 | `cargo run` | Open the derived-table Storybook application |
-| `cargo run -p gpui-table-example-component --bin story --features story` | Open the built-in filter and status-bar stories |
 | `cargo run -p gpui-table --example ordered_sort --features spacetimedb,mcp,rust_decimal` | Verify temporal sorting, calculated keys and MCP pagination |
 | `cargo run -p mcp-query` | Serve an in-memory table as an MCP query tool |
 | `cargo run -p prototyping` | Regenerate table stories from registered metadata |

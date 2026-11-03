@@ -24,6 +24,9 @@ description: >-
 6. Follow the application's existing component, validation, and metadata
    conventions.
 
+Filter widgets belong to application-owned integration crates. The unpublished
+`examples/components` package provides reference shapes and adapters.
+
 ## Choose a shape strategy
 
 | Requirement | Strategy |

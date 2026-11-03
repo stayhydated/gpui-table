@@ -6,6 +6,11 @@ filter controls.
 The gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
 The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
 
+This walkthrough uses the unpublished reference filters in the workspace’s
+`examples/components` package. Its relative dependency path matches the runnable
+`examples/some-lib` model crate. Applications own their corresponding filter
+integration and localization resources.
+
 ## Prerequisites
 
 Use Rust 1.99 or later. Add the table crates alongside the application's
@@ -15,7 +20,7 @@ Use Rust 1.99 or later. Add the table crates alongside the application's
 [dependencies]
 gpui-kit = "0.9.0"
 gpui-table = "0.9"
-gpui-table-example-component = "0.9"
+gpui-table-example-component = { path = "../components" }
 ```
 
 Generated table code refers to `gpui_kit` directly, so keep it as a direct

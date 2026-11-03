@@ -14,9 +14,8 @@ description: >-
 1. Inspect the application's manifest and an existing table before choosing
    features or syntax. Generated code uses `gpui_kit` directly; preserve the
    application's existing `gpui-kit` dependency source.
-2. Use `gpui-table` as the facade. Add
-   `gpui-table-example-component` when the table renders built-in filters or
-   `TableStatusBar`.
+2. Use `gpui-table` as the facade and an application-owned filter-shape crate.
+   The unpublished `examples/components` package demonstrates standard filters.
 3. Derive `GpuiTable` on a named row struct. Configure columns and
    filters at the field, then construct the generated delegate and
    `TableState`.
@@ -33,13 +32,13 @@ description: >-
 | Task | Public surface |
 |---|---|
 | Derive a table | `gpui_table::GpuiTable` |
-| Render built-in filters | `gpui-table-example-component` shapes |
+| Render filters | Application-owned shapes implementing runtime contracts |
 | Define facet values | `Filterable` |
 | Render a value object | `TableCell` |
 | Load more rows | `TableLoader` plus `#[gpui_table_impl]` |
 | Render a custom cell | field-level `style = path` |
 | Control visible rows | generated delegate filter and row-scope methods |
-| Order loaded rows | `runtime::set_table_ordering`, `sort::SortOrder` and `SortEditor` |
+| Order loaded rows | `runtime::set_table_ordering` and `sort::SortOrder` |
 | Sort calculated values | `sort_key = path` paired with the same calculation in `style` |
 | Resolve source-owned columns | `sort::ResolvedSortColumn`, `ResolvedSortColumns`, and `runtime::set_table_resolved_sort_columns` |
 | Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
@@ -58,8 +57,7 @@ description: >-
 - Enable `mcp` for generated query tools; it also enables
   `inventory`.
 - Enable `spacetimedb` for supported SpacetimeDB temporal filters.
-- Match the corresponding `gpui-table-example-component` feature when a
-  built-in component owns the shape.
+- Match features with the application-owned filter integration.
 
 ## Preserve generated contracts
 
@@ -77,8 +75,7 @@ filter collection in the owning view; queued callbacks ignore a closed table.
 
 Keep loader flags coherent: set `loading` before starting work, clear
 it on completion, and set `eof` only when no later page exists.
-Initialize `gpui_table_example_component::i18n` before rendering localized
-components.
+Initialize the owning filter crate’s localization before rendering it.
 
 For MCP, keep query execution in application code. Local row sources return
 `Vec<Row>` or `Result<Vec<Row>, E>`; backend handlers
@@ -110,8 +107,8 @@ source keys. Use the same typed extraction in cells and ordering; native/resolve
 key collisions and context replacement failures are atomic. The application owns
 authorization/readiness and complete-result backend execution. Retire a resolved
 key after clearing orders and capability restrictions that use it.
-Use existing UI composition for `SortEditor`; it emits controlled changes and
-owns no persistence, backend or formula language.
+Application-owned ordering controls emit a `SortOrder`; the source owns
+persistence and complete-result execution.
 
 ## Load focused patterns
 
