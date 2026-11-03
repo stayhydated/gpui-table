@@ -10,7 +10,7 @@ publish = false
 chrono = { workspace = true }
 gpui-kit = { workspace = true }
 gpui-table = { features = [ "mcp", "rust_decimal" ], workspace = true }
-gpui-table-component = { features = [ "chrono", "mcp", "rust_decimal" ], workspace = true }
+gpui-table-example-component = { features = [ "chrono", "mcp", "rust_decimal" ], workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 
 [package.metadata.cargo-machete]

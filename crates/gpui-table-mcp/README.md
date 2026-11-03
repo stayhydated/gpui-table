@@ -11,7 +11,7 @@ templates for the [`gpui-table`][project] ecosystem.
 Requires Rust 1.99 or newer.
 
 Most applications use the `mcp` feature on [`gpui-table`][facade] and
-`gpui-table-component`.
+`gpui-table-example-component`.
 
 Use this crate directly when implementing a custom server or lower-level table
 registration. Queries carry validated ordered sort clauses. Local sources order all matches

@@ -340,11 +340,6 @@ impl<'a> TableShapeAdapter<'a> {
 
         Ok(quote! {
             #filter_views
-            .child(gpui_table_component::TableStatusBar::new(
-                delegate.rows.len(),
-                delegate.loading,
-                delegate.eof,
-            ))
             .child(
                 DataTable::new(&self.table)
                     .stripe(true)
@@ -357,7 +352,7 @@ impl<'a> TableShapeAdapter<'a> {
         if self.identities.uses_fluent_labels() {
             let struct_name_ident = self.identities.struct_name_ident();
             quote! {
-                gpui_table_component::i18n::localize_label::<#struct_name_ident>(cx)
+                gpui_table::runtime::localize_label::<#struct_name_ident>(cx)
             }
         } else {
             let title = self.identities.table_title();
@@ -485,7 +480,7 @@ mod tests {
     static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
         ComponentShapeUse::new(
             ComponentFieldName::new("name"),
-            RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
+            RustPath::from_macro_tokens_unchecked("gpui_table_example_component::TextFilter"),
         ),
         RegistryFilterType::Text,
         RustPath::from_macro_tokens_unchecked(
@@ -525,7 +520,7 @@ mod tests {
         static FILTERS: [FilterVariant; 1] = [FilterVariant::new(
             ComponentShapeUse::new(
                 ComponentFieldName::new("invalid field"),
-                RustPath::from_macro_tokens_unchecked("gpui_table_component::TextFilter"),
+                RustPath::from_macro_tokens_unchecked("gpui_table_example_component::TextFilter"),
             ),
             RegistryFilterType::Text,
             RustPath::from_macro_tokens_unchecked(
@@ -600,10 +595,10 @@ mod tests {
         assert!(!parts.field_initializers.to_string().contains("filters"));
         assert!(!parts.struct_fields.to_string().contains("filters"));
         assert!(
-            parts
+            !parts
                 .render_children
                 .to_string()
-                .contains("TableStatusBar :: new")
+                .contains("gpui_table_example_component")
         );
         assert!(
             parts

@@ -19,6 +19,7 @@ rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal" ]
 spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]
 
 [dependencies]
+gpui-es-fluent = { workspace = true }
 chrono = { optional = true, workspace = true }
 component-shape = { workspace = true }
 gpui-kit = { workspace = true }

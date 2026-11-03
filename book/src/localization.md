@@ -2,13 +2,13 @@
 
 The `fluent` feature lets generated table titles, column labels, and facet
 labels use the application's typed `es-fluent` resources. The application must
-own and link those resources; `gpui-table-component` only supplies resources
+own and link those resources; `gpui-table-example-component` only supplies resources
 for its built-in controls.
 
 ```toml
 [dependencies]
 gpui-table = { version = "0.9", features = ["fluent"] }
-gpui-table-component = "0.9"
+gpui-table-example-component = "0.9"
 es-fluent = "0.21.2"
 ```
 
@@ -39,7 +39,7 @@ enum Status {
 #[fluent_variants(keys = ["label"])]
 #[gpui_table(fluent = "label", filters)]
 struct User {
-    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>))]
+    #[gpui_table(filter(gpui_table_example_component::FacetedFilter::<Status>))]
     status: Status,
 }
 ```
@@ -54,14 +54,14 @@ After `gpui_kit::component::init(cx)`, initialize table localization from the ac
 component locale:
 
 ```rust,ignore
-gpui_table_component::i18n::init(cx)?;
+gpui_table_example_component::i18n::init(cx)?;
 ```
 
 To change locales later, synchronize the built-in component and table-core
 contexts together:
 
 ```rust,ignore
-gpui_table_component::i18n::set_locale(cx, "en")?;
+gpui_table_example_component::i18n::set_locale(cx, "en")?;
 ```
 
 An application with its own embedded resource manager must apply the same

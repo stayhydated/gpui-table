@@ -11,7 +11,7 @@ struct Record {
     #[gpui_table(
         sortable,
         col = "category_key",
-        filter(gpui_table_component::TextFilterAdapter)
+        filter(gpui_table_example_component::TextFilterAdapter)
     )]
     category: String,
     #[gpui_table(sortable, sort_key = calculated_score, style = score_cell)]

@@ -14,18 +14,15 @@ localization, registry metadata, ordered sorting, source-resolved calculated key
 Requires Rust 1.99 or newer for all public crates. Generated UI code uses
 `gpui-kit` 0.9.0 directly, so applications must expose it as a direct dependency.
 
-Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
-[`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.
-
-The gpui-table 0.9 line uses GPUI Kit 0.9 and Storybook 0.8.
-The 0.8 line targets Kit 0.8; keep these public GPUI type families together.
+Start with [`gpui-table`][gpui-table-readme] for derives and table contracts.
+Applications own their concrete filter widgets through the runtime shape contracts.
+The runnable gallery contains unpublished reference components under `examples/components`.
 
 ## Crates
 
 | Crate | Purpose |
 | --- | --- |
 | [`gpui-table`][gpui-table-readme] | Application-facing facade and derive re-exports |
-| [`gpui-table-component`][gpui-table-component-readme] | Built-in filter widgets and table support components |
 | [`gpui-table-core`][gpui-table-core-readme] | UI-neutral filter values and matching semantics |
 | [`gpui-table-derive`][gpui-table-derive-readme] | Proc macros for tables, cells, filters, and MCP queries |
 | [`gpui-table-mcp`][gpui-table-mcp-readme] | Typed MCP query contracts and server composition |
@@ -67,7 +64,6 @@ cover additional table and MCP workflows.
 [gpui-table-badge]: https://img.shields.io/crates/v/gpui-table.svg?label=gpui-table
 [gpui-table-crate]: https://crates.io/crates/gpui-table
 [gpui-table-readme]: crates/gpui-table/README.md
-[gpui-table-component-readme]: crates/gpui-table-component/README.md
 [gpui-table-core-readme]: crates/gpui-table-core/README.md
 [gpui-table-derive-readme]: crates/gpui-table-derive/README.md
 [gpui-table-mcp-readme]: crates/gpui-table-mcp/README.md

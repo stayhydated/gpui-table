@@ -7,7 +7,7 @@
 //!
 //! Built-in filter types also implement the runtime table filter shape
 //! contract, so they can be used directly in
-//! `#[gpui_table(filter(gpui_table_component::TextFilter))]`. Manual filter
+//! `#[gpui_table(filter(gpui_table_example_component::TextFilter))]`. Manual filter
 //! collections can use [`TableFilterComponent`] and [`QueryFilterValue`]
 //! directly.
 //!
@@ -24,11 +24,7 @@ mod mcp;
 #[cfg(feature = "rust_decimal")]
 pub mod number_range_filter;
 pub mod reset_filters;
-pub mod sort_editor;
-pub use sort_editor::{SortColumnOption, SortEditor};
 mod shape;
-#[cfg(feature = "story")]
-mod stories;
 pub mod table_status_bar;
 pub mod text_filter;
 
@@ -56,7 +52,7 @@ use std::collections::HashSet;
 /// Implementing this trait is useful for standalone components in your own UI
 /// code or for custom filter collections you build manually.
 /// The derive macro consumes filter shapes, such as
-/// `gpui_table_component::TextFilter`; generated filter entities construct
+/// `gpui_table_example_component::TextFilter`; generated filter entities construct
 /// those shapes through `gpui_table::runtime::shape::GpuiTableFilterShape`.
 pub trait TableFilterComponent: Sized {
     /// The filter's current value/state type.
@@ -793,4 +789,13 @@ mod tests {
             >>::matches_field(&None, &inactive));
         }
     }
+}
+
+/// Builds the example reset control using a generated collection's public contract.
+pub fn reset_filters_button<F>(filters: &F) -> ResetFilters
+where
+    F: gpui_table_runtime::FilterEntitiesExt + Clone + 'static,
+{
+    let filters = filters.clone();
+    ResetFilters::new(move |window, cx| filters.reset_filters(window, cx))
 }

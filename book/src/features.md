@@ -13,7 +13,7 @@ the row types.
 | `inventory` | No | `GpuiTableShape` registration for tooling and code generation |
 | `mcp` | No | Experimental generated MCP query tools; this also enables `inventory` |
 
-Use `gpui-table-component` for rendered filters, `TableStatusBar`, reset
+Use `gpui-table-example-component` for rendered filters, `TableStatusBar`, reset
 controls, and manual filter composition. Its `chrono` and `rust_decimal`
 features are enabled by default. Enable its `mcp` feature when an MCP-enabled
 row declares a built-in filter shape.
@@ -33,7 +33,7 @@ Use the lower-level crates for reusable integrations and tooling:
 
 Filter-shape feature errors identify the field and missing facade capability.
 Match the facade feature first, then match the corresponding component feature
-when the shape is implemented by `gpui-table-component`.
+when the shape is implemented by `gpui-table-example-component`.
 
 ## Generate table stories from metadata
 

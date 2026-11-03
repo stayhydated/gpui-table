@@ -8,11 +8,11 @@ filter execution, and totals.
 ```toml
 [dependencies]
 gpui-table = { version = "0.9", features = ["mcp"] }
-gpui-table-component = { version = "0.9", features = ["mcp"] }
+gpui-table-example-component = { version = "0.9", features = ["mcp"] }
 serde = { version = "1", features = ["derive"] }
 ```
 
-Enable `gpui-table-component/mcp` when a table uses the built-in
+Enable `gpui-table-example-component/mcp` when a table uses the built-in
 filter shapes. Match the facade and component `rust_decimal`,
 `chrono`, or `spacetimedb` features required by those
 shapes.
@@ -31,7 +31,7 @@ inventory-backed tools over stdio:
 )]
 #[gpui_table(mcp(row_schema))]
 struct User {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 

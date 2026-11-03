@@ -9,16 +9,16 @@ enum Status {
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct User {
-    #[gpui_table(filter(gpui_table_component::TextFilter.numeric_only()))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter.numeric_only()))]
     code: String,
 
-    #[gpui_table(filter(gpui_table_component::TextFilter.alphanumeric_only()))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter.alphanumeric_only()))]
     identifier: String,
 
-    #[gpui_table(filter(gpui_table_component::TextFilter.matching_regex(r"[A-Z0-9-]*")))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter.matching_regex(r"[A-Z0-9-]*")))]
     external_ref: String,
 
-    #[gpui_table(filter(gpui_table_component::FacetedFilter::<Status>.searchable(true)))]
+    #[gpui_table(filter(gpui_table_example_component::FacetedFilter::<Status>.searchable(true)))]
     status: Status,
 }
 

@@ -130,22 +130,22 @@ impl ResolvedFilterShape {
         if !cfg!(feature = "rust_decimal") && self.is_builtin_shape("NumberRangeFilter") {
             return Err(syn::Error::new(
                 self.span(),
-                "`gpui_table_component::NumberRangeFilter` requires enabling the `gpui-table/rust_decimal` feature",
+                "`gpui_table_example_component::NumberRangeFilter` requires enabling the `gpui-table/rust_decimal` feature",
             ));
         }
 
         if !cfg!(feature = "chrono") && self.is_builtin_shape("DateRangeFilter") {
             return Err(syn::Error::new(
                 self.span(),
-                "`gpui_table_component::DateRangeFilter` requires enabling the `gpui-table/chrono` feature",
+                "`gpui_table_example_component::DateRangeFilter` requires enabling the `gpui-table/chrono` feature",
             ));
         }
 
         if !cfg!(feature = "spacetimedb") && self.is_spacetimedb_range_shape() {
             let shape = if self.is_builtin_shape("NumberRangeFilter") {
-                "gpui_table_component::NumberRangeFilter"
+                "gpui_table_example_component::NumberRangeFilter"
             } else {
-                "gpui_table_component::DateRangeFilter"
+                "gpui_table_example_component::DateRangeFilter"
             };
             return Err(syn::Error::new(
                 self.span(),
@@ -208,7 +208,7 @@ impl ResolvedFilterShape {
 
         matches!(
             segments.as_slice(),
-            [root, name] if root == "gpui_table_component" && name == component_name
+            [root, name] if root == "gpui_table_example_component" && name == component_name
         ) || matches!(
             segments.as_slice(),
             [root, runtime, shape, name]

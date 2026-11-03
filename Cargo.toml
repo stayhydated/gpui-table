@@ -2,7 +2,7 @@
 default-members = [ "examples/some-lib-tables" ]
 members = [
   "crates/gpui-table",
-  "crates/gpui-table-component",
+  "examples/components",
   "crates/gpui-table-core",
   "crates/gpui-table-derive",
   "crates/gpui-table-mcp",
@@ -49,7 +49,7 @@ gpui-es-fluent = "0.4.0"
 gpui-kit = "0.9.0"
 gpui-storybook = "0.8.0"
 gpui-table = { path = "crates/gpui-table", version = "0.9.0" }
-gpui-table-component = { default-features = false, path = "crates/gpui-table-component", version = "0.9.0" }
+gpui-table-example-component = { default-features = false, path = "examples/components" }
 gpui-table-core = { default-features = false, path = "crates/gpui-table-core", version = "0.9.0" }
 gpui-table-derive = { path = "crates/gpui-table-derive", version = "0.9.0" }
 gpui-table-mcp = { default-features = false, path = "crates/gpui-table-mcp", version = "0.9.0" }

@@ -87,7 +87,7 @@ values, a calculated key shared with a cell renderer, and an MCP query. Enable
 
 ## Compose sort controls
 
-`gpui-table-component::SortEditor` takes a caller-owned `SortOrder`,
+`gpui-table-example-component::SortEditor` takes a caller-owned `SortOrder`,
 `SortColumnOption` values with localized titles, and an `on_change` callback.
 It provides key selection, direction/null policy, priority changes and removal.
 The owner applies each requested value and notifies its view. Programmatic

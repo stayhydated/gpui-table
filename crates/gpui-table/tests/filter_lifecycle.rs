@@ -6,14 +6,14 @@ use gpui_kit::{AppContext as _, Empty, TestAppContext};
 struct Record {
     #[gpui_table(skip)]
     id: u64,
-    #[gpui_table(filter(gpui_table_component::TextFilterAdapter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilterAdapter))]
     name: String,
 }
 
 #[gpui_kit::test]
 fn generated_filter_builders_release_entities_and_ignore_closed_tables(cx: &mut TestAppContext) {
     cx.update(gpui_kit::init);
-    cx.update(|cx| gpui_table_component::i18n::init(cx).unwrap());
+    cx.update(|cx| gpui_table_example_component::i18n::init(cx).unwrap());
     let window = cx.add_window(|_, _| Empty);
     for loader in [false, true] {
         let (table, filters) = window

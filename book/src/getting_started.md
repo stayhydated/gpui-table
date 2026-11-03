@@ -15,7 +15,7 @@ Use Rust 1.99 or later. Add the table crates alongside the application's
 [dependencies]
 gpui-kit = "0.9.0"
 gpui-table = "0.9"
-gpui-table-component = "0.9"
+gpui-table-example-component = "0.9"
 ```
 
 Generated table code refers to `gpui_kit` directly, so keep it as a direct
@@ -28,7 +28,7 @@ for the built-in table filters:
 
 ```rust,ignore
 gpui_kit::component::init(cx);
-gpui_table_component::i18n::init(cx)?;
+gpui_table_example_component::i18n::init(cx)?;
 ```
 
 ## Define the rows
@@ -52,13 +52,13 @@ struct User {
     #[gpui_table(
         sortable,
         width = 160.,
-        filter(gpui_table_component::TextFilter)
+        filter(gpui_table_example_component::TextFilter)
     )]
     name: String,
 
     #[gpui_table(
         width = 120.,
-        filter(gpui_table_component::FacetedFilter::<UserStatus>.searchable(true))
+        filter(gpui_table_example_component::FacetedFilter::<UserStatus>.searchable(true))
     )]
     status: UserStatus,
 }

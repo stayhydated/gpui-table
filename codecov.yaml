@@ -9,10 +9,10 @@ component_management:
       paths:
         - crates/gpui-table/**
 
-    - component_id: gpui-table-component
-      name: "gpui-table-component"
+    - component_id: gpui-table-example-component
+      name: "gpui-table-example-component"
       paths:
-        - crates/gpui-table-component/**
+        - examples/components/**
 
     - component_id: gpui-table-core
       name: "gpui-table-core"

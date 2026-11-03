@@ -9,7 +9,7 @@
 //!   `GpuiTableFilterShape` for adapting existing filter shapes
 //!
 //! Concrete filter widgets and component-owned helpers live in
-//! `gpui-table-component` and are intentionally not re-exported from this
+//! `gpui-table-example-component` and are intentionally not re-exported from this
 //! facade.
 //!
 //! The facade owns the stable paths that macro-generated code names. Changes to
@@ -31,8 +31,8 @@
 //!
 //! # Filter Feature Requirements
 //!
-//! - `gpui_table_component::NumberRangeFilter` requires the `rust_decimal` feature.
-//! - `gpui_table_component::DateRangeFilter` requires the `chrono` feature.
+//! - `gpui_table_example_component::NumberRangeFilter` requires the `rust_decimal` feature.
+//! - `gpui_table_example_component::DateRangeFilter` requires the `chrono` feature.
 //! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!

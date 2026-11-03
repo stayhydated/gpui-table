@@ -10,21 +10,21 @@ use super::{NoFilterQueryRow, UserRow, no_filter_rows as fixture_no_filter_rows,
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "query_rows", title = "Query Rows", filters, mcp)]
 struct QueryRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "direct_query_rows", title = "Direct Query Rows", filters, mcp)]
 struct DirectQueryRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "async_query_rows", title = "Async Query Rows", filters, mcp)]
 struct AsyncQueryRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
@@ -36,21 +36,21 @@ struct AsyncQueryRow {
     mcp
 )]
 struct AsyncValueQueryRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "async_source_rows", title = "Async Source Rows", filters, mcp)]
 struct AsyncSourceRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
 #[gpui_table(id = "result_source_rows", title = "Result Source Rows", filters, mcp)]
 struct ResultSourceRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
@@ -62,7 +62,7 @@ struct ResultSourceRow {
     mcp
 )]
 struct AsyncResultSourceRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 
@@ -73,7 +73,7 @@ struct AsyncResultSourceRow {
     mcp(name = "query_mcp_only_filter_rows")
 )]
 struct McpOnlyFilterRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 }
 

@@ -146,7 +146,7 @@ pub trait FilterEntitiesExt {
     /// Read all current filter values into the generated filter-values struct.
     ///
     /// Individual wrapper fields can then be serialized with
-    /// `gpui_table_component::QueryFilterValue` when their wrapped type
+    /// the application loader’s query conversion when their wrapped type
     /// supports query-string conversion.
     fn read_values(&self, cx: &gpui_kit::App) -> Self::Values;
 

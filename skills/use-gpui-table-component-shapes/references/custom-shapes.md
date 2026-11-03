@@ -28,7 +28,7 @@ Implement the field conversion trait and select the matching adapter:
 #[derive(Clone, gpui_table::TableCell)]
 struct AccountCode(String);
 
-impl gpui_table_component::TextFilterField for AccountCode {
+impl gpui_table_example_component::TextFilterField for AccountCode {
     fn to_filter_text(&self) -> String {
         self.0.clone()
     }
@@ -37,7 +37,7 @@ impl gpui_table_component::TextFilterField for AccountCode {
 #[derive(Clone, gpui_table::GpuiTable)]
 #[gpui_table(filters)]
 struct Account {
-    #[gpui_table(filter(gpui_table_component::TextFilterAdapter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilterAdapter))]
     code: AccountCode,
 }
 ```
@@ -54,7 +54,7 @@ struct PrefixText(String);
 
 #[derive(gpui_table::GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
-    base = gpui_table_component::TextFilter,
+    base = gpui_table_example_component::TextFilter,
     raw_value = PrefixText,
     field = String,
     into_base = |value: PrefixText| value.0,

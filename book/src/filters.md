@@ -8,7 +8,7 @@ numeric range filter, including one over an integer field:
 [dependencies]
 chrono = "0.4"
 gpui-table = { version = "0.9", features = ["rust_decimal"] }
-gpui-table-component = { version = "0.9", features = ["rust_decimal"] }
+gpui-table-example-component = { version = "0.9", features = ["rust_decimal"] }
 ```
 
 Add `#[gpui_table(filters)]` and declare each filtered field's shape:
@@ -17,13 +17,13 @@ Add `#[gpui_table(filters)]` and declare each filtered field's shape:
 #[derive(Clone, gpui_table::GpuiTable)]
 #[gpui_table(filters)]
 struct Order {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     customer: String,
 
-    #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(filter(gpui_table_example_component::NumberRangeFilter))]
     total: u32,
 
-    #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+    #[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
     placed_at: chrono::DateTime<chrono::Utc>,
 }
 ```

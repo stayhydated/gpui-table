@@ -6,7 +6,7 @@
 `gpui-table` is the application-facing facade for strongly typed
 GPUI tables. It re-exports the table derives, core filter and ordering semantics, runtime
 traits, schema types, and optional MCP integration. Built-in filter widgets live
-in [`gpui-table-component`][components].
+in [`gpui-table-example-component`][components].
 
 Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.9.0 directly,
 so the application must expose it as a direct dependency.
@@ -25,7 +25,7 @@ complete-result backend ordering.
 ## Features
 
 The default feature set is `derive` and `chrono`. Macro re-exports require
-`derive`; match integration features on `gpui-table-component` when using its
+`derive`; match integration features on `gpui-table-example-component` when using its
 corresponding shapes.
 
 | Feature | Default | Purpose |
@@ -66,6 +66,6 @@ and the [API reference][api] for contracts and generated-code support.
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table
 [crate-badge]: https://img.shields.io/crates/v/gpui-table.svg?label=gpui-table
 [crate]: https://crates.io/crates/gpui-table
-[components]: https://github.com/stayhydated/gpui-table/blob/master/crates/gpui-table-component/README.md
+[components]: https://github.com/stayhydated/gpui-table/blob/master/examples/components/README.md
 [table-view]: https://github.com/stayhydated/gpui-table/blob/master/examples/some-lib-tables/src/tables/user.rs
 [api]: https://docs.rs/gpui-table/latest/gpui_table/

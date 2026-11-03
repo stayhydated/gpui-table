@@ -93,8 +93,8 @@ mod tests {
         ) -> String {
             localize(
                 es_fluent::registry::__macro::static_message_key(
-                    "gpui-table-component",
-                    es_fluent::registry::__macro::static_domain("gpui-table-component"),
+                    "gpui-table-example-component",
+                    es_fluent::registry::__macro::static_domain("gpui-table-example-component"),
                     es_fluent::registry::__macro::static_entry_id("reset_filters_ftl-Reset"),
                 ),
                 None,
@@ -157,10 +157,11 @@ mod tests {
         let (source, language, domain_user, component_reset, core_true) = cx.update(|cx| {
             let state = gpui_storybook::try_preference_state(cx)
                 .expect("preference state should be installed after initialization");
-            let domain_user =
-                gpui_table_component::i18n::localize_label::<some_lib::structs::user::User>(cx);
+            let domain_user = gpui_table_example_component::i18n::localize_label::<
+                some_lib::structs::user::User,
+            >(cx);
             let component_reset =
-                gpui_table_component::i18n::localize_message(cx, &ResetFiltersFtl::Reset);
+                gpui_table_example_component::i18n::localize_message(cx, &ResetFiltersFtl::Reset);
             let core_true = <bool as gpui_table::filter::Filterable>::options()
                 .into_iter()
                 .find(|option| option.value == "true")

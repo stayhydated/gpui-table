@@ -4,7 +4,7 @@ description: >-
   Build, debug, or explain application tables using gpui-table derives,
   generated filter state, DataTable composition, loading, localization, or MCP
   queries. For custom filter shape implementations, use
-  use-gpui-table-component-shapes.
+  use-gpui-table-example-component-shapes.
 ---
 
 # Use gpui-table
@@ -15,7 +15,7 @@ description: >-
    features or syntax. Generated code uses `gpui_kit` directly; preserve the
    application's existing `gpui-kit` dependency source.
 2. Use `gpui-table` as the facade. Add
-   `gpui-table-component` when the table renders built-in filters or
+   `gpui-table-example-component` when the table renders built-in filters or
    `TableStatusBar`.
 3. Derive `GpuiTable` on a named row struct. Configure columns and
    filters at the field, then construct the generated delegate and
@@ -33,7 +33,7 @@ description: >-
 | Task | Public surface |
 |---|---|
 | Derive a table | `gpui_table::GpuiTable` |
-| Render built-in filters | `gpui-table-component` shapes |
+| Render built-in filters | `gpui-table-example-component` shapes |
 | Define facet values | `Filterable` |
 | Render a value object | `TableCell` |
 | Load more rows | `TableLoader` plus `#[gpui_table_impl]` |
@@ -45,7 +45,7 @@ description: >-
 | Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
 | Save filter state | generated `FilterValues` JSON methods |
 | Expose rows over MCP | `#[gpui_table(mcp)]` and `#[mcp_query]` |
-| Adapt or implement a filter shape | `use-gpui-table-component-shapes` |
+| Adapt or implement a filter shape | `use-gpui-table-example-component-shapes` |
 
 ## Select features deliberately
 
@@ -58,7 +58,7 @@ description: >-
 - Enable `mcp` for generated query tools; it also enables
   `inventory`.
 - Enable `spacetimedb` for supported SpacetimeDB temporal filters.
-- Match the corresponding `gpui-table-component` feature when a
+- Match the corresponding `gpui-table-example-component` feature when a
   built-in component owns the shape.
 
 ## Preserve generated contracts
@@ -77,7 +77,7 @@ filter collection in the owning view; queued callbacks ignore a closed table.
 
 Keep loader flags coherent: set `loading` before starting work, clear
 it on completion, and set `eof` only when no later page exists.
-Initialize `gpui_table_component::i18n` before rendering localized
+Initialize `gpui_table_example_component::i18n` before rendering localized
 components.
 
 For MCP, keep query execution in application code. Local row sources return
@@ -117,7 +117,7 @@ owns no persistence, backend or formula language.
 
 Read [references/patterns.md](references/patterns.md) when implementation needs
 copyable patterns for table setup, generated filters, loading, cells,
-localization, or MCP. Use `use-gpui-table-component-shapes` for
+localization, or MCP. Use `use-gpui-table-example-component-shapes` for
 adapter shapes, custom shape contracts, or custom MCP filter decoding.
 
 For a displayed resolved key, attach `ResolvedTableColumn<Row>` through the

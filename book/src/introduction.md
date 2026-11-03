@@ -13,7 +13,7 @@ application, window, and view. It assumes familiarity with GPUI entities and
 render methods.
 
 Use the `gpui-table` facade for derives and table contracts, and
-`gpui-table-component` for built-in filter widgets. Applications render
+`gpui-table-example-component` for built-in filter widgets. Applications render
 `gpui_kit::component::table::DataTable` directly.
 
 ## Mental model

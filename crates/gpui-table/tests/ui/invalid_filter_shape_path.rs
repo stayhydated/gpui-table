@@ -3,7 +3,7 @@ use gpui_table::GpuiTable;
 #[derive(Clone, GpuiTable)]
 #[gpui_table(filters)]
 struct InvalidFilterShapePath {
-    #[gpui_table(filter(gpui_table_component::MissingFilter))]
+    #[gpui_table(filter(gpui_table_example_component::MissingFilter))]
     name: String,
 }
 

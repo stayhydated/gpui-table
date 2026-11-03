@@ -14,12 +14,12 @@ use spacetimedb_lib::{TimeDuration, Timestamp};
 struct TemporalRecord {
     #[gpui_table(skip)]
     id: u64,
-    #[gpui_table(sortable, filter(gpui_table_component::TextFilter))]
+    #[gpui_table(sortable, filter(gpui_table_example_component::TextFilter))]
     category: String,
-    #[gpui_table(sortable, filter(gpui_table_component::DateRangeFilter))]
+    #[gpui_table(sortable, filter(gpui_table_example_component::DateRangeFilter))]
     #[serde(serialize_with = "serialize_timestamp")]
     created: Timestamp,
-    #[gpui_table(sortable, filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(sortable, filter(gpui_table_example_component::NumberRangeFilter))]
     #[serde(serialize_with = "serialize_duration")]
     elapsed: TimeDuration,
     #[gpui_table(sortable, sort_key = remaining_score)]

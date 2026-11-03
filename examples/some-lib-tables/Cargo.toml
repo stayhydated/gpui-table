@@ -31,7 +31,7 @@ router = [ "some-lib/router" ]
 gpui-kit = { workspace = true }
 gpui-storybook = { features = [ "macros" ], workspace = true }
 gpui-table = { workspace = true }
-gpui-table-component = { workspace = true }
+gpui-table-example-component = { workspace = true }
 some-lib = { features = [ "client" ], path = "../some-lib" }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]

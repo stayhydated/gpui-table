@@ -46,16 +46,16 @@ enum UserStatus {
     )
 )]
 struct UserRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     name: String,
 
-    #[gpui_table(filter(gpui_table_component::FacetedFilter::<UserStatus>))]
+    #[gpui_table(filter(gpui_table_example_component::FacetedFilter::<UserStatus>))]
     status: UserStatus,
 
-    #[gpui_table(filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(filter(gpui_table_example_component::NumberRangeFilter))]
     age: u8,
 
-    #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+    #[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
     created_on: NaiveDate,
 }
 
@@ -94,7 +94,7 @@ impl gpui_table::mcp::McpToolValue for PrefixText {
 
 #[derive(GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
-    base = gpui_table_component::TextFilter,
+    base = gpui_table_example_component::TextFilter,
     raw_value = PrefixText,
     field = String,
     into_base = |value: PrefixText| value.0,
@@ -133,7 +133,7 @@ struct ValidatedPrefixText(#[koruma(LenValidation::<_>.min(2).max(64))] String);
 
 #[derive(GpuiTableFilterShape)]
 #[gpui_table_filter_shape(
-    base = gpui_table_component::TextFilter,
+    base = gpui_table_example_component::TextFilter,
     field = ValidatedPrefixText,
     koruma_newtype
 )]
@@ -160,7 +160,7 @@ struct NewtypeValidatedFilterRow {
     mcp(name = "query_validated_filter_rows")
 )]
 struct ValidatedFilterRow {
-    #[gpui_table(filter(gpui_table_component::TextFilter))]
+    #[gpui_table(filter(gpui_table_example_component::TextFilter))]
     #[koruma(LenValidation::<_>.min(2).max(5))]
     name: String,
 }

@@ -15,7 +15,7 @@ impl ComponentShapeMetadata for LocalTextFilter {}
 impl DeclaredComponentShape for LocalTextFilter {}
 
 impl GpuiTableFilterShape for LocalTextFilter {
-    type Component = gpui_table_component::TextFilter;
+    type Component = gpui_table_example_component::TextFilter;
     type RawValue = String;
     type FilterValue = TextValue;
 

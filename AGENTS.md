@@ -8,7 +8,7 @@ Start with `crates/gpui-table` for application-facing API changes,
 | Surface | Ownership |
 |---|---|
 | `crates/gpui-table` | Public facade, macro re-exports, and feature gates |
-| `crates/gpui-table-component` | Built-in filters, adapters, controlled sort editor, reset controls and status bar |
+| `examples/components` | Unpublished reference filters and gallery support |
 | `crates/gpui-table-core` | UI-neutral typed filtering and fallible ordering semantics |
 | `crates/gpui-table-runtime` | GPUI row, cell, loading, filter-shape, and generated-filter contracts |
 | `crates/gpui-table-schema` | UI-neutral filter metadata and table-shape registry consumed by tooling |
@@ -24,7 +24,7 @@ Start with `crates/gpui-table` for application-facing API changes,
 
 The default `cargo run` target is `some-lib-tables`. Its
 `examples/demo.rs` entry point discovers the same stories on native and Wasm
-targets. Built-in widget previews live in `crates/gpui-table-component/src/stories`.
+targets. Built-in widget previews live in `examples/components/src/stories`.
 
 ## Keep related surfaces aligned
 
@@ -34,7 +34,7 @@ targets. Built-in widget previews live in `crates/gpui-table-component/src/stori
   and repository skills. Update `web/src/lib.rs` when its catalog description
   changes and this guide when routing or validation changes.
 - Use `skills/use-gpui-table` for table composition guidance and
-  `skills/use-gpui-table-component-shapes` for adapter and custom-shape guidance.
+  `skills/use-gpui-table-example-component-shapes` for adapter and custom-shape guidance.
 - When generated contracts change, check the facade, derive, runtime, schema,
   and affected component or MCP crates together. Keep the corresponding
   `crates/gpui-table/tests/ui` fixtures and
@@ -44,7 +44,7 @@ targets. Built-in widget previews live in `crates/gpui-table-component/src/stori
   and affected `some-lib` row models and `some-lib-tables` views.
 - Keep Chrono conversion behavior aligned between
   `crates/gpui-table-runtime/src/cell.rs` and
-  `crates/gpui-table-component/src/date_range_filter.rs`. Values Jiff cannot
+  `examples/components/src/date_range_filter.rs`. Values Jiff cannot
   represent retain Chrono's original `Display` output; cell fallback also preserves leap seconds
   and the original timezone offset. Keep the boundary tests and
   `book/src/columns.md` aligned with this contract.
@@ -75,7 +75,7 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
   `just check` and `just clippy` exclude `some-lib` and `some-lib-tables`; use
   direct Cargo commands when those examples need validation.
 - For cell rendering or filter widgets, start with
-  `cargo test -p gpui-table-runtime -p gpui-table-component --all-features --locked`.
+  `cargo test -p gpui-table-runtime -p gpui-table-example-component --all-features --locked`.
 - Ordering contracts and SpacetimeDB integration live in
   `crates/gpui-table/tests/ordered_sorting.rs` and
   `crates/gpui-table/tests/spacetimedb_ordering.rs`. Run
@@ -99,7 +99,7 @@ and `.github/workflows/ci.yml` defines CI jobs. The Pages pipeline is in
 - README Rust examples need separate compilation checks against the owning
   crates; `cargo doc` renders rustdoc and does not test those fences.
 - Run built-in widget previews with
-  `cargo run -p gpui-table-component --bin story --features story`.
+  `cargo run -p gpui-table-example-component --bin story --features story`.
 - For book edits, run `MDBOOK_BUILD__CREATE_MISSING=false cargo xtask build book`
   and `cargo xtask build llms-txt`. For the nightly Wasm demo, use
   `cargo xtask build gpui-demo`; for the catalog, use `cargo xtask build web`.

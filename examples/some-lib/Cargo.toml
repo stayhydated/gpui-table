@@ -19,7 +19,7 @@ client = [
   "dep:gpui-kit",
   "dep:gpui-es-fluent",
   "dep:gpui-table",
-  "dep:gpui-table-component",
+  "dep:gpui-table-example-component",
   "dep:rust_decimal",
   "dep:serde",
   "dep:strum",
@@ -49,7 +49,7 @@ gpui-table = { features = [
   "rust_decimal",
   "chrono",
 ], optional = true, workspace = true }
-gpui-table-component = { features = [
+gpui-table-example-component = { features = [
   "chrono",
   "rust_decimal",
 ], optional = true, workspace = true }

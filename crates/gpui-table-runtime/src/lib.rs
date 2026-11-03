@@ -2,8 +2,7 @@
 //!
 //! This crate owns row rendering traits, load-more traits, default cell
 //! rendering, filter-shape contracts, and generic generated-filter helpers.
-//! Built-in filter widget shape implementations live in `gpui-table-component`
-//! so this runtime crate can be used without depending on concrete components.
+//! Applications supply concrete filter widgets through the public shape contracts.
 
 mod cell;
 pub mod generated_filters;
@@ -37,3 +36,6 @@ pub use shape::{
 pub mod __private {
     pub use crate::load::LoadMoreDelegate;
 }
+
+/// Localizes generated filter captions through the active GPUI application.
+pub use gpui_es_fluent::{localize_label, localize_message};

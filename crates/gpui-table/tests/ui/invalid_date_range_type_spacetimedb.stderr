@@ -1,7 +1,7 @@
 error[E0277]: table filter shape `DateRangeFilter` does not support field value `std::string::String`
  --> tests/ui/invalid_date_range_type_spacetimedb.rs:6:25
   |
-6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+6 |     #[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `DateRangeFilter`
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type
@@ -17,13 +17,13 @@ error[E0277]: table filter shape `DateRangeFilter` does not support field value 
 note: required by a bound in `__gpui_table_assert_name_filter_shape_field_support`
  --> tests/ui/invalid_date_range_type_spacetimedb.rs:6:25
   |
-6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+6 |     #[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
   |                         ^^^^^^^^^^^^^^^^^^^^ required by this bound in `__gpui_table_assert_name_filter_shape_field_support`
 
 error[E0277]: table filter shape `DateRangeFilter` does not support field value `std::string::String`
  --> tests/ui/invalid_date_range_type_spacetimedb.rs:6:25
   |
-6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+6 |     #[gpui_table(filter(gpui_table_example_component::DateRangeFilter))]
   |                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ the trait `GpuiTableFilterShapeFor<std::string::String>` is not implemented for `DateRangeFilter`
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type

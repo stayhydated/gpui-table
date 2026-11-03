@@ -183,7 +183,7 @@ pub(super) struct TableColumn {
     pub(super) sort_key: Option<syn::Path>,
     pub(super) skip: bool,
     /// Explicit filter shape path or configured filter shape expression.
-    /// Example: `filter(gpui_table_component::TextFilter.numeric_only())`
+    /// Example: `filter(gpui_table_example_component::TextFilter.numeric_only())`
     pub(super) filter: Option<FilterShapeOptions>,
     /// Koruma validators applied to the decoded MCP filter argument.
     pub(super) validation: Option<FilterValidation>,
@@ -497,7 +497,7 @@ fn parse_path_value(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<syn::P
 fn parse_filter_shape(meta: &syn::meta::ParseNestedMeta<'_>) -> syn::Result<FilterShapeOptions> {
     if meta.input.is_empty() {
         return Err(meta.error(
-            "expected explicit filter shape, e.g. `filter(gpui_table_component::TextFilter)` or `filter(gpui_table_component::TextFilter.numeric_only())`",
+            "expected explicit filter shape, e.g. `filter(gpui_table_example_component::TextFilter)` or `filter(gpui_table_example_component::TextFilter.numeric_only())`",
         ));
     }
 

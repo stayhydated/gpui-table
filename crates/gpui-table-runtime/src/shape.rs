@@ -97,7 +97,7 @@ where
 /// Marker for filter shapes declared by a component crate or user crate.
 #[diagnostic::on_unimplemented(
     message = "table filter shape `{Self}` must implement `DeclaredGpuiTableFilterShape`",
-    note = "use a built-in shape such as `gpui_table_component::TextFilter` or implement the table filter shape contract for your custom shape"
+    note = "use a built-in shape such as `gpui_table_example_component::TextFilter` or implement the table filter shape contract for your custom shape"
 )]
 pub trait DeclaredGpuiTableFilterShape: GpuiTableFilterShape + DeclaredComponentShape {}
 

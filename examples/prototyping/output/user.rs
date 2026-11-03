@@ -14,7 +14,7 @@ pub struct UserTableStory {
 }
 impl gpui_storybook::Story for UserTableStory {
     fn title(cx: &gpui_kit::App) -> String {
-        gpui_table_component::i18n::localize_label::<User>(cx)
+        gpui_table_example_component::i18n::localize_label::<User>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
@@ -80,7 +80,7 @@ impl Render for UserTableStory {
                     ),
             )
             .child(
-                gpui_table_component::TableStatusBar::new(
+                gpui_table_example_component::TableStatusBar::new(
                     delegate.rows.len(),
                     delegate.loading,
                     delegate.eof,

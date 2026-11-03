@@ -73,6 +73,9 @@ impl TableLayout for StorybookLayout {
                         .size_full()
                         .gap_4()
                         .p_4()
+                        .child(gpui_table_example_component::TableStatusBar::new(
+                            delegate.rows.len(), delegate.loading, delegate.eof,
+                        ))
                         #render_children
                 }
             }

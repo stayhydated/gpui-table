@@ -13,10 +13,10 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
 help: the following other types implement trait `McpFilterShape`
   --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
-   |   impl McpFilterShape for gpui_table_component::TextFilter {
+   |   impl McpFilterShape for gpui_table_example_component::TextFilter {
    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
 ...
-   | / impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
+   | / impl<T> McpFilterShape for gpui_table_example_component::FacetedFilter<T>
    | | where
    | |     T: gpui_table_core::filter::Filterable,
    | |___________________________________________^ `FacetedFilter<T>`
@@ -44,10 +44,10 @@ help: the trait `McpFilterShape` is not implemented for `LocalTextFilter`
 help: the following other types implement trait `McpFilterShape`
   --> $WORKSPACE/crates/gpui-table-mcp/src/descriptor.rs
    |
-   |   impl McpFilterShape for gpui_table_component::TextFilter {
+   |   impl McpFilterShape for gpui_table_example_component::TextFilter {
    |   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `TextFilter`
 ...
-   | / impl<T> McpFilterShape for gpui_table_component::FacetedFilter<T>
+   | / impl<T> McpFilterShape for gpui_table_example_component::FacetedFilter<T>
    | | where
    | |     T: gpui_table_core::filter::Filterable,
    | |___________________________________________^ `FacetedFilter<T>`

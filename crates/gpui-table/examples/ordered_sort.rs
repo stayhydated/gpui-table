@@ -15,7 +15,7 @@ struct Record {
     id: u64,
     #[gpui_table(sortable)]
     created: Timestamp,
-    #[gpui_table(sortable, filter(gpui_table_component::NumberRangeFilter))]
+    #[gpui_table(sortable, filter(gpui_table_example_component::NumberRangeFilter))]
     elapsed: TimeDuration,
     #[gpui_table(sortable, sort_key = remaining, style = remaining_cell)]
     score: i64,

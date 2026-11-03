@@ -13,7 +13,7 @@ pub struct ItemTableStory {
 }
 impl gpui_storybook::Story for ItemTableStory {
     fn title(cx: &gpui_kit::App) -> String {
-        gpui_table_component::i18n::localize_label::<Item>(cx)
+        gpui_table_example_component::i18n::localize_label::<Item>(cx)
     }
     fn new_view(window: &mut Window, cx: &mut App) -> Entity<Self> {
         Self::view(window, cx)
@@ -50,7 +50,7 @@ impl Render for ItemTableStory {
             .size_full()
             .gap_4()
             .p_4()
-            .child(gpui_table_component::TableStatusBar::new(
+            .child(gpui_table_example_component::TableStatusBar::new(
                 delegate.rows.len(),
                 delegate.loading,
                 delegate.eof,
