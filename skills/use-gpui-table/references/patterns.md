@@ -83,7 +83,7 @@ created_at: chrono::DateTime<chrono::Utc>,
 Text filters also support `alphabetic_only()`,
 `numeric_only()`, and `matching_regex(...)`. Route domain
 value types and custom shapes to
-`use-gpui-table-example-component-shapes`.
+`use-gpui-table-component-shapes`.
 
 ## Control rows and filter state
 

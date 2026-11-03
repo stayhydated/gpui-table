@@ -1,5 +1,5 @@
 ---
-name: use-gpui-table-example-component-shapes
+name: use-gpui-table-component-shapes
 description: >-
   Adapt or implement gpui-table filter shapes for domain field types, custom
   widgets, saved presets, or MCP arguments. Use for built-in adapters,

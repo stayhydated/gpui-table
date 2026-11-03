@@ -35,7 +35,7 @@ targets. Reference filters live in `examples/components`; their executable consu
   and repository skills. Update `web/src/lib.rs` when its catalog description
   changes and this guide when routing or validation changes.
 - Use `skills/use-gpui-table` for table composition guidance and
-  `skills/use-gpui-table-example-component-shapes` for adapter and custom-shape guidance.
+  `skills/use-gpui-table-component-shapes` for adapter and custom-shape guidance.
 - When generated contracts change, check the facade, derive, runtime, schema,
   and affected component or MCP crates together. Keep the corresponding
   `crates/gpui-table/tests/ui` fixtures and

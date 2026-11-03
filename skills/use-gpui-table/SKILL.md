@@ -4,7 +4,7 @@ description: >-
   Build, debug, or explain application tables using gpui-table derives,
   generated filter state, DataTable composition, loading, localization, or MCP
   queries. For custom filter shape implementations, use
-  use-gpui-table-example-component-shapes.
+  use-gpui-table-component-shapes.
 ---
 
 # Use gpui-table
@@ -45,7 +45,7 @@ description: >-
 | Retain record selection | `row_id = "id"` and `runtime::TableRowSelection` |
 | Save filter state | generated `FilterValues` JSON methods |
 | Expose rows over MCP | `#[gpui_table(mcp)]` and `#[mcp_query]` |
-| Adapt or implement a filter shape | `use-gpui-table-example-component-shapes` |
+| Adapt or implement a filter shape | `use-gpui-table-component-shapes` |
 
 ## Select features deliberately
 
@@ -117,7 +117,7 @@ owns no persistence, backend or formula language.
 
 Read [references/patterns.md](references/patterns.md) when implementation needs
 copyable patterns for table setup, generated filters, loading, cells,
-localization, or MCP. Use `use-gpui-table-example-component-shapes` for
+localization, or MCP. Use `use-gpui-table-component-shapes` for
 adapter shapes, custom shape contracts, or custom MCP filter decoding.
 
 For a displayed resolved key, attach `ResolvedTableColumn<Row>` through the
