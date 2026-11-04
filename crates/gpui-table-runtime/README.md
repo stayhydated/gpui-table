@@ -26,8 +26,11 @@ with `set_table_resolved_sort_columns` to preserve row or cell selection.
 presentation columns move or disappear.
 
 For multiple selection, construct the state with
-`selection::new_multi_row_table` and wrap its `DataTable` or card/grid view in
-`selection::selection_container`. Generated delegates own selected indices,
+`selection::new_multi_row_table`. Wrap its native `DataTable` with
+`selection::selection_scope`; card/grid views use
+`selection::selection_container`, which supplies their focus and `DataTable`
+keyboard context. The host owns record commands and Tab traversal bindings.
+Generated delegates own selected indices,
 range anchors, cursors, and input revisions. Pointer modifiers, keyboard ranges,
 Select All, Escape, and ordering restoration use the same state. Explicit input
 uses `selection::select_row` or `selection::clear_selection`; source refreshes

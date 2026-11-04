@@ -854,7 +854,7 @@ fn delegate_selection_handles_native_modifiers_keys_and_reordering(
     struct Preview(Entity<TableState<RecordTableDelegate>>);
     impl Render for Preview {
         fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
-            selection::selection_container(&self.0, window, cx)
+            selection::selection_scope(&self.0, window, cx)
                 .size_full()
                 .child(DataTable::new(&self.0).stripe(true))
         }
@@ -921,4 +921,107 @@ fn delegate_selection_handles_native_modifiers_keys_and_reordering(
     });
     visual.simulate_keystrokes("escape");
     visual.update(|_, cx| assert!(selection::selected_rows(table.read(cx)).is_empty()));
+}
+
+#[gpui_kit::test]
+fn table_and_grid_preserve_record_commands_and_one_tab_stop(cx: &mut gpui_kit::TestAppContext) {
+    use gpui_kit::component::{
+        Root,
+        button::Button,
+        table::{DataTable, TableState},
+        v_flex,
+    };
+    use gpui_kit::test::TestWindowExt as _;
+    use gpui_kit::{
+        AppContext as _, Context, Entity, Focusable as _, InteractiveElement as _, IntoElement,
+        ParentElement as _, Render, Styled as _, Window,
+    };
+    use gpui_table::runtime::selection;
+    use std::{cell::Cell, rc::Rc};
+    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[action(namespace = table_focus_test, no_json)]
+    struct Open;
+    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[action(namespace = table_focus_test, no_json)]
+    struct Next;
+    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[action(namespace = table_focus_test, no_json)]
+    struct Previous;
+    struct Preview {
+        table: Entity<TableState<RecordTableDelegate>>,
+        grid: bool,
+        opened: Rc<Cell<usize>>,
+    }
+    impl Render for Preview {
+        fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+            let list = if self.grid {
+                selection::selection_container(&self.table, window, cx)
+                    .size_full()
+                    .into_any_element()
+            } else {
+                selection::selection_scope(&self.table, window, cx)
+                    .size_full()
+                    .child(DataTable::new(&self.table))
+                    .into_any_element()
+            };
+            let opened = self.opened.clone();
+            v_flex()
+                .size_full()
+                .key_context("RecordListTest")
+                .on_action(move |_: &Open, _, _| opened.set(opened.get() + 1))
+                .on_action(|_: &Next, window, cx| window.focus_next(cx))
+                .on_action(|_: &Previous, window, cx| window.focus_prev(cx))
+                .child(Button::new("before").label("Before"))
+                .child(list)
+                .child(Button::new("after").label("After"))
+        }
+    }
+    cx.update(|cx| {
+        gpui_kit::init(cx);
+        cx.bind_keys([
+            gpui_kit::KeyBinding::new("enter", Open, Some("RecordListTest > DataTable")),
+            gpui_kit::KeyBinding::new("tab", Next, Some("RecordListTest > DataTable")),
+            gpui_kit::KeyBinding::new("shift-tab", Previous, Some("RecordListTest > DataTable")),
+        ]);
+    });
+    for grid in [false, true] {
+        let opened = Rc::new(Cell::new(0));
+        let mut table = None;
+        let handle = cx.open_window(
+            gpui_kit::size(gpui_kit::px(700.), gpui_kit::px(500.)),
+            |window, cx| {
+                let state = cx.new(|cx| {
+                    selection::new_multi_row_table(RecordTableDelegate::new(records()), window, cx)
+                });
+                table = Some(state.clone());
+                let view = cx.new(|_| Preview {
+                    table: state,
+                    grid,
+                    opened: opened.clone(),
+                });
+                Root::new(view, window, cx)
+            },
+        );
+        let table = table.unwrap();
+        let mut visual = gpui_kit::VisualTestContext::from_window(handle.into(), cx);
+        visual.update(|window, cx| {
+            window.render_frame(cx);
+            table.focus_handle(cx).focus(window, cx);
+            window.press("enter", cx);
+            assert_eq!(
+                opened.get(),
+                1,
+                "record command reaches the owning page, grid={grid}"
+            );
+            window.press("shift-tab", cx);
+            window.render_frame(cx);
+            assert_eq!(window.find("before").focused(), Some(true), "grid={grid}");
+            window.press("tab", cx);
+            window.render_frame(cx);
+            assert!(table.focus_handle(cx).is_focused(window), "grid={grid}");
+            window.press("tab", cx);
+            window.render_frame(cx);
+            assert_eq!(window.find("after").focused(), Some(true), "grid={grid}");
+        });
+    }
 }

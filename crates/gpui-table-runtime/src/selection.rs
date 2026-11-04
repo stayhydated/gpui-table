@@ -183,10 +183,20 @@ pub fn selection_container<D: OrderedTableDelegate>(
     window: &mut Window,
     cx: &App,
 ) -> Stateful<Div> {
+    selection_scope(table, window, cx)
+        .key_context("DataTable")
+        .track_focus(&table.focus_handle(cx))
+}
+
+/// Captures selection commands above an existing native table focus owner.
+pub fn selection_scope<D: OrderedTableDelegate>(
+    table: &Entity<TableState<D>>,
+    window: &mut Window,
+    cx: &App,
+) -> Stateful<Div> {
     let focus = table.focus_handle(cx);
     div()
         .id("table-selection")
-        .track_focus(&focus)
         .capture_action(window.listener_for(
             table,
             |table, _: &gpui_kit::base::actions::Cancel, window, cx| {
