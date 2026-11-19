@@ -6,11 +6,18 @@
 //! so this runtime crate can be used without depending on concrete components.
 
 mod cell;
+mod text;
+pub use text::text_cell;
 pub mod generated_filters;
 mod load;
 pub mod ordering;
 mod row;
-pub use ordering::{OrderedTableDelegate, TableRowSelection, set_table_ordering};
+pub mod selection;
+pub use ordering::{
+    OrderedTableDelegate, ResolvedOrderedTableDelegate, ResolvedTableColumn, ResolvedTableDelegate,
+    TableRowSelection, set_table_ordering, set_table_resolved_columns,
+    set_table_resolved_sort_columns,
+};
 pub mod shape;
 
 pub use cell::{DisplayCell, FormattedCell, TableCell};
