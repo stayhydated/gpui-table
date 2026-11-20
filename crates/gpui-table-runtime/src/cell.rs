@@ -1,3 +1,4 @@
+use crate::text_cell;
 use gpui_kit::{AnyElement, App, IntoElement as _, Window};
 use std::fmt::Display;
 
@@ -28,7 +29,7 @@ impl<T> DisplayCell<T> {
 
 impl<T: Display> TableCell for DisplayCell<T> {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.0.to_string().into_any_element()
+        text_cell(self.0.to_string())
     }
 }
 
@@ -58,7 +59,7 @@ where
     S: Display,
 {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        (self.formatter)(&self.value).to_string().into_any_element()
+        text_cell((self.formatter)(&self.value).to_string())
     }
 }
 
@@ -257,7 +258,7 @@ macro_rules! impl_table_cell_display {
         $(
             impl TableCell for $t {
                 fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-                    self.to_string().into_any_element()
+                    text_cell(self.to_string())
                 }
             }
         )*
@@ -269,7 +270,7 @@ macro_rules! impl_table_cell_float {
         $(
             impl TableCell for $t {
                 fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-                    format!("{:.2}", self).into_any_element()
+                    text_cell(format!("{:.2}", self))
                 }
             }
         )*
@@ -280,21 +281,26 @@ impl<T: TableCell> TableCell for Option<T> {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
         match self {
             Some(value) => value.draw(window, cx),
-            None => "".into_any_element(),
+            None => text_cell(""),
         }
     }
 }
 
 impl<T: TableCell> TableCell for Vec<T> {
     fn draw(&self, window: &mut Window, cx: &mut App) -> AnyElement {
-        use gpui_kit::{ParentElement as _, Styled as _};
+        use gpui_kit::{InteractiveElement as _, ParentElement as _, Styled as _};
 
         let mut children = Vec::with_capacity(self.len().saturating_mul(2));
         for (index, value) in self.iter().enumerate() {
             if index > 0 {
                 children.push(", ".into_any_element());
             }
-            children.push(value.draw(window, cx));
+            children.push(
+                gpui_kit::div()
+                    .id(("cell-value", index))
+                    .child(value.draw(window, cx))
+                    .into_any_element(),
+            );
         }
 
         gpui_kit::div()
@@ -313,21 +319,21 @@ impl_table_cell_float!(f32, f64);
 
 impl TableCell for bool {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        (if *self { "✓" } else { "✗" }).into_any_element()
+        text_cell(if *self { "✓" } else { "✗" })
     }
 }
 
 #[cfg(feature = "spacetimedb")]
 impl TableCell for spacetimedb_lib::Timestamp {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
+        text_cell(self.to_string())
     }
 }
 
 #[cfg(feature = "rust_decimal")]
 impl TableCell for rust_decimal::Decimal {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        format!("{:.2}", self).into_any_element()
+        text_cell(format!("{:.2}", self))
     }
 }
 
@@ -337,70 +343,70 @@ where
     Tz::Offset: std::fmt::Display,
 {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_chrono_datetime(self).into_any_element()
+        text_cell(datetime_format::format_chrono_datetime(self))
     }
 }
 
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDateTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_chrono_naive_datetime(self).into_any_element()
+        text_cell(datetime_format::format_chrono_naive_datetime(self))
     }
 }
 
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveDate {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_chrono_naive_date(self).into_any_element()
+        text_cell(datetime_format::format_chrono_naive_date(self))
     }
 }
 
 #[cfg(feature = "chrono")]
 impl TableCell for chrono::NaiveTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_chrono_naive_time(self).into_any_element()
+        text_cell(datetime_format::format_chrono_naive_time(self))
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::Zoned {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_zoned(self).into_any_element()
+        text_cell(datetime_format::format_zoned(self))
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::Timestamp {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_timestamp_local(*self).into_any_element()
+        text_cell(datetime_format::format_timestamp_local(*self))
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::DateTime {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_datetime(*self).into_any_element()
+        text_cell(datetime_format::format_civil_datetime(*self))
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::Date {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_date(*self).into_any_element()
+        text_cell(datetime_format::format_civil_date(*self))
     }
 }
 
 #[cfg(feature = "jiff")]
 impl TableCell for jiff::civil::Time {
     fn draw(&self, _window: &mut Window, _cx: &mut App) -> AnyElement {
-        datetime_format::format_civil_time(*self).into_any_element()
+        text_cell(datetime_format::format_civil_time(*self))
     }
 }
 
 #[cfg(feature = "spacetimedb")]
 impl TableCell for spacetimedb_lib::TimeDuration {
     fn draw(&self, _: &mut Window, _: &mut App) -> AnyElement {
-        self.to_string().into_any_element()
+        text_cell(self.to_string())
     }
 }
 
