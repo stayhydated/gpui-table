@@ -6,11 +6,13 @@ Use only the section needed for the current application task.
 
 ```toml
 [dependencies]
-gpui-table = { version = "0.9", features = ["rust_decimal"] }
-gpui-table-component = "0.9"
+gpui-kit = "0.11"
+gpui-table = { version = "0.10", features = ["rust_decimal"] }
+gpui-table-component = "0.10"
 ```
 
-Keep `gpui-kit` as a direct dependency using the application's existing source.
+Keep `gpui-kit` as a direct dependency. This recipe is for a Kit 0.11 app;
+use a compatible older Table line for an older Kit app.
 Add `fluent`, `inventory`, `mcp`, or `spacetimedb` for the corresponding workflow.
 
 ## Derive and render a table

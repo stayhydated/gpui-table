@@ -5,14 +5,13 @@ labels use the application's typed `es-fluent` resources. The application must
 own and link those resources; `gpui-table-component` only supplies resources
 for its built-in controls.
 
-This example follows the development branch. Use a sibling `gpui-table`
-checkout and GPUI Kit 0.11:
+Use the published gpui-table 0.10 line and GPUI Kit 0.11:
 
 ```toml
 [dependencies]
 gpui-kit = "0.11.0"
-gpui-table = { path = "../gpui-table/crates/gpui-table", features = ["fluent"] }
-gpui-table-component = { path = "../gpui-table/crates/gpui-table-component" }
+gpui-table = { version = "0.10", features = ["fluent"] }
+gpui-table-component = "0.10"
 es-fluent = "0.22.0"
 ```
 

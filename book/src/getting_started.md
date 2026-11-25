@@ -3,24 +3,21 @@
 This path produces a `DataTable` backed by typed application rows and generated
 filter controls.
 
-The development branch uses GPUI Kit 0.11 and Storybook 0.9. The published
-gpui-table 0.9 line uses Kit 0.9 and Storybook 0.8, and the gpui-table 0.8 line
-targets Kit 0.8. Keep these public GPUI type families together.
+Use GPUI Kit 0.11 with gpui-table 0.10. If you use Storybook, choose 0.9.
 
 ## Prerequisites
 
-Use Rust 1.100 or later to build the development branch. The dependency block
-below is for the published gpui-table 0.9 line and uses its matching Kit:
+Use Rust 1.100 or newer. These versions are available on crates.io:
 
 ```toml
 [dependencies]
-gpui-kit = "0.9.0"
-gpui-table = "0.9"
-gpui-table-component = "0.9"
+gpui-kit = "0.11"
+gpui-table = "0.10"
+gpui-table-component = "0.10"
 ```
 
 Generated table code refers to `gpui_kit` directly, so keep it as a direct
-dependency using the version or source selected by the application. See
+dependency that resolves to the same Kit package as Table. See
 [Features and integration crates](features.md) when a row uses numeric range
 filters, Fluent labels, SpacetimeDB values, or MCP.
 

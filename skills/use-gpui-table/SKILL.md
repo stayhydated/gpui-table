@@ -12,8 +12,9 @@ description: >-
 ## Workflow
 
 1. Inspect the application's manifest and an existing table before choosing
-   features or syntax. Generated code uses `gpui_kit` directly; preserve the
-   application's existing `gpui-kit` dependency source.
+   features or syntax. Generated code uses `gpui_kit` directly. Match the
+   application's existing GPUI family; Table 0.10 uses Kit 0.11. Do not mix
+   package sources that resolve to distinct GPUI Kit types.
 2. Use `gpui-table` as the facade. Add
    `gpui-table-component` when the table renders built-in filters or
    `TableStatusBar`.

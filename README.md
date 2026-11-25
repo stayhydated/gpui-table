@@ -11,15 +11,15 @@ from Rust row types for GPUI application developers. It generates column
 metadata and delegates, with opt-in typed filters, incremental loading,
 localization, registry metadata, ordered sorting, source-resolved calculated keys, and MCP query tools.
 
-The development workspace requires Rust 1.100 or newer. Generated UI code
+GPUI Table 0.10 requires Rust 1.100 or newer. Generated UI code
 uses `gpui-kit` directly, so applications must expose it as a direct dependency.
 
 Start with [`gpui-table`][gpui-table-readme] for derives and table contracts. Add
 [`gpui-table-component`][gpui-table-component-readme] for built-in filter widgets.
 
-The development branch uses GPUI Kit 0.11 and Storybook 0.9. The published
-gpui-table 0.9 line uses Kit 0.9 and Storybook 0.8, and the gpui-table 0.8 line
-targets Kit 0.8. Keep these public GPUI type families together.
+The gpui-table 0.10 line uses GPUI Kit 0.11. Use Storybook 0.9 when the
+application includes stories. For older releases, Table 0.9 uses Kit 0.9
+and Storybook 0.8, and Table 0.8 targets Kit 0.8. Do not mix these families.
 
 ## Crates
 

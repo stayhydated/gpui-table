@@ -4,15 +4,14 @@ Generated filters keep filter values typed and apply them to the table's
 in-memory rows. Enable the facade's `rust_decimal` feature before using any
 numeric range filter, including one over an integer field:
 
-This example follows the development branch. Use a sibling `gpui-table`
-checkout and GPUI Kit 0.11:
+Use the published gpui-table 0.10 line and GPUI Kit 0.11:
 
 ```toml
 [dependencies]
 gpui-kit = "0.11.0"
 jiff = "1.0"
-gpui-table = { path = "../gpui-table/crates/gpui-table", features = ["rust_decimal"] }
-gpui-table-component = { path = "../gpui-table/crates/gpui-table-component", features = ["rust_decimal"] }
+gpui-table = { version = "0.10", features = ["rust_decimal"] }
+gpui-table-component = { version = "0.10", features = ["rust_decimal"] }
 ```
 
 Add `#[gpui_table(filters)]` and declare each filtered field's shape:
