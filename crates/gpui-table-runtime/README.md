@@ -8,7 +8,7 @@ generated table code: row metadata and rendering, cell rendering, loading, filte
 shapes, selection-preserving ordering, and generic helpers for generated filter collections in the
 [`gpui-table`][project] ecosystem.
 
-Requires Rust 1.99 or newer. Uses `gpui-kit` 0.9.0.
+Requires Rust 1.100 or newer. Uses `gpui-kit` 0.11.0.
 
 Depend on this crate directly when writing reusable integrations over
 [`TableCell`][cell], `TableRowMeta`, `TableLoader`,
@@ -41,14 +41,14 @@ Built-in cells and derived text formatters use it automatically.
 
 ## Features
 
-The default feature set is `chrono`, which also enables `jiff`.
+The default feature set is `jiff`.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `chrono` | Yes | Enables Chrono cells, core date conversions, and `jiff` formatting. |
+| `jiff` | Yes | Enables Jiff date and time cells, ICU formatting, and core date conversions. |
 | `jiff` | Yes | Enables Jiff cells and ICU-based localized date/time formatting. |
 | `rust_decimal` | No | Enables decimal cells and core numeric conversions. |
-| `spacetimedb` | No | Enables `chrono`, SpacetimeDB cells, and core temporal conversions. |
+| `spacetimedb` | No | Enables `jiff`, SpacetimeDB cells, and core temporal conversions. |
 
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table-runtime
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table

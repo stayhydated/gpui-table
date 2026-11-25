@@ -1,4 +1,4 @@
-#[cfg(any(feature = "chrono", feature = "rust_decimal"))]
+#[cfg(any(feature = "jiff", feature = "rust_decimal"))]
 use gpui_table::runtime::shape::McpRangeBoundKind;
 use gpui_table::runtime::shape::{
     ComponentShapeFor, ComponentShapeMetadata, DeclaredComponentShape, McpInputShape,
@@ -21,10 +21,10 @@ fn facade_runtime_accepts_builtin_text_filter_shape() {
     );
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 #[test]
 fn facade_runtime_accepts_builtin_date_range_filter_shape_when_enabled() {
-    assert_filter_shape::<gpui_table_component::DateRangeFilter, chrono::NaiveDate>();
+    assert_filter_shape::<gpui_table_component::DateRangeFilter, jiff::civil::Date>();
 
     assert_eq!(
         <gpui_table_component::DateRangeFilter as ComponentShapeMetadata>::MCP_INPUT.input_shape(),

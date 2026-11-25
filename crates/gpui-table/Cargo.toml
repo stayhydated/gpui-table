@@ -12,17 +12,17 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [
-  "dep:chrono",
-  "gpui-table-core/chrono",
-  "gpui-table-derive/chrono",
-  "gpui-table-mcp?/chrono",
-  "gpui-table-runtime/chrono",
-]
-default = [ "derive", "chrono" ]
+default = [ "derive", "jiff" ]
 derive = [ "dep:gpui-table-derive" ]
 fluent = [ "gpui-table-core/fluent", "gpui-table-derive/fluent" ]
 inventory = [ "gpui-table-derive/inventory" ]
+jiff = [
+  "dep:jiff",
+  "gpui-table-core/jiff",
+  "gpui-table-derive/jiff",
+  "gpui-table-mcp?/jiff",
+  "gpui-table-runtime/jiff",
+]
 mcp = [ "dep:gpui-table-mcp", "inventory", "gpui-table-derive?/mcp" ]
 rust_decimal = [
   "dep:rust_decimal",
@@ -39,19 +39,19 @@ spacetimedb = [
 ]
 
 [dependencies]
-chrono = { optional = true, workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
 gpui-table-derive = { optional = true, workspace = true }
 gpui-table-mcp = { default-features = false, optional = true, workspace = true }
 gpui-table-runtime = { default-features = false, workspace = true }
 gpui-table-schema = { workspace = true }
+jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], workspace = true }
 serde_json = { workspace = true }
 
 [dev-dependencies]
-chrono = { workspace = true }
 gpui-kit = { features = [ "test-support" ], workspace = true }
+jiff = { workspace = true }
 # Path-only dev-dependency: cargo prunes versionless dev-dependencies when
 # packaging, avoiding a crates.io resolution failure while release-plz
 # publishes gpui-table before gpui-table-component.

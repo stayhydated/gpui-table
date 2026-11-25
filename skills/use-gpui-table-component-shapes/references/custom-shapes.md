@@ -12,7 +12,7 @@ Use the narrowest section that matches the requested integration.
 - `NumberRangeFilter`: supported numeric types and optional variants
   with `rust_decimal`
 - `DateRangeFilter`: supported date-like types and optional variants
-  with `chrono`
+  with `jiff`
 - SpacetimeDB temporal support: matching facade and component
   `spacetimedb` features
 

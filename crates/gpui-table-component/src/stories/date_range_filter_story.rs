@@ -1,9 +1,9 @@
-use chrono::NaiveDate;
 use gpui_kit::component::{Sizable as _, StyledExt as _, button::Button, h_flex, v_flex};
 use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, InteractiveElement as _,
     IntoElement, Render, StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
+use jiff::civil::Date as CivilDate;
 
 use crate::{DateRangeFilterExt as _, date_range_filter::DateRangeFilter};
 
@@ -59,8 +59,8 @@ impl DateRangeFilterStory {
             DateRangeStoryMode::Preset => DateRangeFilter::new_for(
                 |_| "Created at".to_string(),
                 (
-                    NaiveDate::from_ymd_opt(2026, 1, 1),
-                    NaiveDate::from_ymd_opt(2026, 1, 31),
+                    CivilDate::new(2026, 1, 1).ok(),
+                    CivilDate::new(2026, 1, 31).ok(),
                 ),
                 |_value, _window, _cx| {},
                 cx,
@@ -68,8 +68,8 @@ impl DateRangeFilterStory {
             DateRangeStoryMode::Styled => DateRangeFilter::new_for(
                 |_| "Updated at".to_string(),
                 (
-                    NaiveDate::from_ymd_opt(2026, 2, 1),
-                    NaiveDate::from_ymd_opt(2026, 2, 14),
+                    CivilDate::new(2026, 2, 1).ok(),
+                    CivilDate::new(2026, 2, 14).ok(),
                 ),
                 |_value, _window, _cx| {},
                 cx,

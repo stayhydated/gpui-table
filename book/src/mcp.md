@@ -5,16 +5,20 @@ typed MCP query tools. Generated code validates and decodes filter, ordering and
 pagination arguments; the application still owns data access, authorization,
 filter execution, and totals.
 
+This example follows the development branch. Use a sibling `gpui-table`
+checkout and GPUI Kit 0.11:
+
 ```toml
 [dependencies]
-gpui-table = { version = "0.9", features = ["mcp"] }
-gpui-table-component = { version = "0.9", features = ["mcp"] }
+gpui-kit = "0.11.0"
+gpui-table = { path = "../gpui-table/crates/gpui-table", features = ["mcp"] }
+gpui-table-component = { path = "../gpui-table/crates/gpui-table-component", features = ["mcp"] }
 serde = { version = "1", features = ["derive"] }
 ```
 
 Enable `gpui-table-component/mcp` when a table uses the built-in
 filter shapes. Match the facade and component `rust_decimal`,
-`chrono`, or `spacetimedb` features required by those
+`jiff`, or `spacetimedb` features required by those
 shapes.
 
 ## Register a local row source

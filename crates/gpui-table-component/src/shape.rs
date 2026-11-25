@@ -1,4 +1,4 @@
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 use crate::DateRangeFilter;
 use crate::{FacetedFilter, FacetedFilterExt as _, TextFilter, TextFilterExt as _};
 #[cfg(feature = "rust_decimal")]
@@ -14,7 +14,7 @@ use gpui_table_schema::registry::RegistryFilterType;
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 mod date;
 mod faceted;
 #[cfg(feature = "rust_decimal")]
@@ -22,7 +22,7 @@ mod number;
 mod shared;
 mod text;
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 pub use date::*;
 pub use faceted::*;
 #[cfg(feature = "rust_decimal")]

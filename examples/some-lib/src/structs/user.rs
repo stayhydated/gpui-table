@@ -1,6 +1,6 @@
 use es_fluent::{EsFluentLabel, EsFluentVariants};
 use fake::decimal::PositiveDecimal;
-use fake::faker::{chrono::en::DateTime, internet::en::SafeEmail, name::en::Name};
+use fake::faker::{internet::en::SafeEmail, name::en::Name};
 use fake::uuid::UUIDv4;
 use fake::{Fake as _, Faker};
 use gpui_kit::component::IconName;
@@ -68,8 +68,8 @@ pub struct User {
     pub status: UserStatus,
 
     #[gpui_table(sortable, width = 300., filter(gpui_table_component::DateRangeFilter))]
-    #[dummy(faker = "DateTime()")]
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    #[dummy(faker = "super::TimestampFaker")]
+    pub created_at: jiff::Timestamp,
 }
 
 #[gpui_table::gpui_table_impl]

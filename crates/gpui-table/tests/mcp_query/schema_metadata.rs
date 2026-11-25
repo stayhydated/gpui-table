@@ -64,7 +64,7 @@ fn facade_mcp_json_schema_supports_fixed_tuples() {
 
 #[test]
 fn facade_mcp_json_schema_supports_feature_gated_types() {
-    let date_schema = <chrono::NaiveDate as gpui_table::mcp::McpJsonSchema>::json_schema();
+    let date_schema = <jiff::civil::Date as gpui_table::mcp::McpJsonSchema>::json_schema();
     assert_eq!(date_schema["type"], "string");
     assert_eq!(date_schema["format"], "date");
 

@@ -44,3 +44,7 @@ user_label_variants-status = Status
 user_status-Active = Active
 user_status-Offline = Offline
 user_status-Suspended = Suspended
+
+en = English
+fr-FR = français (France)
+zh-CN = 中文 (中国)

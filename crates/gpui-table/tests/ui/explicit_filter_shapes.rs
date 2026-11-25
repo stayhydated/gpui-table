@@ -1,4 +1,4 @@
-use chrono::NaiveDate;
+use jiff::civil::Date as CivilDate;
 use gpui_table::{Filterable, GpuiTable, TableCell};
 
 #[derive(Clone, Debug, Eq, Filterable, Hash, PartialEq, TableCell)]
@@ -20,7 +20,7 @@ struct User {
     status_history: Vec<Status>,
 
     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
-    created_on: NaiveDate,
+    created_on: CivilDate,
 }
 
 fn main() {}

@@ -1,0 +1,5 @@
+error: `gpui_table_component::DateRangeFilter` requires enabling the `gpui-table/jiff` feature
+ --> tests/ui/date_range_requires_jiff.rs:6:25
+  |
+6 |     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
+  |                         ^^^^^^^^^^^^^^^^^^^^

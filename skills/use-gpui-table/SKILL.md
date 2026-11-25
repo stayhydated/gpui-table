@@ -49,7 +49,7 @@ description: >-
 
 ## Select features deliberately
 
-- `derive` and `chrono` are enabled by default.
+- `derive` and `jiff` are enabled by default.
 - Enable `rust_decimal` for numeric range filters, including integer
   fields.
 - Enable `fluent` for typed localized table and facet labels.

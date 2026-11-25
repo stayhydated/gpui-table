@@ -37,3 +37,7 @@ sort_editor_ftl-MoveUp = Move up
 sort_editor_ftl-MoveDown = Move down
 sort_editor_ftl-Remove = Remove
 sort_editor_ftl-Empty = No sort keys
+
+en = English
+fr-FR = français (France)
+zh-CN = 中文 (中国)

@@ -134,10 +134,10 @@ impl ResolvedFilterShape {
             ));
         }
 
-        if !cfg!(feature = "chrono") && self.is_builtin_shape("DateRangeFilter") {
+        if !cfg!(feature = "jiff") && self.is_builtin_shape("DateRangeFilter") {
             return Err(syn::Error::new(
                 self.span(),
-                "`gpui_table_component::DateRangeFilter` requires enabling the `gpui-table/chrono` feature",
+                "`gpui_table_component::DateRangeFilter` requires enabling the `gpui-table/jiff` feature",
             ));
         }
 

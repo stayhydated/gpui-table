@@ -218,7 +218,7 @@ mod number_range {
     }
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 mod date_range {
     use gpui_table_mcp::{
         McpAny, McpFilterShape, McpFilterShapeValidation, McpTableFilter, McpToolError,
@@ -230,14 +230,14 @@ mod date_range {
 
     impl McpFilterShape for DateRangeFilter {
         fn input_schema(filter: McpTableFilter) -> gpui_table_mcp::McpSchema {
-            range_filter_input_schema::<chrono::NaiveDate>(filter)
+            range_filter_input_schema::<jiff::civil::Date>(filter)
         }
 
         fn decode_filter(
             field: &'static str,
             value: McpAny,
         ) -> Result<Self::FilterValue, McpToolError> {
-            let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
+            let value = decode_range_filter::<jiff::civil::Date>(field, value)?;
             Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
         }
     }
@@ -251,7 +251,7 @@ mod date_range {
         where
             Validate: FnOnce(&Self::RawValue) -> Result<(), McpToolError>,
         {
-            let value = decode_range_filter::<chrono::NaiveDate>(field, value)?;
+            let value = decode_range_filter::<jiff::civil::Date>(field, value)?;
             validate(&value)?;
             Ok(<Self as GpuiTableFilterShape>::wrap_value(value))
         }
@@ -452,11 +452,11 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     #[test]
     fn date_range_filter_and_adapter_decode_bounds_and_validation() {
         use crate::{DateRangeFilter, DateRangeFilterAdapter};
-        use chrono::NaiveDate;
+        use jiff::civil::Date as CivilDate;
 
         let filter = table_filter::<DateRangeFilter>("created_on");
         let schema = <DateRangeFilter as McpFilterShape>::input_schema(filter);
@@ -467,14 +467,8 @@ mod tests {
             McpAny::from(json!({ "min": "2026-01-01", "max": "2026-01-31" })),
         )
         .unwrap();
-        assert_eq!(
-            decoded.min(),
-            Some(&NaiveDate::from_ymd_opt(2026, 1, 1).unwrap())
-        );
-        assert_eq!(
-            decoded.max(),
-            Some(&NaiveDate::from_ymd_opt(2026, 1, 31).unwrap())
-        );
+        assert_eq!(decoded.min(), Some(&CivilDate::new(2026, 1, 1).unwrap()));
+        assert_eq!(decoded.max(), Some(&CivilDate::new(2026, 1, 31).unwrap()));
 
         assert!(
             <DateRangeFilter as McpFilterShapeValidation>::decode_filter_with_validation(

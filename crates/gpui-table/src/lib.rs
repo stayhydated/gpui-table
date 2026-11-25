@@ -32,7 +32,7 @@
 //! # Filter Feature Requirements
 //!
 //! - `gpui_table_component::NumberRangeFilter` requires the `rust_decimal` feature.
-//! - `gpui_table_component::DateRangeFilter` requires the `chrono` feature.
+//! - `gpui_table_component::DateRangeFilter` requires the `jiff` feature.
 //! - Filtering SpacetimeDB `Timestamp`/`TimeDuration` with range filters requires the `spacetimedb` feature.
 //! - `#[gpui_table(filters)]` is required to generate filter entities and matching logic.
 //!
@@ -117,8 +117,8 @@ where
 {
     fn to_preset_json(&self) -> serde_json::Value {
         serde_json::json!({
-            "min": self.0.as_ref().map(ToString::to_string),
-            "max": self.1.as_ref().map(ToString::to_string),
+            "min": self.0.as_ref().map(format_range_preset_bound),
+            "max": self.1.as_ref().map(format_range_preset_bound),
         })
     }
 
@@ -129,8 +129,7 @@ where
         let parse_bound = |name: &str| -> Result<Option<T>, String> {
             match object.get(name) {
                 None | Some(serde_json::Value::Null) => Ok(None),
-                Some(serde_json::Value::String(value)) => value
-                    .parse::<T>()
+                Some(serde_json::Value::String(value)) => parse_range_preset_bound::<T>(value)
                     .map(Some)
                     .map_err(|error| format!("invalid range {name} `{value}`: {error}")),
                 Some(_) => Err(format!(
@@ -140,6 +139,31 @@ where
         };
         Ok(Self(parse_bound("min")?, parse_bound("max")?))
     }
+}
+
+fn format_range_preset_bound<T: ToString + 'static>(value: &T) -> String {
+    #[cfg(feature = "jiff")]
+    if let Some(date) = (value as &dyn std::any::Any).downcast_ref::<jiff::civil::Date>()
+        && date.year() < 0
+    {
+        // Preserve the spelling used by earlier versions for saved BCE ranges.
+        return format!("-{:04}-{:02}-{:02}", -date.year(), date.month(), date.day());
+    }
+    value.to_string()
+}
+
+fn parse_range_preset_bound<T: std::str::FromStr + 'static>(value: &str) -> Result<T, T::Err> {
+    #[cfg(feature = "jiff")]
+    if std::any::TypeId::of::<T>() == std::any::TypeId::of::<jiff::civil::Date>()
+        && let [b'-', a, b, c, d, b'-', e, f, b'-', g, h] = *value.as_bytes()
+        && [a, b, c, d] != [b'0'; 4]
+        && [a, b, c, d, e, f, g, h].iter().all(u8::is_ascii_digit)
+    {
+        // Accept the former four-digit BCE spelling, but leave validation
+        // (including out-of-range values) to the actual Jiff parser.
+        return format!("-00{}", &value[1..]).parse();
+    }
+    value.parse()
 }
 
 impl<T> FilterPresetValue for filter::SingleValue<T>
@@ -187,13 +211,64 @@ mod filter_preset_tests {
             facets
         );
     }
+    #[cfg(feature = "jiff")]
+    #[test]
+    fn civil_range_presets_keep_old_bce_dates_and_accept_jiff_spelling() {
+        use jiff::civil::Date;
+        use serde_json::json;
+
+        for (legacy, year, month, day) in [
+            ("-0001-01-01", -1, 1, 1),
+            ("-0004-02-29", -4, 2, 29),
+            ("-9999-12-31", -9999, 12, 31),
+            ("2024-02-29", 2024, 2, 29),
+        ] {
+            let date = Date::new(year, month, day).unwrap();
+            let expected = filter::RangeValue(Some(date), None);
+            assert_eq!(
+                expected.to_preset_json(),
+                json!({"min": legacy, "max": null})
+            );
+            for spelling in [legacy.to_string(), date.to_string()] {
+                assert_eq!(
+                    filter::RangeValue::<Date>::from_preset_json(
+                        &json!({"min": spelling, "max": null})
+                    )
+                    .unwrap(),
+                    expected,
+                );
+            }
+        }
+        let earliest = Date::new(-9999, 1, 1).unwrap();
+        let latest = Date::new(2024, 2, 29).unwrap();
+        assert_eq!(
+            filter::RangeValue::<Date>::from_preset_json(
+                &json!({"min": "-9999-01-01", "max": "2024-02-29"})
+            )
+            .unwrap(),
+            filter::RangeValue(Some(earliest), Some(latest)),
+        );
+        let max_only = filter::RangeValue(None, Some(earliest));
+        assert_eq!(
+            max_only.to_preset_json(),
+            json!({"min": null, "max": "-9999-01-01"})
+        );
+
+        for invalid in ["-0000-01-01", "-0001-02-29", "-010000-01-01"] {
+            assert!(
+                filter::RangeValue::<Date>::from_preset_json(&json!({"min": invalid, "max": null}))
+                    .is_err(),
+                "unexpectedly decoded {invalid}"
+            );
+        }
+    }
 }
 
 /// Hidden dependency surface used by macro-generated code.
 #[doc(hidden)]
 pub mod __deps {
-    #[cfg(feature = "chrono")]
-    pub use chrono;
+    #[cfg(feature = "jiff")]
+    pub use jiff;
     #[cfg(feature = "rust_decimal")]
     pub use rust_decimal;
     pub use serde_json;

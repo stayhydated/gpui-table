@@ -26,14 +26,14 @@ publish = false
 
 [features]
 derive = []
-chrono = []
+jiff = []
 rust_decimal = []
 spacetimedb = ["dep:spacetimedb-lib"]
 mcp = []
 
 [dependencies]
 gpui-table = { path = "$repo_root/crates/gpui-table", default-features = $defaults, features = [$feature_list] }
-gpui-kit = "0.9.0"
+gpui-kit = "=0.11.0"
 spacetimedb-lib = { version = "2.14.0", optional = true }
 EOF
     # Each temporary workspace is a Cargo root, so dependency source patches
@@ -68,10 +68,10 @@ PYTHON
     cargo check "${args[@]}"
 }
 
-check default true "" "derive,chrono"
+check default true "" "derive,jiff"
 check minimal false "" ""
 check derive false "derive" "derive"
-check chrono false "chrono" "chrono"
+check jiff false "jiff" "jiff"
 check rust_decimal false "rust_decimal" "rust_decimal"
 check spacetimedb false "spacetimedb" "spacetimedb"
 check mcp false "mcp" "mcp"

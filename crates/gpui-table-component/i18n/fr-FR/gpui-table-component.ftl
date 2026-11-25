@@ -41,3 +41,10 @@ sort_editor_ftl-MoveUp = Monter
 sort_editor_ftl-MoveDown = Descendre
 sort_editor_ftl-Remove = Retirer
 sort_editor_ftl-Empty = Aucune clé de tri
+
+# es-fluent: same-as-fallback
+en = English
+# es-fluent: same-as-fallback
+fr-FR = français (France)
+# es-fluent: same-as-fallback
+zh-CN = 中文 (中国)

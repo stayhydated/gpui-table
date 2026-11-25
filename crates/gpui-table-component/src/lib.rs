@@ -15,7 +15,7 @@
 //! and [`DateRangeFilterAdapter`] reuse the built-in widgets and MCP schemas
 //! for application-owned value types that implement the matching field trait.
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 pub mod date_range_filter;
 pub mod faceted_filter;
 pub mod i18n;
@@ -33,13 +33,13 @@ pub mod table_status_bar;
 pub mod text_filter;
 
 // Re-export component types and extension traits for convenience.
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 pub use date_range_filter::{DateRangeFilter, DateRangeFilterExt};
 pub use faceted_filter::{FacetedFilter, FacetedFilterExt};
 #[cfg(feature = "rust_decimal")]
 pub use number_range_filter::{NumberRangeFilter, NumberRangeFilterExt};
 pub use reset_filters::ResetFilters;
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 pub use shape::{DateRangeFilterAdapter, DateRangeFilterField};
 pub use shape::{FacetedFilterArgs, TextFilterAdapter, TextFilterArgs, TextFilterField};
 #[cfg(feature = "rust_decimal")]
@@ -162,8 +162,8 @@ impl QueryFilterValue for (Option<rust_decimal::Decimal>, Option<rust_decimal::D
     }
 }
 
-#[cfg(feature = "chrono")]
-impl QueryFilterValue for (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>) {
+#[cfg(feature = "jiff")]
+impl QueryFilterValue for (Option<jiff::civil::Date>, Option<jiff::civil::Date>) {
     fn is_empty(&self) -> bool {
         self.0.is_none() && self.1.is_none()
     }
@@ -294,12 +294,12 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "chrono")]
-    struct BusinessDate(chrono::NaiveDate);
+    #[cfg(feature = "jiff")]
+    struct BusinessDate(jiff::civil::Date);
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     impl super::DateRangeFilterField for BusinessDate {
-        fn to_filter_naive_date(&self) -> chrono::NaiveDate {
+        fn to_filter_date(&self) -> jiff::civil::Date {
             self.0
         }
     }
@@ -386,12 +386,12 @@ mod tests {
             assert_eq!(bounds.to_query_string(), Some("1.5-2.5".into()));
         }
 
-        #[cfg(feature = "chrono")]
+        #[cfg(feature = "jiff")]
         {
-            use chrono::NaiveDate;
+            use jiff::civil::Date as CivilDate;
             let bounds = (
-                Some(NaiveDate::from_ymd_opt(2026, 1, 1).unwrap()),
-                Some(NaiveDate::from_ymd_opt(2026, 1, 31).unwrap()),
+                Some(CivilDate::new(2026, 1, 1).unwrap()),
+                Some(CivilDate::new(2026, 1, 31).unwrap()),
             );
             assert!(!QueryFilterValue::is_empty(&bounds));
             assert_eq!(
@@ -460,17 +460,17 @@ mod tests {
             assert_table_filter_shape::<NumberRangeFilterAdapter, Option<Amount>>();
         }
 
-        #[cfg(feature = "chrono")]
+        #[cfg(feature = "jiff")]
         {
             use super::{DateRangeFilter, DateRangeFilterAdapter};
 
             assert_declared::<DateRangeFilter>();
-            assert_shape_for::<DateRangeFilter, chrono::NaiveDate>();
-            assert_shape_for::<DateRangeFilter, Option<chrono::NaiveDate>>();
-            assert_shape_for::<DateRangeFilter, chrono::NaiveDateTime>();
-            assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDate>();
-            assert_table_filter_shape::<DateRangeFilter, Option<chrono::NaiveDate>>();
-            assert_table_filter_shape::<DateRangeFilter, chrono::NaiveDateTime>();
+            assert_shape_for::<DateRangeFilter, jiff::civil::Date>();
+            assert_shape_for::<DateRangeFilter, Option<jiff::civil::Date>>();
+            assert_shape_for::<DateRangeFilter, jiff::civil::DateTime>();
+            assert_table_filter_shape::<DateRangeFilter, jiff::civil::Date>();
+            assert_table_filter_shape::<DateRangeFilter, Option<jiff::civil::Date>>();
+            assert_table_filter_shape::<DateRangeFilter, jiff::civil::DateTime>();
             assert_declared::<DateRangeFilterAdapter>();
             assert_shape_for::<DateRangeFilterAdapter, BusinessDate>();
             assert_shape_for::<DateRangeFilterAdapter, Option<BusinessDate>>();
@@ -684,16 +684,16 @@ mod tests {
         }
     }
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     #[test]
     fn date_range_filter_adapter_matches_custom_fields_and_options() {
         use super::{DateRangeFilter, DateRangeFilterAdapter, DateRangeFilterField as _};
-        use chrono::{DateTime, NaiveDate, Utc};
+        use jiff::{ZonedDateTime, civil::Date as CivilDate, tz::TimeZone};
 
-        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
-        let inside = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
-        let outside = NaiveDate::from_ymd_opt(2026, 2, 1).unwrap();
-        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let start = CivilDate::new(2026, 1, 1).unwrap();
+        let inside = CivilDate::new(2026, 1, 15).unwrap();
+        let outside = CivilDate::new(2026, 2, 1).unwrap();
+        let end = CivilDate::new(2026, 1, 31).unwrap();
         let active = RangeValue::from((Some(start), Some(end)));
         let inactive = RangeValue::default();
 
@@ -724,58 +724,56 @@ mod tests {
             active
         );
 
-        let inside_datetime = inside.and_hms_opt(12, 0, 0).unwrap();
-        let outside_datetime = outside.and_hms_opt(12, 0, 0).unwrap();
-        assert_eq!(inside.to_filter_naive_date(), inside);
-        assert_eq!(inside_datetime.to_filter_naive_date(), inside);
+        let inside_datetime = inside.at(12, 0, 0, 0);
+        let outside_datetime = outside.at(12, 0, 0, 0);
+        assert_eq!(inside.to_filter_date(), inside);
+        assert_eq!(inside_datetime.to_filter_date(), inside);
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::NaiveDate,
+            jiff::civil::Date,
         >>::matches_field(&inside, &active));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::NaiveDate,
+            jiff::civil::Date,
         >>::matches_field(&outside, &active));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<chrono::NaiveDate>,
+            Option<jiff::civil::Date>,
         >>::matches_field(&None, &inactive));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<chrono::NaiveDate>,
+            Option<jiff::civil::Date>,
         >>::matches_field(&None, &active));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::NaiveDateTime,
+            jiff::civil::DateTime,
         >>::matches_field(&inside_datetime, &active));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::NaiveDateTime,
+            jiff::civil::DateTime,
         >>::matches_field(&outside_datetime, &active));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<chrono::NaiveDateTime>,
+            Option<jiff::civil::DateTime>,
         >>::matches_field(&None, &inactive));
 
-        let inside_zoned = DateTime::<Utc>::from_naive_utc_and_offset(inside_datetime, Utc);
-        let outside_zoned = DateTime::<Utc>::from_naive_utc_and_offset(outside_datetime, Utc);
-        assert_eq!(inside_zoned.to_filter_naive_date(), inside);
+        let inside_zoned = inside_datetime.to_zoned_datetime(TimeZone::UTC).unwrap();
+        let outside_zoned = outside_datetime.to_zoned_datetime(TimeZone::UTC).unwrap();
+        assert_eq!(inside_zoned.to_filter_date(), inside);
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            DateTime<Utc>,
+            ZonedDateTime,
         >>::matches_field(&inside_zoned, &active));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            DateTime<Utc>,
+            ZonedDateTime,
         >>::matches_field(&outside_zoned, &active));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<DateTime<Utc>>,
+            Option<ZonedDateTime>,
         >>::matches_field(&None, &inactive));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<DateTime<Utc>>,
+            Option<ZonedDateTime>,
         >>::matches_field(&None, &active));
 
         #[cfg(feature = "spacetimedb")]
         {
             use spacetimedb_lib::Timestamp;
-            let inside_timestamp = Timestamp::from_micros_since_unix_epoch(
-                inside_datetime.and_utc().timestamp_micros(),
-            );
-            let outside_timestamp = Timestamp::from_micros_since_unix_epoch(
-                outside_datetime.and_utc().timestamp_micros(),
-            );
-            assert_eq!(inside_timestamp.to_filter_naive_date(), inside);
+            let inside_timestamp =
+                Timestamp::from_micros_since_unix_epoch(inside_zoned.timestamp().as_microsecond());
+            let outside_timestamp =
+                Timestamp::from_micros_since_unix_epoch(outside_zoned.timestamp().as_microsecond());
+            assert_eq!(inside_timestamp.to_filter_date(), inside);
             assert!(
                 <DateRangeFilter as GpuiTableFilterShapeFor<Timestamp>>::matches_field(
                     &inside_timestamp,

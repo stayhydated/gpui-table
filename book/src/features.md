@@ -6,7 +6,7 @@ the row types.
 | Facade feature | Default | Use it for |
 |---|---:|---|
 | `derive` | Yes | `GpuiTable`, `Filterable`, `TableCell`, `GpuiTableFilterShape`, and `gpui_table_impl` |
-| `chrono` | Yes | Chrono cells and date-range filter support |
+| `jiff` | Yes | Jiff cells and date-range filter support |
 | `rust_decimal` | No | Numeric range filters, including filters over integer fields |
 | `fluent` | No | Typed localized table and facet labels |
 | `spacetimedb` | No | Supported SpacetimeDB temporal range filtering |
@@ -14,7 +14,7 @@ the row types.
 | `mcp` | No | Experimental generated MCP query tools; this also enables `inventory` |
 
 Use `gpui-table-component` for rendered filters, `TableStatusBar`, reset
-controls, and manual filter composition. Its `chrono` and `rust_decimal`
+controls, and manual filter composition. Its `jiff` and `rust_decimal`
 features are enabled by default. Enable its `mcp` feature when an MCP-enabled
 row declares a built-in filter shape.
 

@@ -7,7 +7,7 @@
 the [`gpui-table`][facade] facade for developers integrating generated table,
 cell, filter, and MCP query contracts.
 
-Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.9.0 directly.
+Requires Rust 1.100 or newer. Generated UI code uses `gpui-kit` 0.11.0 directly.
 
 ## Overview
 
@@ -38,7 +38,7 @@ the facade, which keeps generated-code dependencies aligned.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `chrono` | No | Accepts built-in date-range shapes during macro expansion. |
+| `jiff` | No | Accepts built-in date-range shapes during macro expansion. |
 | `fluent` | No | Generates typed Fluent labels for tables and facets. |
 | `inventory` | No | Generates inventory-registered table metadata. |
 | `mcp` | No | Enables `inventory`, MCP table generation, `McpFilterShape`, and `mcp_query`. |

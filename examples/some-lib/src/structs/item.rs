@@ -1,5 +1,5 @@
 use es_fluent::{EsFluentLabel, EsFluentVariants};
-use fake::faker::{chrono::en::DateTime, color::en::HexColor, lorem::en::Word};
+use fake::faker::{color::en::HexColor, lorem::en::Word};
 use fake::uuid::UUIDv4;
 use fake::{Fake as _, Faker};
 use gpui_kit::component::table::TableState;
@@ -29,8 +29,8 @@ pub struct Item {
     weight: u8,
 
     #[gpui_table(width = 250.)]
-    #[dummy(faker = "DateTime()")]
-    acquired_on: chrono::DateTime<chrono::Utc>,
+    #[dummy(faker = "super::TimestampFaker")]
+    acquired_on: jiff::Timestamp,
 }
 
 fn render_color_cell(

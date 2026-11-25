@@ -5,10 +5,10 @@ mod traits;
 mod value;
 mod wrappers;
 
+#[cfg(feature = "jiff")]
+pub use convert::ToCivilDate;
 #[cfg(feature = "rust_decimal")]
 pub use convert::ToDecimal;
-#[cfg(feature = "chrono")]
-pub use convert::ToNaiveDate;
 pub use gpui_table_schema::filter::{
     FacetedFilterIcon, FacetedFilterOption, FilterConfig, FilterType,
 };

@@ -7,27 +7,27 @@
 adapter shapes, controlled `SortEditor`, reset control, and `TableStatusBar` for applications using
 the [`gpui-table`][facade] derive workflow.
 
-Requires Rust 1.99 or newer. Uses `gpui-kit` 0.9.0.
+Requires Rust 1.100 or newer. Uses `gpui-kit` 0.11.0.
 
 Use the same components directly when the application owns the filter layout.
 
-Date filter labels use localized formatting for dates representable by Jiff.
-Dates outside that range retain their original Chrono `Display` representation.
+Date filter labels use localized formatting for Jiff civil dates.
+Civil and zoned fields match by their own date; instant fields match by UTC date.
 Initialize [`i18n::init`][i18n] after GPUI component initialization and before
 rendering filters.
 
 ## Features
 
-The default feature set is `chrono` and `rust_decimal`. Match the facade
+The default feature set is `jiff` and `rust_decimal`. Match the facade
 features when deriving tables with date, numeric, SpacetimeDB, or MCP shapes.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `chrono` | Yes | Provides date-range widgets and adapters, with Chrono, Jiff, ICU formatting, and matching runtime/core support. |
+| `jiff` | Yes | Provides date-range widgets and adapters, with Jiff dates, ICU formatting, and matching runtime/core support. |
 | `rust_decimal` | Yes | Provides numeric range widgets and adapters for decimal, integer, and float fields. |
 | `mcp` | No | Implements MCP schemas and decoding for built-in filter shapes. |
-| `spacetimedb` | No | Enables `chrono` and supported SpacetimeDB field conversions; numeric temporal filters also need `rust_decimal`. |
-| `story` | No | Enables `chrono`, `rust_decimal`, and the built-in widget Storybook binary; intended for previews. |
+| `spacetimedb` | No | Enables `jiff` and supported SpacetimeDB field conversions; numeric temporal filters also need `rust_decimal`. |
+| `story` | No | Enables `jiff`, `rust_decimal`, and the built-in widget Storybook binary; intended for previews. |
 
 ## Example
 

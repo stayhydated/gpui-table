@@ -8,7 +8,7 @@ inventory-backed `GpuiTableShape` registry. Tooling can inspect table
 IDs, columns, filter categories, Rust type syntax, and component-shape usage
 without depending on GPUI in the [`gpui-table`][project] ecosystem.
 
-Requires Rust 1.99 or newer.
+Requires Rust 1.100 or newer.
 
 Use this crate for metadata consumers and generators. The facade's `inventory`
 feature registers generated table shapes for inspection. Applications that

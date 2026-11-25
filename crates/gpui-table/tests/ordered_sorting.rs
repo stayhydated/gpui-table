@@ -938,13 +938,13 @@ fn table_and_grid_preserve_record_commands_and_one_tab_stop(cx: &mut gpui_kit::T
     };
     use gpui_table::runtime::selection;
     use std::{cell::Cell, rc::Rc};
-    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[derive(gpui_kit::Action, Clone, Debug, PartialEq)]
     #[action(namespace = table_focus_test, no_json)]
     struct Open;
-    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[derive(gpui_kit::Action, Clone, Debug, PartialEq)]
     #[action(namespace = table_focus_test, no_json)]
     struct Next;
-    #[derive(Clone, Debug, PartialEq, gpui_kit::Action)]
+    #[derive(gpui_kit::Action, Clone, Debug, PartialEq)]
     #[action(namespace = table_focus_test, no_json)]
     struct Previous;
     struct Preview {

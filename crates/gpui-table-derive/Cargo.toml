@@ -15,9 +15,9 @@ readme = "README.md"
 proc-macro = true
 
 [features]
-chrono = [  ]
 fluent = [  ]
 inventory = [  ]
+jiff = [  ]
 mcp = [ "inventory" ]
 rust_decimal = [  ]
 spacetimedb = [  ]

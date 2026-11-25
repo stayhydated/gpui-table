@@ -24,8 +24,8 @@ fn main() {
     accepts_cell::<String>();
     #[cfg(feature = "derive")]
     accepts_cell::<ConsumerCell>();
-    #[cfg(feature = "chrono")]
-    accepts_cell::<gpui_table::__deps::chrono::NaiveDate>();
+    #[cfg(feature = "jiff")]
+    accepts_cell::<gpui_table::__deps::jiff::civil::Date>();
     #[cfg(feature = "rust_decimal")]
     accepts_cell::<gpui_table::__deps::rust_decimal::Decimal>();
     #[cfg(feature = "spacetimedb")]

@@ -70,7 +70,7 @@ where
     Ok(Shape::wrap_value(value))
 }
 
-#[cfg(any(feature = "chrono", feature = "rust_decimal"))]
+#[cfg(any(feature = "jiff", feature = "rust_decimal"))]
 pub fn range_filter_input_schema<T>(_filter: McpTableFilter) -> McpSchema
 where
     McpRange<T>: McpToolValue,
@@ -78,7 +78,7 @@ where
     <McpRange<T> as McpToolValue>::tool_value_schema()
 }
 
-#[cfg(any(feature = "chrono", feature = "rust_decimal"))]
+#[cfg(any(feature = "jiff", feature = "rust_decimal"))]
 pub fn decode_range_filter<T>(
     field: &'static str,
     value: McpAny,
