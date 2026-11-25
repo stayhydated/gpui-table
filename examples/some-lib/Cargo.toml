@@ -11,9 +11,8 @@ crate-type = [ "cdylib", "lib" ]
 
 [features]
 client = [
-  "dep:chrono",
+  "dep:jiff",
   "dep:es-fluent",
-  "dep:es-fluent-lang",
   "dep:es-fluent-manager-embedded",
   "dep:fake",
   "dep:gpui-kit",
@@ -22,7 +21,7 @@ client = [
   "dep:gpui-table-component",
   "dep:rust_decimal",
   "dep:serde",
-  "dep:strum",
+  "dep:iso-types",
   "dep:uuid",
 ]
 db = [  ]
@@ -30,15 +29,12 @@ default = [  ]
 router = [ "client" ]
 
 [dependencies]
-chrono = { optional = true, workspace = true }
 es-fluent = { optional = true, workspace = true }
-es-fluent-lang = { optional = true, workspace = true }
 es-fluent-manager-embedded = { optional = true, workspace = true }
 fake = { features = [
   "derive",
   "uuid",
   "random_color",
-  "chrono",
   "rust_decimal",
 ], optional = true, workspace = true }
 gpui-es-fluent = { features = [ "component" ], optional = true, workspace = true }
@@ -47,15 +43,13 @@ gpui-table = { features = [
   "fluent",
   "inventory",
   "rust_decimal",
-  "chrono",
+  "jiff",
 ], optional = true, workspace = true }
-gpui-table-component = { features = [
-  "chrono",
-  "rust_decimal",
-], optional = true, workspace = true }
+gpui-table-component = { features = [ "jiff", "rust_decimal" ], optional = true, workspace = true }
+iso-types = { optional = true, workspace = true }
+jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 serde = { features = [ "derive" ], optional = true, workspace = true }
-strum = { optional = true, workspace = true }
 uuid = { optional = true, workspace = true }
 
 [build-dependencies]

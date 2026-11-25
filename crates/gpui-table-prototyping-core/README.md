@@ -7,7 +7,7 @@
 `GpuiTableShape` metadata into Rust syntax trees for table stories and
 scaffolding in the [`gpui-table`][project] ecosystem.
 
-Requires Rust 1.99 or newer.
+Requires Rust 1.100 or newer.
 
 Use `TableShapeAdapter` with a custom `TableLayout` when a
 tool needs validated identifiers, imports, field initializers, and render

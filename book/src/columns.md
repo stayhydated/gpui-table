@@ -22,7 +22,7 @@ struct BuildRow {
     status: String,
 
     #[gpui_table(width = 140., movable = false, sortable, ascending)]
-    started_at: chrono::DateTime<chrono::Utc>,
+    started_at: jiff::Timestamp,
 }
 ```
 
@@ -48,12 +48,19 @@ identity, null placement and calculated keys.
 
 ## Date and time cells
 
-Built-in Chrono cells use localized date and time formatting through Jiff and ICU.
-Timezone-aware values normally render in the system timezone. If Jiff cannot
-represent a value, such as a date outside its year range or a leap second, the
-cell uses the original Chrono `Display` representation, including its original
-offset. This preserves the value without clamping or normalizing it. Date filter
-labels use the same fallback for dates outside Jiff's range.
+Built-in Jiff dates and times use localized ICU formatting. A bare
+`jiff::Timestamp` displays in the system timezone (the browser's timezone on
+WebAssembly), while a `jiff::ZonedDateTime` displays in its own zone. Valid
+offsets outside ICU's 18-hour range use the original Jiff representation. Date
+filters have a separate contract: civil and zoned datetimes retain their
+calendar date, and bare Jiff instants and SpacetimeDB timestamps match by UTC
+date.
+
+Jiff civil years are limited to −9999 through 9999. A leap-second input with
+second 60 is interpreted by Jiff as second 59; it is not stored literally as
+60. If the exact original text must be displayed, use `DisplayCell<String>`
+instead of a typed date or time cell. That text is not a typed date filter
+value.
 
 ## Render application value objects
 

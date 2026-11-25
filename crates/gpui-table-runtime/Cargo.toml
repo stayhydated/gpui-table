@@ -12,14 +12,12 @@ repository.workspace = true
 readme = "README.md"
 
 [features]
-chrono = [ "dep:chrono", "gpui-table-core/chrono", "jiff" ]
-default = [ "chrono" ]
-jiff = [ "dep:icu", "dep:jiff" ]
+default = [ "jiff" ]
+jiff = [ "dep:icu", "dep:jiff", "gpui-table-core/jiff" ]
 rust_decimal = [ "dep:rust_decimal", "gpui-table-core/rust_decimal" ]
-spacetimedb = [ "dep:spacetimedb-lib", "chrono", "gpui-table-core/spacetimedb" ]
+spacetimedb = [ "dep:spacetimedb-lib", "jiff", "gpui-table-core/spacetimedb" ]
 
 [dependencies]
-chrono = { optional = true, workspace = true }
 component-shape = { workspace = true }
 gpui-kit = { workspace = true }
 gpui-table-core = { default-features = false, workspace = true }
@@ -28,6 +26,10 @@ icu = { optional = true, workspace = true }
 jiff = { optional = true, workspace = true }
 rust_decimal = { optional = true, workspace = true }
 spacetimedb-lib = { optional = true, workspace = true }
+
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+# Timestamp cells use the browser's timezone, not just bundled timezone data.
+jiff = { features = [ "js" ], optional = true, workspace = true }
 
 [lints]
 workspace = true

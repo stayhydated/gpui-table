@@ -14,7 +14,7 @@ fn ui_compile_fail() {
     t.pass("tests/ui/configured_filter_shapes.rs");
     #[cfg(feature = "rust_decimal")]
     t.pass("tests/ui/configured_number_range_filter_shapes.rs");
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     t.pass("tests/ui/explicit_filter_shapes.rs");
     t.pass("tests/ui/faceted_option_filter.rs");
     t.pass("tests/ui/faceted_vec_filter.rs");
@@ -31,13 +31,9 @@ fn ui_compile_fail() {
     t.pass("tests/ui/koruma_domain_validation_without_mcp.rs");
     #[cfg(not(feature = "mcp"))]
     t.compile_fail("tests/ui/mcp_requires_feature.rs");
-    #[cfg(all(feature = "mcp", feature = "chrono", feature = "rust_decimal"))]
+    #[cfg(all(feature = "mcp", feature = "jiff", feature = "rust_decimal"))]
     t.compile_fail("tests/ui/mcp_filter_shape_requires_decode.rs");
-    #[cfg(all(
-        feature = "mcp",
-        not(feature = "chrono"),
-        not(feature = "rust_decimal")
-    ))]
+    #[cfg(all(feature = "mcp", not(feature = "jiff"), not(feature = "rust_decimal")))]
     t.compile_fail("tests/ui/mcp_filter_shape_requires_decode_minimal.rs");
     t.compile_fail("tests/ui/invalid_fixed_value.rs");
     t.compile_fail("tests/ui/invalid_duplicate_style.rs");
@@ -61,16 +57,16 @@ fn ui_compile_fail() {
     t.compile_fail("tests/ui/invalid_faceted_option_type.rs");
     #[cfg(all(feature = "mcp", feature = "rust_decimal", feature = "spacetimedb"))]
     t.compile_fail("tests/ui/invalid_faceted_option_type_all_features.rs");
-    #[cfg(not(feature = "chrono"))]
-    t.compile_fail("tests/ui/date_range_requires_chrono.rs");
+    #[cfg(not(feature = "jiff"))]
+    t.compile_fail("tests/ui/date_range_requires_jiff.rs");
 
-    #[cfg(feature = "chrono")]
-    t.pass("tests/ui/date_range_requires_chrono.rs");
+    #[cfg(feature = "jiff")]
+    t.pass("tests/ui/date_range_requires_jiff.rs");
 
-    #[cfg(all(feature = "chrono", not(feature = "spacetimedb")))]
+    #[cfg(all(feature = "jiff", not(feature = "spacetimedb")))]
     t.compile_fail("tests/ui/invalid_date_range_type.rs");
 
-    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[cfg(all(feature = "jiff", feature = "spacetimedb"))]
     t.compile_fail("tests/ui/invalid_date_range_type_spacetimedb.rs");
 
     #[cfg(not(feature = "rust_decimal"))]
@@ -85,10 +81,10 @@ fn ui_compile_fail() {
     #[cfg(all(feature = "rust_decimal", feature = "spacetimedb"))]
     t.compile_fail("tests/ui/invalid_number_range_type_spacetimedb.rs");
 
-    #[cfg(all(feature = "chrono", not(feature = "spacetimedb")))]
+    #[cfg(all(feature = "jiff", not(feature = "spacetimedb")))]
     t.compile_fail("tests/ui/spacetimedb_requires_feature.rs");
 
-    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[cfg(all(feature = "jiff", feature = "spacetimedb"))]
     t.pass("tests/ui/spacetimedb_requires_feature.rs");
 }
 

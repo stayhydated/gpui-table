@@ -37,3 +37,10 @@ sort_editor_ftl-MoveUp = 上移
 sort_editor_ftl-MoveDown = 下移
 sort_editor_ftl-Remove = 移除
 sort_editor_ftl-Empty = 无排序键
+
+# es-fluent: same-as-fallback
+en = English
+# es-fluent: same-as-fallback
+fr-FR = français (France)
+# es-fluent: same-as-fallback
+zh-CN = 中文 (中国)

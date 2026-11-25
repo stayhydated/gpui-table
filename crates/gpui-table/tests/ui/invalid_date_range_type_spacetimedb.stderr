@@ -6,13 +6,15 @@ error[E0277]: table filter shape `DateRangeFilter` does not support field value 
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type
   = help: `DateRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::DateTime<Tz>>
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::NaiveDate>
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::NaiveDateTime>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::Timestamp>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::ZonedDateTime>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::civil::Date>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::civil::DateTime>
             GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::DateTime<Tz>>>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::NaiveDate>>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::NaiveDateTime>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::ZonedDateTime>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::civil::Date>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::civil::DateTime>>
             GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>
 note: required by a bound in `__gpui_table_assert_name_filter_shape_field_support`
  --> tests/ui/invalid_date_range_type_spacetimedb.rs:6:25
@@ -28,11 +30,13 @@ error[E0277]: table filter shape `DateRangeFilter` does not support field value 
   |
   = note: implement `GpuiTableFilterShapeFor<std::string::String>` for `DateRangeFilter`, or choose a filter shape that supports the field type
   = help: `DateRangeFilter` implements trait `GpuiTableFilterShapeFor<Field>`:
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::DateTime<Tz>>
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::NaiveDate>
-            GpuiTableFilterShapeFor<gpui_table::__deps::chrono::NaiveDateTime>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::Timestamp>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::ZonedDateTime>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::civil::Date>
+            GpuiTableFilterShapeFor<gpui_table::__deps::jiff::civil::DateTime>
             GpuiTableFilterShapeFor<spacetimedb_sats::timestamp::Timestamp>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::DateTime<Tz>>>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::NaiveDate>>
-            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::chrono::NaiveDateTime>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::Timestamp>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::ZonedDateTime>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::civil::Date>>
+            GpuiTableFilterShapeFor<std::option::Option<gpui_table::__deps::jiff::civil::DateTime>>
             GpuiTableFilterShapeFor<std::option::Option<spacetimedb_sats::timestamp::Timestamp>>

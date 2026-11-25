@@ -4,11 +4,11 @@ mod pagination_errors;
 mod resources_registration;
 mod schema_metadata;
 
-use chrono::NaiveDate;
 use gpui_table::{
     Filterable, GpuiTable, GpuiTableFilterShape, TableCell,
     mcp::{McpServer, serde_json::json},
 };
+use jiff::civil::Date as CivilDate;
 use koruma::NewtypeTryFromInner as _;
 use koruma_collection::collection::LenValidation;
 use serde::{Deserialize, Serialize};
@@ -56,7 +56,7 @@ struct UserRow {
     age: u8,
 
     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
-    created_on: NaiveDate,
+    created_on: CivilDate,
 }
 
 #[derive(Clone, Debug, GpuiTable, Serialize)]
@@ -230,6 +230,6 @@ fn newtype_validated_filter_rows() -> Result<Vec<NewtypeValidatedFilterRow>, Str
     }])
 }
 
-fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-    NaiveDate::from_ymd_opt(year, month, day).expect("test date should be valid")
+fn date(year: i16, month: i8, day: i8) -> CivilDate {
+    CivilDate::new(year, month, day).expect("test date should be valid")
 }

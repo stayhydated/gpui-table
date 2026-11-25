@@ -4,11 +4,15 @@ Generated filters keep filter values typed and apply them to the table's
 in-memory rows. Enable the facade's `rust_decimal` feature before using any
 numeric range filter, including one over an integer field:
 
+This example follows the development branch. Use a sibling `gpui-table`
+checkout and GPUI Kit 0.11:
+
 ```toml
 [dependencies]
-chrono = "0.4"
-gpui-table = { version = "0.9", features = ["rust_decimal"] }
-gpui-table-component = { version = "0.9", features = ["rust_decimal"] }
+gpui-kit = "0.11.0"
+jiff = "1.0"
+gpui-table = { path = "../gpui-table/crates/gpui-table", features = ["rust_decimal"] }
+gpui-table-component = { path = "../gpui-table/crates/gpui-table-component", features = ["rust_decimal"] }
 ```
 
 Add `#[gpui_table(filters)]` and declare each filtered field's shape:
@@ -24,11 +28,15 @@ struct Order {
     total: u32,
 
     #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
-    placed_at: chrono::DateTime<chrono::Utc>,
+    placed_at: jiff::Timestamp,
 }
 ```
 
 Built-in shapes cover text, faceted, numeric range, and date range filters.
+Civil and zoned datetimes keep their own date for matching. A bare Jiff
+`Timestamp` or SpacetimeDB timestamp matches by UTC date. See
+[Date and time cells](columns.md#date-and-time-cells) for how cells display those
+values separately.
 Configured expressions such as `TextFilter.alphanumeric_only()` and
 `FacetedFilter::<T>.searchable(true)` customize generated widget construction.
 `NumberRangeFilter.range(...).step(...)` accepts

@@ -8,7 +8,7 @@ without depending on GPUI for shared client/server filtering, non-UI query
 logic, and generic code over `Matchable<F>` in the [`gpui-table`][project]
 ecosystem.
 
-Requires Rust 1.99 or newer.
+Requires Rust 1.100 or newer.
 
 The crate includes text, faceted, range, and single-value wrappers; faceted
 filter traits; and feature-gated date, decimal, SpacetimeDB, and Fluent support.
@@ -17,14 +17,14 @@ Applications that derive or render tables should normally depend on
 
 ## Features
 
-The default feature set is `chrono`.
+The default feature set is `jiff`.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `chrono` | Yes | Provides Chrono date conversions and the `DateRange` filter category. |
+| `jiff` | Yes | Provides Jiff date conversions and the `DateRange` filter category. |
 | `fluent` | No | Provides Fluent labels and localization initialization for filter categories. |
 | `rust_decimal` | No | Provides decimal numeric conversions and the `NumberRange` filter category. |
-| `spacetimedb` | No | Enables `chrono` and SpacetimeDB temporal conversions; decimal conversions additionally need `rust_decimal`. |
+| `spacetimedb` | No | Enables `jiff` and SpacetimeDB temporal conversions; decimal conversions additionally need `rust_decimal`. |
 
 ## Example
 

@@ -1,11 +1,11 @@
 use std::collections::HashSet;
 
-use chrono::NaiveDate;
 use gpui_kit::component::{StyledExt as _, v_flex};
 use gpui_kit::{
     App, AppContext as _, Context, Entity, FocusHandle, Focusable, IntoElement, Render,
     StyleRefinement, Styled as _, Window, div, prelude::*, px,
 };
+use jiff::civil::Date as CivilDate;
 use rust_decimal::Decimal;
 
 use crate::{
@@ -58,8 +58,8 @@ impl ResetFiltersStory {
             date_filter: DateRangeFilter::new_for(
                 |_| "Created at".to_string(),
                 (
-                    NaiveDate::from_ymd_opt(2026, 1, 1),
-                    NaiveDate::from_ymd_opt(2026, 1, 31),
+                    CivilDate::new(2026, 1, 1).ok(),
+                    CivilDate::new(2026, 1, 31).ok(),
                 ),
                 |_value, _window, _cx| {},
                 cx,

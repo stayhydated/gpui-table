@@ -223,6 +223,7 @@ fn to_column_snapshot(column: &Column) -> ColumnSnapshot {
         width,
         fixed: column.fixed.map(|fixed| match fixed {
             ColumnFixed::Left => "left",
+            ColumnFixed::Right => "right",
         }),
         resizable: column.resizable,
         movable: column.movable,

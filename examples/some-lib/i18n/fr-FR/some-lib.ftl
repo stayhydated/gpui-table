@@ -131,3 +131,10 @@ product_description_variants-price = Prix
 product_description_variants-rating = Note
 product_description_variants-stock = Stock
 product_description_variants-title = Titre
+
+# es-fluent: same-as-fallback
+en = English
+# es-fluent: same-as-fallback
+fr-FR = français (France)
+# es-fluent: same-as-fallback
+zh-CN = 中文 (中国)

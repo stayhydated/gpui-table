@@ -131,3 +131,10 @@ user_label_variants-status = 状态
 user_status-Active = 活跃
 user_status-Offline = 离线
 user_status-Suspended = 已暂停
+
+# es-fluent: same-as-fallback
+en = English
+# es-fluent: same-as-fallback
+fr-FR = français (France)
+# es-fluent: same-as-fallback
+zh-CN = 中文 (中国)

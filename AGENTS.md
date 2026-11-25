@@ -42,11 +42,10 @@ targets. Built-in widget previews live in `crates/gpui-table-component/src/stori
   and snapshot diffs before accepting them.
 - When built-in filters or query values change, update their component stories
   and affected `some-lib` row models and `some-lib-tables` views.
-- Keep Chrono conversion behavior aligned between
-  `crates/gpui-table-runtime/src/cell.rs` and
-  `crates/gpui-table-component/src/date_range_filter.rs`. Values Jiff cannot
-  represent retain Chrono's original `Display` output; cell fallback also preserves leap seconds
-  and the original timezone offset. Keep the boundary tests and
+- Keep date behavior aligned between cell rendering and date-range filters.
+  Civil and zoned datetimes retain their calendar date for matching; bare Jiff
+  instants and SpacetimeDB timestamps match by UTC date. A Jiff instant cell
+  displays in the system timezone. Keep boundary tests and
   `book/src/columns.md` aligned with this contract.
 - When Fluent behavior changes, update the affected `i18n.toml`, `i18n/*.ftl`,
   localized examples, and user guidance together.

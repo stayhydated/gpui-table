@@ -1,5 +1,4 @@
 use crate::TableFilterComponent;
-use chrono::NaiveDate;
 use gpui_kit::component::{
     Icon, IconName, Sizable as _, StyledExt as _,
     button::Button,
@@ -12,6 +11,7 @@ use gpui_kit::{
     App, Context, Entity, IntoElement, Render, StyleRefinement, Subscription, Window, div,
     prelude::*, px,
 };
+use jiff::civil::Date as CivilDate;
 use std::borrow::Borrow as _;
 use std::rc::Rc;
 
@@ -20,7 +20,6 @@ fn app<'a, T>(cx: &'a Context<'_, T>) -> &'a App {
 }
 
 mod date_display {
-    use chrono::{Datelike as _, NaiveDate};
     use icu::{
         calendar::{Date, Iso},
         datetime::{DateTimeFormatter, DateTimeFormatterPreferences, fieldsets},
@@ -44,15 +43,6 @@ mod date_display {
             .unwrap_or_else(|error| panic!("failed to create ICU date formatter: {error:?}"))
     }
 
-    fn chrono_naive_date_to_jiff(value: &NaiveDate) -> Option<civil::Date> {
-        civil::Date::new(
-            i16::try_from(value.year()).ok()?,
-            i8::try_from(value.month()).ok()?,
-            i8::try_from(value.day()).ok()?,
-        )
-        .ok()
-    }
-
     fn to_icu_date(value: civil::Date) -> Date<Iso> {
         let month = u8::try_from(value.month()).expect("jiff months fit ICU month values");
         let day = u8::try_from(value.day()).expect("jiff days fit ICU day values");
@@ -61,24 +51,21 @@ mod date_display {
         })
     }
 
-    pub(super) fn format_date(value: NaiveDate) -> String {
-        let Some(date) = chrono_naive_date_to_jiff(&value) else {
-            return value.to_string();
-        };
-        let date = to_icu_date(date);
+    pub(super) fn format_date(value: civil::Date) -> String {
+        let date = to_icu_date(value);
         date_formatter().format(&date).to_string()
     }
 }
 
 pub struct DateRangeFilter {
     title: Rc<dyn Fn(&App) -> String>,
-    selected_range: (Option<NaiveDate>, Option<NaiveDate>),
+    selected_range: (Option<CivilDate>, Option<CivilDate>),
     trigger_style: StyleRefinement,
     popover_style: StyleRefinement,
     calendar_style: StyleRefinement,
     clear_button_style: StyleRefinement,
     calendar: Option<Entity<CalendarState>>,
-    on_change: Rc<dyn Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static>,
+    on_change: Rc<dyn Fn((Option<CivilDate>, Option<CivilDate>), &mut Window, &mut App) + 'static>,
     _subscriptions: Vec<Subscription>,
 }
 
@@ -86,20 +73,15 @@ impl component_shape::ComponentShapeMetadata for DateRangeFilter {
     const MCP_INPUT: component_shape::McpInput = component_shape::McpInput::date_range();
 }
 impl component_shape::DeclaredComponentShape for DateRangeFilter {}
-impl component_shape::ComponentShapeFor<NaiveDate> for DateRangeFilter {}
-impl component_shape::ComponentShapeFor<Option<NaiveDate>> for DateRangeFilter {}
-impl component_shape::ComponentShapeFor<chrono::NaiveDateTime> for DateRangeFilter {}
-impl component_shape::ComponentShapeFor<Option<chrono::NaiveDateTime>> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<CivilDate> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<CivilDate>> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<jiff::civil::DateTime> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<jiff::civil::DateTime>> for DateRangeFilter {}
 
-impl<Tz> component_shape::ComponentShapeFor<chrono::DateTime<Tz>> for DateRangeFilter where
-    Tz: chrono::TimeZone
-{
-}
-
-impl<Tz> component_shape::ComponentShapeFor<Option<chrono::DateTime<Tz>>> for DateRangeFilter where
-    Tz: chrono::TimeZone
-{
-}
+impl component_shape::ComponentShapeFor<jiff::Timestamp> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<jiff::Timestamp>> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<jiff::ZonedDateTime> for DateRangeFilter {}
+impl component_shape::ComponentShapeFor<Option<jiff::ZonedDateTime>> for DateRangeFilter {}
 
 #[cfg(feature = "spacetimedb")]
 impl component_shape::ComponentShapeFor<spacetimedb_lib::Timestamp> for DateRangeFilter {}
@@ -108,7 +90,7 @@ impl component_shape::ComponentShapeFor<spacetimedb_lib::Timestamp> for DateRang
 impl component_shape::ComponentShapeFor<Option<spacetimedb_lib::Timestamp>> for DateRangeFilter {}
 
 impl TableFilterComponent for DateRangeFilter {
-    type Value = (Option<NaiveDate>, Option<NaiveDate>);
+    type Value = (Option<CivilDate>, Option<CivilDate>);
 
     const FILTER_TYPE: gpui_table_schema::registry::RegistryFilterType =
         gpui_table_schema::registry::RegistryFilterType::DateRange;
@@ -128,8 +110,8 @@ impl DateRangeFilter {
     /// Create a date range filter with a fixed title.
     pub fn new(
         title: impl Into<String>,
-        value: (Option<NaiveDate>, Option<NaiveDate>),
-        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        value: (Option<CivilDate>, Option<CivilDate>),
+        on_change: impl Fn((Option<CivilDate>, Option<CivilDate>), &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
         let title = title.into();
@@ -138,8 +120,8 @@ impl DateRangeFilter {
 
     fn new_with_title(
         title: Rc<dyn Fn(&App) -> String>,
-        value: (Option<NaiveDate>, Option<NaiveDate>),
-        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        value: (Option<CivilDate>, Option<CivilDate>),
+        on_change: impl Fn((Option<CivilDate>, Option<CivilDate>), &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
         cx.new(|_cx| Self {
@@ -158,8 +140,8 @@ impl DateRangeFilter {
     /// Create a date range filter with a reactive title provider (e.g. for i18n).
     pub fn new_for(
         title: impl Fn(&App) -> String + 'static,
-        value: (Option<NaiveDate>, Option<NaiveDate>),
-        on_change: impl Fn((Option<NaiveDate>, Option<NaiveDate>), &mut Window, &mut App) + 'static,
+        value: (Option<CivilDate>, Option<CivilDate>),
+        on_change: impl Fn((Option<CivilDate>, Option<CivilDate>), &mut Window, &mut App) + 'static,
         cx: &mut App,
     ) -> Entity<Self> {
         Self::new_with_title(Rc::new(title), value, on_change, cx)
@@ -238,7 +220,7 @@ impl DateRangeFilter {
     /// Replace date bounds without invoking the change callback.
     pub fn set_silent(
         &mut self,
-        value: (Option<NaiveDate>, Option<NaiveDate>),
+        value: (Option<CivilDate>, Option<CivilDate>),
         window: &mut Window,
         cx: &mut Context<Self>,
     ) {
@@ -252,7 +234,7 @@ impl DateRangeFilter {
     }
 
     /// Get the current filter value.
-    pub fn value(&self) -> (Option<NaiveDate>, Option<NaiveDate>) {
+    pub fn value(&self) -> (Option<CivilDate>, Option<CivilDate>) {
         self.selected_range
     }
 
@@ -273,7 +255,7 @@ impl DateRangeFilter {
     }
 }
 
-fn format_date(date: NaiveDate) -> String {
+fn format_date(date: CivilDate) -> String {
     date_display::format_date(date)
 }
 
@@ -415,32 +397,20 @@ impl DateRangeFilterExt for Entity<DateRangeFilter> {
 #[cfg(test)]
 mod tests {
     use super::{DateRangeFilter, DateRangeFilterExt as _, format_date};
-    use chrono::NaiveDate;
     use gpui_kit::{Empty, StyleRefinement, TestAppContext, VisualTestContext};
+    use jiff::civil::Date as CivilDate;
     use std::{cell::RefCell, rc::Rc};
 
     #[test]
     fn formats_dates_with_icu4x() {
-        let date = NaiveDate::from_ymd_opt(2026, 1, 31).expect("valid date");
+        let date = CivilDate::new(2026, 1, 31).expect("valid date");
         assert_eq!(format_date(date), "Jan 31, 2026");
-    }
-
-    #[test]
-    fn dates_outside_jiff_range_preserve_original_display() {
-        for date in [
-            NaiveDate::MIN,
-            NaiveDate::MAX,
-            NaiveDate::from_ymd_opt(-10_000, 1, 1).unwrap(),
-            NaiveDate::from_ymd_opt(10_000, 12, 31).unwrap(),
-        ] {
-            assert_eq!(format_date(date), date.to_string());
-        }
     }
 
     #[gpui_kit::test]
     fn range_display_and_configuration_cover_each_bound_shape(cx: &mut TestAppContext) {
-        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
-        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let start = CivilDate::new(2026, 1, 1).unwrap();
+        let end = CivilDate::new(2026, 1, 31).unwrap();
 
         let both = cx.update(|cx| {
             DateRangeFilter::new("Created", (Some(start), Some(end)), |_, _, _| {}, cx)
@@ -491,8 +461,8 @@ mod tests {
     #[gpui_kit::test]
     fn date_filter_apply_and_reset_paths_use_window_context(cx: &mut TestAppContext) {
         cx.update(gpui_kit::component::init);
-        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
-        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let start = CivilDate::new(2026, 1, 1).unwrap();
+        let end = CivilDate::new(2026, 1, 31).unwrap();
         let changes = Rc::new(RefCell::new(Vec::new()));
         let changes_for_callback = changes.clone();
         let filter = cx.update(|cx| {

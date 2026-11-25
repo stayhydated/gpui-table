@@ -1,5 +1,5 @@
-use chrono::NaiveDate;
 use gpui_table::{Filterable, GpuiTable, TableCell, mcp::McpJsonSchema};
+use jiff::civil::Date as CivilDate;
 use serde::Serialize;
 
 #[derive(Clone, Debug, Eq, Filterable, Hash, McpJsonSchema, PartialEq, Serialize, TableCell)]
@@ -31,7 +31,7 @@ struct IssueRow {
     state: IssueState,
 
     #[gpui_table(width = 120, filter(gpui_table_component::DateRangeFilter))]
-    updated_on: NaiveDate,
+    updated_on: CivilDate,
 }
 
 fn main() -> gpui_table::mcp::ServeStdioResult {
@@ -62,6 +62,6 @@ fn rows() -> Vec<IssueRow> {
     ]
 }
 
-fn date(year: i32, month: u32, day: u32) -> NaiveDate {
-    NaiveDate::from_ymd_opt(year, month, day).expect("example date should be valid")
+fn date(year: i16, month: i8, day: i8) -> CivilDate {
+    CivilDate::new(year, month, day).expect("example date should be valid")
 }

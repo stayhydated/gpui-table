@@ -105,7 +105,7 @@ mod tests {
         );
         assert!(ready.diagnostics.is_empty());
 
-        let (source, language, component_reset, core_true) = cx.update(|cx| {
+        let (source, language, component_reset, core_true, language_labels) = cx.update(|cx| {
             let state = gpui_storybook::try_preference_state(cx)
                 .expect("preference state should be installed after initialization");
             let component_reset =
@@ -115,11 +115,14 @@ mod tests {
                 .find(|option| option.value == "true")
                 .expect("the boolean filter should include true")
                 .label;
+            let language_labels = [Languages::En, Languages::FrFr, Languages::ZhCn]
+                .map(|language| gpui_table_component::i18n::localize_message(cx, &language));
             (
                 state.resolved.language.source,
                 state.resolved.language.language.to_string(),
                 component_reset,
                 core_true,
+                language_labels,
             )
         });
 
@@ -127,6 +130,10 @@ mod tests {
         assert_eq!(language, "fr-FR");
         assert_eq!(component_reset, "Réinitialiser");
         assert_eq!(core_true, "Vrai");
+        assert_eq!(
+            language_labels,
+            ["English", "français (France)", "中文 (中国)"]
+        );
 
         cx.update(|cx| {
             cx.open_window(Default::default(), |window, cx| {

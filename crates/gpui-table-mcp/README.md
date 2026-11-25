@@ -8,7 +8,7 @@ table rows through typed query tools. It provides query contracts, schemas,
 inventory registration, server composition, table resources, and prompt
 templates for the [`gpui-table`][project] ecosystem.
 
-Requires Rust 1.99 or newer.
+Requires Rust 1.100 or newer.
 
 Most applications use the `mcp` feature on [`gpui-table`][facade] and
 `gpui-table-component`.
@@ -25,14 +25,14 @@ shows a complete stdio server with an in-memory row source.
 
 ## Features
 
-The default feature set is `chrono`. Match field integrations on the facade
+The default feature set is `jiff`. Match field integrations on the facade
 and built-in components when using generated query tools.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
-| `chrono` | Yes | Enables Chrono query values and corresponding core/runtime conversions. |
+| `jiff` | Yes | Enables Jiff query values and corresponding core/runtime conversions. |
 | `rust_decimal` | No | Enables decimal query values and numeric core/runtime conversions. |
-| `spacetimedb` | No | Enables `chrono` and supported SpacetimeDB temporal conversions. |
+| `spacetimedb` | No | Enables `jiff` and supported SpacetimeDB temporal conversions. |
 
 [codecov-badge]: https://codecov.io/gh/stayhydated/gpui-table/branch/master/graph/badge.svg?component=gpui-table-mcp
 [codecov]: https://codecov.io/gh/stayhydated/gpui-table

@@ -1,7 +1,7 @@
 //! Layout-preserving readable text for table cell values.
 use gpui_kit::{
     A11ySubtreeBuilder, App, Bounds, Element, ElementId, GlobalElementId, InspectorElementId,
-    IntoElement, LayoutId, Pixels, Role, SharedString, Window, accesskit,
+    IntoElement as _, LayoutId, Pixels, Role, SharedString, Window, accesskit,
 };
 
 /// Renders the same text visually and through the native accessibility tree.
@@ -31,12 +31,6 @@ impl<E> CellText<E> {
                 .collect::<Vec<_>>(),
         );
         node
-    }
-}
-impl<E: Element> IntoElement for CellText<E> {
-    type Element = Self;
-    fn into_element(self) -> Self {
-        self
     }
 }
 impl<E: Element> Element for CellText<E> {

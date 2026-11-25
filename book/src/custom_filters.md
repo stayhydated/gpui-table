@@ -65,7 +65,8 @@ struct Account {
 `TextFilterAdapter` supports `T` and
 `Option<T>` when `T: TextFilterField`. The number and date
 adapters follow the same pattern with `NumberRangeFilterField` and
-`DateRangeFilterField`, subject to their feature flags.
+`DateRangeFilterField`, subject to their feature flags. On the development
+branch a date adapter returns a `jiff::civil::Date` from `to_filter_date`.
 
 ## Adapt an existing shape
 

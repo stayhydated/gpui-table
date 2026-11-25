@@ -77,7 +77,7 @@ amount: u32,
 status: Status,
 
 #[gpui_table(filter(gpui_table_component::DateRangeFilter))]
-created_at: chrono::DateTime<chrono::Utc>,
+created_at: jiff::Timestamp,
 ```
 
 Text filters also support `alphabetic_only()`,

@@ -1,21 +1,16 @@
-#[cfg(feature = "story")]
-use es_fluent::EsFluent;
 use es_fluent::unic_langid::LanguageIdentifier;
 use es_fluent::{FluentLabel, FluentMessage};
-#[cfg(feature = "story")]
-use es_fluent_lang::es_fluent_language;
 use gpui_kit::App;
-use std::borrow::Borrow;
 #[cfg(feature = "story")]
-use strum::EnumIter;
+use iso_types::iso_locale;
+use std::borrow::Borrow;
 
 es_fluent_manager_embedded::define_i18n_module!();
 
 pub use gpui_es_fluent::{ComponentLocaleError, EmbeddedInitError, I18n};
 
 #[cfg(feature = "story")]
-#[es_fluent_language]
-#[derive(Clone, Copy, Debug, EnumIter, Eq, EsFluent, PartialEq)]
+#[iso_locale(custom)]
 pub enum Languages {}
 
 /// Errors produced while synchronizing component and table-core locales.

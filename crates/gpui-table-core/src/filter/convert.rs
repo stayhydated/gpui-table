@@ -116,53 +116,61 @@ impl ToDecimal for spacetimedb_lib::TimeDuration {
     }
 }
 
-/// Trait for converting date/time types to NaiveDate for range filter matching.
-#[cfg(feature = "chrono")]
-pub trait ToNaiveDate {
-    fn to_naive_date(&self) -> chrono::NaiveDate;
+/// A civil date used by date-range filters.
+///
+/// Civil values and zoned datetimes keep their own calendar date. Bare
+/// instants use UTC, independently of the time zone used to display them.
+#[cfg(feature = "jiff")]
+pub trait ToCivilDate {
+    fn to_civil_date(&self) -> jiff::civil::Date;
 }
 
-#[cfg(feature = "chrono")]
-impl ToNaiveDate for chrono::NaiveDate {
-    fn to_naive_date(&self) -> chrono::NaiveDate {
+#[cfg(feature = "jiff")]
+impl ToCivilDate for jiff::civil::Date {
+    fn to_civil_date(&self) -> jiff::civil::Date {
         *self
     }
 }
 
-#[cfg(feature = "chrono")]
-impl<Tz: chrono::TimeZone> ToNaiveDate for chrono::DateTime<Tz> {
-    fn to_naive_date(&self) -> chrono::NaiveDate {
-        self.date_naive()
-    }
-}
-
-#[cfg(feature = "chrono")]
-impl ToNaiveDate for chrono::NaiveDateTime {
-    fn to_naive_date(&self) -> chrono::NaiveDate {
+#[cfg(feature = "jiff")]
+impl ToCivilDate for jiff::civil::DateTime {
+    fn to_civil_date(&self) -> jiff::civil::Date {
         self.date()
     }
 }
 
-#[cfg(all(feature = "chrono", feature = "spacetimedb"))]
-impl ToNaiveDate for spacetimedb_lib::Timestamp {
-    fn to_naive_date(&self) -> chrono::NaiveDate {
-        chrono::DateTime::from_timestamp_micros(self.to_micros_since_unix_epoch())
-            .map(|value| value.date_naive())
-            .unwrap_or_else(|| {
-                panic!(
-                    "SpacetimeDB timestamp `{}` is outside chrono's supported date range",
-                    self.to_micros_since_unix_epoch()
-                )
+#[cfg(feature = "jiff")]
+impl ToCivilDate for jiff::ZonedDateTime {
+    fn to_civil_date(&self) -> jiff::civil::Date {
+        self.date()
+    }
+}
+
+#[cfg(feature = "jiff")]
+impl ToCivilDate for jiff::Timestamp {
+    fn to_civil_date(&self) -> jiff::civil::Date {
+        self.to_zoned_datetime(jiff::tz::TimeZone::UTC).date()
+    }
+}
+
+#[cfg(feature = "spacetimedb")]
+impl ToCivilDate for spacetimedb_lib::Timestamp {
+    fn to_civil_date(&self) -> jiff::civil::Date {
+        let micros = self.to_micros_since_unix_epoch();
+        jiff::Timestamp::from_microsecond(micros)
+            .unwrap_or_else(|error| {
+                panic!("SpacetimeDB timestamp `{micros}` is outside Jiff's supported date range: {error}")
             })
+            .to_civil_date()
     }
 }
 
 #[cfg(test)]
 mod tests {
+    #[cfg(feature = "jiff")]
+    use super::ToCivilDate as _;
     #[cfg(feature = "rust_decimal")]
     use super::ToDecimal as _;
-    #[cfg(feature = "chrono")]
-    use super::ToNaiveDate as _;
 
     #[cfg(feature = "rust_decimal")]
     #[test]
@@ -207,38 +215,45 @@ mod tests {
         );
     }
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     #[test]
-    fn chrono_values_convert_to_their_calendar_date() {
-        use chrono::{DateTime, NaiveDate, NaiveDateTime, Utc};
+    fn civil_and_zoned_values_keep_their_date_and_instants_use_utc() {
+        use jiff::{Timestamp, ZonedDateTime, civil::Date};
 
-        let date = NaiveDate::from_ymd_opt(2026, 7, 11).unwrap();
-        let datetime = date.and_hms_opt(23, 59, 58).unwrap();
-        let zoned = DateTime::<Utc>::from_naive_utc_and_offset(datetime, Utc);
+        let date = Date::new(2026, 1, 1).unwrap();
+        let datetime = date.at(0, 30, 0, 0);
+        let zoned: ZonedDateTime = "2026-01-01T00:30:00+01:00[Europe/Paris]".parse().unwrap();
+        let instant: Timestamp = "2025-12-31T23:30:00Z".parse().unwrap();
 
-        assert_eq!(date.to_naive_date(), date);
-        assert_eq!(NaiveDateTime::to_naive_date(&datetime), date);
-        assert_eq!(zoned.to_naive_date(), date);
+        assert_eq!(date.to_civil_date(), date);
+        assert_eq!(datetime.to_civil_date(), date);
+        assert_eq!(zoned.to_civil_date(), date);
+        assert_eq!(zoned.timestamp(), instant);
+        assert_eq!(instant.to_civil_date(), Date::new(2025, 12, 31).unwrap());
     }
 
-    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[cfg(feature = "spacetimedb")]
     #[test]
-    fn spacetimedb_timestamps_convert_to_dates() {
-        use chrono::NaiveDate;
+    fn spacetimedb_timestamps_keep_signed_microseconds_at_the_utc_date_boundary() {
+        use jiff::civil::Date;
         use spacetimedb_lib::Timestamp;
 
-        assert_eq!(
-            Timestamp::from_micros_since_unix_epoch(0).to_naive_date(),
-            NaiveDate::from_ymd_opt(1970, 1, 1).unwrap()
-        );
+        for (micros, date) in [
+            (-1, Date::new(1969, 12, 31).unwrap()),
+            (0, Date::new(1970, 1, 1).unwrap()),
+            (1, Date::new(1970, 1, 1).unwrap()),
+        ] {
+            assert_eq!(
+                Timestamp::from_micros_since_unix_epoch(micros).to_civil_date(),
+                date
+            );
+        }
     }
 
-    #[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+    #[cfg(feature = "spacetimedb")]
     #[test]
-    #[should_panic(expected = "outside chrono's supported date range")]
+    #[should_panic(expected = "outside Jiff's supported date range")]
     fn out_of_range_spacetimedb_timestamps_are_rejected() {
-        use spacetimedb_lib::Timestamp;
-
-        _ = Timestamp::from_micros_since_unix_epoch(i64::MAX).to_naive_date();
+        _ = spacetimedb_lib::Timestamp::from_micros_since_unix_epoch(i64::MAX).to_civil_date();
     }
 }

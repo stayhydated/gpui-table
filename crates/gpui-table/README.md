@@ -8,7 +8,7 @@ GPUI tables. It re-exports the table derives, core filter and ordering semantics
 traits, schema types, and optional MCP integration. Built-in filter widgets live
 in [`gpui-table-component`][components].
 
-Requires Rust 1.99 or newer. Generated UI code uses `gpui-kit` 0.9.0 directly,
+Requires Rust 1.100 or newer. Generated UI code uses `gpui-kit` 0.11.0 directly,
 so the application must expose it as a direct dependency.
 
 Generated delegates expose `set_allowed_sort_columns` to restrict both header
@@ -24,14 +24,14 @@ complete-result backend ordering.
 
 ## Features
 
-The default feature set is `derive` and `chrono`. Macro re-exports require
+The default feature set is `derive` and `jiff`. Macro re-exports require
 `derive`; match integration features on `gpui-table-component` when using its
 corresponding shapes.
 
 | Feature | Default | Purpose |
 | --- | --- | --- |
 | `derive` | Yes | Re-exports the table, cell, filter, and supporting proc macros. |
-| `chrono` | Yes | Enables Chrono cell rendering and date-filter support across core, derive, runtime, and an enabled MCP integration. |
+| `jiff` | Yes | Enables Jiff cell rendering and date-filter support across core, derive, runtime, and an enabled MCP integration. |
 | `fluent` | No | Enables typed Fluent labels in core and generated tables and facets. |
 | `inventory` | No | Emits inventory-registered table metadata for tooling. |
 | `mcp` | No | Enables the experimental MCP integration and `inventory`, plus MCP macro generation when derive support is present. |

@@ -1,7 +1,7 @@
 use super::shared::{delegate_filter_shape, matches_optional_field};
 use super::*;
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 /// Adapter shape for date range filters over application-owned field types.
 ///
 /// Use this when a table field is a transparent or domain-specific value type
@@ -9,52 +9,47 @@ use super::*;
 /// [`DateRangeFilter`] component and MCP schema.
 pub struct DateRangeFilterAdapter;
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 /// Field conversion contract used by [`DateRangeFilterAdapter`].
 pub trait DateRangeFilterField {
     /// Converts the field value into the date matched by [`DateRangeFilter`].
-    fn to_filter_naive_date(&self) -> chrono::NaiveDate;
+    fn to_filter_date(&self) -> jiff::civil::Date;
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 macro_rules! impl_date_range_filter_field {
     ($($ty:ty),* $(,)?) => {
         $(
             impl DateRangeFilterField for $ty {
-                fn to_filter_naive_date(&self) -> chrono::NaiveDate {
-                    gpui_table_core::filter::ToNaiveDate::to_naive_date(self)
+                fn to_filter_date(&self) -> jiff::civil::Date {
+                    gpui_table_core::filter::ToCivilDate::to_civil_date(self)
                 }
             }
         )*
     };
 }
 
-#[cfg(feature = "chrono")]
-impl_date_range_filter_field!(chrono::NaiveDate, chrono::NaiveDateTime);
+#[cfg(feature = "jiff")]
+impl_date_range_filter_field!(
+    jiff::civil::Date,
+    jiff::civil::DateTime,
+    jiff::Timestamp,
+    jiff::ZonedDateTime
+);
 
-#[cfg(feature = "chrono")]
-impl<Tz> DateRangeFilterField for chrono::DateTime<Tz>
-where
-    Tz: chrono::TimeZone,
-{
-    fn to_filter_naive_date(&self) -> chrono::NaiveDate {
-        self.date_naive()
-    }
-}
-
-#[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+#[cfg(all(feature = "jiff", feature = "spacetimedb"))]
 impl_date_range_filter_field!(spacetimedb_lib::Timestamp);
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 delegate_filter_shape!(DateRangeFilterAdapter, DateRangeFilter);
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl<T> ComponentShapeFor<T> for DateRangeFilterAdapter where T: DateRangeFilterField {}
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl<T> ComponentShapeFor<Option<T>> for DateRangeFilterAdapter where T: DateRangeFilterField {}
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl<T> GpuiTableFilterShapeFor<T> for DateRangeFilterAdapter
 where
     T: DateRangeFilterField,
@@ -64,11 +59,11 @@ where
     }
 
     fn matches_field(field: &T, value: &Self::FilterValue) -> bool {
-        value.matches(&field.to_filter_naive_date())
+        value.matches(&field.to_filter_date())
     }
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl<T> GpuiTableFilterShapeFor<Option<T>> for DateRangeFilterAdapter
 where
     T: DateRangeFilterField,
@@ -79,16 +74,16 @@ where
 
     fn matches_field(field: &Option<T>, value: &Self::FilterValue) -> bool {
         matches_optional_field(field, value.is_active(), |field| {
-            value.matches(&field.to_filter_naive_date())
+            value.matches(&field.to_filter_date())
         })
     }
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl GpuiTableFilterShape for DateRangeFilter {
     type Component = DateRangeFilter;
-    type RawValue = (Option<chrono::NaiveDate>, Option<chrono::NaiveDate>);
-    type FilterValue = gpui_table_core::filter::RangeValue<chrono::NaiveDate>;
+    type RawValue = (Option<jiff::civil::Date>, Option<jiff::civil::Date>);
+    type FilterValue = gpui_table_core::filter::RangeValue<jiff::civil::Date>;
 
     const FILTER_TYPE: RegistryFilterType = RegistryFilterType::DateRange;
 
@@ -127,10 +122,10 @@ impl GpuiTableFilterShape for DateRangeFilter {
     }
 }
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 impl DeclaredGpuiTableFilterShape for DateRangeFilter {}
 
-#[cfg(feature = "chrono")]
+#[cfg(feature = "jiff")]
 macro_rules! impl_date_range_shape_for {
     ($($ty:ty),* $(,)?) => {
         $(
@@ -140,7 +135,7 @@ macro_rules! impl_date_range_shape_for {
                 }
 
                 fn matches_field(field: &$ty, value: &Self::FilterValue) -> bool {
-                    value.matches(&gpui_table_core::filter::ToNaiveDate::to_naive_date(field))
+                    value.matches(&gpui_table_core::filter::ToCivilDate::to_civil_date(field))
                 }
             }
 
@@ -151,7 +146,7 @@ macro_rules! impl_date_range_shape_for {
 
                 fn matches_field(field: &Option<$ty>, value: &Self::FilterValue) -> bool {
                     matches_optional_field(field, value.is_active(), |field| {
-                        value.matches(&gpui_table_core::filter::ToNaiveDate::to_naive_date(field))
+                        value.matches(&gpui_table_core::filter::ToCivilDate::to_civil_date(field))
                     })
                 }
             }
@@ -159,40 +154,15 @@ macro_rules! impl_date_range_shape_for {
     };
 }
 
-#[cfg(feature = "chrono")]
-impl_date_range_shape_for!(chrono::NaiveDate, chrono::NaiveDateTime);
+#[cfg(feature = "jiff")]
+impl_date_range_shape_for!(
+    jiff::civil::Date,
+    jiff::civil::DateTime,
+    jiff::Timestamp,
+    jiff::ZonedDateTime
+);
 
-#[cfg(feature = "chrono")]
-impl<Tz> GpuiTableFilterShapeFor<chrono::DateTime<Tz>> for DateRangeFilter
-where
-    Tz: chrono::TimeZone,
-{
-    fn filter_type() -> FilterType {
-        FilterType::DateRange
-    }
-
-    fn matches_field(field: &chrono::DateTime<Tz>, value: &Self::FilterValue) -> bool {
-        value.matches(&field.date_naive())
-    }
-}
-
-#[cfg(feature = "chrono")]
-impl<Tz> GpuiTableFilterShapeFor<Option<chrono::DateTime<Tz>>> for DateRangeFilter
-where
-    Tz: chrono::TimeZone,
-{
-    fn filter_type() -> FilterType {
-        FilterType::DateRange
-    }
-
-    fn matches_field(field: &Option<chrono::DateTime<Tz>>, value: &Self::FilterValue) -> bool {
-        matches_optional_field(field, value.is_active(), |field| {
-            value.matches(&field.date_naive())
-        })
-    }
-}
-
-#[cfg(all(feature = "chrono", feature = "spacetimedb"))]
+#[cfg(all(feature = "jiff", feature = "spacetimedb"))]
 impl_date_range_shape_for!(spacetimedb_lib::Timestamp);
 
 #[cfg(test)]
@@ -201,60 +171,60 @@ mod tests {
     use gpui_table_core::filter::{FilterType, RangeValue};
     use gpui_table_runtime::shape::{GpuiTableFilterShape, GpuiTableFilterShapeFor};
 
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "jiff")]
     #[test]
     fn date_shapes_match_date_datetime_and_zoned_categories() {
-        use chrono::{NaiveDate, TimeZone as _, Utc};
+        use jiff::{ZonedDateTime, civil::Date as CivilDate};
 
-        let start = NaiveDate::from_ymd_opt(2026, 1, 1).unwrap();
-        let middle = NaiveDate::from_ymd_opt(2026, 1, 15).unwrap();
-        let end = NaiveDate::from_ymd_opt(2026, 1, 31).unwrap();
+        let start = CivilDate::new(2026, 1, 1).unwrap();
+        let middle = CivilDate::new(2026, 1, 15).unwrap();
+        let end = CivilDate::new(2026, 1, 31).unwrap();
         let active = RangeValue(Some(start), Some(end));
-        let inactive = RangeValue::<NaiveDate>::new();
-        let datetime = middle.and_hms_opt(12, 0, 0).unwrap();
-        let zoned = Utc.from_utc_datetime(&datetime);
+        let inactive = RangeValue::<CivilDate>::new();
+        let datetime = middle.at(12, 0, 0, 0);
+        let zoned: ZonedDateTime = "2026-01-15T12:00:00+01:00[Europe/Paris]".parse().unwrap();
 
         assert!(
-            <DateRangeFilter as GpuiTableFilterShapeFor<NaiveDate>>::matches_field(
+            <DateRangeFilter as GpuiTableFilterShapeFor<CivilDate>>::matches_field(
                 &middle, &active,
             )
         );
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::NaiveDateTime,
+            jiff::civil::DateTime,
         >>::matches_field(&datetime, &active,));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            chrono::DateTime<Utc>,
+            ZonedDateTime,
         >>::matches_field(&zoned, &active,));
         assert!(<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<NaiveDate>,
+            Option<CivilDate>,
         >>::matches_field(&None, &inactive,));
         assert!(!<DateRangeFilter as GpuiTableFilterShapeFor<
-            Option<chrono::NaiveDateTime>,
+            Option<jiff::civil::DateTime>,
         >>::matches_field(&None, &active,));
         assert!(<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
-            chrono::DateTime<Utc>,
+            ZonedDateTime,
         >>::matches_field(&zoned, &active,));
         assert!(!<DateRangeFilterAdapter as GpuiTableFilterShapeFor<
-            Option<NaiveDate>,
+            Option<CivilDate>,
         >>::matches_field(&None, &active,));
         assert_eq!(
-            <NaiveDate as DateRangeFilterField>::to_filter_naive_date(&middle),
+            <CivilDate as DateRangeFilterField>::to_filter_date(&middle),
             middle
         );
         assert_eq!(
-            <chrono::NaiveDateTime as DateRangeFilterField>::to_filter_naive_date(&datetime),
+            <jiff::civil::DateTime as DateRangeFilterField>::to_filter_date(&datetime),
             middle
         );
         assert_eq!(
-            <chrono::DateTime<Utc> as DateRangeFilterField>::to_filter_naive_date(&zoned),
+            <ZonedDateTime as DateRangeFilterField>::to_filter_date(&zoned),
             middle
         );
         assert!(matches!(
-            <DateRangeFilter as GpuiTableFilterShapeFor<NaiveDate>>::filter_type(),
+            <DateRangeFilter as GpuiTableFilterShapeFor<CivilDate>>::filter_type(),
             FilterType::DateRange
         ));
         assert!(matches!(
-            <DateRangeFilterAdapter as GpuiTableFilterShapeFor<NaiveDate>>::filter_type(),
+            <DateRangeFilterAdapter as GpuiTableFilterShapeFor<CivilDate>>::filter_type(),
             FilterType::DateRange
         ));
         assert_eq!(
