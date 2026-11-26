@@ -5,14 +5,13 @@ typed MCP query tools. Generated code validates and decodes filter, ordering and
 pagination arguments; the application still owns data access, authorization,
 filter execution, and totals.
 
-This example follows the development branch. Use a sibling `gpui-table`
-checkout and GPUI Kit 0.11:
+Use the published gpui-table 0.10 line and GPUI Kit 0.11:
 
 ```toml
 [dependencies]
 gpui-kit = "0.11.0"
-gpui-table = { path = "../gpui-table/crates/gpui-table", features = ["mcp"] }
-gpui-table-component = { path = "../gpui-table/crates/gpui-table-component", features = ["mcp"] }
+gpui-table = { version = "0.10", features = ["mcp"] }
+gpui-table-component = { version = "0.10", features = ["mcp"] }
 serde = { version = "1", features = ["derive"] }
 ```
 
